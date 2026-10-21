@@ -28,6 +28,7 @@ var _pause: CanvasLayer
 var _end: CanvasLayer
 var _spectating := false
 var _seed := 0
+var _picker: CharacterSelect
 
 
 func _ready() -> void:
@@ -41,6 +42,13 @@ func _ready() -> void:
 	Audio.stop_music(1.0)
 	await get_tree().process_frame
 	await _build_world()
+	# the island is ready: wait for the player to confirm their critter
+	# (automated runs and --quick-match go straight in)
+	_picker.ready_to_drop = true
+	var args := OS.get_cmdline_user_args()
+	if not (Settings.is_test_run() or args.has("--smoke-test") or args.has("--quick-match")):
+		await _picker.confirmed
+	_spawn_player()
 	_start()
 
 
@@ -72,6 +80,13 @@ func _build_world() -> void:
 	match_manager.player_eliminated.connect(_on_player_eliminated)
 	match_manager.finished.connect(_on_match_finished)
 
+
+func _spawn_player() -> void:
+	var world := match_manager.world_root
+	var def: CritterDef = load("res://data/critters/%s.tres" % String(Settings.get_value(&"player_character")))
+	if def == null:
+		def = load("res://data/critters/bun.tres")
+	match_manager.spawn_player(def, String(Settings.get_value(&"player_skin")))
 	rig = CameraRig.new()
 	rig.name = "CameraRig"
 	world.add_child(rig)
@@ -103,6 +118,28 @@ func _start() -> void:
 	hud.show_message("Press SPACE to jump!", "Pick your spot — the balloon won't wait.", 6.0)
 	match_manager.player.state_changed.connect(_on_player_state)
 	GameSession.matches_played += 1
+	if OS.get_cmdline_user_args().has("--smoke-test"):
+		_smoke_test()
+
+
+## `-- --smoke-test`: drop in, land, save user://smoke_test.png, quit. Exit code
+## 0 if the match ran (used to check exported builds end to end).
+func _smoke_test() -> void:
+	var p := match_manager.player
+	await get_tree().create_timer(2.0).timeout
+	match_manager.player_jump()
+	var t := 0.0
+	while p.state != Critter.State.GROUND and t < 45.0:
+		p.want_jump = p.state == Critter.State.FREEFALL
+		await get_tree().process_frame
+		t += get_process_delta_time()
+	await get_tree().create_timer(3.0).timeout
+	var ok := p.state == Critter.State.GROUND and match_manager.phase != MatchManager.Phase.LOADING
+	var img := get_viewport().get_texture().get_image()
+	img.save_png("user://smoke_test.png")
+	print("SMOKE TEST %s: landed=%s phase=%s fps=%d shot=%s" % ["PASS" if ok else "FAIL", p.state == Critter.State.GROUND,
+		MatchManager.Phase.keys()[match_manager.phase], Engine.get_frames_per_second(), ProjectSettings.globalize_path("user://smoke_test.png")])
+	get_tree().quit(0 if ok else 1)
 
 
 func _on_player_state(s: int) -> void:
@@ -148,9 +185,9 @@ func _build_loading() -> void:
 	c.theme = UITheme.theme()
 	_loading.add_child(c)
 	var v := VBoxContainer.new()
-	v.add_theme_constant_override("separation", 22)
+	v.add_theme_constant_override("separation", 16)
 	c.add_child(v)
-	var t := UITheme.label("BUNNY BEAT DOWN", 84, UITheme.CARROT, true)
+	var t := UITheme.label("BUNNY BEAT DOWN", 64, UITheme.CARROT, true)
 	t.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(t)
 	_load_label = UITheme.label("Growing the island", 28)
@@ -174,6 +211,11 @@ func _build_loading() -> void:
 	var s := UITheme.label("Island #%d" % _seed, 18, Color(UITheme.CREAM, 0.5))
 	s.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(s)
+	# pick a critter while the island grows
+	_picker = CharacterSelect.new()
+	_picker.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	v.add_child(_picker)
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 
 
 func _on_load_progress(f: float, label: String) -> void:

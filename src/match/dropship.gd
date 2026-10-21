@@ -7,6 +7,7 @@ const MODEL := "res://assets/props/dropship_balloon.glb"
 const ALTITUDE := 115.0
 const DURATION := 38.0
 
+var duration := DURATION
 var start := Vector3.ZERO
 var finish := Vector3.ZERO
 var progress := 0.0
@@ -16,6 +17,7 @@ var _wind: Node
 
 
 func setup(island_radius: float, rng: RandomNumberGenerator) -> void:
+	duration = DURATION * sqrt(island_radius / 215.0)
 	var a := rng.randf() * TAU
 	var offset := Vector2(rng.randf_range(-0.35, 0.35), 0.0).rotated(a) * island_radius
 	var dir := Vector2(cos(a), sin(a))
@@ -82,7 +84,7 @@ func eject(c: Critter) -> void:
 func _process(delta: float) -> void:
 	if not flying:
 		return
-	progress = minf(1.0, progress + delta / DURATION)
+	progress = minf(1.0, progress + delta / duration)
 	global_position = start.lerp(finish, progress)
 	if progress >= 1.0:
 		for c in passengers.duplicate():

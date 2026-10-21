@@ -210,6 +210,14 @@ func _find_loot() -> Node3D:
 		if sc and not sc.opened and sd < 60.0 + skill * 60.0 and sd * 0.5 < best_d:
 			best_d = sd * 0.5
 			best = sc
+	# treasure chests are worth a detour even when armed (but not mid-storm)
+	for n in me.get_tree().get_nodes_in_group(&"treasure"):
+		var tc := n as LootCrate
+		if tc and not tc.opened and (tc.channeler() == null or tc.channeler() == me):
+			var td := tc.global_position.distance_to(pos) * 0.6
+			if td < best_d:
+				best_d = td
+				best = tc
 	if me.inventory.weapon_count() < 2:
 		for n in me.get_tree().get_nodes_in_group(&"crates"):
 			var c := n as LootCrate
@@ -258,7 +266,7 @@ func _act(delta: float) -> void:
 		Mode.FIGHT:
 			_fight(delta)
 		Mode.LOOT:
-			_loot()
+			_loot(delta)
 		Mode.HEAL:
 			me.move_input = Vector2.ZERO
 			me.use_clover()
@@ -291,7 +299,7 @@ func _roam() -> void:
 	_follow_path(false)
 
 
-func _loot() -> void:
+func _loot(delta: float) -> void:
 	if _loot_goal == null or not is_instance_valid(_loot_goal) or (_loot_goal is LootCrate and (_loot_goal as LootCrate).opened):
 		_loot_goal = _find_loot()
 		if _loot_goal == null:
@@ -306,7 +314,16 @@ func _loot() -> void:
 				me.switch_to(_worst_slot())
 			pk.try_collect(me)
 		elif _loot_goal is LootCrate:
-			(_loot_goal as LootCrate).open(me)
+			var crate := _loot_goal as LootCrate
+			if crate.open_time > 0.0 and not crate.opened:
+				# stand still and work the lock (fights interrupt via _choose_mode)
+				me.move_input = Vector2.ZERO
+				var to := crate.global_position - me.global_position
+				me.look_yaw = atan2(-to.x, -to.z)
+				if not crate.channel(me, delta):
+					return
+			else:
+				crate.open(me)
 		_loot_goal = null
 		_think_t = 0.4   # glance around before grabbing the next thing
 		return
@@ -379,7 +396,7 @@ func _fight(delta: float) -> void:
 	if w.ammo_in_mag <= 0:
 		me.start_reload()
 	elif visible and on_target and in_range and _clock - _spotted_t > reaction:
-		me.want_aim = dist > 18.0 and skill > 0.5
+		me.want_aim = (dist > 18.0 and skill > 0.5) or w.data.scoped
 		if w.data.fire_mode == WeaponData.FireMode.AUTO:
 			me.want_fire = true
 		else:

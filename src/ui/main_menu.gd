@@ -15,6 +15,11 @@ var _t := 0.0
 func _ready() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	get_tree().paused = false
+	# `BunnyBeatDown -- --quick-match` (or --smoke-test) skips straight into a match
+	var args := OS.get_cmdline_user_args()
+	if args.has("--quick-match") or args.has("--smoke-test"):
+		get_tree().change_scene_to_file.call_deferred(GAME_SCENE)
+		return
 	_build_diorama()
 	_build_ui()
 	Audio.play_music("menu")

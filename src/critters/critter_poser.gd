@@ -16,6 +16,11 @@ extends SkeletonModifier3D
 const UP := Vector3.UP
 const FWD := Vector3(0, 0, 1)
 const RIGHT := Vector3(-1, 0, 0)
+## Hop length = leg * (HOP_BASE + speed * HOP_PER_SPEED); the airborne share
+## of each hop cycle is HOP_AIR (the rest is the crouch-and-push contact).
+const HOP_BASE := 3.2
+const HOP_PER_SPEED := 0.35
+const HOP_AIR := 0.72
 
 signal footstep(hop: bool)
 
@@ -35,6 +40,8 @@ var hold_distance := 0.26
 var gliding := false
 var reload_progress := -1.0   ## 0..1 while reloading, -1 otherwise
 var recoil := 0.0             ## 0..1, decays in CritterVisual
+var trick_tuck := 0.0         ## +1 tuck limbs in (flips, rolls), -1 stretch out (leaps)
+var trick_active := false     ## mid-trick: stop tracking the aim, the body is spinning
 
 # ---- internal state ---------------------------------------------------------------
 var _phase := 0.0
@@ -81,7 +88,7 @@ func _process_modification_with_delta(delta: float) -> void:
 		return
 	delta = minf(delta, 0.05)
 	var to_skel := skel.global_basis.orthonormalized().inverse()
-	var v := to_skel * velocity
+	var v := to_skel * velocity / rig.size   # model units (the model node is scaled)
 	var hv := Vector3(v.x, 0.0, v.z)
 	var speed := hv.length()
 	var move_dir := hv / speed if speed > 0.05 else FWD
@@ -98,8 +105,9 @@ func _process_modification_with_delta(delta: float) -> void:
 
 	# ---- gait clock -------------------------------------------------------------
 	var stride := leg * (0.85 + speed * 0.06 / S)
+	# bunnies take long bounding hops (~2.5–3.5 per second), not a rapid patter
+	var hop_len := leg * (HOP_BASE + speed * HOP_PER_SPEED / S)
 	if gait == CritterDef.Gait.HOP:
-		var hop_len := leg * (1.5 + speed * 0.12 / S)
 		_phase = fposmod(_phase + speed / hop_len * TAU * delta, TAU)
 	else:
 		_phase = fposmod(_phase + speed / (2.0 * stride) * TAU * delta, TAU)
@@ -122,9 +130,10 @@ func _process_modification_with_delta(delta: float) -> void:
 	var hop_air := 0.0
 	if gait == CritterDef.Gait.HOP:
 		var u := _phase / TAU
-		hop_air = sin(u / 0.72 * PI) if u < 0.72 else 0.0
-		var squash := sin((u - 0.72) / 0.28 * PI) if u >= 0.72 else 0.0
-		hip_pos.y += _move * (leg * 0.5 * hop_air - leg * 0.08 * squash) * (1.0 - _air)
+		hop_air = sin(u / HOP_AIR * PI) if u < HOP_AIR else 0.0
+		var squash := sin((u - HOP_AIR) / (1.0 - HOP_AIR) * PI) if u >= HOP_AIR else 0.0
+		# longer hops arc higher; a little forward pitch on take-off, nose-up on landing
+		hip_pos.y += _move * (leg * 0.68 * hop_air - leg * 0.1 * squash) * (1.0 - _air)
 	else:
 		hip_pos.y -= _move * leg * (0.03 + 0.05 * (0.5 - 0.5 * cos(2.0 * _phase)))
 		hip_pos += RIGHT * sin(_phase) * 0.012 * S * _move
@@ -136,7 +145,7 @@ func _process_modification_with_delta(delta: float) -> void:
 		_rotate_global(hips, Quaternion(UP, sin(_phase) * 0.12 * _move))
 
 	# ---- spine aims ---------------------------------------------------------------
-	var a := (to_skel * aim_dir).normalized()
+	var a := FWD if trick_active else (to_skel * aim_dir).normalized()
 	var pitch := clampf(asin(clampf(a.y, -1.0, 1.0)), -1.3, 1.3)
 	var yaw := clampf(atan2(-a.x, a.z) * -1.0, -1.0, 1.0)
 	var chain := [[&"spine", 0.25, 0.3], [&"chest", 0.35, 0.4], [&"neck", 0.15, 0.1], [&"head", 0.25, 0.2]]
@@ -220,13 +229,28 @@ func _process_modification_with_delta(delta: float) -> void:
 			else _g(ll).origin * Vector3(1, 0, 1) + UP * 0.05 * S
 		var target := rest_foot
 		if gait == CritterDef.Gait.HOP:
-			target += UP * hop_air * leg * 0.3 * _move - move_dir * hop_air * stride * 0.25 * _move
+			# feet stay planted during contact (they slide back exactly as fast as the
+			# body moves forward), then swing through to land ahead for the next hop
+			var u := _phase / TAU
+			var contact := hop_len * (1.0 - HOP_AIR)
+			var along: float
+			if u >= HOP_AIR:
+				along = (0.5 - (u - HOP_AIR) / (1.0 - HOP_AIR)) * contact
+			else:
+				var hop_t := u / HOP_AIR
+				along = lerpf(-0.5, 0.5, smoothstep(0.0, 1.0, hop_t)) * contact
+				target += UP * sin(hop_t * PI) * leg * 0.35 * _move
+			target += move_dir * along * _move
 		else:
 			var ph := _phase + (0.0 if side == &"l" else PI)
 			target += move_dir * (-cos(ph) * stride * 0.5 * _move)
 			target += UP * maxf(0.0, sin(ph)) * leg * 0.22 * _move
-		# tuck in the air
+		# tuck in the air (harder for flips and rolls, stretched out for leaps)
 		target += UP * _air * leg * 0.28 - FWD * _air * 0.04 * S
+		if trick_tuck > 0.0:
+			target += UP * trick_tuck * leg * 0.3 + FWD * trick_tuck * 0.08 * S
+		elif trick_tuck < 0.0:
+			target += -FWD * -trick_tuck * leg * 0.45 - UP * -trick_tuck * leg * 0.15
 		var hip := _g(ul).origin
 		var pole := hip + FWD * leg + RIGHT * sgn * 0.08 * S
 		_two_bone(ul, ll, ft, _seg_len[side + "_leg1"], _seg_len[side + "_leg2"], target, pole)

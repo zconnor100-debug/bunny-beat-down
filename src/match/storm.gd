@@ -34,12 +34,17 @@ var _from_center := Vector2.ZERO
 var _from_radius := 0.0
 var _tick := 0.0
 var _wall: MeshInstance3D
+var _k := 1.0
 var _hum: AudioStreamPlayer3D
 
 
 func start(island_: Island, start_radius: float, pace_ := 1.0) -> void:
 	island = island_
 	pace = pace_
+	# stages are tuned for a 215 m island: scale circle sizes with the island,
+	# and give critters a little longer to cross the bigger map
+	_k = island.terrain.island_radius / 215.0
+	pace *= sqrt(_k)
 	rng.seed = island.seed_value * 31 + 7
 	center = Vector2.ZERO
 	radius = start_radius
@@ -53,7 +58,7 @@ func start(island_: Island, start_radius: float, pace_ := 1.0) -> void:
 
 func _plan_next() -> void:
 	var s: Array = STAGES[mini(stage, STAGES.size() - 1)]
-	next_radius = s[2]
+	next_radius = s[2] * _k
 	dps = s[3]
 	# new centre: inside the current circle so the new one fits, nudged onto land
 	var best := center

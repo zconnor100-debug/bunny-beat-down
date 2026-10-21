@@ -16,6 +16,7 @@ var pitch := 0.0
 var first_person := false
 var shoulder := 1.0          ## +1 right shoulder, -1 left
 var aiming := false
+var scoped := false           ## looking through a sniper scope (HUD draws the overlay)
 var spectate_target: Node3D
 
 var camera: Camera3D
@@ -95,9 +96,17 @@ func _process(delta: float) -> void:
 	if not alive and spectate_target and is_instance_valid(spectate_target):
 		follow = spectate_target
 	_aim_blend = lerpf(_aim_blend, 1.0 if aiming and alive and not dropping else 0.0, IKMath.damp(14.0, delta))
-	_fp_blend = 1.0 if first_person and alive and not dropping else 0.0
-	var rig_scale := target.visual.rig.scale if target.visual.rig else 1.0
-	var eye_h := (target.visual.rig.eye_height if target.visual.rig else 0.85)
+	# scoped weapons look through the scope: the camera moves to the eye
+	var cur := target.current_weapon()
+	var now_scoped := aiming and alive and not dropping and cur != null and cur.data.scoped and _aim_blend > 0.55
+	if now_scoped != scoped:
+		scoped = now_scoped
+		if target.visual:
+			target.visual.set_first_person((first_person or scoped) and alive)
+		_viewmodel_root.visible = first_person and not scoped
+	_fp_blend = 1.0 if (first_person or scoped) and alive and not dropping else 0.0
+	var rig_scale := target.visual.rig.world_scale if target.visual.rig else 1.0
+	var eye_h := (target.visual.rig.world_eye_height if target.visual.rig else 0.85)
 
 	var base := follow.global_position
 	if dropping and target.state == Critter.State.IN_DROPSHIP and spectate_target:
@@ -167,6 +176,7 @@ func _update_viewmodel(delta: float, w: WeaponInstance) -> void:
 				target.visual._gild(_viewmodel)
 			for gi in ModelUtil.find_all(_viewmodel, "GeometryInstance3D"):
 				(gi as GeometryInstance3D).cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+			_viewmodel.scale = Vector3.ONE * 1.15
 			_viewmodel_root.add_child(_viewmodel)
 	if _viewmodel == null:
 		return
@@ -183,7 +193,7 @@ func _update_viewmodel(delta: float, w: WeaponInstance) -> void:
 	var ads := Vector3(0.0, -0.06, -0.24)
 	var sight := ModelUtil.find_named(_viewmodel, "Sight")
 	if sight:
-		ads = -sight.position + Vector3(0, 0, -0.22)
+		ads = -sight.position * _viewmodel.scale.x + Vector3(0, 0, -0.22)
 	var pos := hip.lerp(ads, _aim_blend) + bob * (1.0 - _aim_blend * 0.8)
 	pos += Vector3(_sway.x, _sway.y, 0.0) * 0.04
 	var reload := target.reload_progress()

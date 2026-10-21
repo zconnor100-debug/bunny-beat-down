@@ -7,7 +7,7 @@ const TEST_DEF := "res://data/critters/test_critter.tres"
 
 func test_weapons_are_sane() -> void:
 	var all := WeaponDB.all()
-	check(all.size() == 4, "four carrot guns (%d)" % all.size())
+	check(all.size() == 7, "seven carrot guns (%d)" % all.size())
 	for w in all:
 		var dps := w.damage * w.pellets * w.rounds_per_minute / 60.0
 		check(dps > 20.0 and dps < 250.0, "%s dps %.0f in a sane range" % [w.id, dps])

@@ -28,6 +28,8 @@ const DEFAULTS := {
 	"opponents": 23,
 	"difficulty": Difficulty.NORMAL,
 	"seed": 0,                      # 0 = random island every match
+	"player_character": "bun",
+	"player_skin": "default",
 }
 
 var path: String = REAL_PATH

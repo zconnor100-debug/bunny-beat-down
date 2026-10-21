@@ -1,0 +1,45 @@
+[gd_resource type="Resource" script_class="WeaponData" format=3]
+
+[ext_resource type="Script" path="res://src/weapons/weapon_data.gd" id="1_wd"]
+
+[resource]
+script = ExtResource("1_wd")
+id = &"carrot_rifle"
+display_name = "Carrot Assault Rifle"
+blurb = "One curved carrot for a magazine, thirty reasons to respect it. Good at every range."
+model_path = "res://assets/weapons/carrot_rifle.glb"
+icon_color = Color(0.95, 0.5, 0.18, 1)
+fire_mode = 1
+ammo_type = 2
+magazine = 30
+rounds_per_minute = 600.0
+pellets = 1
+damage = 17.0
+headshot_multiplier = 1.8
+spread_hip_deg = 2.2
+spread_aim_deg = 0.5
+spread_move_deg = 1.8
+bloom_per_shot_deg = 0.12
+bloom_max_deg = 2.0
+projectile = 0
+projectile_speed = 170.0
+projectile_gravity = 0.4
+falloff_start = 40.0
+falloff_end = 110.0
+min_damage_scale = 0.6
+impulse = 4.0
+dismember_power = 0.2
+reload_time = 2.2
+equip_time = 0.4
+two_handed = true
+hold_distance = 0.24
+aim_fov_scale = 0.75
+recoil_pitch_deg = 1.1
+recoil_yaw_deg = 0.45
+camera_shake = 0.05
+move_speed_scale = 0.95
+sfx_fire = &"rifle_fire"
+ai_preferred_range = 25.0
+ai_max_range = 70.0
+ai_burst = 1
+loot_weight = 1.0

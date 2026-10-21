@@ -362,8 +362,10 @@ class HUDOverlay:
 		var p := hud.player
 		var c := size * 0.5
 		var font := UITheme.text_font(700)
+		if hud.rig and hud.rig.scoped:
+			_draw_scope(c)
 		# crosshair: gap follows the real spread cone
-		if p.alive and p.current_weapon() and p.state == Critter.State.GROUND and not (hud.rig and hud.rig.first_person and p.want_aim):
+		elif p.alive and p.current_weapon() and p.state == Critter.State.GROUND and not (hud.rig and hud.rig.first_person and p.want_aim):
 			var cam := hud.rig.camera
 			var spread := deg_to_rad(p.current_spread_deg())
 			var gap := tan(spread) / tan(deg_to_rad(cam.fov) * 0.5) * size.y * 0.5 + 4.0
@@ -375,6 +377,17 @@ class HUDOverlay:
 				draw_line(a, b, col, 2.0)
 			draw_circle(c, 2.5, Color(0, 0, 0, 0.6))
 			draw_circle(c, 1.6, col)
+		# unlocking a treasure chest: progress bar under the crosshair
+		var pcn := p.get_node_or_null("PlayerController") as PlayerController
+		var crate := pcn.focused_crate() if pcn else null
+		if crate and crate.open_time > 0.0 and crate.channeler() == p and not crate.opened:
+			var bw := 260.0
+			var bp := c + Vector2(-bw * 0.5, 70.0)
+			draw_style_box(_box(Color(UITheme.INK, 0.75), 9), Rect2(bp, Vector2(bw, 18)))
+			draw_style_box(_box(Rarity.COLORS[Rarity.Tier.GOLDEN], 7), Rect2(bp + Vector2(3, 3), Vector2((bw - 6) * crate.progress, 12)))
+			var label := "Unlocking %s… %.1f s" % [crate.display_name, (1.0 - crate.progress) * crate.open_time]
+			draw_string_outline(font, bp + Vector2(0, -8), label, HORIZONTAL_ALIGNMENT_CENTER, bw, 18, 5, Color(0, 0, 0, 0.8))
+			draw_string(font, bp + Vector2(0, -8), label, HORIZONTAL_ALIGNMENT_CENTER, bw, 18, UITheme.CREAM)
 		# hit marker
 		if _hit_t > 0.0:
 			var hc := Color("ff4d4d") if _hit_kill else (Color("ffd34d") if _hit_head else Color.WHITE)
@@ -424,6 +437,25 @@ class HUDOverlay:
 			sb.set_corner_radius_all(radius)
 			_boxes[key] = sb
 		return _boxes[key]
+
+	## Sniper scope: black surround with a round lens, fine reticle and mil-dots.
+	func _draw_scope(c: Vector2) -> void:
+		var r := size.y * 0.42
+		var outer := size.length()
+		# a very thick ring covers everything outside the lens
+		draw_arc(c, r + outer * 0.5, 0.0, TAU, 180, Color.BLACK, outer, true)
+		draw_arc(c, r, 0.0, TAU, 180, Color(0.15, 0.1, 0.05), 6.0, true)
+		var ink := Color(0.02, 0.02, 0.02, 0.9)
+		draw_line(c - Vector2(r, 0), c + Vector2(r, 0), ink, 1.5)
+		draw_line(c - Vector2(0, r), c + Vector2(0, r), ink, 1.5)
+		draw_line(c - Vector2(r, 0), c - Vector2(r * 0.55, 0), ink, 5.0)
+		draw_line(c + Vector2(r * 0.55, 0), c + Vector2(r, 0), ink, 5.0)
+		draw_line(c + Vector2(0, r * 0.55), c + Vector2(0, r), ink, 5.0)
+		for i in range(1, 5):
+			var o := r * 0.1 * i
+			for dpos in [Vector2(o, 0), Vector2(-o, 0), Vector2(0, o), Vector2(0, -o)]:
+				draw_circle(c + dpos, 2.2, ink)
+		draw_circle(c, 2.0, Color(1, 0.3, 0.1, 0.95))
 
 	func _bar(pos: Vector2, w: float, h: float, frac: float, col: Color, text: String, font: Font) -> void:
 		draw_style_box(_box(Color(UITheme.INK, 0.7), int(h * 0.5)), Rect2(pos, Vector2(w, h)))

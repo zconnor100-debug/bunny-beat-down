@@ -36,25 +36,37 @@ func setup(world_root_: Node3D, island_: Island, opponents: int, difficulty: int
 	world_root.add_child(storm)
 	Events.critter_died.connect(_on_critter_died)
 	_spawn_loot()
-	player = _spawn_critter(load("res://data/critters/bun.tres"), "Bun")
-	var pc := PlayerController.new()
-	pc.name = "PlayerController"
-	player.add_child(pc)
 	var defs := _available_defs()
 	var used_names := {}
 	for i in opponents:
 		var def: CritterDef = _pick_def(defs)
 		var n := _unique_name(def, used_names)
 		var c := _spawn_critter(def, n)
+		var skins := def.skins()
+		c.visual.apply_skin(String(skins[rng.randi() % skins.size()].get("id", "default")))
 		var brain := AIBrain.new()
 		brain.name = "AIBrain"
 		brain.island = island
 		brain.match_manager = self
 		brain.skill = clampf(_skill_for(difficulty) + rng.randf_range(-0.12, 0.12), 0.05, 0.98)
 		c.add_child(brain)
-	total = critters.size()
+	total = critters.size() + 1   # + the player, who joins after picking a critter
 	_alive_cache = total
 	Events.alive_count_changed.emit(total, total)
+
+
+## The player's critter joins once they've picked it on the loading screen.
+func spawn_player(def: CritterDef, skin_id: String) -> Critter:
+	var display := "Bun" if def.id == &"bun" else "You (%s)" % def.display_name
+	player = _spawn_critter(def, display)
+	player.visual.apply_skin(skin_id)
+	var pc := PlayerController.new()
+	pc.name = "PlayerController"
+	player.add_child(pc)
+	critters.push_front(player)
+	total = critters.size()
+	Events.alive_count_changed.emit(total, total)
+	return player
 
 
 func _available_defs() -> Array[CritterDef]:
@@ -111,6 +123,13 @@ func _spawn_critter(def: CritterDef, display: String) -> Critter:
 func _spawn_loot() -> void:
 	for lp in island.loot_points:
 		var pos: Vector3 = lp.pos
+		if lp.has("chest"):
+			var chest := TreasureChest.new(lp.chest == "golden")
+			chest.rng.seed = rng.randi()
+			world_root.add_child(chest)
+			chest.global_position = pos
+			chest.rotation.y = lp.get("yaw", 0.0)
+			continue
 		if lp.crate:
 			var crate := LootCrate.new()
 			crate.rng.seed = rng.randi()

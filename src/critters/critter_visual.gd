@@ -9,7 +9,13 @@ extends Node3D
 
 const HELMET_MODEL := "res://assets/props/acorn_helmet.glb"
 const GLIDER_MODEL := "res://assets/props/dandelion_glider.glb"
+const GOLD_SHADER := preload("res://src/fx/golden.gdshader")
+
+static var _gold_overlay: ShaderMaterial
 const BASE_MASS := 12.0
+## Carrot guns are drawn bigger than "real" proportions so they read clearly
+## in third person (the holder already carries the critter's body scale).
+const WEAPON_SCALE := 1.3
 const RENDER_LAYER := 2   # decals skip this layer so blood only lands on the world
 
 var critter: Node3D
@@ -34,6 +40,8 @@ var _att_by_bone: Dictionary = {}    # bone index -> BoneAttachment3D
 var ragdolled := false
 var dismembered: Dictionary = {}     # role -> true
 
+var trick: JumpTrick
+var _model_base := Transform3D.IDENTITY
 var _glider: Node3D
 var _loaded_round: Node3D          ## the rocket sitting in the launcher's tube
 var _prev_xf := Transform3D.IDENTITY
@@ -51,6 +59,8 @@ func build(critter_: Node3D, def_: CritterDef) -> bool:
 		return false
 	model.name = "Model"
 	model.rotation.y = PI   # models face +Z, critters face -Z
+	model.scale = Vector3.ONE * def.body_scale
+	_model_base = model.transform
 	add_child(model)
 	for ap in ModelUtil.find_all(model, "AnimationPlayer"):
 		(ap as AnimationPlayer).stop()
@@ -59,7 +69,7 @@ func build(critter_: Node3D, def_: CritterDef) -> bool:
 		push_error("%s has no Skeleton3D" % def.resolved_model())
 		return false
 	rig = RigInfo.new()
-	if not rig.bind(RigInfo.read_json(def.resolved_rig()), skeleton):
+	if not rig.bind(RigInfo.read_json(def.resolved_rig()), skeleton, def.body_scale):
 		return false
 	for mi in ModelUtil.find_all(model, "MeshInstance3D"):
 		var m := mi as MeshInstance3D
@@ -106,6 +116,7 @@ func _process(delta: float) -> void:
 		_sway_glider(delta, (critter as CharacterBody3D).velocity)
 	if _loaded_round and critter:
 		_loaded_round.visible = Critter.round_chambered(critter)
+	_update_trick(delta)
 
 
 func set_first_person(on: bool) -> void:
@@ -121,7 +132,7 @@ func set_first_person(on: bool) -> void:
 
 
 func eye_position() -> Vector3:
-	return global_transform * Vector3(0, rig.eye_height if rig else 0.85, 0)
+	return global_transform * Vector3(0, rig.world_eye_height if rig else 0.85, 0)
 
 
 ## World position of a role's bone *as rendered*. Skeleton3D restores the
@@ -163,7 +174,7 @@ func set_weapon(w: WeaponInstance) -> void:
 	if weapon_model == null:
 		weapon_model = _fallback_gun(w.data)
 	holder.add_child(weapon_model)
-	weapon_model.scale = Vector3.ONE * rig.scale
+	weapon_model.scale = Vector3.ONE * rig.scale * WEAPON_SCALE
 	for gi in ModelUtil.find_all(weapon_model, "GeometryInstance3D"):
 		(gi as GeometryInstance3D).layers = RENDER_LAYER
 	if w.rarity == Rarity.Tier.GOLDEN:
@@ -173,6 +184,66 @@ func set_weapon(w: WeaponInstance) -> void:
 	_loaded_round = ModelUtil.find_named(weapon_model, "Rocket")
 
 
+# --- skins --------------------------------------------------------------------------------
+
+var skin_id := "default"
+
+## Swap albedo textures per material name, as listed in the species' skins.json.
+func apply_skin(id: String) -> void:
+	skin_id = id
+	var entry := def.skin(id)
+	var swaps: Dictionary = entry.get("albedo", {})
+	var base_dir := def.model_path.get_base_dir()
+	for m in meshes:
+		for s in m.mesh.get_surface_count():
+			var mat := m.mesh.surface_get_material(s) as BaseMaterial3D
+			if mat == null:
+				continue
+			var rel: Variant = swaps.get(mat.resource_name)
+			if rel == null:
+				m.set_surface_override_material(s, null)
+				continue
+			var tex_path := base_dir.path_join(String(rel))
+			if not ResourceLoader.exists(tex_path):
+				continue
+			var copy := mat.duplicate() as BaseMaterial3D
+			copy.albedo_texture = load(tex_path)
+			m.set_surface_override_material(s, copy)
+
+
+# --- jump tricks ------------------------------------------------------------------------
+
+## Start this species' airborne move. local_vel is the critter's velocity in its
+## own frame (x right, -z forward); airtime is the predicted time to touchdown.
+func start_jump_trick(local_vel: Vector3, airtime: float) -> void:
+	if ragdolled:
+		return
+	trick = JumpTrick.make(def.jump_style, local_vel, airtime)
+
+
+func trick_landed() -> void:
+	if trick:
+		trick.land()
+
+
+func _update_trick(delta: float) -> void:
+	if trick == null or ragdolled:
+		if poser:
+			poser.trick_tuck = 0.0
+			poser.trick_active = false
+		return
+	trick.step(delta)
+	# rotate the whole body about its centre of mass
+	var pivot := Vector3(0, (rig.world_head_top if rig else 1.0) * 0.5, 0)
+	var r := trick.rotation()
+	model.transform = Transform3D(r, pivot - r * pivot) * _model_base
+	poser.trick_tuck = trick.tuck()
+	poser.trick_active = trick.active
+	if trick.finished():
+		trick = null
+		model.transform = _model_base
+
+
 ## The dandelion-seed parachute held overhead while gliding in from the balloon.
 func set_glider(on: bool) -> void:
 	if on and _glider == null:
@@ -180,11 +251,11 @@ func set_glider(on: bool) -> void:
 		if _glider == null:
 			return
 		add_child(_glider)
-		_glider.scale = Vector3.ONE * rig.scale * 1.4
-		_glider.position = Vector3(0, rig.head_top + 0.35 * rig.scale, 0)
+		_glider.scale = Vector3.ONE * rig.world_scale * 1.4
+		_glider.position = Vector3(0, rig.world_head_top + 0.35 * rig.world_scale, 0)
 		_glider.scale *= 0.2
 		var tw := _glider.create_tween()
-		tw.tween_property(_glider, "scale", Vector3.ONE * rig.scale * 1.4, 0.35).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		tw.tween_property(_glider, "scale", Vector3.ONE * rig.world_scale * 1.4, 0.35).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	elif not on and _glider:
 		var g := _glider
 		_glider = null
@@ -211,20 +282,13 @@ func muzzle_position() -> Vector3:
 
 
 func _gild(root: Node) -> void:
-	var gold := StandardMaterial3D.new()
-	gold.albedo_color = Color(1.0, 0.78, 0.3)
-	gold.metallic = 1.0
-	gold.roughness = 0.25
+	# Golden guns get an additive gold sheen + sweeping glint (works on any model,
+	# including single-atlas ones whose carrots and metal share one material)
+	if _gold_overlay == null:
+		_gold_overlay = ShaderMaterial.new()
+		_gold_overlay.shader = GOLD_SHADER
 	for gi in ModelUtil.find_all(root, "GeometryInstance3D"):
-		(gi as GeometryInstance3D).material_overlay = null
-		if gi is MeshInstance3D:
-			var mi := gi as MeshInstance3D
-			# gild the wood and metal, leave the carrots orange
-			for s in mi.get_surface_override_material_count():
-				var mat := mi.mesh.surface_get_material(s)
-				var n := String(mat.resource_name).to_lower() if mat else ""
-				if not ("carrot" in n or "leaf" in n or "green" in n):
-					mi.set_surface_override_material(s, gold)
+		(gi as GeometryInstance3D).material_overlay = _gold_overlay
 
 
 func _fallback_gun(data: WeaponData) -> Node3D:
@@ -232,7 +296,8 @@ func _fallback_gun(data: WeaponData) -> Node3D:
 	var root := Node3D.new()
 	var body := MeshInstance3D.new()
 	var box := BoxMesh.new()
-	var length: float = {&"carrot_pistol": 0.26, &"carrot_shotgun": 0.7, &"carrot_lmg": 0.85, &"carrot_rocket_launcher": 0.95}.get(data.id, 0.5)
+	var length: float = {&"carrot_pistol": 0.26, &"carrot_smg": 0.45, &"carrot_shotgun": 0.7, &"carrot_rifle": 0.8,
+		&"carrot_lmg": 0.85, &"carrot_sniper": 1.15, &"carrot_rocket_launcher": 0.95}.get(data.id, 0.5)
 	box.size = Vector3(0.05, 0.08, length)
 	var mat := StandardMaterial3D.new()
 	mat.albedo_color = data.icon_color
@@ -259,7 +324,7 @@ func _build_hitboxes_and_ragdoll() -> void:
 	phys_sim.name = "Ragdoll"
 	phys_sim.active = false
 	skeleton.add_child(phys_sim)
-	var total_mass := BASE_MASS * pow(rig.scale, 3.0)
+	var total_mass := BASE_MASS * pow(rig.world_scale, 3.0)
 	for role in RigInfo.BODY_SEGMENTS:
 		if not rig.segments.has(role) or not rig.has_role(role):
 			continue
@@ -289,8 +354,9 @@ func _build_hitboxes_and_ragdoll() -> void:
 		area.set_meta(&"role", role)
 		var cs := CollisionShape3D.new()
 		var cap := CapsuleShape3D.new()
-		cap.radius = radius * 1.15
-		cap.height = height + radius * 0.3
+		var hs := def.hitbox_scale
+		cap.radius = radius * hs
+		cap.height = maxf(height + radius * 0.3 + radius * (hs - 1.0) * 2.0, cap.radius * 2.0 + 0.001)
 		cs.shape = cap
 		cs.transform = shape_xf
 		area.add_child(cs)
@@ -447,9 +513,9 @@ func pop_helmet(impulse: Vector3) -> void:
 	body.mass = 0.4
 	var cs := CollisionShape3D.new()
 	var sph := SphereShape3D.new()
-	sph.radius = 0.12 * rig.scale
+	sph.radius = 0.12 * rig.world_scale
 	cs.shape = sph
-	cs.position = Vector3(0, 0.08 * rig.scale, 0)
+	cs.position = Vector3(0, 0.08 * rig.world_scale, 0)
 	body.add_child(cs)
 	var xf := helmet.global_transform
 	get_tree().current_scene.add_child(body)

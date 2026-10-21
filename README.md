@@ -24,10 +24,30 @@ Built in **Godot 4.6** (GDScript, Jolt physics, Forward+).
 - **Third person with a first-person option** (press **V**): over-the-shoulder
   camera with a shoulder swap, aim-down-sights zoom, recoil kick and trauma
   shake; a first-person viewmodel with sway, bob and procedural reloads.
-- **Four carrot guns**: Carrot Pistol, Carrot Shotgun (nine julienned
-  pellets), Carrot LMG (a drum of baby carrots) and Carrot Rocket Launcher.
-  Five loot rarities run from Baby to **Golden**. Projectiles are real carrots
-  that fly with drop and **stay stuck** in whatever they hit.
+- **Seven carrot guns**, each with its own feel:
+
+  | Gun | Role |
+  |---|---|
+  | Carrot Pistol | snappy sidearm, big headshot bonus |
+  | Carrot SMG | 900 rpm stick-mag of baby carrots, great up close |
+  | Carrot Shotgun | nine julienned pellets, pump action |
+  | Carrot Assault Rifle | the all-rounder, banana-carrot magazine |
+  | Carrot LMG | a pan of baby carrots and no off switch |
+  | The Long Carrot | bolt-action sniper with a real scope view |
+  | Carrot Rocket Launcher | one very large, very angry carrot |
+
+  Five loot rarities run from Baby to **Golden**, and Golden guns shimmer.
+  Projectiles are real carrots that fly with drop and **stay stuck** in
+  whatever they hit.
+- **Species jump tricks**: every critter jumps in character.
+  - **Bunnies flip**: a front flip when running forward, a back flip when
+    backing up, a side flip when strafing.
+  - Squirrels spin, foxes do a head-first mousing pounce, and raccoons
+    cannonball.
+  - Frogs stretch out into a leap, beavers land with a tail slap, and
+    hamsters barrel-roll.
+
+  ![Jump tricks](docs/screenshots/jump_tricks.gif)
 - **Battle royale for 1 player and up to 49 bots**: a balloon drop, freefall
   and dandelion glider, floor loot and garden crates, the shrinking **Briar**,
   a kill feed, a minimap and full map, spectating, and *Winner Winner Carrot
@@ -83,6 +103,13 @@ The full write-up is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ## Running it
 
+**Desktop app (Linux):** run `./tools/install_desktop.sh`. It adds *Bunny Beat
+Down* to your applications menu and desktop, with Bun as the icon. If a
+standalone build exists in `build/linux/`, it launches that; otherwise it runs
+the project through Godot.
+
+**From source:**
+
 1. Install **[Godot 4.6.2](https://godotengine.org/download)** (standard build).
 2. `git clone https://github.com/zconnor100-debug/bunny-beat-down.git` and open `project.godot` (the first import takes a minute). On Linux you can also run `./play.sh`.
 3. Press **F5**.
@@ -100,8 +127,8 @@ godot --headless --path . -s tests/check_scripts.gd     # compile every script
 | Action | Keyboard / mouse | Gamepad |
 |---|---|---|
 | Move / look | WASD / mouse | Left / right stick |
-| Fire / aim | LMB / RMB | RT / LT |
-| Jump · glide · leave the balloon | Space | A |
+| Fire / aim (scope) | LMB / RMB | RT / LT |
+| Jump (with species trick) · glide · leave the balloon | Space | A |
 | Sprint / crouch | Shift / Ctrl | L3 / B |
 | Reload / pick up | R / E | X / Y |
 | Switch weapon | 1-3, mouse wheel | LB / RB |

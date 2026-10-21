@@ -84,7 +84,10 @@ func _physics_process(delta: float) -> void:
 	critter.look_pitch = rig.pitch
 	critter.want_fire = Input.is_action_pressed(&"fire") and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED
 	critter.want_aim = Input.is_action_pressed(&"aim")
+	var was_aiming := rig.aiming
 	rig.aiming = critter.want_aim and critter.current_weapon() != null
+	if rig.aiming and not was_aiming and critter.current_weapon().data.scoped:
+		Audio.play(&"scope_in", -4.0)
 	critter.want_sprint = Input.is_action_pressed(&"sprint")
 	critter.want_crouch = Input.is_action_pressed(&"crouch")
 	_jump_buffer -= delta
@@ -93,6 +96,11 @@ func _physics_process(delta: float) -> void:
 		_jump_buffer = 0.0
 	critter.aim_point = rig.aim_point(critter.visual.hitbox_rids)
 	_update_focus()
+	# treasure chests: keep unlocking while interact is held
+	if _focus is LootCrate and is_instance_valid(_focus) and Input.is_action_pressed(&"interact"):
+		var crate := _focus as LootCrate
+		if crate.open_time > 0.0 and crate.channel(critter, delta):
+			_focus = null
 
 
 func _on_shot(shooter: Node, _origin: Vector3, weapon_id: StringName) -> void:
@@ -122,7 +130,7 @@ func _update_focus() -> void:
 				continue
 			var to := n3.global_position + Vector3.UP * 0.3 - eye
 			var d := to.length()
-			if d > INTERACT_RANGE * critter.visual.rig.scale + 0.8:
+			if d > INTERACT_RANGE * critter.visual.rig.world_scale + 0.8:
 				continue
 			var facing := to.normalized().dot(fwd)
 			var score := facing * 2.0 - d * 0.3
@@ -135,10 +143,16 @@ func _update_focus() -> void:
 		if best is Pickup:
 			text = "[E] Pick up %s" % (best as Pickup).label()
 		elif best is LootCrate:
-			text = "[E] Open garden crate"
+			var crate := best as LootCrate
+			text = "[E] Open garden crate" if crate.open_time <= 0.0 \
+				else "[Hold E] Unlock %s (%d s)" % [crate.display_name, ceili(crate.open_time)]
 		if text != _hint:
 			_hint = text
 			interact_hint_changed.emit(text)
+
+
+func focused_crate() -> LootCrate:
+	return _focus as LootCrate if is_instance_valid(_focus) else null
 
 
 func focused_pickup() -> Pickup:
@@ -151,5 +165,8 @@ func _interact() -> void:
 	if _focus is Pickup:
 		(_focus as Pickup).try_collect(critter)
 	elif _focus is LootCrate:
-		(_focus as LootCrate).open(critter)
+		var crate := _focus as LootCrate
+		if crate.open_time > 0.0:
+			return   # treasure chests are unlocked by holding interact (see _physics_process)
+		crate.open(critter)
 	_focus = null

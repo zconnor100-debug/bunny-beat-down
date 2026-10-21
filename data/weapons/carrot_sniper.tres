@@ -1,0 +1,47 @@
+[gd_resource type="Resource" script_class="WeaponData" format=3]
+
+[ext_resource type="Script" path="res://src/weapons/weapon_data.gd" id="1_wd"]
+
+[resource]
+script = ExtResource("1_wd")
+id = &"carrot_sniper"
+display_name = "The Long Carrot"
+blurb = "A bolt-action carrot as long as a bunny is tall. Scope in, breathe out, bonk."
+model_path = "res://assets/weapons/carrot_sniper.glb"
+icon_color = Color(0.98, 0.55, 0.2, 1)
+fire_mode = 0
+ammo_type = 2
+magazine = 5
+rounds_per_minute = 40.0
+pellets = 1
+damage = 90.0
+headshot_multiplier = 2.5
+spread_hip_deg = 4.0
+spread_aim_deg = 0.0
+spread_move_deg = 3.0
+bloom_per_shot_deg = 0.0
+bloom_max_deg = 0.0
+projectile = 0
+projectile_speed = 320.0
+projectile_gravity = 0.25
+falloff_start = 150.0
+falloff_end = 300.0
+min_damage_scale = 0.9
+impulse = 12.0
+dismember_power = 0.7
+reload_time = 2.8
+equip_time = 0.6
+two_handed = true
+hold_distance = 0.2
+aim_fov_scale = 0.28
+recoil_pitch_deg = 5.0
+recoil_yaw_deg = 0.8
+camera_shake = 0.12
+move_speed_scale = 0.9
+sfx_fire = &"sniper_fire"
+scoped = true
+cycle_sfx = &"sniper_bolt"
+ai_preferred_range = 45.0
+ai_max_range = 120.0
+ai_burst = 1
+loot_weight = 0.5

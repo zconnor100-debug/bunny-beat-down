@@ -187,6 +187,7 @@ func _make_model() -> Node3D:
 	if m:
 		if spec.get("type") == "weapon":
 			m.rotation = Vector3(0, 0, PI / 2.2)
+			m.scale = Vector3.ONE * CritterVisual.WEAPON_SCALE * 1.2   # same size as in the paws
 		return m
 	# Fallback only — coloured box until the prop model exists.
 	var mi := MeshInstance3D.new()

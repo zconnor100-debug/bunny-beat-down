@@ -101,5 +101,6 @@ func add_clovers(n: int) -> int:
 static func weapon_score(w: WeaponInstance) -> float:
 	if w == null:
 		return 0.0
-	var base := {&"carrot_pistol": 1.0, &"carrot_shotgun": 2.2, &"carrot_lmg": 2.6, &"carrot_rocket_launcher": 2.4}
+	var base := {&"carrot_pistol": 1.0, &"carrot_smg": 2.0, &"carrot_shotgun": 2.2, &"carrot_rifle": 2.7,
+		&"carrot_lmg": 2.6, &"carrot_sniper": 2.3, &"carrot_rocket_launcher": 2.4}
 	return base.get(w.data.id, 1.5) * w.damage_scale()

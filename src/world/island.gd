@@ -9,7 +9,7 @@ signal progress(fraction: float, label: String)
 
 const TERRAIN_SHADER := preload("res://src/world/shaders/terrain.gdshader")
 const WATER_SHADER := preload("res://src/world/shaders/water.gdshader")
-const NAV_TILES := 4
+const NAV_TILES := 6
 
 ## Points of interest: name, radius, what to build there.
 const POI_KINDS := [
@@ -21,6 +21,9 @@ const POI_KINDS := [
 	{"name": "Boulder Bluff", "kit": "boulders", "radius": 28.0},
 	{"name": "Log Jam", "kit": "logs", "radius": 26.0},
 	{"name": "Duck Pond", "kit": "pond", "radius": 26.0},
+	{"name": "Cottage Hollow", "kit": "cottages", "radius": 30.0},
+	{"name": "Stump Village", "kit": "stumps", "radius": 28.0},
+	{"name": "Treasure Grove", "kit": "treasure", "radius": 22.0},
 ]
 
 var seed_value := 1
@@ -208,6 +211,29 @@ func _build_pois() -> void:
 				_put("log_hollow", p.center, rng.randf() * TAU, 1.0)
 				for id in ["log_dead_big", "log_mossy", "log_old_mossy", "log_fallen_a", "log_birch_rotten"]:
 					_put(id, p.center + Vector2(rng.randf_range(-14, 14), rng.randf_range(-14, 14)), rng.randf() * TAU, rng.randf_range(0.9, 1.2))
+			"cottages":
+				# a little lane of critter cottages facing a shared green
+				for i in 4:
+					var a := TAU * i / 4.0 + rng.randf_range(-0.3, 0.3)
+					var at: Vector2 = p.center + Vector2(cos(a), sin(a)) * rng.randf_range(13.0, 18.0)
+					_put_entry(scatter.pick("cottage", rng), at, -a - PI / 2.0, 1.0)
+				for i in 4:
+					var a2 := rng.randf() * TAU
+					_put_entry(scatter.pick("cover", rng), p.center + Vector2(cos(a2), sin(a2)) * rng.randf_range(5.0, 10.0), rng.randf() * TAU, 1.0)
+				_put("fence_picket", p.center + Vector2(0, 22), 0.0, 1.0)
+			"stumps":
+				for i in 9:
+					var a3 := rng.randf() * TAU
+					var at3: Vector2 = p.center + Vector2(cos(a3), sin(a3)) * rng.randf_range(4.0, 20.0)
+					_put_entry(scatter.pick("stump", rng), at3, rng.randf() * TAU, rng.randf_range(0.9, 1.3))
+				_put_entry(scatter.pick("cottage", rng), p.center, rng.randf() * TAU, 1.0)
+			"treasure":
+				var n2 := 10
+				for i in n2:
+					var a4 := TAU * i / n2
+					_put_entry(scatter.pick("mushroom", rng), p.center + Vector2(cos(a4), sin(a4)) * 12.0, rng.randf() * TAU, rng.randf_range(1.0, 1.5))
+				for i in 3:
+					_put_entry(scatter.pick("rock", rng), p.center + Vector2(rng.randf_range(-9, 9), rng.randf_range(-9, 9)), rng.randf() * TAU, 0.8)
 			"pond":
 				_add_pond_water(c3, p)
 				_put("rubber_duck", p.center + Vector2(3, 2), rng.randf() * TAU, 1.0, true)
@@ -274,9 +300,9 @@ func _scatter_forest() -> void:
 			_put_entry(e, p, rng.randf() * TAU, s)
 		z += spacing
 	# rocks, logs, stumps and mushrooms (mushrooms like to grow near trees)
-	for spec in [["rock", 150], ["log", 45], ["stump", 35], ["mushroom", 110], ["prop", 90]]:
+	for spec in [["rock", 150], ["log", 45], ["stump", 70], ["mushroom", 110], ["prop", 90], ["cover", 60], ["cottage", 10]]:
 		var cat: String = spec[0]
-		for i in spec[1]:
+		for i in int(spec[1] * terrain.area_scale):
 			var p := _random_land(2.0)
 			if not _solid_ok(p, 1.5):
 				continue
@@ -458,9 +484,38 @@ func _plan_loot() -> void:
 		for i in range(2, poly.size() - 2, 4):
 			var lp: Vector2 = poly[i] + Vector2(rng.randf_range(-3, 3), rng.randf_range(-3, 3))
 			loot_points.append({"pos": Vector3(lp.x, terrain.height_at(lp.x, lp.y), lp.y), "crate": rng.randf() < 0.15, "poi": "", "yaw": rng.randf() * TAU})
-	for i in 40:
+	for i in int(40 * terrain.area_scale):
 		var lp := _random_land(2.0)
 		loot_points.append({"pos": Vector3(lp.x, terrain.height_at(lp.x, lp.y), lp.y), "crate": false, "poi": ""})
+	_plan_treasure()
+
+
+## Treasure chests: one golden chest in Treasure Grove, a chance of a chest at
+## each landmark, and more tucked into the woods (beside trees and rocks, so
+## whoever is unlocking has a little cover — and a little blind spot).
+func _plan_treasure() -> void:
+	for p in pois:
+		var golden: bool = p.kit == "treasure"
+		if golden or rng.randf() < 0.45:
+			var a := rng.randf() * TAU
+			var at: Vector2 = p.center if golden else p.center + Vector2(cos(a), sin(a)) * p.radius * 0.6
+			loot_points.append({"pos": Vector3(at.x, terrain.height_at(at.x, at.y), at.y), "crate": false,
+				"chest": "golden" if golden else "treasure", "poi": p.name, "yaw": rng.randf() * TAU})
+	var hidden := int(10 * terrain.area_scale)
+	var placed := 0
+	var tries := 0
+	while placed < hidden and tries < hidden * 30:
+		tries += 1
+		if scatter.obstacles.is_empty():
+			break
+		var o: Array = scatter.obstacles[rng.randi() % scatter.obstacles.size()]
+		var a := rng.randf() * TAU
+		var at: Vector2 = o[0] + Vector2(cos(a), sin(a)) * (float(o[1]) + 1.4)
+		if terrain.height_at(at.x, at.y) < 2.0 or terrain.normal_at(at.x, at.y).y < 0.85 or scatter.blocked(at, 0.7):
+			continue
+		loot_points.append({"pos": Vector3(at.x, terrain.height_at(at.x, at.y), at.y), "crate": false,
+			"chest": "golden" if rng.randf() < 0.08 else "treasure", "poi": "", "yaw": a + PI})
+		placed += 1
 
 
 ## A random reachable spot on land (for AI wandering and landing targets).

@@ -2,21 +2,35 @@ class_name LootCrate
 extends StaticBody3D
 ## A garden crate. Opening it pops out a weapon (better odds than floor loot),
 ## carrots for it, and sometimes a clover or armor.
+##
+## Containers with an `open_time` (treasure chests) must be *channelled*: the
+## opener holds interact and stays put for that long, exposed, while the lid
+## creaks open. Letting go, walking off or firing resets the lock.
 
 const MODEL := "res://assets/props/loot_crate.glb"
+const CHANNEL_RANGE := 2.6
+const CHANNEL_MAX_SPEED := 2.0
 
 var opened := false
 var model_path := MODEL
 var weights: Array = Rarity.CRATE_WEIGHTS
 var supply := false         ## landed supply drop: hide the chute, extra loot
+var open_time := 0.0        ## seconds to unlock (0 = instant)
+var extra_weapons := 0      ## additional guns beyond the first
+var display_name := "garden crate"
 var rng := RandomNumberGenerator.new()
+var progress := 0.0         ## 0..1 while being unlocked
 var _lid: Node3D
+var _last_channel_frame := -10
+var _channeler: Node = null
 
 
 func _ready() -> void:
 	add_to_group(&"crates")
 	if supply:
 		add_to_group(&"supply_crates")
+	if open_time > 0.0:
+		add_to_group(&"treasure")
 	collision_layer = Layers.WORLD
 	set_meta(&"surface", &"wood")
 	var model := ModelUtil.instantiate(model_path)
@@ -50,25 +64,73 @@ func _ready() -> void:
 	add_child(cs)
 
 
+## Called every physics tick while `by` holds interact on this container.
+## Returns true on the tick it opens. Instant containers open immediately.
+func channel(by: Critter, delta: float) -> bool:
+	if opened:
+		return false
+	if open_time <= 0.0:
+		open(by)
+		return true
+	var flat_v := Vector2(by.velocity.x, by.velocity.z).length()
+	if by.global_position.distance_to(global_position) > CHANNEL_RANGE * maxf(by.visual.rig.world_scale, 1.0) \
+			or flat_v > CHANNEL_MAX_SPEED or by.want_fire or not by.alive:
+		return false
+	if _channeler != by:
+		_channeler = by
+		progress = 0.0
+		Audio.play_at(&"reload_start", global_position, -2.0, 0.0)
+	_last_channel_frame = Engine.get_physics_frames()
+	progress = minf(1.0, progress + delta / open_time)
+	if _lid:
+		# the lid strains against the lock as the critter works it
+		_lid.rotation.x = -0.12 * progress + sin(Time.get_ticks_msec() * 0.03) * 0.02 * progress
+	if progress >= 1.0:
+		open(by)
+		return true
+	return false
+
+
+## Who is currently unlocking this (null if nobody this tick).
+func channeler() -> Node:
+	return _channeler if Engine.get_physics_frames() - _last_channel_frame <= 1 else null
+
+
+func _physics_process(delta: float) -> void:
+	if open_time <= 0.0 or opened or progress <= 0.0:
+		return
+	if Engine.get_physics_frames() - _last_channel_frame > 1:
+		# let go: the lock snaps shut again
+		progress = maxf(0.0, progress - delta * 3.0)
+		_channeler = null
+		if _lid:
+			_lid.rotation.x = -0.12 * progress
+
+
 func open(by: Node) -> void:
 	if opened:
 		return
 	opened = true
+	progress = 1.0
 	remove_from_group(&"supply_crates")
-	Audio.play_at(&"crate_open", global_position)
+	remove_from_group(&"treasure")
+	Audio.play_at(&"crate_open", global_position, 3.0 if open_time > 0.0 else 0.0)
 	if _lid:
 		var tw := create_tween()
 		tw.tween_property(_lid, "rotation:x", -1.9, 0.35).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	if open_time > 0.0:
+		FX.muzzle(global_position + Vector3.UP * 0.6, Vector3.UP, true)   # a puff of golden sparkle
 	var parent := get_parent()
 	var up := global_transform.basis.y
 	var tier := Rarity.roll(weights, rng)
 	var w := WeaponInstance.new(WeaponDB.random_weapon(rng), tier)
 	var specs := [Pickup.weapon_spec(w), Pickup.ammo_spec(w.data.ammo_type, Inventory.AMMO_PICKUP[w.data.ammo_type])]
-	if rng.randf() < 0.5:
+	if rng.randf() < 0.5 or open_time > 0.0:
 		specs.append(Pickup.clover_spec(rng.randi_range(1, 2)))
-	if rng.randf() < 0.35 or supply:
+	if rng.randf() < 0.35 or supply or open_time > 0.0:
 		specs.append(Pickup.armor_spec(50.0))
-	if supply:
+	var more := extra_weapons + (1 if supply else 0)
+	for i in more:
 		var w2 := WeaponInstance.new(WeaponDB.random_weapon(rng), Rarity.roll(weights, rng))
 		specs.append(Pickup.weapon_spec(w2))
 		specs.append(Pickup.ammo_spec(w2.data.ammo_type, Inventory.AMMO_PICKUP[w2.data.ammo_type] * 2))

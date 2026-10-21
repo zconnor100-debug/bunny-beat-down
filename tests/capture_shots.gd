@@ -101,6 +101,28 @@ func _run() -> void:
 		rig.pitch = 0.25
 		await _wait(0.5)
 		await _snap("11_vista")
+	if which in ["scope"]:
+		change_scene_to_file("res://scenes/game.tscn")
+		var gs: Node = null
+		while gs == null or gs.match_manager == null:
+			await process_frame
+			gs = current_scene
+		await _wait(1.0)
+		var ms = gs.match_manager
+		ms.player_jump()
+		var ps = ms.player
+		var t2 := Time.get_ticks_msec()
+		while ps.state != 3 and Time.get_ticks_msec() - t2 < 40000:
+			ps.want_jump = ps.state == 1
+			await process_frame
+		ps.give_weapon(load("res://src/weapons/weapon_instance.gd").new(load("res://data/weapons/carrot_sniper.tres"), 3))
+		gs.rig.pitch = 0.02
+		await _wait(1.2)
+		await _snap("16_sniper_hip")
+		Input.action_press(&"aim")
+		await _wait(0.8)
+		await _snap("17_sniper_scope")
+		Input.action_release(&"aim")
 	if which in ["ui"]:
 		change_scene_to_file("res://scenes/main.tscn")
 		await _wait(3.0)

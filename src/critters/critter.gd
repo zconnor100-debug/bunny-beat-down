@@ -66,8 +66,13 @@ var swimming := false
 var _water_level := -INF
 
 
+## Menu/picker previews: not part of any match (no group, no events, no AI sight).
+var preview := false
+
+
 func _ready() -> void:
-	add_to_group(&"critters")
+	if not preview:
+		add_to_group(&"critters")
 	collision_layer = Layers.CRITTERS
 	collision_mask = Layers.WORLD | Layers.CRITTERS
 	floor_max_angle = deg_to_rad(52.0)
@@ -83,7 +88,7 @@ func _ready() -> void:
 	add_child(visual)
 	if not visual.build(self, def):
 		push_error("critter %s failed to build its visual" % display_name)
-	var h := visual.rig.head_top if visual.rig else 1.0
+	var h := visual.rig.world_head_top if visual.rig else 1.0
 	cap.radius = clampf(h * 0.3, 0.22, 0.38)
 	cap.height = maxf(h * 0.98, cap.radius * 2.0 + 0.05)
 	shape.shape = cap
@@ -93,17 +98,18 @@ func _ready() -> void:
 	visual.physics_tick(global_transform, true)
 	visual.poser.footstep.connect(_on_footstep)
 	inventory.changed.connect(_on_inventory_changed)
-	Events.critter_spawned.emit(self)
+	if not preview:
+		Events.critter_spawned.emit(self)
 
 
 # ---- queries used by AI / HUD / weapons ---------------------------------------------
 
 func get_eye_position() -> Vector3:
-	return global_position + Vector3.UP * (visual.rig.eye_height if visual and visual.rig else 0.85)
+	return global_position + Vector3.UP * (visual.rig.world_eye_height if visual and visual.rig else 0.85)
 
 
 func get_chest_position() -> Vector3:
-	return global_position + Vector3.UP * (visual.rig.head_top * 0.6 if visual and visual.rig else 0.6)
+	return global_position + Vector3.UP * (visual.rig.world_head_top * 0.6 if visual and visual.rig else 0.6)
 
 
 func current_weapon() -> WeaponInstance:
@@ -191,6 +197,8 @@ func _ground_move(delta: float) -> void:
 		if want_jump:
 			velocity.y = sqrt(2.0 * _gravity * def.jump_height)
 			Audio.play_at(&"hop" if def.gait == CritterDef.Gait.HOP else &"jump", global_position, -6.0)
+			# every species has its own move in the air (bunnies flip!)
+			visual.start_jump_trick(global_basis.inverse() * velocity, 2.0 * velocity.y / _gravity)
 	else:
 		velocity.y -= _gravity * delta
 	want_jump = false
@@ -198,6 +206,8 @@ func _ground_move(delta: float) -> void:
 	move_and_slide()
 	_slide_off_slippery()
 	var landed := is_on_floor() and not _was_on_floor
+	if landed:
+		_on_touchdown()
 	if landed and _fall_speed > 4.0:
 		visual.poser.on_landed(_fall_speed)
 		Audio.play_at(&"land", global_position, -8.0)
@@ -212,7 +222,7 @@ func _update_swimming() -> void:
 	var was := swimming
 	var level := Island.current.water_level_at(global_position) if Island.current else -INF
 	_water_level = level
-	var h := visual.rig.head_top if visual and visual.rig else 1.0
+	var h := visual.rig.world_head_top if visual and visual.rig else 1.0
 	swimming = level - global_position.y > h * 0.55
 	if swimming and not was:
 		FX.impact(Vector3(global_position.x, level, global_position.z), Vector3.UP, &"water")
@@ -220,7 +230,7 @@ func _update_swimming() -> void:
 
 
 func _swim_move(delta: float) -> void:
-	var h := visual.rig.head_top if visual and visual.rig else 1.0
+	var h := visual.rig.world_head_top if visual and visual.rig else 1.0
 	var basis := Basis(Vector3.UP, look_yaw)
 	var wish := basis * Vector3(move_input.x, 0, -move_input.y)
 	if wish.length() > 1.0:
@@ -235,6 +245,19 @@ func _swim_move(delta: float) -> void:
 	want_jump = false
 	move_and_slide()
 	_was_on_floor = false
+
+
+func _on_touchdown() -> void:
+	var t := visual.trick
+	if t == null or not t.active:
+		return
+	visual.trick_landed()
+	if def.jump_style == CritterDef.JumpStyle.TAIL_SLAP:
+		# beavers finish with a tail slap: a whap and a ring of dust
+		Audio.play_at(&"body_fall", global_position, 0.0, 0.1)
+		for i in 6:
+			var a := TAU * i / 6.0
+			FX.impact(global_position + Vector3(cos(a), 0.05, sin(a)) * 0.6, Vector3(cos(a), 0.6, sin(a)), &"dirt")
 
 
 func _air_drop_move(delta: float) -> void:
@@ -367,7 +390,8 @@ func _weapon_tick(delta: float) -> void:
 		_reload_timer -= delta
 		if _reload_timer < 0.0:
 			_finish_reload()
-	var can_shoot := state == State.GROUND and not swimming and _equip_timer <= 0.0 and _reload_timer < 0.0
+	var can_shoot := state == State.GROUND and not swimming and _equip_timer <= 0.0 and _reload_timer < 0.0 \
+		and not (visual.trick and visual.trick.blocks_fire())
 	if want_fire and can_shoot and _fire_cooldown <= 0.0:
 		var semi_ok := w.data.fire_mode == WeaponData.FireMode.AUTO or not _trigger_held
 		if semi_ok:
@@ -407,6 +431,8 @@ func _fire(w: WeaponInstance) -> void:
 	else:
 		Audio.play_at(w.data.sfx_fire, origin, 0.0, 0.06)
 	Events.shot_fired.emit(self, origin, w.data.id)
+	if w.data.cycle_sfx != &"":
+		Despawner.after(self, 0.45, func(n: Node): Audio.play_at(w.data.cycle_sfx, (n as Node3D).global_position, -4.0))
 	if w.ammo_in_mag <= 0 and inventory.ammo[w.data.ammo_type] > 0:
 		start_reload.call_deferred()
 

@@ -50,15 +50,16 @@ static func spawn_limb_gib(visual: CritterVisual, bone_idx: int, impulse: Vector
 	var bone_world: Transform3D = src.global_transform * (globals[bone_idx] as Transform3D)
 	var seg_len := 0.0
 	var radius := 0.05
+	var k := visual.rig.size   # rig data is in model units; the gib body is not scaled
 	var cs := CollisionShape3D.new()
 	if role == &"head":
 		var sph := SphereShape3D.new()
 		var seg: Dictionary = visual.rig.segments[&"head"]
 		radius = seg["radius"]
-		sph.radius = radius
+		sph.radius = radius * k
 		cs.shape = sph
 		var mid: Vector3 = ((seg["start"] as Vector3) + (seg["end"] as Vector3)) * 0.5
-		cs.position = (visual.rig.rest[&"head"] as Transform3D).affine_inverse() * mid
+		cs.position = (visual.rig.rest[&"head"] as Transform3D).affine_inverse() * mid * k
 		body.mass = 1.2
 	else:
 		# capsule spanning the limb (upper + lower segments when the cut is high)
@@ -69,6 +70,8 @@ static func spawn_limb_gib(visual: CritterVisual, bone_idx: int, impulse: Vector
 				var seg: Dictionary = visual.rig.segments[r]
 				radius = maxf(radius, seg["radius"])
 				b = (visual.rig.rest[role] as Transform3D).affine_inverse() * (seg["end"] as Vector3)
+		b *= k
+		radius *= k
 		seg_len = a.distance_to(b)
 		var cap := CapsuleShape3D.new()
 		cap.radius = radius
@@ -116,7 +119,7 @@ static func make_gib_stump(gib: RigidBody3D, visual: CritterVisual, bone_idx: in
 	if Settings.gore == Settings.Gore.OFF:
 		return
 	var role := visual.rig.role_of_bone(bone_idx)
-	var radius: float = visual.rig.segments.get(role, {}).get("radius", 0.05)
+	var radius: float = visual.rig.segments.get(role, {}).get("radius", 0.05) * visual.rig.size
 	var holder := Node3D.new()
 	gib.add_child(holder)
 	# the gib's origin is the severed joint; the limb runs along local +Y

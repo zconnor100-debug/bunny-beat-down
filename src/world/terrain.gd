@@ -4,13 +4,17 @@ extends Node3D
 ## then builds chunked render meshes (for culling) and a single
 ## HeightMapShape3D for physics. Also answers height/normal queries.
 
-const SIZE := 512.0            ## metres covered by the heightfield
-const RES := 513               ## vertices per side (1 m spacing)
-const CHUNKS := 8              ## render chunks per side
+const SIZE := 768.0            ## metres covered by the heightfield
+const RES := 769               ## vertices per side (1 m spacing)
+const CHUNKS := 12             ## render chunks per side (64 m each)
 const WATER_LEVEL := 0.0
 const SEA_FLOOR := -7.0
 
-var island_radius := 215.0
+var island_radius := 330.0
+## Area relative to the original 215 m island; content counts scale with it.
+var area_scale: float:
+	get:
+		return pow(island_radius / 215.0, 2.0)
 var heights := PackedFloat32Array()
 var control: Image             ## R grass, G dirt path, B rock, A moss
 var rng := RandomNumberGenerator.new()

@@ -107,3 +107,30 @@ func _count_gibs() -> int:
 		if node.has_meta(&"gib"):
 			n += 1
 	return n
+
+
+func test_scaled_critter_hitboxes_and_ragdoll() -> void:
+	# the frog is scaled ×1.4: hit capsules and ragdoll bodies inherit that scale
+	var c := spawn_critter("res://data/critters/frog.tres", Vector3(0, 0.1, 0))
+	await wait_physics(4)
+	check_near(c.visual.rig.world_head_top, 0.85 * 1.4, 0.01, "frog is ~1.19 m tall")
+	var space := get_world_3d().direct_space_state
+	# a ray at the top of the (scaled) head must hit, and one well above must miss
+	for probe in [[c.visual.rig.world_head_top * 0.92, true], [c.visual.rig.world_head_top * 1.5, false]]:
+		var y: float = probe[0]
+		var q := PhysicsRayQueryParameters3D.create(Vector3(0, y, -4), Vector3(0, y, 4), Layers.HITBOXES)
+		q.collide_with_areas = true
+		var hit := space.intersect_ray(q)
+		check(hit.is_empty() != probe[1], "ray at y=%.2f %s" % [y, "hits" if probe[1] else "misses"])
+	# hit capsules are wider than the body for small critters
+	var area: Area3D = c.visual.hitboxes[&"chest"]
+	var shape_node := area.get_child(0) as CollisionShape3D
+	check(shape_node.global_basis.get_scale().x > 1.35, "hit capsule inherits the ×1.4 body scale (%s)" % shape_node.global_basis.get_scale())
+	var info := DamageInfo.make(500.0, DamageInfo.Kind.BULLET, null)
+	info.direction = Vector3(1, 0, 0)
+	info.impulse = 8.0
+	info.bone_role = &"chest"
+	c.take_damage(info)
+	await wait_physics(120)
+	var head := c.visual.bone_world_position(&"head")
+	check(head.y > -0.2 and head.y < 0.6, "scaled ragdoll settles on the ground (head y=%.2f)" % head.y)

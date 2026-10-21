@@ -2,7 +2,7 @@ extends Node3D
 ## Stage for tests/capture_roster.gd (loaded at runtime so autoloads exist).
 
 const IDS := ["bun", "bandit_bunny", "squirrel", "fox", "raccoon", "frog", "beaver", "hamster"]
-const GUNS := [&"carrot_pistol", &"carrot_shotgun", &"carrot_lmg", &"carrot_rocket_launcher"]
+const GUNS := [&"carrot_pistol", &"carrot_smg", &"carrot_shotgun", &"carrot_rifle", &"carrot_lmg", &"carrot_sniper", &"carrot_rocket_launcher", &"carrot_rifle"]
 
 var out_dir := "user://roster"
 var world: Node3D

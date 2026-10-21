@@ -49,9 +49,11 @@ enum ProjectileKind { BOLT, PELLET, ROCKET }
 @export var recoil_yaw_deg := 0.4
 @export var camera_shake := 0.08
 @export var move_speed_scale := 1.0
+@export var scoped := false             ## aiming shows a scope overlay (sniper)
 
 @export_group("Audio")
 @export var sfx_fire: StringName = &"pistol_fire"
+@export var cycle_sfx: StringName = &""  ## played after each shot (bolt action)
 
 @export_group("AI")
 @export var ai_preferred_range := 18.0

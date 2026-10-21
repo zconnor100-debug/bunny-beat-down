@@ -34,7 +34,22 @@ var rest: Dictionary = {}          # role -> Transform3D (skeleton space)
 var segments: Dictionary = {}      # role -> {"start": Vector3, "end": Vector3, "radius": float}
 var arm_length := {&"l": 0.3, &"r": 0.3}
 var leg_length := {&"l": 0.4, &"r": 0.4}
-var scale := 1.0                   # head_top / 0.95 — size relative to the hero
+var scale := 1.0                   # head_top / 0.95 — model size relative to the hero
+## CritterDef.body_scale: the model node is scaled by this, so skeleton-space
+## values (rest, segments, radii, head_top...) are model units; world = model * size.
+var size := 1.0
+
+var world_head_top: float:
+	get:
+		return head_top * size
+
+var world_eye_height: float:
+	get:
+		return eye_height * size
+
+var world_scale: float:
+	get:
+		return scale * size
 
 
 static func read_json(path: String) -> Dictionary:
@@ -44,8 +59,9 @@ static func read_json(path: String) -> Dictionary:
 	return parsed if parsed is Dictionary else {}
 
 
-func bind(json: Dictionary, skel: Skeleton3D) -> bool:
+func bind(json: Dictionary, skel: Skeleton3D, size_ := 1.0) -> bool:
 	data = json
+	size = size_
 	skeleton = skel
 	id = str(json.get("id", "critter"))
 	head_top = float(json.get("head_top", 1.0))
