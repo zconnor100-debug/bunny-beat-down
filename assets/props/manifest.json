@@ -1,0 +1,685 @@
+[
+  {
+    "id": "carrot_pistol",
+    "file": "assets/weapons/carrot_pistol.glb",
+    "kind": "weapon",
+    "use": "Sidearm: six-shot carrot revolver",
+    "size_m": [
+      0.064,
+      0.197,
+      0.284
+    ],
+    "max_extent_m": 0.284,
+    "aabb_min": [
+      -0.0418,
+      -0.0651,
+      -0.249
+    ],
+    "aabb_max": [
+      0.0218,
+      0.1315,
+      0.0349
+    ],
+    "origin": "main (trigger) grip",
+    "orientation": "barrel along -Z, +Y up",
+    "tris": 6390,
+    "texture_px": 1024,
+    "markers": {
+      "Muzzle": [
+        0.0,
+        0.0745,
+        -0.2495
+      ],
+      "SupportGrip": [
+        -0.02,
+        -0.014,
+        -0.004
+      ],
+      "Sight": [
+        0.0,
+        0.094,
+        0.006
+      ],
+      "Eject": [
+        0.02,
+        0.062,
+        -0.052
+      ]
+    },
+    "nodes": {},
+    "notes": "Six-shot revolver; drum front shows the loaded baby carrots. Sight marker sits in the rear notch; front post on the brass ferrule is level with it."
+  },
+  {
+    "id": "carrot_shotgun",
+    "file": "assets/weapons/carrot_shotgun.glb",
+    "kind": "weapon",
+    "use": "Shotgun: side-by-side coach gun firing carrot_shell_pellet spreads",
+    "size_m": [
+      0.094,
+      0.189,
+      0.751
+    ],
+    "max_extent_m": 0.751,
+    "aabb_min": [
+      -0.0615,
+      -0.0927,
+      -0.515
+    ],
+    "aabb_max": [
+      0.0321,
+      0.096,
+      0.2363
+    ],
+    "origin": "main (trigger) grip",
+    "orientation": "barrel along -Z, +Y up",
+    "tris": 6630,
+    "texture_px": 1024,
+    "markers": {
+      "Muzzle": [
+        0.0,
+        0.016,
+        -0.515
+      ],
+      "SupportGrip": [
+        0.0,
+        -0.015,
+        -0.28
+      ],
+      "Sight": [
+        0.0,
+        0.0353,
+        -0.128
+      ],
+      "Eject": [
+        0.0,
+        0.02,
+        -0.142
+      ]
+    },
+    "nodes": {},
+    "notes": "Twin barrels at x = +/-0.0145 m; Muzzle is between them (alternate L/R in code if desired). Sight sits on the rib line, level with the brass bead."
+  },
+  {
+    "id": "carrot_lmg",
+    "file": "assets/weapons/carrot_lmg.glb",
+    "kind": "weapon",
+    "use": "Light machine gun: pan-fed baby-carrot bolts",
+    "size_m": [
+      0.172,
+      0.232,
+      0.905
+    ],
+    "max_extent_m": 0.905,
+    "aabb_min": [
+      -0.086,
+      -0.0459,
+      -0.6468
+    ],
+    "aabb_max": [
+      0.086,
+      0.186,
+      0.258
+    ],
+    "origin": "main (trigger) grip",
+    "orientation": "barrel along -Z, +Y up",
+    "tris": 7980,
+    "texture_px": 1024,
+    "markers": {
+      "Muzzle": [
+        0.0,
+        0.078,
+        -0.6468
+      ],
+      "SupportGrip": [
+        0.0,
+        0.008,
+        -0.287
+      ],
+      "Sight": [
+        0.0,
+        0.1635,
+        0.056
+      ],
+      "Eject": [
+        0.029,
+        0.078,
+        -0.065
+      ]
+    },
+    "nodes": {},
+    "notes": "Pan magazine is part of the main mesh (13 baby carrots). Sight line runs over the pan from the rear tower to the brass front post."
+  },
+  {
+    "id": "carrot_rocket_launcher",
+    "file": "assets/weapons/carrot_rocket_launcher.glb",
+    "kind": "weapon",
+    "use": "Rocket launcher firing carrot_rocket",
+    "size_m": [
+      0.158,
+      0.306,
+      1.016
+    ],
+    "max_extent_m": 1.016,
+    "aabb_min": [
+      -0.079,
+      -0.0499,
+      -0.675
+    ],
+    "aabb_max": [
+      0.079,
+      0.2565,
+      0.341
+    ],
+    "origin": "main (trigger) grip",
+    "orientation": "barrel along -Z, +Y up",
+    "tris": 7160,
+    "texture_px": 1024,
+    "markers": {
+      "Muzzle": [
+        0.0,
+        0.11,
+        -0.479
+      ],
+      "SupportGrip": [
+        0.0,
+        0.018,
+        -0.277
+      ],
+      "Sight": [
+        0.0,
+        0.208,
+        0.125
+      ],
+      "Eject": [
+        0.0,
+        0.11,
+        0.341
+      ]
+    },
+    "nodes": {
+      "Rocket": [
+        0.0,
+        0.11,
+        -0.45
+      ]
+    },
+    "notes": "Loaded rocket is the separate node `Rocket` (hide it after firing, show on reload). Eject marks the rear exhaust bell = backblast origin. Sight is the centre of the rear peep ring."
+  },
+  {
+    "id": "carrot_bolt",
+    "file": "assets/weapons/carrot_bolt.glb",
+    "kind": "projectile",
+    "use": "Projectile for carrot_pistol and carrot_lmg",
+    "size_m": [
+      0.032,
+      0.032,
+      0.167
+    ],
+    "max_extent_m": 0.167,
+    "aabb_min": [
+      -0.0105,
+      -0.0156,
+      -0.07
+    ],
+    "aabb_max": [
+      0.0217,
+      0.0168,
+      0.0966
+    ],
+    "origin": "centre of the projectile",
+    "orientation": "tip / flight direction -Z",
+    "tris": 434,
+    "texture_px": 512,
+    "markers": {
+      "Trail": [
+        0.0,
+        0.0,
+        0.063
+      ]
+    },
+    "nodes": {},
+    "notes": "Origin at the bolt centre, tip toward -Z; three leaf sprigs at the back."
+  },
+  {
+    "id": "carrot_shell_pellet",
+    "file": "assets/weapons/carrot_shell_pellet.glb",
+    "kind": "projectile",
+    "use": "Shotgun pellet (spawn 6-8 per shot)",
+    "size_m": [
+      0.045,
+      0.045,
+      0.024
+    ],
+    "max_extent_m": 0.045,
+    "aabb_min": [
+      -0.0228,
+      -0.0227,
+      -0.0134
+    ],
+    "aabb_max": [
+      0.0226,
+      0.0228,
+      0.0104
+    ],
+    "origin": "centre of the projectile",
+    "orientation": "tip / flight direction -Z",
+    "tris": 212,
+    "texture_px": 512,
+    "markers": {},
+    "nodes": {},
+    "notes": "Origin at the chunk centre. Spawn several per shotgun blast with random spin."
+  },
+  {
+    "id": "carrot_rocket",
+    "file": "assets/weapons/carrot_rocket.glb",
+    "kind": "projectile",
+    "use": "Projectile for carrot_rocket_launcher",
+    "size_m": [
+      0.104,
+      0.104,
+      0.514
+    ],
+    "max_extent_m": 0.514,
+    "aabb_min": [
+      -0.0518,
+      -0.0518,
+      -0.225
+    ],
+    "aabb_max": [
+      0.0518,
+      0.0518,
+      0.2886
+    ],
+    "origin": "centre of the projectile",
+    "orientation": "tip / flight direction -Z",
+    "tris": 1588,
+    "texture_px": 512,
+    "markers": {
+      "Trail": [
+        0.0,
+        0.0,
+        0.2035
+      ]
+    },
+    "nodes": {},
+    "notes": "Origin at the rocket centre, tip toward -Z. `Trail` marks the rear for the exhaust/leaf-trail particles."
+  },
+  {
+    "id": "acorn_helmet",
+    "file": "assets/props/acorn_helmet.glb",
+    "kind": "prop",
+    "use": "Signature acorn helmet worn by the hero bunny (attach to the head at bun model-space (0, 0.875, -0.010))",
+    "size_m": [
+      0.327,
+      0.208,
+      0.317
+    ],
+    "max_extent_m": 0.327,
+    "aabb_min": [
+      -0.1636,
+      -0.0452,
+      -0.1571
+    ],
+    "aabb_max": [
+      0.1637,
+      0.1629,
+      0.16
+    ],
+    "origin": "helmet attach point: put it at bun model space (0, 0.875, -0.010), upright, scale 1",
+    "orientation": "opening faces -Y, front faces +Z (bowl authored tipped back 15 deg on the skull)",
+    "tris": 7482,
+    "texture_px": 1024,
+    "markers": {
+      "EarHole_L": [
+        0.075,
+        0.1243,
+        -0.0375
+      ],
+      "EarHole_R": [
+        -0.075,
+        0.1243,
+        -0.0375
+      ]
+    },
+    "nodes": {},
+    "notes": "Fitted to bun: attach with the origin at bun model space (0, 0.875, -0.010), upright, scale 1 (opening -Y, front +Z). Inner surface = bun's cranium sphere (centre 2.6 cm forward of the origin) + 1.5 cm clearance, inner diameter 0.245 m at the rim; bowl tipped back 15 deg so the front brim sits at ~0.92 m (eyes 0.855) with the forehead tuft peeking out under it. EarHole_L/R = slot centres where the DEF_Ear_1->2 lines leave the cupule; slots 0.066 x 0.050 m aligned with the ears.",
+    "fit_check_on_bun": {
+      "samples_skull": 60608,
+      "samples_ear": 44640,
+      "skull_inside_helmet": 0,
+      "skull_max_penetration_m": 0.0,
+      "ear_inside_helmet": 0,
+      "ear_max_penetration_m": 0.0,
+      "skull_min_gap_m_above_brim": 0.0075
+    }
+  },
+  {
+    "id": "pickup_health",
+    "file": "assets/props/pickup_health.glb",
+    "kind": "pickup",
+    "use": "Health pickup: dandelion-tea flask with a four-leaf clover",
+    "size_m": [
+      0.196,
+      0.27,
+      0.226
+    ],
+    "max_extent_m": 0.27,
+    "aabb_min": [
+      -0.098,
+      0.0,
+      -0.098
+    ],
+    "aabb_max": [
+      0.098,
+      0.27,
+      0.1284
+    ],
+    "origin": "bottom centre (rests on the ground)",
+    "orientation": "front faces +Z",
+    "tris": 1880,
+    "texture_px": 1024,
+    "markers": {},
+    "nodes": {},
+    "notes": "Origin at the bottom centre. Readable pair: amber tea flask + green clover."
+  },
+  {
+    "id": "pickup_armor",
+    "file": "assets/props/pickup_armor.glb",
+    "kind": "pickup",
+    "use": "Armour pickup: pine-bark breastplate with an acorn-shell boss",
+    "size_m": [
+      0.447,
+      0.416,
+      0.241
+    ],
+    "max_extent_m": 0.447,
+    "aabb_min": [
+      -0.2236,
+      0.0004,
+      -0.0056
+    ],
+    "aabb_max": [
+      0.2236,
+      0.4161,
+      0.2358
+    ],
+    "origin": "bottom centre (rests on the ground)",
+    "orientation": "front faces +Z",
+    "tris": 2820,
+    "texture_px": 1024,
+    "markers": {},
+    "nodes": {},
+    "notes": "Origin at the bottom centre; the plate faces +Z (front)."
+  },
+  {
+    "id": "ammo_light",
+    "file": "assets/props/ammo_light.glb",
+    "kind": "pickup",
+    "use": "Light ammo (pistol / LMG bolts): bundle of carrots tied with twine",
+    "size_m": [
+      0.265,
+      0.129,
+      0.108
+    ],
+    "max_extent_m": 0.265,
+    "aabb_min": [
+      -0.1498,
+      -0.0039,
+      -0.0539
+    ],
+    "aabb_max": [
+      0.115,
+      0.1253,
+      0.0539
+    ],
+    "origin": "bottom centre (rests on the ground)",
+    "orientation": "front faces +Z",
+    "tris": 2390,
+    "texture_px": 512,
+    "markers": {},
+    "nodes": {},
+    "notes": "Origin at the bottom centre, bundle lies along X."
+  },
+  {
+    "id": "ammo_shells",
+    "file": "assets/props/ammo_shells.glb",
+    "kind": "pickup",
+    "use": "Shotgun ammo: burlap pouch of carrot chunks",
+    "size_m": [
+      0.2,
+      0.238,
+      0.253
+    ],
+    "max_extent_m": 0.253,
+    "aabb_min": [
+      -0.0983,
+      0.0002,
+      -0.1004
+    ],
+    "aabb_max": [
+      0.102,
+      0.238,
+      0.1526
+    ],
+    "origin": "bottom centre (rests on the ground)",
+    "orientation": "front faces +Z",
+    "tris": 2872,
+    "texture_px": 512,
+    "markers": {},
+    "nodes": {},
+    "notes": "Origin at the bottom centre."
+  },
+  {
+    "id": "ammo_heavy",
+    "file": "assets/props/ammo_heavy.glb",
+    "kind": "pickup",
+    "use": "Heavy ammo (LMG): tin drum with a belt of strapped carrots",
+    "size_m": [
+      0.212,
+      0.233,
+      0.423
+    ],
+    "max_extent_m": 0.423,
+    "aabb_min": [
+      -0.1058,
+      -0.0,
+      -0.104
+    ],
+    "aabb_max": [
+      0.1058,
+      0.2328,
+      0.3195
+    ],
+    "origin": "bottom centre (rests on the ground)",
+    "orientation": "front faces +Z",
+    "tris": 3066,
+    "texture_px": 1024,
+    "markers": {},
+    "nodes": {},
+    "notes": "Origin at the bottom centre of the drum; the belt spills toward +Z (front)."
+  },
+  {
+    "id": "ammo_rocket",
+    "file": "assets/props/ammo_rocket.glb",
+    "kind": "pickup",
+    "use": "Rocket ammo: two rocket carrots on a pine cradle",
+    "size_m": [
+      0.438,
+      0.136,
+      0.21
+    ],
+    "max_extent_m": 0.438,
+    "aabb_min": [
+      -0.2463,
+      0.0,
+      -0.105
+    ],
+    "aabb_max": [
+      0.1912,
+      0.1364,
+      0.105
+    ],
+    "origin": "bottom centre (rests on the ground)",
+    "orientation": "front faces +Z",
+    "tris": 4220,
+    "texture_px": 512,
+    "markers": {},
+    "nodes": {},
+    "notes": "Origin at the bottom centre; rockets point along +X."
+  },
+  {
+    "id": "loot_crate",
+    "file": "assets/props/loot_crate.glb",
+    "kind": "prop",
+    "use": "Lootable garden crate with an opening Lid",
+    "size_m": [
+      0.837,
+      0.484,
+      0.548
+    ],
+    "max_extent_m": 0.837,
+    "aabb_min": [
+      -0.4183,
+      0.0,
+      -0.27
+    ],
+    "aabb_max": [
+      0.4187,
+      0.484,
+      0.278
+    ],
+    "origin": "bottom centre (rests on the ground)",
+    "orientation": "front faces +Z",
+    "tris": 6870,
+    "texture_px": 1024,
+    "markers": {},
+    "nodes": {
+      "Lid": [
+        0.0,
+        0.444,
+        -0.263
+      ]
+    },
+    "notes": "Origin at the bottom centre, front (stencilled carrot) faces +Z. `Lid` pivots on the back hinge line: rotate Lid.rotation.x towards -110 deg to open."
+  },
+  {
+    "id": "supply_drop",
+    "file": "assets/props/supply_drop.glb",
+    "kind": "prop",
+    "use": "Air-dropped supply crate under a dandelion-seed parachute (Chute)",
+    "size_m": [
+      2.362,
+      2.849,
+      2.412
+    ],
+    "max_extent_m": 2.849,
+    "aabb_min": [
+      -1.1629,
+      -0.0045,
+      -1.2045
+    ],
+    "aabb_max": [
+      1.1987,
+      2.8449,
+      1.2075
+    ],
+    "origin": "bottom centre (rests on the ground)",
+    "orientation": "front faces +Z",
+    "tris": 9490,
+    "texture_px": 1024,
+    "markers": {},
+    "nodes": {
+      "Lid": [
+        0.0,
+        0.444,
+        -0.263
+      ],
+      "Chute": [
+        0.0,
+        0.49,
+        -0.0
+      ]
+    },
+    "notes": "Crate + `Lid` (as loot_crate) under a dandelion-seed parachute `Chute` (pivot at the crate top; hide or detach it on landing). Pappus bristles use an alpha-scissor texture (second material)."
+  },
+  {
+    "id": "dandelion_glider",
+    "file": "assets/props/dandelion_glider.glb",
+    "kind": "prop",
+    "use": "Glider for the battle-royale drop: a giant dandelion seed held overhead",
+    "size_m": [
+      1.235,
+      0.975,
+      1.229
+    ],
+    "max_extent_m": 1.235,
+    "aabb_min": [
+      -0.6197,
+      -0.0849,
+      -0.6019
+    ],
+    "aabb_max": [
+      0.6155,
+      0.8903,
+      0.627
+    ],
+    "origin": "hand grip on the seed handle",
+    "orientation": "pappus overhead along +Y",
+    "tris": 1804,
+    "texture_px": 512,
+    "markers": {
+      "Hand_L": [
+        0.0,
+        0.035,
+        -0.0
+      ],
+      "Hand_R": [
+        0.0,
+        -0.035,
+        -0.0
+      ]
+    },
+    "nodes": {},
+    "notes": "Origin at the hand grip (centre of the twine wrap). Hand_L / Hand_R are IK targets above/below it. Pappus is ~1.2 m wide, centre 0.63 m above the grip."
+  },
+  {
+    "id": "dropship_balloon",
+    "file": "assets/props/dropship_balloon.glb",
+    "kind": "vehicle",
+    "use": "Battle-royale dropship: patchwork hot-air balloon with a picnic-basket gondola",
+    "size_m": [
+      12.61,
+      21.596,
+      12.61
+    ],
+    "max_extent_m": 21.596,
+    "aabb_min": [
+      -6.305,
+      -0.1895,
+      -6.305
+    ],
+    "aabb_max": [
+      6.305,
+      21.4067,
+      6.305
+    ],
+    "origin": "centre of the basket floor",
+    "orientation": "flies toward -Z",
+    "tris": 16046,
+    "texture_px": 2048,
+    "markers": {
+      "Burner": [
+        0.0,
+        3.4,
+        -0.0
+      ],
+      "Exit": [
+        0.0,
+        0.78,
+        -1.55
+      ]
+    },
+    "nodes": {},
+    "notes": "Origin at the basket floor centre; flies toward -Z. Basket interior ~3.76 x 2.76 m with 0.78 m walls (critters see over them). `Burner` marks the flame VFX point (3.4 m up), `Exit` the front rim where critters jump. One 2048 px atlas (basket parts get 2.6x texel density)."
+  }
+]

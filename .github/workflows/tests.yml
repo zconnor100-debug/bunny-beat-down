@@ -1,0 +1,32 @@
+name: tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  godot-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      GODOT_VERSION: 4.6.2
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Credits file is up to date
+        run: python3 tools/gen_credits.py --check
+
+      - name: Install Godot ${{ env.GODOT_VERSION }}
+        run: |
+          wget -q "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip"
+          unzip -q "Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip"
+          mv "Godot_v${GODOT_VERSION}-stable_linux.x86_64" godot
+
+      - name: Import assets
+        run: ./godot --headless --path . --import || true
+
+      - name: Compile every script
+        run: ./godot --headless --path . -s tests/check_scripts.gd
+
+      - name: Run tests (incl. a full headless bot match)
+        run: ./godot --headless --path . -s tests/run_tests.gd

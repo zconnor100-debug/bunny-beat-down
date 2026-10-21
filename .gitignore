@@ -1,0 +1,32 @@
+# Godot
+.godot/
+*.translation
+export_presets.cfg.bak
+/build/
+# tool caches / raw downloads
+tools/_cache/
+__pycache__/
+*.pyc
+*.blend1
+# logs
+*.log
+
+# Godot extracts textures embedded in .glb files on import (<model>_<image>.png/jpg).
+# They are regenerated on every import, so only the .glb sources are committed.
+assets/env/*/*.png
+assets/env/*/*.jpg
+assets/env/*/*.png.import
+assets/env/*/*.jpg.import
+!assets/env/preview_sheet.png
+assets/characters/*/*_*.png
+assets/characters/*/*_*.jpg
+assets/characters/*/*_*.png.import
+assets/characters/*/*_*.jpg.import
+assets/weapons/carrot_*_*.png
+assets/weapons/carrot_*_*.jpg
+assets/weapons/carrot_*_*.png.import
+assets/weapons/carrot_*_*.jpg.import
+assets/props/*_*_*.png
+assets/props/*_*_*.jpg
+assets/props/*_*_*.png.import
+assets/props/*_*_*.jpg.import

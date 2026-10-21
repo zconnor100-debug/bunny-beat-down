@@ -1,0 +1,55 @@
+{
+  "id": "squirrel",
+  "display_name": "Squirrel",
+  "species": "squirrel",
+  "head_top": 0.9,
+  "eye_height": 0.703,
+  "rest_pose": "T",
+  "bones": {
+    "hips": "pelvice",
+    "spine": "torso",
+    "chest": "torso_upper",
+    "neck": null,
+    "head": "head",
+    "jaw": null,
+    "l_upper_arm": "sholder_L",
+    "l_lower_arm": "biseps_L",
+    "l_hand": "hand_L",
+    "r_upper_arm": "sholder_R",
+    "r_lower_arm": "biseps_R",
+    "r_hand": "hand_R",
+    "l_upper_leg": "thai_L",
+    "l_lower_leg": "leg_L",
+    "l_foot": "foot_L",
+    "r_upper_leg": "thai_R",
+    "r_lower_leg": "leg_R",
+    "r_foot": "foot_R"
+  },
+  "chains": {
+    "tail": [
+      "tail_joint",
+      "tail1",
+      "tail2"
+    ]
+  },
+  "radii": {
+    "hips": 0.1506,
+    "spine": 0.2781,
+    "chest": 0.1863,
+    "head": 0.1975,
+    "l_upper_arm": 0.0903,
+    "l_lower_arm": 0.045,
+    "l_hand": 0.0294,
+    "r_upper_arm": 0.0923,
+    "r_lower_arm": 0.0455,
+    "r_hand": 0.0296,
+    "l_upper_leg": 0.1016,
+    "l_lower_leg": 0.0552,
+    "l_foot": 0.0419,
+    "r_upper_leg": 0.1076,
+    "r_lower_leg": 0.0559,
+    "r_foot": 0.0436
+  },
+  "animations": [],
+  "notes": "Chubby squirrel with short stubby arms (hands are small paws: hand + one 'hand1' finger-mitten bone). No neck bone (head sits on the torso). The source has one torso bone; it was split into torso (role spine) + torso_upper (role chest) with weights blended along the bone. femar_L/femar_R are pelvis-side hip bones between the hips and the thighs. The eyes were separate rigid meshes and are now skinned 100% to the head. Ears are small fur tufts without bones (not prominent enough for a spring chain). Facing +Z (glTF/Godot), +Y up, metres; soles at y=0, centred between the feet. Top of skull at y=0.900 (ears/hats excluded), crown point (x 0.077, y 0.900, z -0.038); head width 0.400 m, depth 0.496 m; head bone origin at (x 0.001, y 0.538, z -0.084). Rest pose T (upper arm 10 deg below horizontal). 23 bones, 6348 triangles. Bone local axes follow Blender's convention (+Y along each bone towards its child)."
+}

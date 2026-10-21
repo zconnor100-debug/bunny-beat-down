@@ -1,0 +1,73 @@
+{
+  "id": "fox",
+  "display_name": "Fox",
+  "species": "fox",
+  "head_top": 1.15,
+  "eye_height": 1.095,
+  "rest_pose": "T",
+  "bones": {
+    "hips": "Pelvis",
+    "spine": "Body_1",
+    "chest": "Body_2",
+    "neck": "Neck",
+    "head": "Head",
+    "jaw": "Bottom_Jaw",
+    "l_upper_arm": "Arm_l",
+    "l_lower_arm": "Forearm_l",
+    "l_hand": "Hand_l",
+    "r_upper_arm": "Arm_r",
+    "r_lower_arm": "Forearm_r",
+    "r_hand": "Hand_r",
+    "l_upper_leg": "Leg_l",
+    "l_lower_leg": "Calf_l",
+    "l_foot": "Foot_l",
+    "r_upper_leg": "Leg_r",
+    "r_lower_leg": "Calf_r",
+    "r_foot": "Foot_r"
+  },
+  "chains": {
+    "ear_l": [
+      "Ear_L",
+      "Ear_tip_L"
+    ],
+    "ear_r": [
+      "Ear_R",
+      "Ear_tip_R"
+    ],
+    "tail": [
+      "Tail_1",
+      "Tail_2",
+      "Tail_3",
+      "Tail_4",
+      "Tail_5",
+      "Tail_6"
+    ]
+  },
+  "radii": {
+    "hips": 0.087,
+    "spine": 0.0752,
+    "chest": 0.0636,
+    "neck": 0.0717,
+    "head": 0.1458,
+    "jaw": 0.1073,
+    "l_upper_arm": 0.0224,
+    "l_lower_arm": 0.0195,
+    "l_hand": 0.0342,
+    "r_upper_arm": 0.0224,
+    "r_lower_arm": 0.0195,
+    "r_hand": 0.0342,
+    "l_upper_leg": 0.0289,
+    "l_lower_leg": 0.0259,
+    "l_foot": 0.0385,
+    "r_upper_leg": 0.0288,
+    "r_lower_leg": 0.0259,
+    "r_foot": 0.0385
+  },
+  "animations": [
+    "Run",
+    "RunScared",
+    "Sneak",
+    "Walk"
+  ],
+  "notes": "Source rig was an IK control rig: hands, feet and the head were children of the root (driven by IK targets). They were re-parented (Hand -> Forearm, Foot -> Calf, Head -> Neck), the IK/pole/face-UI control bones removed and the clips re-baked onto the cleaned hierarchy. Rest pose rebuilt from the bind pose (a clean T-pose; the file's node pose was an animation frame). Long snout: Head -> Top_Jaw (upper snout) -> Nose_1 -> Nose_2; Bottom_Jaw is the lower jaw. Eyelid and eyeball bones are kept (big cartoon eyes). Hands have 4 fingers. Facing +Z (glTF/Godot), +Y up, metres; soles at y=0, centred between the feet. Top of skull at y=1.150 (ears/hats excluded), crown point (x -0.000, y 1.150, z -0.081); head width 0.429 m, depth 0.253 m; head bone origin at (x -0.000, y 0.864, z -0.033). Rest pose T (upper arm 2 deg below horizontal). 63 bones, 9480 triangles. Bone local axes follow Blender's convention (+Y along each bone towards its child)."
+}

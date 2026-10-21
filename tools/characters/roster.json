@@ -1,0 +1,217 @@
+{
+  "_doc": "Per-character recipe for normalize.py. Bone/mesh names are the SOURCE names as Blender imports the Sketchfab GLB (Sketchfab appends _NN to node names); normalize.py renames bones to Godot-safe names and writes the final names into <id>.rig.json. Keys: rest_from (node = file pose is rest, bind = rebuild rest from the inverse bind matrices, see gltf_bind.py), anchor (bind mode: joint kept in place), drop_meshes (substrings), rigid_bind (unskinned mesh -> bone it rides on), reparent (bone -> new parent), split (bone -> [first, second] final names, at: fraction), roles, chains, skull (how to find the top of the skull: bones whose vertices are NOT skull, optional centre column), eye (bones/meshes/height), animations (source action -> exported clip name), used_for / changes (credits text, see write_credits.py).",
+
+  "bun": {
+    "display_name": "Bun",
+    "species": "rabbit",
+    "uid": "f08f25f13e6e45fcaf41e66860961c60",
+    "used_for": "Player character (Bun)",
+    "changes": "Re-oriented to face +Z and rescaled so the top of the skull is at 0.95 m, feet on the ground; bones renamed Godot-safe (Sketchfab _NN suffixes dropped, '.' and ':' replaced by '_'); Sketchfab helper nodes and non-deforming root/end bones removed; meshes joined into one; colour textures re-encoded as JPEG. Geometry, UVs, texture content and skin weights unchanged.",
+    "head_top": 0.95,
+    "rest_from": "node",
+    "roles": {
+      "hips": "DEF_Hip_01", "spine": "DEF_Spine1_02", "chest": "DEF_Chest_04", "neck": "DEF_Neck_021", "head": "DEF_Head_022", "jaw": null,
+      "l_upper_arm": "DEF_UpperArm.L_06", "l_lower_arm": "DEF_Forearm1.L_07", "l_hand": "DEF_Hand.L_09",
+      "r_upper_arm": "DEF_UpperArm.R_032", "r_lower_arm": "DEF_Forearm1.R_033", "r_hand": "DEF_Hand.R_035",
+      "l_upper_leg": "DEF_Thigh.L_047", "l_lower_leg": "DEF_Calph.L_048", "l_foot": "DEF_Ankle.L_049",
+      "r_upper_leg": "DEF_Thigh.R_054", "r_lower_leg": "DEF_Calph.R_055", "r_foot": "DEF_Ankle.R_056"
+    },
+    "chains": {
+      "ear_l": ["DEF_Ear_1.L_023", "DEF_Ear_2.L_024", "DEF_Ear_3.L_025", "DEF_Ear_4.L_026"],
+      "ear_r": ["DEF_Ear_1.R_027", "DEF_Ear_2.R_028", "DEF_Ear_3.R_029", "DEF_Ear_4.R_030"],
+      "tail": ["DEF_Tail_Base_052", "DEF_Tail_End_053"]
+    },
+    "skull": {"exclude": ["DEF_Ear_"]},
+    "eye": {"height": 0.855},
+    "animations": {},
+    "notes": "Hero. No hat in the source (the acorn helmet is a separate prop). Lower arm is two bones: DEF_Forearm1 (elbow) -> DEF_Forearm2 (twist) -> DEF_Hand. Leg is rabbit-shaped: DEF_Thigh -> DEF_Calph (shin) -> DEF_Ankle (long rabbit foot, role foot) -> DEF_Ball -> DEF_Toes. DEF_Spine1_02_0 / DEF_Spine1_02_1 are two helper bones sitting on DEF_Spine1 (belt/pouch skinning). Full 3-segment fingers."
+  },
+
+  "bandit_bunny": {
+    "display_name": "Bandit Bunny",
+    "species": "rabbit",
+    "uid": "1716b70d8ff149b99ee0430f6932d59b",
+    "used_for": "Enemy: Bandit Bunny",
+    "changes": "Re-oriented to face +Z and rescaled so the top of the skull (hood) is at 0.95 m, feet on the ground; bones renamed Godot-safe (Sketchfab _NN suffixes dropped, '.' and ':' replaced by '_'); Sketchfab helper nodes and non-deforming root/end bones removed; meshes joined into one; colour textures re-encoded as JPEG; vertex colours kept. Geometry, UVs and skin weights unchanged.",
+    "head_top": 0.95,
+    "rest_from": "node",
+    "roles": {
+      "hips": "DEF_Hip_01", "spine": "DEF_Spine1_02", "chest": "DEF_Chest_04", "neck": "DEF_Neck_021", "head": "DEF_Head_022", "jaw": null,
+      "l_upper_arm": "DEF_UpperArm.L_06", "l_lower_arm": "DEF_Forearm1.L_07", "l_hand": "DEF_Hand.L_09",
+      "r_upper_arm": "DEF_UpperArm.R_032", "r_lower_arm": "DEF_Forearm1.R_033", "r_hand": "DEF_Hand.R_035",
+      "l_upper_leg": "DEF_Thigh.L_047", "l_lower_leg": "DEF_Calph.L_048", "l_foot": "DEF_Ankle.L_049",
+      "r_upper_leg": "DEF_Thigh.R_054", "r_lower_leg": "DEF_Calph.R_055", "r_foot": "DEF_Ankle.R_056"
+    },
+    "chains": {
+      "ear_l": ["DEF_Ear_1.L_023", "DEF_Ear_2.L_024", "DEF_Ear_3.L_025", "DEF_Ear_4.L_026"],
+      "ear_r": ["DEF_Ear_1.R_027", "DEF_Ear_2.R_028", "DEF_Ear_3.R_029", "DEF_Ear_4.R_030"],
+      "tail": ["DEF_Tail_Base_052", "DEF_Tail_End_053"]
+    },
+    "skull": {"exclude": ["DEF_Ear_"], "column": 0.45},
+    "eye": {"height": 0.81},
+    "animations": {},
+    "notes": "Same rig family as Bun (Arcnay's Bunny Guard) minus finger bones: the hands are clawed mitts skinned to DEF_Hand only. Keeps its hood and the small horns on the hood (part of the character). Rest pose taken from the file's node pose because the source's inverse bind matrices for the ear tips are corrupt (the node pose is the same A-pose)."
+  },
+
+  "squirrel": {
+    "display_name": "Squirrel",
+    "species": "squirrel",
+    "uid": "1d0b4641c80f49aab951948fe297c359",
+    "used_for": "Enemy: Squirrel",
+    "changes": "Rest pose rebuilt from the skin's bind pose; rescaled so the top of the skull is at 0.9 m, feet on the ground; the separate eye meshes skinned to the head bone; foot and paw bones re-parented out of the IK chains and the IK/face-control bones removed; the torso bone split into two (torso, torso_upper) with weights blended along it; skin influences limited to 4 per vertex; bones renamed Godot-safe (Sketchfab _NN suffixes dropped, '.' and ':' replaced by '_'); Sketchfab helper nodes and non-deforming root/end bones removed; meshes joined into one; colour textures re-encoded as JPEG.",
+    "head_top": 0.9,
+    "rest_from": "bind",
+    "anchor": "pelvice_02",
+    "rigid_bind": {"right eye_Material.004_0": "head_04", "left eye_Material.004_0": "head_04"},
+    "reparent": {"foot.L_044": "leg.L_042", "foot.R_050": "leg.R_047", "hand1.L_030": "hand.L_027", "hand1.R_036": "hand.R_033"},
+    "split": {"torso_03": {"names": ["torso", "torso_upper"], "at": 0.5}},
+    "roles": {
+      "hips": "pelvice_02", "spine": "torso", "chest": "torso_upper", "neck": null, "head": "head_04", "jaw": null,
+      "l_upper_arm": "sholder.L_025", "l_lower_arm": "biseps.L_026", "l_hand": "hand.L_027",
+      "r_upper_arm": "sholder.R_031", "r_lower_arm": "biseps.R_032", "r_hand": "hand.R_033",
+      "l_upper_leg": "thai.L_041", "l_lower_leg": "leg.L_042", "l_foot": "foot.L_044",
+      "r_upper_leg": "thai.R_046", "r_lower_leg": "leg.R_047", "r_foot": "foot.R_050"
+    },
+    "chains": {"tail": ["tail joint_037", "tail1_038", "tail2_039"]},
+    "skull": {"exclude": [], "column": 0.45},
+    "eye": {"meshes": ["right eye", "left eye"]},
+    "animations": {},
+    "notes": "Chubby squirrel with short stubby arms (hands are small paws: hand + one 'hand1' finger-mitten bone). No neck bone (head sits on the torso). The source has one torso bone; it was split into torso (role spine) + torso_upper (role chest) with weights blended along the bone. femar_L/femar_R are pelvis-side hip bones between the hips and the thighs. The eyes were separate rigid meshes and are now skinned 100% to the head. Ears are small fur tufts without bones (not prominent enough for a spring chain)."
+  },
+
+  "fox": {
+    "display_name": "Fox",
+    "species": "fox",
+    "uid": "62f910c702eb488198e03e56bc399f67",
+    "used_for": "Enemy: Fox",
+    "changes": "Rest pose rebuilt from the skin's bind pose (T-pose); rescaled so the top of the skull is at 1.15 m, feet on the ground; hand, foot and head bones re-parented from IK targets into the arm, leg and neck chains; IK, pole, face-UI and helper bones removed; the Walk, Run, Sneak and RunScared clips re-baked onto the cleaned rig (Default_pose dropped); bones renamed Godot-safe (Sketchfab _NN suffixes dropped, '.' and ':' replaced by '_'); Sketchfab helper nodes and non-deforming root/end bones removed; meshes joined into one; colour textures re-encoded as JPEG (normal map kept as PNG).",
+    "head_top": 1.15,
+    "rest_from": "bind",
+    "anchor": "Pelvis_02",
+    "reparent": {"Hand.l_049": "Forearm.l_08", "Hand.r_063": "Forearm.r_010", "Foot.l_061": "Calf.l_012", "Foot.r_075": "Calf.r_020", "Head_030": "Neck_05"},
+    "roles": {
+      "hips": "Pelvis_02", "spine": "Body_1_03", "chest": "Body_2_04", "neck": "Neck_05", "head": "Head_030", "jaw": "Bottom_Jaw_034",
+      "l_upper_arm": "Arm.l_07", "l_lower_arm": "Forearm.l_08", "l_hand": "Hand.l_049",
+      "r_upper_arm": "Arm.r_09", "r_lower_arm": "Forearm.r_010", "r_hand": "Hand.r_063",
+      "l_upper_leg": "Leg.l_011", "l_lower_leg": "Calf.l_012", "l_foot": "Foot.l_061",
+      "r_upper_leg": "Leg.r_019", "r_lower_leg": "Calf.r_020", "r_foot": "Foot.r_075"
+    },
+    "chains": {
+      "ear_l": ["Ear.L_035", "Ear_tip.L_036"],
+      "ear_r": ["Ear.R_041", "Ear_tip.R_00"],
+      "tail": ["Tail_1_013", "Tail_2_014", "Tail_3_015", "Tail_4_016", "Tail_5_017", "Tail_6_018"]
+    },
+    "skull": {"exclude": ["Ear"]},
+    "eye": {"bones": ["Eye.l_037", "Eye.r_042"]},
+    "animations": {"Walk_loop": "Walk", "Run_loop": "Run", "Sneak_animation_loop": "Sneak", "Run_scared_loop": "RunScared"},
+    "notes": "Source rig was an IK control rig: hands, feet and the head were children of the root (driven by IK targets). They were re-parented (Hand -> Forearm, Foot -> Calf, Head -> Neck), the IK/pole/face-UI control bones removed and the clips re-baked onto the cleaned hierarchy. Rest pose rebuilt from the bind pose (a clean T-pose; the file's node pose was an animation frame). Long snout: Head -> Top_Jaw (upper snout) -> Nose_1 -> Nose_2; Bottom_Jaw is the lower jaw. Eyelid and eyeball bones are kept (big cartoon eyes). Hands have 4 fingers."
+  },
+
+  "raccoon": {
+    "display_name": "Raccoon",
+    "species": "raccoon",
+    "uid": "0d16178ccb4b4451b8afc4a2d00b3a98",
+    "used_for": "Enemy: Raccoon",
+    "note": "The uploader's model page adds informal terms of use on top of CC BY (no pornographic, criminal or harmful uses; intended for positive creative projects). This project honours them; the model is used under its CC BY 4.0 license.",
+    "changes": "Re-oriented to face +Z and rescaled so the top of the skull is at 1.05 m, feet on the ground; bones renamed Godot-safe (Sketchfab _NN suffixes dropped, '.' and ':' replaced by '_'); Sketchfab helper nodes and non-deforming root/end bones removed; meshes joined into one; colour textures re-encoded as JPEG. Geometry, UVs, texture content and skin weights unchanged.",
+    "head_top": 1.05,
+    "rest_from": "node",
+    "roles": {
+      "hips": "mixamorig:Hips_31", "spine": "mixamorig:Spine_17", "chest": "mixamorig:Spine2_15", "neck": "mixamorig:Neck_6", "head": "mixamorig:Head_5", "jaw": null,
+      "l_upper_arm": "mixamorig:LeftArm_9", "l_lower_arm": "mixamorig:LeftForeArm_8", "l_hand": "mixamorig:LeftHand_7",
+      "r_upper_arm": "mixamorig:RightArm_13", "r_lower_arm": "mixamorig:RightForeArm_12", "r_hand": "mixamorig:RightHand_11",
+      "l_upper_leg": "mixamorig:LeftUpLeg_22", "l_lower_leg": "mixamorig:LeftLeg_21", "l_foot": "mixamorig:LeftFoot_20",
+      "r_upper_leg": "mixamorig:RightUpLeg_27", "r_lower_leg": "mixamorig:RightLeg_26", "r_foot": "mixamorig:RightFoot_25"
+    },
+    "chains": {
+      "ear_l": ["mixamorig:Head.003_2", "mixamorig:Head.005_1"],
+      "ear_r": ["mixamorig:Head.004_4", "mixamorig:Head.006_3"],
+      "tail": ["T1_30", "T2_29", "T3_28"]
+    },
+    "skull": {"exclude": ["Head.00"]},
+    "eye": {"height": 0.76},
+    "animations": {},
+    "notes": "Chibi proportions: the head is about half the body height, arms are short with mitten hands (no finger bones). Mixamo-style T-pose rig; the ear chains are the source's mixamorig_Head_003/_005 (left) and mixamorig_Head_004/_006 (right) bones. Feet are barely skinned to the foot bone (the toe bone carries the paw)."
+  },
+
+  "frog": {
+    "display_name": "Frog",
+    "species": "frog",
+    "uid": "b06af7ff11eb485bbbcb248d2f5427f5",
+    "used_for": "Enemy: Frog",
+    "changes": "Rest pose rebuilt from the skin's bind pose (T-pose) and turned to face +Z; rescaled so the top of the skull is at 0.85 m, feet on the ground; the idle, run and punch clips re-baked onto the cleaned rig (renamed Idle, Run, Punch); bones renamed Godot-safe (Sketchfab _NN suffixes dropped, '.' and ':' replaced by '_'); Sketchfab helper nodes and non-deforming root/end bones removed; meshes joined into one; colour textures re-encoded as JPEG.",
+    "head_top": 0.85,
+    "rest_from": "bind",
+    "anchor": "root.x_00",
+    "roles": {
+      "hips": "root.x_00", "spine": "spine_01.x_01", "chest": "spine_03.x_03", "neck": "neck.x_04", "head": "head.x_05", "jaw": null,
+      "l_upper_arm": "arm_stretch.l_07", "l_lower_arm": "forearm_stretch.l_08", "l_hand": "hand.l_09",
+      "r_upper_arm": "arm_stretch.r_011", "r_lower_arm": "forearm_stretch.r_012", "r_hand": "hand.r_013",
+      "l_upper_leg": "thigh_stretch.l_014", "l_lower_leg": "leg_stretch.l_015", "l_foot": "foot.l_016",
+      "r_upper_leg": "thigh_stretch.r_018", "r_lower_leg": "leg_stretch.r_019", "r_foot": "foot.r_020"
+    },
+    "chains": {},
+    "skull": {"exclude": []},
+    "eye": {"height": 0.81},
+    "animations": {"idle": "Idle", "run": "Run", "punch": "Punch"},
+    "notes": "Low-poly hand-painted frog in leather armour. Hands are closed fists (no finger bones) - a carrot gun will need a grip pose or fist-attach. Rest pose rebuilt from the bind pose (T-ish pose, slight crouch); the file's node pose was a hunched frame. No ears/tail. Auto-Rig Pro naming (.x = centre, .l/.r = sides)."
+  },
+
+  "beaver": {
+    "display_name": "Beaver",
+    "species": "beaver",
+    "uid": "a43fc138613c4de3aeb138ce02b79890",
+    "used_for": "Enemy: Beaver",
+    "changes": "Rest pose rebuilt from the skin's bind pose (T-pose); rescaled so the top of the skull is at 1.0 m, feet on the ground; IK target, pole and guide bones removed; the spine bone split into two (coluna, coluna_upper) with weights blended along it; skin influences limited to 4 per vertex; bones renamed Godot-safe (Sketchfab _NN suffixes dropped, '.' and ':' replaced by '_'); Sketchfab helper nodes and non-deforming root/end bones removed; meshes joined into one; colour textures re-encoded as JPEG.",
+    "head_top": 1.0,
+    "rest_from": "bind",
+    "anchor": "coluna_01",
+    "split": {"coluna_01": {"names": ["coluna", "coluna_upper"], "at": 0.5}},
+    "roles": {
+      "hips": "coluna", "spine": "coluna_upper", "chest": "Bone.001_02", "neck": "Bone.002_07", "head": "Bone.003_08", "jaw": null,
+      "l_upper_arm": "Bone.001_R.005_00", "l_lower_arm": "Bone.001_R.006_010", "l_hand": "Bone.001_R.007_011",
+      "r_upper_arm": "Bone.001_R.001_04", "r_lower_arm": "Bone.001_R.002_05", "r_hand": "Bone.001_R.003_06",
+      "l_upper_leg": "Bone_L.001_017", "l_lower_leg": "Bone_L.002_018", "l_foot": "Bone_L.003_019",
+      "r_upper_leg": "Bone_R.001_021", "r_lower_leg": "Bone_R.002_022", "r_foot": "Bone_R.003_023"
+    },
+    "chains": {"tail": ["Bone.005_012", "Bone.007_013", "Bone.006_014", "Bone.008_015"]},
+    "skull": {"exclude": [], "column": 0.45},
+    "eye": {"height": 0.85},
+    "animations": {},
+    "notes": "Cartoon beaver in a green T-shirt; open 5-finger hands skinned to one hand bone each (no finger bones). Source bone names are generic: the LEFT arm chain is Bone_001_R_004 (clavicle) -> Bone_001_R_005 -> Bone_001_R_006 -> Bone_001_R_007 despite the _R in its name; the right arm is Bone_001_R -> Bone_001_R_001 -> _002 -> _003. Bone_L / Bone_R are pelvis-side hip bones above the thighs (Bone_L_001.._003 = left thigh, shin, foot). The single source spine bone (coluna = 'spine' in Portuguese) was split into coluna (role hips) + coluna_upper (role spine). Flat paddle tail with a 4-bone chain. Rest pose rebuilt from the bind pose (T-pose)."
+  },
+
+  "hamster": {
+    "display_name": "Hamster",
+    "species": "hamster",
+    "uid": "c9433cb2268f497491a3dfb5bab1870e",
+    "used_for": "Enemy: Hamster",
+    "changes": "Rest pose rebuilt from the skin's bind pose (T-pose); rescaled so the top of the skull is at 0.8 m, feet on the ground; arm, leg and thumb bones re-parented to the torso, hips and palms; each arm and leg bone split into upper and lower segments with weights blended along it; skin influences limited to 4 per vertex; bones renamed Godot-safe (Sketchfab _NN suffixes dropped, '.' and ':' replaced by '_'); Sketchfab helper nodes and non-deforming root/end bones removed; meshes joined into one; colour textures re-encoded as JPEG (normal map kept as PNG).",
+    "head_top": 0.8,
+    "rest_from": "bind",
+    "anchor": "Caderas_4",
+    "reparent": {
+      "L.brazo_20": "Torso_alto_2", "R.brazo_38": "Torso_alto_2",
+      "L.pierna_6": "Caderas_4", "R.pierna_24": "Caderas_4",
+      "L.pulgar1_22": "L.palma_19", "R.pulgar1_40": "R.palma_37"
+    },
+    "split": {
+      "L.brazo_20": {"names": ["L_brazo", "L_antebrazo"], "at": 0.5},
+      "R.brazo_38": {"names": ["R_brazo", "R_antebrazo"], "at": 0.5},
+      "L.pierna_6": {"names": ["L_pierna", "L_pierna_lower"], "at": 0.5},
+      "R.pierna_24": {"names": ["R_pierna", "R_pierna_lower"], "at": 0.5}
+    },
+    "roles": {
+      "hips": "Caderas_4", "spine": "Torso_bajo_3", "chest": "Torso_alto_2", "neck": "Cuello_1", "head": "Cabeza_0", "jaw": null,
+      "l_upper_arm": "L_brazo", "l_lower_arm": "L_antebrazo", "l_hand": "L.palma_19",
+      "r_upper_arm": "R_brazo", "r_lower_arm": "R_antebrazo", "r_hand": "R.palma_37",
+      "l_upper_leg": "L_pierna", "l_lower_leg": "L_pierna_lower", "l_foot": "L.pie_5",
+      "r_upper_leg": "R_pierna", "r_lower_leg": "R_pierna_lower", "r_foot": "R.pie_23"
+    },
+    "chains": {},
+    "skull": {"exclude": [], "column": 0.45},
+    "eye": {"height": 0.71},
+    "animations": {},
+    "notes": "Round hamster with short limbs. Spanish bone names (Caderas = hips, Torso_bajo/alto = lower/upper torso, Cuello = neck, Cabeza = head, brazo = arm, palma = palm, pulgar/indice/medio/anular/menique = fingers, pierna = leg, pie = foot). The source arms and legs were single bones parented to the root; they were re-parented to the torso/hips and split in two (brazo -> antebrazo, pierna -> pierna_lower) with weights blended along the bone so every limb has upper/lower segments. Full 5-finger hands. Ears are small and have no bones."
+  }
+}

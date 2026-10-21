@@ -1,0 +1,148 @@
+{
+  "_comment": "Third-party inputs for the weapons & props generator. fetch_sources.py downloads these into tools/_cache/weapons/ (git-ignored) and records author/licence metadata; build_all.py turns that metadata into assets/credits/weapons_props.json. Only CC0 / CC BY sources are allowed (docs/ASSET_PIPELINE.md).",
+  "polyhaven_textures": {
+    "dark_wood": {
+      "res": "2k",
+      "maps": [
+        "Diffuse",
+        "nor_gl",
+        "Rough"
+      ],
+      "used_for": "Gun stocks, pistol grips and fore-ends"
+    },
+    "coated_pine": {
+      "res": "2k",
+      "maps": [
+        "Diffuse",
+        "nor_gl",
+        "Rough"
+      ],
+      "used_for": "Light pine parts: launcher grips, crate battens, cradle, glider handle"
+    },
+    "rough_wood": {
+      "res": "2k",
+      "maps": [
+        "Diffuse",
+        "nor_gl",
+        "Rough"
+      ],
+      "used_for": "Weathered garden-crate slats (loot crate, supply drop)"
+    },
+    "metal_plate_02": {
+      "res": "2k",
+      "maps": [
+        "Diffuse",
+        "nor_gl",
+        "Rough",
+        "Metal"
+      ],
+      "used_for": "Blued / worn steel and brass fittings (tinted)"
+    },
+    "green_metal_rust": {
+      "res": "2k",
+      "maps": [
+        "Diffuse",
+        "nor_gl",
+        "Rough"
+      ],
+      "used_for": "Chipped painted sheet metal (hue-shifted to carrot orange / sage)"
+    },
+    "hessian_380": {
+      "res": "2k",
+      "maps": [
+        "Diffuse",
+        "nor_gl",
+        "Rough"
+      ],
+      "used_for": "Jute twine wraps, burlap pouch and shoulder pads"
+    },
+    "brown_leather": {
+      "res": "2k",
+      "maps": [
+        "Diffuse",
+        "nor_gl",
+        "Rough"
+      ],
+      "used_for": "Leather straps, butt pads, slings"
+    },
+    "pine_bark": {
+      "res": "2k",
+      "maps": [
+        "Diffuse",
+        "nor_gl",
+        "Rough"
+      ],
+      "used_for": "Bark armour plates (pickup_armor)"
+    },
+    "caban": {
+      "res": "1k",
+      "maps": [
+        "Diffuse",
+        "nor_gl",
+        "Rough"
+      ],
+      "used_for": "Patchwork envelope panels (orange wool), dropship balloon"
+    },
+    "fabric_pattern_07": {
+      "res": "1k",
+      "maps": [
+        "Diffuse=col_1",
+        "nor_gl",
+        "Rough"
+      ],
+      "used_for": "Red picnic-check panels and basket lining, dropship balloon"
+    },
+    "gingham_check": {
+      "res": "1k",
+      "maps": [
+        "Diffuse",
+        "nor_gl",
+        "Rough"
+      ],
+      "used_for": "Green gingham envelope panels, dropship balloon"
+    },
+    "waffle_pique_cotton": {
+      "res": "1k",
+      "maps": [
+        "Diffuse",
+        "nor_gl",
+        "Rough"
+      ],
+      "used_for": "Yellow waffle-cotton envelope panels, dropship balloon"
+    },
+    "stretch_poplin": {
+      "res": "1k",
+      "maps": [
+        "Diffuse",
+        "nor_gl",
+        "Rough"
+      ],
+      "used_for": "Leaf-green envelope panels, dropship balloon"
+    },
+    "fabric_pattern_05": {
+      "res": "1k",
+      "maps": [
+        "Diffuse=col_01",
+        "nor_gl",
+        "Rough"
+      ],
+      "used_for": "Cream windowpane-plaid envelope panels, dropship balloon"
+    }
+  },
+  "polyhaven_hdris": {
+    "studio_small_09": {
+      "res": "1k",
+      "used_for": "Lighting for preview renders only (not shipped inside any glb)"
+    }
+  },
+  "sketchfab_models": {
+    "carrot_scan": {
+      "uid": "985240a0da5848e9aa639d5e4daa38e0",
+      "used_for": "Photoscanned carrot skin: unwrapped by prep_scans.py into a carrot-skin strip (albedo + normal) used on every carrot surface"
+    },
+    "acorn_scan": {
+      "uid": "84ad040b23644329aa142e502a1d4b14",
+      "used_for": "Photoscanned acorn: unwrapped by prep_scans.py into cupule-scale and nut-shell strips (albedo + normal) for the acorn helmet and acorn-shell armour"
+    }
+  }
+}

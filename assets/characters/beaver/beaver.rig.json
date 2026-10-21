@@ -1,0 +1,57 @@
+{
+  "id": "beaver",
+  "display_name": "Beaver",
+  "species": "beaver",
+  "head_top": 1.0,
+  "eye_height": 0.85,
+  "rest_pose": "T",
+  "bones": {
+    "hips": "coluna",
+    "spine": "coluna_upper",
+    "chest": "Bone_001",
+    "neck": "Bone_002",
+    "head": "Bone_003",
+    "jaw": null,
+    "l_upper_arm": "Bone_001_R_005",
+    "l_lower_arm": "Bone_001_R_006",
+    "l_hand": "Bone_001_R_007",
+    "r_upper_arm": "Bone_001_R_001",
+    "r_lower_arm": "Bone_001_R_002",
+    "r_hand": "Bone_001_R_003",
+    "l_upper_leg": "Bone_L_001",
+    "l_lower_leg": "Bone_L_002",
+    "l_foot": "Bone_L_003",
+    "r_upper_leg": "Bone_R_001",
+    "r_lower_leg": "Bone_R_002",
+    "r_foot": "Bone_R_003"
+  },
+  "chains": {
+    "tail": [
+      "Bone_005",
+      "Bone_007",
+      "Bone_006",
+      "Bone_008"
+    ]
+  },
+  "radii": {
+    "hips": 0.0806,
+    "spine": 0.1129,
+    "chest": 0.0854,
+    "neck": 0.0448,
+    "head": 0.1094,
+    "l_upper_arm": 0.0296,
+    "l_lower_arm": 0.0203,
+    "l_hand": 0.0384,
+    "r_upper_arm": 0.0297,
+    "r_lower_arm": 0.0203,
+    "r_hand": 0.0385,
+    "l_upper_leg": 0.054,
+    "l_lower_leg": 0.0353,
+    "l_foot": 0.053,
+    "r_upper_leg": 0.054,
+    "r_lower_leg": 0.0353,
+    "r_foot": 0.053
+  },
+  "animations": [],
+  "notes": "Cartoon beaver in a green T-shirt; open 5-finger hands skinned to one hand bone each (no finger bones). Source bone names are generic: the LEFT arm chain is Bone_001_R_004 (clavicle) -> Bone_001_R_005 -> Bone_001_R_006 -> Bone_001_R_007 despite the _R in its name; the right arm is Bone_001_R -> Bone_001_R_001 -> _002 -> _003. Bone_L / Bone_R are pelvis-side hip bones above the thighs (Bone_L_001.._003 = left thigh, shin, foot). The single source spine bone (coluna = 'spine' in Portuguese) was split into coluna (role hips) + coluna_upper (role spine). Flat paddle tail with a 4-bone chain. Rest pose rebuilt from the bind pose (T-pose). Facing +Z (glTF/Godot), +Y up, metres; soles at y=0, centred between the feet. Top of skull at y=1.000 (ears/hats excluded), crown point (x -0.000, y 1.000, z -0.031); head width 0.307 m, depth 0.329 m; head bone origin at (x 0.000, y 0.680, z -0.016). Rest pose T (upper arm 17 deg below horizontal). 25 bones, 12858 triangles. Bone local axes follow Blender's convention (+Y along each bone towards its child)."
+}

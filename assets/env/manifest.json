@@ -1,0 +1,802 @@
+[
+  {
+    "id": "tree_oak_a",
+    "file": "assets/env/tree_oak_a/tree_oak_a.glb",
+    "category": "tree",
+    "height_m": 95.4,
+    "footprint_radius_m": 58.46,
+    "collision": "cylinder",
+    "collision_radius_m": 2.26,
+    "scale_range": [
+      0.8,
+      1.2
+    ],
+    "density_weight": 1.0,
+    "sink_m": 0.6,
+    "tris": 24298
+  },
+  {
+    "id": "tree_oak_b",
+    "file": "assets/env/tree_oak_b/tree_oak_b.glb",
+    "category": "tree",
+    "height_m": 77.4,
+    "footprint_radius_m": 45.42,
+    "collision": "cylinder",
+    "collision_radius_m": 2.4,
+    "scale_range": [
+      0.8,
+      1.2
+    ],
+    "density_weight": 0.8,
+    "sink_m": 0.6,
+    "tris": 18410
+  },
+  {
+    "id": "tree_oak_young",
+    "file": "assets/env/tree_oak_young/tree_oak_young.glb",
+    "category": "tree",
+    "height_m": 41.6,
+    "footprint_radius_m": 18.23,
+    "collision": "cylinder",
+    "collision_radius_m": 0.63,
+    "scale_range": [
+      0.8,
+      1.2
+    ],
+    "density_weight": 0.7,
+    "sink_m": 0.4,
+    "tris": 6381
+  },
+  {
+    "id": "tree_pine_a",
+    "file": "assets/env/tree_pine_a/tree_pine_a.glb",
+    "category": "tree",
+    "height_m": 113.49,
+    "footprint_radius_m": 34.03,
+    "collision": "cylinder",
+    "collision_radius_m": 1.61,
+    "scale_range": [
+      0.8,
+      1.2
+    ],
+    "density_weight": 1.0,
+    "sink_m": 0.3,
+    "tris": 11484
+  },
+  {
+    "id": "tree_pine_b",
+    "file": "assets/env/tree_pine_b/tree_pine_b.glb",
+    "category": "tree",
+    "height_m": 69.44,
+    "footprint_radius_m": 19.88,
+    "collision": "cylinder",
+    "collision_radius_m": 0.91,
+    "scale_range": [
+      0.8,
+      1.2
+    ],
+    "density_weight": 0.8,
+    "sink_m": 0.3,
+    "tris": 5105
+  },
+  {
+    "id": "tree_fir_a",
+    "file": "assets/env/tree_fir_a/tree_fir_a.glb",
+    "category": "tree",
+    "height_m": 63.7,
+    "footprint_radius_m": 18.85,
+    "collision": "cylinder",
+    "collision_radius_m": 1.37,
+    "scale_range": [
+      0.8,
+      1.25
+    ],
+    "density_weight": 0.8,
+    "sink_m": 0.3,
+    "tris": 11029
+  },
+  {
+    "id": "tree_birch_a",
+    "file": "assets/env/tree_birch_a/tree_birch_a.glb",
+    "category": "tree",
+    "height_m": 61.5,
+    "footprint_radius_m": 23.32,
+    "collision": "cylinder",
+    "collision_radius_m": 1.46,
+    "scale_range": [
+      0.8,
+      1.2
+    ],
+    "density_weight": 0.7,
+    "sink_m": 0.5,
+    "tris": 9376
+  },
+  {
+    "id": "log_hollow",
+    "file": "assets/env/log_hollow/log_hollow.glb",
+    "category": "log",
+    "height_m": 4.11,
+    "footprint_radius_m": 7.22,
+    "collision": "trimesh",
+    "collision_radius_m": 6.5,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 0.15,
+    "sink_m": 0.3,
+    "tris": 14592
+  },
+  {
+    "id": "log_fallen_a",
+    "file": "assets/env/log_fallen_a/log_fallen_a.glb",
+    "category": "log",
+    "height_m": 1.34,
+    "footprint_radius_m": 7.63,
+    "collision": "convex",
+    "collision_radius_m": 7.32,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 0.6,
+    "sink_m": 0.12,
+    "tris": 39200
+  },
+  {
+    "id": "log_dead_big",
+    "file": "assets/env/log_dead_big/log_dead_big.glb",
+    "category": "log",
+    "height_m": 3.64,
+    "footprint_radius_m": 10.19,
+    "collision": "trimesh",
+    "collision_radius_m": 9.2,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 0.4,
+    "sink_m": 1.64,
+    "tris": 39200
+  },
+  {
+    "id": "log_mossy",
+    "file": "assets/env/log_mossy/log_mossy.glb",
+    "category": "log",
+    "height_m": 2.6,
+    "footprint_radius_m": 5.16,
+    "collision": "convex",
+    "collision_radius_m": 4.85,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 0.6,
+    "sink_m": 0.0,
+    "tris": 19600
+  },
+  {
+    "id": "stump_a",
+    "file": "assets/env/stump_a/stump_a.glb",
+    "category": "stump",
+    "height_m": 1.9,
+    "footprint_radius_m": 4.59,
+    "collision": "convex",
+    "collision_radius_m": 4.02,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 0.6,
+    "sink_m": 0.96,
+    "tris": 41046
+  },
+  {
+    "id": "stump_hollow",
+    "file": "assets/env/stump_hollow/stump_hollow.glb",
+    "category": "landmark",
+    "height_m": 11.0,
+    "footprint_radius_m": 6.08,
+    "collision": "trimesh",
+    "collision_radius_m": 5.16,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 0.1,
+    "sink_m": 0.0,
+    "tris": 39200
+  },
+  {
+    "id": "rock_mossy_a",
+    "file": "assets/env/rock_mossy_a/rock_mossy_a.glb",
+    "category": "rock",
+    "height_m": 2.79,
+    "footprint_radius_m": 6.73,
+    "collision": "convex",
+    "collision_radius_m": 5.64,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 0.8,
+    "sink_m": 1.63,
+    "tris": 10996
+  },
+  {
+    "id": "rock_mossy_b",
+    "file": "assets/env/rock_mossy_b/rock_mossy_b.glb",
+    "category": "rock",
+    "height_m": 3.88,
+    "footprint_radius_m": 4.47,
+    "collision": "convex",
+    "collision_radius_m": 3.86,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 0.8,
+    "sink_m": 2.31,
+    "tris": 10589
+  },
+  {
+    "id": "boulder_big",
+    "file": "assets/env/boulder_big/boulder_big.glb",
+    "category": "landmark",
+    "height_m": 8.0,
+    "footprint_radius_m": 8.45,
+    "collision": "convex",
+    "collision_radius_m": 7.29,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 0.2,
+    "sink_m": 0.63,
+    "tris": 39200
+  },
+  {
+    "id": "cliff_rock",
+    "file": "assets/env/cliff_rock/cliff_rock.glb",
+    "category": "landmark",
+    "height_m": 16.0,
+    "footprint_radius_m": 11.79,
+    "collision": "trimesh",
+    "collision_radius_m": 9.81,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 0.1,
+    "sink_m": 0.96,
+    "tris": 29566
+  },
+  {
+    "id": "pebble_a",
+    "file": "assets/env/pebble_a/pebble_a.glb",
+    "category": "rock",
+    "height_m": 0.7,
+    "footprint_radius_m": 0.63,
+    "collision": "convex",
+    "collision_radius_m": 0.58,
+    "scale_range": [
+      0.6,
+      1.6
+    ],
+    "density_weight": 1.0,
+    "sink_m": 0.0,
+    "tris": 3920
+  },
+  {
+    "id": "fern_a",
+    "file": "assets/env/fern_a/fern_a.glb",
+    "category": "bush",
+    "height_m": 2.2,
+    "footprint_radius_m": 3.37,
+    "collision": "none",
+    "collision_radius_m": 0.0,
+    "scale_range": [
+      0.8,
+      1.3
+    ],
+    "density_weight": 1.0,
+    "sink_m": 0.0,
+    "tris": 2384
+  },
+  {
+    "id": "fern_b",
+    "file": "assets/env/fern_b/fern_b.glb",
+    "category": "bush",
+    "height_m": 1.8,
+    "footprint_radius_m": 2.53,
+    "collision": "none",
+    "collision_radius_m": 0.0,
+    "scale_range": [
+      0.8,
+      1.3
+    ],
+    "density_weight": 1.0,
+    "sink_m": 0.0,
+    "tris": 2248
+  },
+  {
+    "id": "grass_clump_a",
+    "file": "assets/env/grass_clump_a/grass_clump_a.glb",
+    "category": "grass",
+    "height_m": 1.2,
+    "footprint_radius_m": 0.85,
+    "collision": "none",
+    "collision_radius_m": 0.0,
+    "scale_range": [
+      0.7,
+      1.3
+    ],
+    "density_weight": 3.0,
+    "sink_m": 0.0,
+    "tris": 31
+  },
+  {
+    "id": "grass_clump_b",
+    "file": "assets/env/grass_clump_b/grass_clump_b.glb",
+    "category": "grass",
+    "height_m": 1.1,
+    "footprint_radius_m": 1.27,
+    "collision": "none",
+    "collision_radius_m": 0.0,
+    "scale_range": [
+      0.7,
+      1.3
+    ],
+    "density_weight": 2.0,
+    "sink_m": 0.0,
+    "tris": 32
+  },
+  {
+    "id": "grass_tall",
+    "file": "assets/env/grass_tall/grass_tall.glb",
+    "category": "grass",
+    "height_m": 2.4,
+    "footprint_radius_m": 1.06,
+    "collision": "none",
+    "collision_radius_m": 0.0,
+    "scale_range": [
+      0.7,
+      1.2
+    ],
+    "density_weight": 1.0,
+    "sink_m": 0.0,
+    "tris": 74
+  },
+  {
+    "id": "clover_a",
+    "file": "assets/env/clover_a/clover_a.glb",
+    "category": "flower",
+    "height_m": 0.34,
+    "footprint_radius_m": 1.22,
+    "collision": "none",
+    "collision_radius_m": 0.0,
+    "scale_range": [
+      0.8,
+      1.3
+    ],
+    "density_weight": 1.5,
+    "sink_m": 0.0,
+    "tris": 284
+  },
+  {
+    "id": "dandelion_a",
+    "file": "assets/env/dandelion_a/dandelion_a.glb",
+    "category": "flower",
+    "height_m": 2.2,
+    "footprint_radius_m": 0.92,
+    "collision": "none",
+    "collision_radius_m": 0.0,
+    "scale_range": [
+      0.8,
+      1.3
+    ],
+    "density_weight": 1.0,
+    "sink_m": 0.0,
+    "tris": 1468
+  },
+  {
+    "id": "dandelion_b",
+    "file": "assets/env/dandelion_b/dandelion_b.glb",
+    "category": "flower",
+    "height_m": 1.6,
+    "footprint_radius_m": 1.13,
+    "collision": "none",
+    "collision_radius_m": 0.0,
+    "scale_range": [
+      0.8,
+      1.3
+    ],
+    "density_weight": 1.0,
+    "sink_m": 0.0,
+    "tris": 636
+  },
+  {
+    "id": "daisy_patch",
+    "file": "assets/env/daisy_patch/daisy_patch.glb",
+    "category": "flower",
+    "height_m": 2.4,
+    "footprint_radius_m": 1.37,
+    "collision": "none",
+    "collision_radius_m": 0.0,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 1.0,
+    "sink_m": 0.0,
+    "tris": 2217
+  },
+  {
+    "id": "bush_a",
+    "file": "assets/env/bush_a/bush_a.glb",
+    "category": "bush",
+    "height_m": 4.5,
+    "footprint_radius_m": 2.32,
+    "collision": "none",
+    "collision_radius_m": 0.0,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 0.8,
+    "sink_m": 0.0,
+    "tris": 1972
+  },
+  {
+    "id": "mushroom_fly_agaric",
+    "file": "assets/env/mushroom_fly_agaric/mushroom_fly_agaric.glb",
+    "category": "mushroom",
+    "height_m": 4.5,
+    "footprint_radius_m": 1.86,
+    "collision": "cylinder",
+    "collision_radius_m": 0.46,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 0.6,
+    "sink_m": 0.0,
+    "tris": 5208
+  },
+  {
+    "id": "mushroom_amanita",
+    "file": "assets/env/mushroom_amanita/mushroom_amanita.glb",
+    "category": "mushroom",
+    "height_m": 3.4,
+    "footprint_radius_m": 1.34,
+    "collision": "cylinder",
+    "collision_radius_m": 0.37,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 0.6,
+    "sink_m": 0.0,
+    "tris": 4176
+  },
+  {
+    "id": "mushroom_orange",
+    "file": "assets/env/mushroom_orange/mushroom_orange.glb",
+    "category": "mushroom",
+    "height_m": 3.0,
+    "footprint_radius_m": 0.97,
+    "collision": "cylinder",
+    "collision_radius_m": 0.24,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 0.5,
+    "sink_m": 0.0,
+    "tris": 7838
+  },
+  {
+    "id": "mushroom_parasol",
+    "file": "assets/env/mushroom_parasol/mushroom_parasol.glb",
+    "category": "mushroom",
+    "height_m": 2.2,
+    "footprint_radius_m": 2.13,
+    "collision": "convex",
+    "collision_radius_m": 2.0,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 0.6,
+    "sink_m": 0.0,
+    "tris": 1882
+  },
+  {
+    "id": "acorn",
+    "file": "assets/env/acorn/acorn.glb",
+    "category": "prop",
+    "height_m": 0.38,
+    "footprint_radius_m": 0.26,
+    "collision": "convex",
+    "collision_radius_m": 0.23,
+    "scale_range": [
+      0.8,
+      1.25
+    ],
+    "density_weight": 1.0,
+    "sink_m": 0.0,
+    "tris": 4900
+  },
+  {
+    "id": "pinecone",
+    "file": "assets/env/pinecone/pinecone.glb",
+    "category": "prop",
+    "height_m": 0.6,
+    "footprint_radius_m": 0.21,
+    "collision": "convex",
+    "collision_radius_m": 0.18,
+    "scale_range": [
+      0.8,
+      1.2
+    ],
+    "density_weight": 1.0,
+    "sink_m": 0.0,
+    "tris": 5880
+  },
+  {
+    "id": "leaf_oak_brown",
+    "file": "assets/env/leaf_oak_brown/leaf_oak_brown.glb",
+    "category": "prop",
+    "height_m": 0.2,
+    "footprint_radius_m": 0.78,
+    "collision": "none",
+    "collision_radius_m": 0.0,
+    "scale_range": [
+      0.7,
+      1.4
+    ],
+    "density_weight": 2.0,
+    "sink_m": 0.0,
+    "tris": 8
+  },
+  {
+    "id": "picnic_basket",
+    "file": "assets/env/picnic_basket/picnic_basket.glb",
+    "category": "landmark",
+    "height_m": 2.6,
+    "footprint_radius_m": 1.91,
+    "collision": "trimesh",
+    "collision_radius_m": 1.84,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 0.05,
+    "sink_m": 0.0,
+    "tris": 3211
+  },
+  {
+    "id": "picnic_table",
+    "file": "assets/env/picnic_table/picnic_table.glb",
+    "category": "landmark",
+    "height_m": 3.73,
+    "footprint_radius_m": 9.39,
+    "collision": "trimesh",
+    "collision_radius_m": 8.85,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 0.05,
+    "sink_m": 0.0,
+    "tris": 10210
+  },
+  {
+    "id": "watering_can",
+    "file": "assets/env/watering_can/watering_can.glb",
+    "category": "landmark",
+    "height_m": 2.4,
+    "footprint_radius_m": 2.76,
+    "collision": "convex",
+    "collision_radius_m": 2.64,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 0.05,
+    "sink_m": 0.0,
+    "tris": 11837
+  },
+  {
+    "id": "tin_can",
+    "file": "assets/env/tin_can/tin_can.glb",
+    "category": "prop",
+    "height_m": 1.0,
+    "footprint_radius_m": 0.42,
+    "collision": "cylinder",
+    "collision_radius_m": 0.41,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 0.2,
+    "sink_m": 0.0,
+    "tris": 3520
+  },
+  {
+    "id": "garden_gnome",
+    "file": "assets/env/garden_gnome/garden_gnome.glb",
+    "category": "landmark",
+    "height_m": 3.6,
+    "footprint_radius_m": 0.98,
+    "collision": "convex",
+    "collision_radius_m": 0.76,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 0.05,
+    "sink_m": 0.0,
+    "tris": 19600
+  },
+  {
+    "id": "rubber_boot",
+    "file": "assets/env/rubber_boot/rubber_boot.glb",
+    "category": "landmark",
+    "height_m": 2.2,
+    "footprint_radius_m": 0.79,
+    "collision": "convex",
+    "collision_radius_m": 0.73,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 0.05,
+    "sink_m": 0.0,
+    "tris": 14032
+  },
+  {
+    "id": "garden_spade",
+    "file": "assets/env/garden_spade/garden_spade.glb",
+    "category": "landmark",
+    "height_m": 5.5,
+    "footprint_radius_m": 0.49,
+    "collision": "convex",
+    "collision_radius_m": 0.47,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 0.05,
+    "sink_m": 0.75,
+    "tris": 11436
+  },
+  {
+    "id": "old_tyre",
+    "file": "assets/env/old_tyre/old_tyre.glb",
+    "category": "prop",
+    "height_m": 0.9,
+    "footprint_radius_m": 1.64,
+    "collision": "trimesh",
+    "collision_radius_m": 1.64,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 0.1,
+    "sink_m": 0.0,
+    "tris": 2880
+  },
+  {
+    "id": "wooden_crate",
+    "file": "assets/env/wooden_crate/wooden_crate.glb",
+    "category": "prop",
+    "height_m": 1.75,
+    "footprint_radius_m": 2.1,
+    "collision": "convex",
+    "collision_radius_m": 2.02,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 0.2,
+    "sink_m": 0.0,
+    "tris": 6576
+  },
+  {
+    "id": "flower_pot",
+    "file": "assets/env/flower_pot/flower_pot.glb",
+    "category": "prop",
+    "height_m": 1.4,
+    "footprint_radius_m": 0.85,
+    "collision": "trimesh",
+    "collision_radius_m": 0.84,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 0.1,
+    "sink_m": 0.0,
+    "tris": 3080
+  },
+  {
+    "id": "rubber_duck",
+    "file": "assets/env/rubber_duck/rubber_duck.glb",
+    "category": "prop",
+    "height_m": 1.5,
+    "footprint_radius_m": 0.79,
+    "collision": "convex",
+    "collision_radius_m": 0.74,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 0.05,
+    "sink_m": 0.0,
+    "tris": 4288
+  },
+  {
+    "id": "apple",
+    "file": "assets/env/apple/apple.glb",
+    "category": "prop",
+    "height_m": 0.6,
+    "footprint_radius_m": 0.35,
+    "collision": "convex",
+    "collision_radius_m": 0.34,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 0.2,
+    "sink_m": 0.0,
+    "tris": 7012
+  },
+  {
+    "id": "birdhouse_stump",
+    "file": "assets/env/birdhouse_stump/birdhouse_stump.glb",
+    "category": "landmark",
+    "height_m": 7.0,
+    "footprint_radius_m": 1.96,
+    "collision": "trimesh",
+    "collision_radius_m": 1.65,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 0.05,
+    "sink_m": 0.0,
+    "tris": 19600
+  },
+  {
+    "id": "carrot_patch",
+    "file": "assets/env/carrot_patch/carrot_patch.glb",
+    "category": "landmark",
+    "height_m": 2.39,
+    "footprint_radius_m": 13.1,
+    "collision": "none",
+    "collision_radius_m": 0.0,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 0.05,
+    "sink_m": 0.0,
+    "tris": 4839
+  },
+  {
+    "id": "fence_picket",
+    "file": "assets/env/fence_picket/fence_picket.glb",
+    "category": "landmark",
+    "height_m": 5.0,
+    "footprint_radius_m": 5.1,
+    "collision": "convex",
+    "collision_radius_m": 5.1,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 0.05,
+    "sink_m": 0.0,
+    "tris": 1060
+  }
+]

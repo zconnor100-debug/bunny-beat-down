@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="CritterDef" format=3]
+
+[ext_resource type="Script" path="res://src/critters/critter_def.gd" id="1_cd"]
+
+[resource]
+script = ExtResource("1_cd")
+id = &"squirrel"
+display_name = "Squirrel"
+model_path = "res://assets/characters/squirrel/squirrel.glb"
+rig_path = "res://assets/characters/squirrel/squirrel.rig.json"
+fur_color = Color(0.95, 0.45, 0.15, 1)
+max_health = 100.0
+move_speed = 7.0
+sprint_speed = 10.2
+jump_height = 1.7
+gait = 0
+voice_pitch = 1.35
+wears_acorn_helmet = false
+spawn_weight = 1.0
+names = PackedStringArray("Nutsy", "Chitter", "Acorn Al", "Bushytail", "Sir Scamper", "Hazel")

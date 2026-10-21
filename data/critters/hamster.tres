@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="CritterDef" format=3]
+
+[ext_resource type="Script" path="res://src/critters/critter_def.gd" id="1_cd"]
+
+[resource]
+script = ExtResource("1_cd")
+id = &"hamster"
+display_name = "Hamster"
+model_path = "res://assets/characters/hamster/hamster.glb"
+rig_path = "res://assets/characters/hamster/hamster.rig.json"
+fur_color = Color(0.92, 0.75, 0.55, 1)
+max_health = 100.0
+move_speed = 6.8
+sprint_speed = 9.8
+jump_height = 1.5
+gait = 0
+voice_pitch = 1.45
+wears_acorn_helmet = false
+spawn_weight = 0.8
+names = PackedStringArray("Squeaks", "Cheeks McGee", "Nibbler", "Pudge", "Whisker Biscuit", "Hammy")

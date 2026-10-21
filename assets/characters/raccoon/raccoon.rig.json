@@ -1,0 +1,64 @@
+{
+  "id": "raccoon",
+  "display_name": "Raccoon",
+  "species": "raccoon",
+  "head_top": 1.05,
+  "eye_height": 0.76,
+  "rest_pose": "A",
+  "bones": {
+    "hips": "mixamorig_Hips",
+    "spine": "mixamorig_Spine",
+    "chest": "mixamorig_Spine2",
+    "neck": "mixamorig_Neck",
+    "head": "mixamorig_Head",
+    "jaw": null,
+    "l_upper_arm": "mixamorig_LeftArm",
+    "l_lower_arm": "mixamorig_LeftForeArm",
+    "l_hand": "mixamorig_LeftHand",
+    "r_upper_arm": "mixamorig_RightArm",
+    "r_lower_arm": "mixamorig_RightForeArm",
+    "r_hand": "mixamorig_RightHand",
+    "l_upper_leg": "mixamorig_LeftUpLeg",
+    "l_lower_leg": "mixamorig_LeftLeg",
+    "l_foot": "mixamorig_LeftFoot",
+    "r_upper_leg": "mixamorig_RightUpLeg",
+    "r_lower_leg": "mixamorig_RightLeg",
+    "r_foot": "mixamorig_RightFoot"
+  },
+  "chains": {
+    "ear_l": [
+      "mixamorig_Head_003",
+      "mixamorig_Head_005"
+    ],
+    "ear_r": [
+      "mixamorig_Head_004",
+      "mixamorig_Head_006"
+    ],
+    "tail": [
+      "T1",
+      "T2",
+      "T3"
+    ]
+  },
+  "radii": {
+    "hips": 0.1095,
+    "spine": 0.1074,
+    "chest": 0.0648,
+    "neck": 0.1102,
+    "head": 0.2656,
+    "l_upper_arm": 0.0299,
+    "l_lower_arm": 0.0508,
+    "l_hand": 0.0379,
+    "r_upper_arm": 0.0301,
+    "r_lower_arm": 0.0504,
+    "r_hand": 0.0395,
+    "l_upper_leg": 0.0386,
+    "l_lower_leg": 0.0515,
+    "l_foot": 0.0154,
+    "r_upper_leg": 0.0387,
+    "r_lower_leg": 0.0515,
+    "r_foot": 0.0172
+  },
+  "animations": [],
+  "notes": "Chibi proportions: the head is about half the body height, arms are short with mitten hands (no finger bones). Mixamo-style T-pose rig; the ear chains are the source's mixamorig_Head_003/_005 (left) and mixamorig_Head_004/_006 (right) bones. Feet are barely skinned to the foot bone (the toe bone carries the paw). Facing +Z (glTF/Godot), +Y up, metres; soles at y=0, centred between the feet. Top of skull at y=1.050 (ears/hats excluded), crown point (x -0.002, y 1.050, z -0.062); head width 0.817 m, depth 0.582 m; head bone origin at (x -0.002, y 0.643, z -0.008). Rest pose A (upper arm 29 deg below horizontal). 29 bones, 5688 triangles. Bone local axes follow Blender's convention (+Y along each bone towards its child)."
+}

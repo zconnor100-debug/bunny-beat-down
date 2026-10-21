@@ -1,0 +1,787 @@
+[
+  {
+    "asset": "Oak trees pack (17var, LODs, seasons, gameready)",
+    "author": "LOLIPOP",
+    "author_url": "https://sketchfab.com/lolipop_1707",
+    "source_url": "https://sketchfab.com/3d-models/oak-trees-pack-17var-lods-seasons-gameready-a5e4e64f9f1d4089bdcc6170a9333393",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "tree_oak_a: kept sub-object(s) Large_oak_tree_001_LOD0_Bark_Mat_0, Large_oak_tree_001_LOD0_Cluster_Mat_0; rescaled x3.6206 to critter-world size, grounded and centred; pruned for critter scale: removed 0 root/low-branch parts below 6.5 m and 1 foliage cards below 7.5 m (or orphaned); re-centred on the trunk (+0.14, -0.11 m) and re-grounded (+0.00 m); material 'Bark_Mat' retextured with Poly Haven 'jolcham_oak_bark_01' (1024x2048, resampled to the original UV aspect); foliage materials converted to alpha-clip (cut-out) with bled RGBA albedo; textures re-encoded <= 2048px (JPEG colour/ORM, PNG normals) | tree_oak_b: kept sub-object(s) Big_oak_tree__004_LOD0_Bark_Mat_0, Big_oak_tree__004_LOD0_Cluster_Mat_0; rescaled x3.6319 to critter-world size, grounded and centred; pruned for critter scale: removed 1 root/low-branch parts below 6.5 m and 0 foliage cards below 7.5 m (or orphaned); re-centred on the trunk (-0.73, -0.04 m) and re-grounded (+0.00 m); material 'Bark_Mat' retextured with Poly Haven 'jolcham_oak_bark_01' (1024x2048, resampled to the original UV aspect); foliage materials converted to alpha-clip (cut-out) with bled RGBA albedo; textures re-encoded <= 2048px (JPEG colour/ORM, PNG normals) | tree_oak_young: kept sub-object(s) Medium_oak_tree__003_LOD0_Bark_Mat_0, Medium_oak_tree__003_LOD0_Cluster_Mat_0; rescaled x3.3106 to critter-world size, grounded and centred; pruned for critter scale: removed 0 root/low-branch parts below 6.5 m and 12 foliage cards below 7.5 m (or orphaned); re-centred on the trunk (-0.04, -0.21 m) and re-grounded (+0.00 m); material 'Bark_Mat' retextured with Poly Haven 'jolcham_oak_bark_01' (1024x2048, resampled to the original UV aspect); foliage materials converted to alpha-clip (cut-out) with bled RGBA albedo; textures re-encoded <= 2048px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Environment scenery: giant oak tree (tree_oak_a), giant spreading oak tree (tree_oak_b), young oak tree (tree_oak_young)",
+    "files": [
+      "assets/env/tree_oak_a/tree_oak_a.glb",
+      "assets/env/tree_oak_b/tree_oak_b.glb",
+      "assets/env/tree_oak_young/tree_oak_young.glb"
+    ]
+  },
+  {
+    "asset": "Jolcham Oak Bark 01 (Poly Haven texture)",
+    "author": "Charlotte Baglioni",
+    "author_url": "https://polyhaven.com/all?a=Charlotte%20Baglioni",
+    "source_url": "https://polyhaven.com/a/jolcham_oak_bark_01",
+    "license": "CC0 1.0",
+    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "changes": "Resampled to 1024x2048 (normal 1024x2048) to fit the model's bark UV layout; AO/roughness packed into one JPEG | Resampled to 1024x2048 (normal 1024x2048) to fit the model's bark UV layout; AO/roughness packed into one JPEG | Resampled to 1024x2048 (normal 1024x2048) to fit the model's bark UV layout; AO/roughness packed into one JPEG",
+    "used_for": "Bark material of giant oak tree (tree_oak_a); Bark material of giant spreading oak tree (tree_oak_b); Bark material of young oak tree (tree_oak_young)",
+    "files": [
+      "assets/env/tree_oak_a/tree_oak_a.glb",
+      "assets/env/tree_oak_b/tree_oak_b.glb",
+      "assets/env/tree_oak_young/tree_oak_young.glb"
+    ]
+  },
+  {
+    "asset": "Pine trees pack (lowpoly, game ready, LODs)",
+    "author": "LOLIPOP",
+    "author_url": "https://sketchfab.com/lolipop_1707",
+    "source_url": "https://sketchfab.com/3d-models/pine-trees-pack-lowpoly-game-ready-lods-e1e9c07b8e2e445c943fec660beefba2",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "tree_pine_a: kept sub-object(s) Pine_large_1_LOD0_Bark_Mat_0, Pine_large_1_LOD0_Clusters_Mat_0; rescaled x3.6148 to critter-world size, grounded and centred; pruned for critter scale: removed 12 root/low-branch parts below 6.5 m and 0 foliage cards below 7.5 m (or orphaned); re-centred on the trunk (-0.10, +0.50 m) and re-grounded (-1.21 m); material 'Bark_Mat' retextured with Poly Haven 'pine_bark' (1024x2048, resampled to the original UV aspect); foliage materials converted to alpha-clip (cut-out) with bled RGBA albedo; textures re-encoded <= 2048px (JPEG colour/ORM, PNG normals) | tree_pine_b: kept sub-object(s) Pine_big_3_LOD0_Bark_Mat_0, Pine_big_3_LOD0_Clusters_Mat_0; rescaled x3.6795 to critter-world size, grounded and centred; pruned for critter scale: removed 12 root/low-branch parts below 6.5 m and 0 foliage cards below 7.5 m (or orphaned); re-centred on the trunk (+0.72, +0.28 m) and re-grounded (-2.26 m); material 'Bark_Mat' retextured with Poly Haven 'pine_bark' (1024x2048, resampled to the original UV aspect); foliage materials converted to alpha-clip (cut-out) with bled RGBA albedo; textures re-encoded <= 2048px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Environment scenery: giant Scots pine (tree_pine_a), tall pine (tree_pine_b)",
+    "files": [
+      "assets/env/tree_pine_a/tree_pine_a.glb",
+      "assets/env/tree_pine_b/tree_pine_b.glb"
+    ]
+  },
+  {
+    "asset": "Pine Bark (Poly Haven texture)",
+    "author": "Dimitrios Savva",
+    "author_url": "https://polyhaven.com/all?a=Dimitrios%20Savva",
+    "source_url": "https://polyhaven.com/a/pine_bark",
+    "license": "CC0 1.0",
+    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "changes": "Resampled to 1024x2048 (normal 1024x2048) to fit the model's bark UV layout; AO/roughness packed into one JPEG | Resampled to 1024x2048 (normal 1024x2048) to fit the model's bark UV layout; AO/roughness packed into one JPEG",
+    "used_for": "Bark material of giant Scots pine (tree_pine_a); Bark material of tall pine (tree_pine_b)",
+    "files": [
+      "assets/env/tree_pine_a/tree_pine_a.glb",
+      "assets/env/tree_pine_b/tree_pine_b.glb"
+    ]
+  },
+  {
+    "asset": "Realistic fir trees pack (LODS, gameready)",
+    "author": "LOLIPOP",
+    "author_url": "https://sketchfab.com/lolipop_1707",
+    "source_url": "https://sketchfab.com/3d-models/realistic-fir-trees-pack-lods-gameready-f58e8b6d733e4b0586e5b7db847b89e7",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "tree_fir_a: kept sub-object(s) Christmas tree_LOD0_Bark_Mat_0, Christmas tree_LOD0_Brunches_Mat_0; rescaled x6.8869 to critter-world size, grounded and centred; pruned for critter scale: removed 16 root/low-branch parts below 6.5 m and 99 foliage cards below 7.5 m (or orphaned); re-centred on the trunk (+1.35, -1.12 m) and re-grounded (+0.00 m); material 'Bark_Mat' retextured with Poly Haven 'bark_willow_02' (1024x2048, resampled to the original UV aspect); foliage materials converted to alpha-clip (cut-out) with bled RGBA albedo; textures re-encoded <= 2048px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Environment scenery: fir tree (tree_fir_a)",
+    "files": [
+      "assets/env/tree_fir_a/tree_fir_a.glb"
+    ]
+  },
+  {
+    "asset": "Bark Willow 02 (Poly Haven texture)",
+    "author": "Charlotte Baglioni",
+    "author_url": "https://polyhaven.com/all?a=Charlotte%20Baglioni",
+    "source_url": "https://polyhaven.com/a/bark_willow_02",
+    "license": "CC0 1.0",
+    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "changes": "Resampled to 1024x2048 (normal 1024x2048) to fit the model's bark UV layout; AO/roughness packed into one JPEG",
+    "used_for": "Bark material of fir tree (tree_fir_a)",
+    "files": [
+      "assets/env/tree_fir_a/tree_fir_a.glb"
+    ]
+  },
+  {
+    "asset": "Five Birch trees pack (lowpoly, LODs)",
+    "author": "LOLIPOP",
+    "author_url": "https://sketchfab.com/lolipop_1707",
+    "source_url": "https://sketchfab.com/3d-models/five-birch-trees-pack-lowpoly-lods-08fe5117138e4fdaa7ca440ef1201e07",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "tree_birch_a: kept sub-object(s) Birch_Birch_Atlas_0, Birch_Birch_bark_0; rescaled x5.2312 to critter-world size, grounded and centred; pruned for critter scale: removed 0 root/low-branch parts below 6.5 m and 3 foliage cards below 7.5 m (or orphaned); re-centred on the trunk (-0.04, +0.03 m) and re-grounded (+0.00 m); foliage materials converted to alpha-clip (cut-out) with bled RGBA albedo; textures re-encoded <= 1024px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Environment scenery: silver birch (tree_birch_a)",
+    "files": [
+      "assets/env/tree_birch_a/tree_birch_a.glb"
+    ]
+  },
+  {
+    "asset": "Hollow fallen log you can walk through (procedural mesh)",
+    "author": "Bunny Beat Down project",
+    "author_url": "",
+    "source_url": "tools/env/hollow_log.py",
+    "license": "MIT (project)",
+    "license_url": "https://opensource.org/licenses/MIT",
+    "changes": "Original work: mesh generated by a Blender script; textures credited separately",
+    "used_for": "Environment scenery: hollow fallen log you can walk through (log_hollow)",
+    "files": [
+      "assets/env/log_hollow/log_hollow.glb"
+    ]
+  },
+  {
+    "asset": "Bark Brown 02 (Poly Haven texture)",
+    "author": "Rob Tuytel",
+    "author_url": "https://polyhaven.com/all?a=Rob%20Tuytel",
+    "source_url": "https://polyhaven.com/a/bark_brown_02",
+    "license": "CC0 1.0",
+    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "changes": "Re-encoded to 1024px (JPEG colour, PNG normal, packed AO/roughness JPEG) and embedded in the GLB | Downscaled to 1024px (AO/height 1024px), normal map converted to 8-bit PNG (OpenGL convention), greyscale maps re-encoded as JPEG",
+    "used_for": "Surface material of hollow fallen log you can walk through (log_hollow); Terrain texture layer 'bark' (generic tree bark for custom meshes/shaders)",
+    "files": [
+      "assets/env/log_hollow/log_hollow.glb",
+      "assets/textures/bark/albedo.jpg",
+      "assets/textures/bark/ao.jpg",
+      "assets/textures/bark/height.jpg",
+      "assets/textures/bark/normal.png",
+      "assets/textures/bark/roughness.jpg"
+    ]
+  },
+  {
+    "asset": "Rough Wood (Poly Haven texture)",
+    "author": "Rob Tuytel",
+    "author_url": "https://polyhaven.com/all?a=Rob%20Tuytel",
+    "source_url": "https://polyhaven.com/a/rough_wood",
+    "license": "CC0 1.0",
+    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "changes": "Re-encoded to 1024px (JPEG colour, PNG normal, packed AO/roughness JPEG) and embedded in the GLB",
+    "used_for": "Surface material of hollow fallen log you can walk through (log_hollow)",
+    "files": [
+      "assets/env/log_hollow/log_hollow.glb"
+    ]
+  },
+  {
+    "asset": "Dead Tree Trunk (Poly Haven model)",
+    "author": "Rob Tuytel",
+    "author_url": "https://polyhaven.com/all?a=Rob%20Tuytel",
+    "source_url": "https://polyhaven.com/a/dead_tree_trunk",
+    "license": "CC0 1.0",
+    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "changes": "log_fallen_a: rescaled x5 to critter-world size, grounded and centred; decimated 101802 -> 39200 triangles (seams welded first, no cracks); normal map re-baked from the full-detail source onto the decimated mesh; textures re-encoded <= 2048px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Environment scenery: fallen dead trunk (log_fallen_a)",
+    "files": [
+      "assets/env/log_fallen_a/log_fallen_a.glb"
+    ]
+  },
+  {
+    "asset": "Dead Tree Trunk 02 (Poly Haven model)",
+    "author": "Jenelle van Heerden, Rico Cilliers",
+    "author_url": "https://polyhaven.com/all?a=Jenelle%20van%20Heerden",
+    "source_url": "https://polyhaven.com/a/dead_tree_trunk_02",
+    "license": "CC0 1.0",
+    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "changes": "log_dead_big: rescaled x5 to critter-world size, grounded and centred; decimated 83128 -> 39200 triangles (seams welded first, no cracks); normal map re-baked from the full-detail source onto the decimated mesh; textures re-encoded <= 2048px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Environment scenery: big fallen trunk with branches (log_dead_big)",
+    "files": [
+      "assets/env/log_dead_big/log_dead_big.glb"
+    ]
+  },
+  {
+    "asset": "Mossy Log MEDPOLY",
+    "author": "EFX",
+    "author_url": "https://sketchfab.com/evan4129",
+    "source_url": "https://sketchfab.com/3d-models/mossy-log-medpoly-55bb84704c42412f809c5f2a93a00bc4",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "log_mossy: rescaled x5.3068 to critter-world size, grounded and centred; decimated 23020 -> 19600 triangles (seams welded first, no cracks); textures re-encoded <= 1024px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Environment scenery: mossy fallen log (log_mossy)",
+    "files": [
+      "assets/env/log_mossy/log_mossy.glb"
+    ]
+  },
+  {
+    "asset": "Tree Stump 01 (Poly Haven model)",
+    "author": "Rob Tuytel",
+    "author_url": "https://polyhaven.com/all?a=Rob%20Tuytel",
+    "source_url": "https://polyhaven.com/a/tree_stump_01",
+    "license": "CC0 1.0",
+    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "changes": "stump_a: rescaled x5 to critter-world size, grounded and centred; textures re-encoded <= 2048px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Environment scenery: tree stump (stump_a)",
+    "files": [
+      "assets/env/stump_a/stump_a.glb"
+    ]
+  },
+  {
+    "asset": "Hollowed Tree Trunk",
+    "author": "Terrie Simmons-Ehrhardt",
+    "author_url": "https://sketchfab.com/terrielsimmons",
+    "source_url": "https://sketchfab.com/3d-models/hollowed-tree-trunk-c727bca0d62f41b48fd4af28bd5a4502",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "stump_hollow: rescaled x5.056 to critter-world size, grounded and centred; unlit material 'material0000' rebuilt as lit PBR (roughness 0.9); unlit material 'material0001' rebuilt as lit PBR (roughness 0.9); unlit material 'material0002' rebuilt as lit PBR (roughness 0.9); unlit material 'material0003' rebuilt as lit PBR (roughness 0.9); unlit material 'material0004' rebuilt as lit PBR (roughness 0.9); unlit material 'material0005' rebuilt as lit PBR (roughness 0.9); decimated 284775 -> 39200 triangles (seams welded first, no cracks); textures re-encoded <= 1024px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Environment scenery: hollow tree stump you can walk into (stump_hollow)",
+    "files": [
+      "assets/env/stump_hollow/stump_hollow.glb"
+    ]
+  },
+  {
+    "asset": "Rock Moss Set 01 (Poly Haven model)",
+    "author": "Kless Gyzen",
+    "author_url": "https://polyhaven.com/all?a=Kless%20Gyzen",
+    "source_url": "https://polyhaven.com/a/rock_moss_set_01",
+    "license": "CC0 1.0",
+    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "changes": "rock_mossy_a: kept sub-object(s) rock_moss_set_01_rock02; rescaled x3.5 to critter-world size, grounded and centred; texture atlas cropped to the UV region this object uses (34% x 31%); textures re-encoded <= 2048px (JPEG colour/ORM, PNG normals) | rock_mossy_b: kept sub-object(s) rock_moss_set_01_rock04; rescaled x3.5 to critter-world size, grounded and centred; texture atlas cropped to the UV region this object uses (30% x 34%); textures re-encoded <= 2048px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Environment scenery: mossy boulder (rock_mossy_a), mossy boulder (rock_mossy_b)",
+    "files": [
+      "assets/env/rock_mossy_a/rock_mossy_a.glb",
+      "assets/env/rock_mossy_b/rock_mossy_b.glb"
+    ]
+  },
+  {
+    "asset": "Boulder 01 (Poly Haven model)",
+    "author": "Rico Cilliers",
+    "author_url": "https://polyhaven.com/all?a=Rico%20Cilliers",
+    "source_url": "https://polyhaven.com/a/boulder_01",
+    "license": "CC0 1.0",
+    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "changes": "boulder_big: rescaled x8.6004 to critter-world size, grounded and centred; decimated 66122 -> 39200 triangles (seams welded first, no cracks); normal map re-baked from the full-detail source onto the decimated mesh; textures re-encoded <= 2048px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Environment scenery: giant boulder (boulder_big)",
+    "files": [
+      "assets/env/boulder_big/boulder_big.glb"
+    ]
+  },
+  {
+    "asset": "Rock Face 02 (Poly Haven model)",
+    "author": "Dario Barresi, Rico Cilliers",
+    "author_url": "https://polyhaven.com/all?a=Dario%20Barresi",
+    "source_url": "https://polyhaven.com/a/rock_face_02",
+    "license": "CC0 1.0",
+    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "changes": "cliff_rock: rescaled x6.86 to critter-world size, grounded and centred; textures re-encoded <= 2048px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Environment scenery: rock outcrop / cliff face (cliff_rock)",
+    "files": [
+      "assets/env/cliff_rock/cliff_rock.glb"
+    ]
+  },
+  {
+    "asset": "Namaqualand Stones 01 (Poly Haven model)",
+    "author": "Greg Zaal, Jenelle van Heerden",
+    "author_url": "https://polyhaven.com/all?a=Greg%20Zaal",
+    "source_url": "https://polyhaven.com/a/namaqualand_stones_01",
+    "license": "CC0 1.0",
+    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "changes": "pebble_a: kept sub-object(s) namaqualand_stones_01_b; rescaled x8.3367 to critter-world size, grounded and centred; decimated 9086 -> 3920 triangles (seams welded first, no cracks); normal map re-baked from the full-detail source onto the decimated mesh; textures re-encoded <= 512px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Environment scenery: pebble (boulder-sized for critters) (pebble_a)",
+    "files": [
+      "assets/env/pebble_a/pebble_a.glb"
+    ]
+  },
+  {
+    "asset": "Fern 02 (Poly Haven model)",
+    "author": "Rob Tuytel, Rico Cilliers",
+    "author_url": "https://polyhaven.com/all?a=Rob%20Tuytel",
+    "source_url": "https://polyhaven.com/a/fern_02",
+    "license": "CC0 1.0",
+    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "changes": "fern_a: kept sub-object(s) fern_02_b; rescaled x5.1439 to critter-world size, grounded and centred; foliage materials converted to alpha-clip (cut-out) with bled RGBA albedo; textures re-encoded <= 1024px (JPEG colour/ORM, PNG normals) | fern_b: kept sub-object(s) fern_02_c; rescaled x5.1573 to critter-world size, grounded and centred; foliage materials converted to alpha-clip (cut-out) with bled RGBA albedo; textures re-encoded <= 1024px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Environment scenery: fern (fern_a), fern (fern_b)",
+    "files": [
+      "assets/env/fern_a/fern_a.glb",
+      "assets/env/fern_b/fern_b.glb"
+    ]
+  },
+  {
+    "asset": "Grass pack (lowpoly, game-ready)",
+    "author": "LOLIPOP",
+    "author_url": "https://sketchfab.com/lolipop_1707",
+    "source_url": "https://sketchfab.com/3d-models/grass-pack-lowpoly-game-ready-422f42f618d342c6958b02613dc57403",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "grass_clump_a: kept sub-object(s) Grass main fresh_Grass_Mat_0; rescaled x4.6696 to critter-world size, grounded and centred; foliage materials converted to alpha-clip (cut-out) with bled RGBA albedo; textures re-encoded <= 1024px (JPEG colour/ORM, PNG normals) | grass_clump_b: kept sub-object(s) Grass main aged_Grass_Mat_0; rescaled x4.6381 to critter-world size, grounded and centred; foliage materials converted to alpha-clip (cut-out) with bled RGBA albedo; textures re-encoded <= 1024px (JPEG colour/ORM, PNG normals) | grass_tall: kept sub-object(s) Grass tall high_Tall_grass_Mat_0; rescaled x2.4096 to critter-world size, grounded and centred; foliage materials converted to alpha-clip (cut-out) with bled RGBA albedo; textures re-encoded <= 1024px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Environment scenery: grass clump (grass_clump_a), grass clump (grass_clump_b), tall seeding grass (grass_tall)",
+    "files": [
+      "assets/env/grass_clump_a/grass_clump_a.glb",
+      "assets/env/grass_clump_b/grass_clump_b.glb",
+      "assets/env/grass_tall/grass_tall.glb"
+    ]
+  },
+  {
+    "asset": "Clover (game ready, lowpoly)",
+    "author": "LOLIPOP",
+    "author_url": "https://sketchfab.com/lolipop_1707",
+    "source_url": "https://sketchfab.com/3d-models/clover-game-ready-lowpoly-4f637654bdea448caa3e9503caca338d",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "clover_a: kept sub-object(s) clover_2_flower_LOD0_Clover_material_0; rescaled x5 to critter-world size, grounded and centred; foliage materials converted to alpha-clip (cut-out) with bled RGBA albedo; textures re-encoded <= 1024px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Environment scenery: white clover patch (clover_a)",
+    "files": [
+      "assets/env/clover_a/clover_a.glb"
+    ]
+  },
+  {
+    "asset": "Dandelion Blossom Flower (game ready asset)",
+    "author": "Aparicio Silva 3D",
+    "author_url": "https://sketchfab.com/apariciosilva3D",
+    "source_url": "https://sketchfab.com/3d-models/dandelion-blossom-flower-game-ready-asset-c09331338f7745a980865098c4c7da6e",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "dandelion_a: kept sub-object(s) Object_8; rescaled x9.1769 to critter-world size, grounded and centred; foliage materials converted to alpha-clip (cut-out) with bled RGBA albedo; textures re-encoded <= 1024px (JPEG colour/ORM, PNG normals) | dandelion_b: kept sub-object(s) Object_4; rescaled x7.9497 to critter-world size, grounded and centred; foliage materials converted to alpha-clip (cut-out) with bled RGBA albedo; textures re-encoded <= 1024px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Environment scenery: dandelion (dandelion_a), dandelion (dandelion_b)",
+    "files": [
+      "assets/env/dandelion_a/dandelion_a.glb",
+      "assets/env/dandelion_b/dandelion_b.glb"
+    ]
+  },
+  {
+    "asset": "Daisy models pack (realistic, optimized)",
+    "author": "LOLIPOP",
+    "author_url": "https://sketchfab.com/lolipop_1707",
+    "source_url": "https://sketchfab.com/3d-models/daisy-models-pack-realistic-optimized-0748471f99f2416a8b66b522c293720f",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "daisy_patch: kept sub-object(s) Daisy_patch_big_1_LOD0_Daisy_main_mat_0; rescaled x3.468 to critter-world size, grounded and centred; foliage materials converted to alpha-clip (cut-out) with bled RGBA albedo; textures re-encoded <= 512px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Environment scenery: daisy patch (daisy_patch)",
+    "files": [
+      "assets/env/daisy_patch/daisy_patch.glb"
+    ]
+  },
+  {
+    "asset": "Bush models pack (gameready, LODs)",
+    "author": "LOLIPOP",
+    "author_url": "https://sketchfab.com/lolipop_1707",
+    "source_url": "https://sketchfab.com/3d-models/bush-models-pack-gameready-lods-f2d9ffd3e6a94cf0b9464ccd66a4c2f8",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "bush_a: kept sub-object(s) Bush_big_001_LOD0_Bark_material_0, Bush_big_001_LOD0_Brunch_material_0; rescaled x2.7076 to critter-world size, grounded and centred; foliage materials converted to alpha-clip (cut-out) with bled RGBA albedo; textures re-encoded <= 1024px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Environment scenery: leafy bush (bush_a)",
+    "files": [
+      "assets/env/bush_a/bush_a.glb"
+    ]
+  },
+  {
+    "asset": "Fly Agaric Mushroom",
+    "author": "Timothy Hsu",
+    "author_url": "https://sketchfab.com/timothyhsu",
+    "source_url": "https://sketchfab.com/3d-models/fly-agaric-mushroom-d6c3876f091b4de49a38553a177bab0f",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "mushroom_fly_agaric: rescaled x0.0353 to critter-world size, grounded and centred; textures re-encoded <= 1024px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Environment scenery: giant fly agaric toadstool (mushroom_fly_agaric)",
+    "files": [
+      "assets/env/mushroom_fly_agaric/mushroom_fly_agaric.glb"
+    ]
+  },
+  {
+    "asset": "Amanita muscaria",
+    "author": "Tadeas Kribek",
+    "author_url": "https://sketchfab.com/tadeas.kribek",
+    "source_url": "https://sketchfab.com/3d-models/amanita-muscaria-8922dfce2e1641e497087b38650df9d2",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "mushroom_amanita: rescaled x3.9193 to critter-world size, grounded and centred; textures re-encoded <= 1024px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Environment scenery: fly agaric (mushroom_amanita)",
+    "files": [
+      "assets/env/mushroom_amanita/mushroom_amanita.glb"
+    ]
+  },
+  {
+    "asset": "Amanita muscaria mushroom",
+    "author": "JevinJones",
+    "author_url": "https://sketchfab.com/JevinJ",
+    "source_url": "https://sketchfab.com/3d-models/amanita-muscaria-mushroom-e5964d20519f41afba07e01cf1aa96a4",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "mushroom_orange: rescaled x0.4156 to critter-world size, grounded and centred; unlit material 'AmanitaMuscaria_rt' rebuilt as lit PBR (roughness 0.9); decimated 14844 -> 7838 triangles (seams welded first, no cracks); normal map re-baked from the full-detail source onto the decimated mesh; textures re-encoded <= 1024px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Environment scenery: orange amanita (mushroom_orange)",
+    "files": [
+      "assets/env/mushroom_orange/mushroom_orange.glb"
+    ]
+  },
+  {
+    "asset": "Mushroom Photoscan LOWPOLY",
+    "author": "EFX",
+    "author_url": "https://sketchfab.com/evan4129",
+    "source_url": "https://sketchfab.com/3d-models/mushroom-photoscan-lowpoly-7f4d1101ba644503a54dba86e05513a2",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "mushroom_parasol: rescaled x3.3939 to critter-world size, grounded and centred; textures re-encoded <= 1024px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Environment scenery: parasol mushroom (mushroom_parasol)",
+    "files": [
+      "assets/env/mushroom_parasol/mushroom_parasol.glb"
+    ]
+  },
+  {
+    "asset": "Swamp White Oak Acorn",
+    "author": "VT Indigenous Community Garden Scans",
+    "author_url": "https://sketchfab.com/vtIndigenousCommunityGarden",
+    "source_url": "https://sketchfab.com/3d-models/swamp-white-oak-acorn-d227dff7581e4cde968cced0c0126962",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "acorn: rescaled x24.9362 to critter-world size, grounded and centred; decimated 62064 -> 4900 triangles (seams welded first, no cracks); normal map re-baked from the full-detail source onto the decimated mesh; removed baked emission map; textures re-encoded <= 1024px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Environment scenery: fallen acorn (acorn)",
+    "files": [
+      "assets/env/acorn/acorn.glb"
+    ]
+  },
+  {
+    "asset": "Pine cone",
+    "author": "tessie675",
+    "author_url": "https://sketchfab.com/tessie675",
+    "source_url": "https://sketchfab.com/3d-models/pine-cone-35ef97c025e245d190b72a4419d5689b",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "pinecone: rescaled x0.0158 to critter-world size, grounded and centred; decimated 49966 -> 5880 triangles (seams welded first, no cracks); normal map re-baked from the full-detail source onto the decimated mesh; textures re-encoded <= 1024px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Environment scenery: fallen pine cone (pinecone)",
+    "files": [
+      "assets/env/pinecone/pinecone.glb"
+    ]
+  },
+  {
+    "asset": "Realistic HD Red oak leaf litter (35/36)",
+    "author": "PlantCatalog",
+    "author_url": "https://sketchfab.com/PlantCatalog",
+    "source_url": "https://sketchfab.com/3d-models/realistic-hd-red-oak-leaf-litter-3536-63728d41371d41738734f77d61fd745d",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "leaf_oak_brown: rescaled x5 to critter-world size, grounded and centred; foliage materials converted to alpha-clip (cut-out) with bled RGBA albedo; textures re-encoded <= 1024px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Environment scenery: fallen oak leaf (leaf_oak_brown)",
+    "files": [
+      "assets/env/leaf_oak_brown/leaf_oak_brown.glb"
+    ]
+  },
+  {
+    "asset": "Wicker Basket (lowpoly)",
+    "author": "manic_panic",
+    "author_url": "https://sketchfab.com/manic_panic",
+    "source_url": "https://sketchfab.com/3d-models/wicker-basket-lowpoly-92dd13b5d8154d779713bdfcf4497b96",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "picnic_basket: rescaled x5.3716 to critter-world size, grounded and centred; textures re-encoded <= 1024px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Environment scenery: giant open picnic basket (picnic_basket)",
+    "files": [
+      "assets/env/picnic_basket/picnic_basket.glb"
+    ]
+  },
+  {
+    "asset": "Wooden Picnic Table (Poly Haven model)",
+    "author": "Ulan Cabanilla",
+    "author_url": "https://polyhaven.com/all?a=Ulan%20Cabanilla",
+    "source_url": "https://polyhaven.com/a/wooden_picnic_table",
+    "license": "CC0 1.0",
+    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "changes": "picnic_table: rescaled x5 to critter-world size, grounded and centred; textures re-encoded <= 2048px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Environment scenery: giant picnic table (picnic_table)",
+    "files": [
+      "assets/env/picnic_table/picnic_table.glb"
+    ]
+  },
+  {
+    "asset": "Watering Can Metal 01 (Poly Haven model)",
+    "author": "Charles Nderitu",
+    "author_url": "https://polyhaven.com/all?a=Charles%20Nderitu",
+    "source_url": "https://polyhaven.com/a/watering_can_metal_01",
+    "license": "CC0 1.0",
+    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "changes": "watering_can: rescaled x12.194 to critter-world size, grounded and centred; textures re-encoded <= 1024px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Environment scenery: giant watering can (watering_can)",
+    "files": [
+      "assets/env/watering_can/watering_can.glb"
+    ]
+  },
+  {
+    "asset": "Can Rusted (Poly Haven model)",
+    "author": "Rahul Chaudhary",
+    "author_url": "https://polyhaven.com/all?a=Rahul%20Chaudhary",
+    "source_url": "https://polyhaven.com/a/can_rusted",
+    "license": "CC0 1.0",
+    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "changes": "tin_can: rescaled x6.606 to critter-world size, grounded and centred; textures re-encoded <= 1024px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Environment scenery: rusty tin can (tin_can)",
+    "files": [
+      "assets/env/tin_can/tin_can.glb"
+    ]
+  },
+  {
+    "asset": "Garden Gnome (Poly Haven model)",
+    "author": "Bhargav Kubal",
+    "author_url": "https://polyhaven.com/all?a=Bhargav%20Kubal",
+    "source_url": "https://polyhaven.com/a/garden_gnome",
+    "license": "CC0 1.0",
+    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "changes": "garden_gnome: rescaled x6.0092 to critter-world size, grounded and centred; decimated 28858 -> 19600 triangles (seams welded first, no cracks); textures re-encoded <= 1024px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Environment scenery: giant garden gnome statue (garden_gnome)",
+    "files": [
+      "assets/env/garden_gnome/garden_gnome.glb"
+    ]
+  },
+  {
+    "asset": "Rubber Boots (Poly Haven model)",
+    "author": "L",
+    "author_url": "https://polyhaven.com/all?a=L",
+    "source_url": "https://polyhaven.com/a/rubber_boots",
+    "license": "CC0 1.0",
+    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "changes": "rubber_boot: kept sub-object(s) rubber_boots_dirty_l; rescaled x5.9018 to critter-world size, grounded and centred; textures re-encoded <= 1024px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Environment scenery: lost rubber boot (rubber_boot)",
+    "files": [
+      "assets/env/rubber_boot/rubber_boot.glb"
+    ]
+  },
+  {
+    "asset": "Rusted Spade 01 (Poly Haven model)",
+    "author": "Blemonade",
+    "author_url": "https://polyhaven.com/all?a=Blemonade",
+    "source_url": "https://polyhaven.com/a/rusted_spade_01",
+    "license": "CC0 1.0",
+    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "changes": "garden_spade: rescaled x5.6771 to critter-world size, grounded and centred; textures re-encoded <= 1024px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Environment scenery: giant garden spade stuck in the ground (garden_spade)",
+    "files": [
+      "assets/env/garden_spade/garden_spade.glb"
+    ]
+  },
+  {
+    "asset": "Old Tyre (Poly Haven model)",
+    "author": "MP",
+    "author_url": "https://polyhaven.com/all?a=MP",
+    "source_url": "https://polyhaven.com/a/old_tyre",
+    "license": "CC0 1.0",
+    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "changes": "old_tyre: rescaled x5.4545 to critter-world size, grounded and centred; rotated [90, 0, 0] deg; textures re-encoded <= 1024px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Environment scenery: old tyre lying on the ground (old_tyre)",
+    "files": [
+      "assets/env/old_tyre/old_tyre.glb"
+    ]
+  },
+  {
+    "asset": "Wooden Crate 01 (Poly Haven model)",
+    "author": "James Ray Cock",
+    "author_url": "https://polyhaven.com/all?a=James%20Ray%20Cock",
+    "source_url": "https://polyhaven.com/a/wooden_crate_01",
+    "license": "CC0 1.0",
+    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "changes": "wooden_crate: rescaled x5 to critter-world size, grounded and centred; textures re-encoded <= 1024px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Environment scenery: wooden crate (wooden_crate)",
+    "files": [
+      "assets/env/wooden_crate/wooden_crate.glb"
+    ]
+  },
+  {
+    "asset": "Planter Pot Clay (Poly Haven model)",
+    "author": "Amal Kumar",
+    "author_url": "https://polyhaven.com/all?a=Amal%20Kumar",
+    "source_url": "https://polyhaven.com/a/planter_pot_clay",
+    "license": "CC0 1.0",
+    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "changes": "flower_pot: rescaled x6.31 to critter-world size, grounded and centred; textures re-encoded <= 1024px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Environment scenery: clay flower pot (flower_pot)",
+    "files": [
+      "assets/env/flower_pot/flower_pot.glb"
+    ]
+  },
+  {
+    "asset": "Rubber Duck Toy (Poly Haven model)",
+    "author": "Plat251",
+    "author_url": "https://polyhaven.com/all?a=Plat251",
+    "source_url": "https://polyhaven.com/a/rubber_duck_toy",
+    "license": "CC0 1.0",
+    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "changes": "rubber_duck: rescaled x5.2535 to critter-world size, grounded and centred; textures re-encoded <= 1024px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Environment scenery: rubber duck (pond decoration) (rubber_duck)",
+    "files": [
+      "assets/env/rubber_duck/rubber_duck.glb"
+    ]
+  },
+  {
+    "asset": "Food Apple 01 (Poly Haven model)",
+    "author": "Oliver Harries",
+    "author_url": "https://polyhaven.com/all?a=Oliver%20Harries",
+    "source_url": "https://polyhaven.com/a/food_apple_01",
+    "license": "CC0 1.0",
+    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "changes": "apple: rescaled x7.0266 to critter-world size, grounded and centred; textures re-encoded <= 1024px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Environment scenery: fallen apple (apple)",
+    "files": [
+      "assets/env/apple/apple.glb"
+    ]
+  },
+  {
+    "asset": "Birdhouse",
+    "author": "wickens",
+    "author_url": "https://sketchfab.com/Wickens-Studios",
+    "source_url": "https://sketchfab.com/3d-models/birdhouse-dde24c663d154281ad6ee0da490ef612",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "birdhouse_stump: rescaled x0.6603 to critter-world size, grounded and centred; decimated 24490 -> 19600 triangles (seams welded first, no cracks); textures re-encoded <= 1024px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Environment scenery: birdhouse on an old stump (birdhouse_stump)",
+    "files": [
+      "assets/env/birdhouse_stump/birdhouse_stump.glb"
+    ]
+  },
+  {
+    "asset": "Farm plants models (mobile game-ready, lowpoly)",
+    "author": "LOLIPOP",
+    "author_url": "https://sketchfab.com/lolipop_1707",
+    "source_url": "https://sketchfab.com/3d-models/farm-plants-models-mobile-game-ready-lowpoly-9b59e7cf3bcd4feb80ff0cf5fb780055",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "carrot_patch: kept sub-object(s) Bed_low_Bed_0, Carrot_Plants_0; arranged extra copies of Carrot_Plants_0; rescaled x3.2 to critter-world size, grounded and centred; foliage materials converted to alpha-clip (cut-out) with bled RGBA albedo; textures re-encoded <= 1024px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Environment scenery: garden carrot patch (raised bed) (carrot_patch)",
+    "files": [
+      "assets/env/carrot_patch/carrot_patch.glb"
+    ]
+  },
+  {
+    "asset": "Wooden Fence",
+    "author": "DmitriyGDS",
+    "author_url": "https://sketchfab.com/DmitriyGDS",
+    "source_url": "https://sketchfab.com/3d-models/wooden-fence-43f8b3127fba4800bfc3f36078393e87",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "fence_picket: rescaled x0.2548 to critter-world size, grounded and centred; textures re-encoded <= 1024px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Environment scenery: garden picket fence section (fence_picket)",
+    "files": [
+      "assets/env/fence_picket/fence_picket.glb"
+    ]
+  },
+  {
+    "asset": "Forest Leaves 02 (Poly Haven texture)",
+    "author": "Rob Tuytel",
+    "author_url": "https://polyhaven.com/all?a=Rob%20Tuytel",
+    "source_url": "https://polyhaven.com/a/forest_leaves_02",
+    "license": "CC0 1.0",
+    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "changes": "Downscaled to 2048px (AO/height 1024px), normal map converted to 8-bit PNG (OpenGL convention), greyscale maps re-encoded as JPEG",
+    "used_for": "Terrain texture layer 'forest_floor' (default forest ground: moss, grass and leaf litter)",
+    "files": [
+      "assets/textures/forest_floor/albedo.jpg",
+      "assets/textures/forest_floor/ao.jpg",
+      "assets/textures/forest_floor/height.jpg",
+      "assets/textures/forest_floor/normal.png",
+      "assets/textures/forest_floor/roughness.jpg"
+    ]
+  },
+  {
+    "asset": "Grass 004 (ambientCG material Grass004)",
+    "author": "Lennart Demes (ambientCG)",
+    "author_url": "https://ambientcg.com/",
+    "source_url": "https://ambientcg.com/view?id=Grass004",
+    "license": "CC0 1.0",
+    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "changes": "Downscaled to 2048px (AO/height 1024px), normal map converted to 8-bit PNG (OpenGL convention), greyscale maps re-encoded as JPEG",
+    "used_for": "Terrain texture layer 'grass' (lush grass meadow)",
+    "files": [
+      "assets/textures/grass/albedo.jpg",
+      "assets/textures/grass/ao.jpg",
+      "assets/textures/grass/height.jpg",
+      "assets/textures/grass/normal.png",
+      "assets/textures/grass/roughness.jpg"
+    ]
+  },
+  {
+    "asset": "Dirt Floor (Poly Haven texture)",
+    "author": "eye-candy.xyz",
+    "author_url": "https://polyhaven.com/all?a=eye-candy.xyz",
+    "source_url": "https://polyhaven.com/a/dirt_floor",
+    "license": "CC0 1.0",
+    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "changes": "Downscaled to 2048px (AO/height 1024px), normal map converted to 8-bit PNG (OpenGL convention), greyscale maps re-encoded as JPEG",
+    "used_for": "Terrain texture layer 'dirt_path' (packed-earth paths)",
+    "files": [
+      "assets/textures/dirt_path/albedo.jpg",
+      "assets/textures/dirt_path/ao.jpg",
+      "assets/textures/dirt_path/height.jpg",
+      "assets/textures/dirt_path/normal.png",
+      "assets/textures/dirt_path/roughness.jpg"
+    ]
+  },
+  {
+    "asset": "Moss 002 (ambientCG material Moss002)",
+    "author": "Lennart Demes (ambientCG)",
+    "author_url": "https://ambientcg.com/",
+    "source_url": "https://ambientcg.com/view?id=Moss002",
+    "license": "CC0 1.0",
+    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "changes": "Downscaled to 2048px (AO/height 1024px), normal map converted to 8-bit PNG (OpenGL convention), greyscale maps re-encoded as JPEG",
+    "used_for": "Terrain texture layer 'moss' (thick ground moss)",
+    "files": [
+      "assets/textures/moss/albedo.jpg",
+      "assets/textures/moss/ao.jpg",
+      "assets/textures/moss/height.jpg",
+      "assets/textures/moss/normal.png",
+      "assets/textures/moss/roughness.jpg"
+    ]
+  },
+  {
+    "asset": "Lichen Rock (Poly Haven texture)",
+    "author": "Rico Cilliers",
+    "author_url": "https://polyhaven.com/all?a=Rico%20Cilliers",
+    "source_url": "https://polyhaven.com/a/lichen_rock",
+    "license": "CC0 1.0",
+    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "changes": "Downscaled to 2048px (AO/height 1024px), normal map converted to 8-bit PNG (OpenGL convention), greyscale maps re-encoded as JPEG",
+    "used_for": "Terrain texture layer 'rock' (steep slopes and cliffs)",
+    "files": [
+      "assets/textures/rock/albedo.jpg",
+      "assets/textures/rock/ao.jpg",
+      "assets/textures/rock/height.jpg",
+      "assets/textures/rock/normal.png",
+      "assets/textures/rock/roughness.jpg"
+    ]
+  },
+  {
+    "asset": "Forest Floor (Poly Haven texture)",
+    "author": "eye-candy.xyz",
+    "author_url": "https://polyhaven.com/all?a=eye-candy.xyz",
+    "source_url": "https://polyhaven.com/a/forest_floor",
+    "license": "CC0 1.0",
+    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "changes": "Downscaled to 1024px (AO/height 1024px), normal map converted to 8-bit PNG (OpenGL convention), greyscale maps re-encoded as JPEG",
+    "used_for": "Terrain texture layer 'leaf_litter' (autumn leaf litter under trees)",
+    "files": [
+      "assets/textures/leaf_litter/albedo.jpg",
+      "assets/textures/leaf_litter/ao.jpg",
+      "assets/textures/leaf_litter/height.jpg",
+      "assets/textures/leaf_litter/normal.png",
+      "assets/textures/leaf_litter/roughness.jpg"
+    ]
+  },
+  {
+    "asset": "Coast Sand 01 (Poly Haven texture)",
+    "author": "Rob Tuytel",
+    "author_url": "https://polyhaven.com/all?a=Rob%20Tuytel",
+    "source_url": "https://polyhaven.com/a/coast_sand_01",
+    "license": "CC0 1.0",
+    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "changes": "Downscaled to 1024px (AO/height 1024px), normal map converted to 8-bit PNG (OpenGL convention), greyscale maps re-encoded as JPEG",
+    "used_for": "Terrain texture layer 'sand' (island beach)",
+    "files": [
+      "assets/textures/sand/albedo.jpg",
+      "assets/textures/sand/ao.jpg",
+      "assets/textures/sand/height.jpg",
+      "assets/textures/sand/normal.png",
+      "assets/textures/sand/roughness.jpg"
+    ]
+  },
+  {
+    "asset": "Kloofendal 48d Partly Cloudy (Pure Sky) (Poly Haven HDRI)",
+    "author": "Greg Zaal, Jarod Guest",
+    "author_url": "https://polyhaven.com/all?a=Greg%20Zaal",
+    "source_url": "https://polyhaven.com/a/kloofendal_48d_partly_cloudy_puresky",
+    "license": "CC0 1.0",
+    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "changes": "None (original 2K .hdr files)",
+    "used_for": "Sky / image-based lighting (default sunny sky)",
+    "files": [
+      "assets/sky/kloofendal_48d_partly_cloudy_puresky_2k.hdr"
+    ]
+  },
+  {
+    "asset": "Qwantani Late Afternoon (Pure Sky) (Poly Haven HDRI)",
+    "author": "Greg Zaal, Jarod Guest",
+    "author_url": "https://polyhaven.com/all?a=Greg%20Zaal",
+    "source_url": "https://polyhaven.com/a/qwantani_late_afternoon_puresky",
+    "license": "CC0 1.0",
+    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "changes": "None (original 2K .hdr files)",
+    "used_for": "Sky / image-based lighting (soft afternoon sky)",
+    "files": [
+      "assets/sky/qwantani_late_afternoon_puresky_2k.hdr"
+    ]
+  },
+  {
+    "asset": "Water ripple normal map",
+    "author": "Bunny Beat Down project",
+    "author_url": "",
+    "source_url": "tools/env/build_textures.py",
+    "license": "MIT (project)",
+    "license_url": "https://opensource.org/licenses/MIT",
+    "changes": "Original work, generated procedurally (sum of tileable ripples)",
+    "used_for": "Pond / sea surface normal map",
+    "files": [
+      "assets/textures/water/normal.png"
+    ]
+  }
+]

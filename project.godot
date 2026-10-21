@@ -1,0 +1,70 @@
+; Engine configuration file.
+; Bunny Beat Down — Godot 4.6
+
+config_version=5
+
+[application]
+
+config/name="Bunny Beat Down"
+config/description="A whimsical third-person battle royale: one bunny, one acorn helmet, a lot of carrots."
+config/version="0.1.0"
+run/main_scene="res://scenes/main.tscn"
+config/features=PackedStringArray("4.6", "Forward Plus")
+config/icon="res://icon.svg"
+boot_splash/bg_color=Color(0.10, 0.13, 0.09, 1)
+
+[autoload]
+
+Settings="*res://src/autoload/settings.gd"
+Events="*res://src/autoload/events.gd"
+GameInput="*res://src/autoload/game_input.gd"
+Audio="*res://src/autoload/audio.gd"
+
+[display]
+
+window/size/viewport_width=1920
+window/size/viewport_height=1080
+window/size/mode=2
+window/stretch/mode="canvas_items"
+window/stretch/aspect="expand"
+window/vsync/vsync_mode=1
+
+[editor]
+
+export/convert_text_resources_to_binary=true
+
+[filesystem]
+
+import/blender/enabled=false
+
+[layer_names]
+
+3d_physics/layer_1="world"
+3d_physics/layer_2="critters"
+3d_physics/layer_3="hitboxes"
+3d_physics/layer_4="ragdoll"
+3d_physics/layer_5="pickups"
+3d_physics/layer_6="debris"
+3d_physics/layer_7="water"
+
+[navigation]
+
+3d/default_cell_size=0.5
+3d/default_cell_height=0.25
+3d/merge_rasterizer_cell_scale=0.1
+
+[physics]
+
+3d/physics_engine="Jolt Physics"
+3d/default_gravity=16.0
+common/physics_ticks_per_second=60
+common/max_physics_steps_per_frame=6
+
+[rendering]
+
+anti_aliasing/quality/msaa_3d=2
+anti_aliasing/quality/use_debanding=true
+lights_and_shadows/directional_shadow/size=4096
+lights_and_shadows/directional_shadow/soft_shadow_filter_quality=3
+textures/default_filters/anisotropic_filtering_level=4
+environment/defaults/default_clear_color=Color(0.55, 0.72, 0.85, 1)

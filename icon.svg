@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <!-- Bunny Beat Down icon: a bunny face under an acorn helmet -->
+  <rect width="128" height="128" rx="24" fill="#2f4a22"/>
+  <ellipse cx="44" cy="40" rx="11" ry="30" fill="#efe6da" transform="rotate(-12 44 40)"/>
+  <ellipse cx="44" cy="42" rx="5" ry="20" fill="#f2b8b8" transform="rotate(-12 44 42)"/>
+  <ellipse cx="84" cy="40" rx="11" ry="30" fill="#efe6da" transform="rotate(12 84 40)"/>
+  <ellipse cx="84" cy="42" rx="5" ry="20" fill="#f2b8b8" transform="rotate(12 84 42)"/>
+  <ellipse cx="64" cy="86" rx="34" ry="30" fill="#efe6da"/>
+  <path d="M30 76 Q32 46 64 44 Q96 46 98 76 Z" fill="#8a5a2b"/>
+  <path d="M30 76 Q64 66 98 76 L98 70 Q64 58 30 70 Z" fill="#5e3a19"/>
+  <path d="M36 62 l6 -4 M48 56 l6 -4 M62 54 l6 -4 M76 56 l6 -4 M88 62 l6 -4" stroke="#4a2c12" stroke-width="3" stroke-linecap="round"/>
+  <rect x="61" y="36" width="6" height="10" rx="3" fill="#5e3a19"/>
+  <circle cx="51" cy="88" r="5" fill="#222"/>
+  <circle cx="77" cy="88" r="5" fill="#222"/>
+  <circle cx="52.5" cy="86.5" r="1.6" fill="#fff"/>
+  <circle cx="78.5" cy="86.5" r="1.6" fill="#fff"/>
+  <path d="M60 98 Q64 102 68 98" stroke="#c46a6a" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <ellipse cx="64" cy="95" rx="4" ry="3" fill="#e88a8a"/>
+  <path d="M96 104 l20 -10" stroke="#f08a24" stroke-width="7" stroke-linecap="round"/>
+  <path d="M114 94 l6 -6 M116 96 l8 -2" stroke="#4f9a2a" stroke-width="3" stroke-linecap="round"/>
+</svg>

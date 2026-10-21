@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="CritterDef" format=3]
+
+[ext_resource type="Script" path="res://src/critters/critter_def.gd" id="1_cd"]
+
+[resource]
+script = ExtResource("1_cd")
+id = &"raccoon"
+display_name = "Raccoon"
+model_path = "res://assets/characters/raccoon/raccoon.glb"
+rig_path = "res://assets/characters/raccoon/raccoon.rig.json"
+fur_color = Color(0.45, 0.43, 0.42, 1)
+max_health = 100.0
+move_speed = 6.2
+sprint_speed = 9.2
+jump_height = 1.4
+gait = 0
+voice_pitch = 0.95
+wears_acorn_helmet = false
+spawn_weight = 1.0
+names = PackedStringArray("Bandit Bill", "Trash Panda", "Rocco", "Masky", "Dumpster Dan", "Ringtail")

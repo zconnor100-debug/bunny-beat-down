@@ -1,0 +1,24 @@
+[
+  {
+    "asset": "Fredoka",
+    "author": "The Fredoka Project Authors (Milena Brandão, Hafontia)",
+    "author_url": "https://github.com/hafontia/Fredoka-One",
+    "source_url": "https://fonts.google.com/specimen/Fredoka",
+    "license": "SIL OFL 1.1",
+    "license_url": "https://openfontlicense.org/open-font-license-official-text/",
+    "changes": "None (renamed file; license text shipped alongside as Fredoka-OFL.txt)",
+    "used_for": "UI and HUD text",
+    "files": ["assets/fonts/Fredoka-Variable.ttf", "assets/fonts/Fredoka-OFL.txt"]
+  },
+  {
+    "asset": "Lilita One",
+    "author": "Juan Montoreano",
+    "author_url": "https://fonts.google.com/?query=Juan+Montoreano",
+    "source_url": "https://fonts.google.com/specimen/Lilita+One",
+    "license": "SIL OFL 1.1",
+    "license_url": "https://openfontlicense.org/open-font-license-official-text/",
+    "changes": "None (license text shipped alongside as LilitaOne-OFL.txt)",
+    "used_for": "Titles and big HUD callouts",
+    "files": ["assets/fonts/LilitaOne-Regular.ttf", "assets/fonts/LilitaOne-OFL.txt"]
+  }
+]

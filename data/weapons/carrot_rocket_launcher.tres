@@ -1,0 +1,48 @@
+[gd_resource type="Resource" script_class="WeaponData" format=3]
+
+[ext_resource type="Script" path="res://src/weapons/weapon_data.gd" id="1_wd"]
+
+[resource]
+script = ExtResource("1_wd")
+id = &"carrot_rocket_launcher"
+display_name = "Carrot Rocket Launcher"
+blurb = "One very large, very angry carrot. Stand well back from the salad."
+model_path = "res://assets/weapons/carrot_rocket_launcher.glb"
+icon_color = Color(0.9, 0.3, 0.1, 1)
+fire_mode = 0
+ammo_type = 3
+magazine = 1
+rounds_per_minute = 50.0
+pellets = 1
+damage = 55.0
+headshot_multiplier = 1.0
+spread_hip_deg = 0.6
+spread_aim_deg = 0.2
+spread_move_deg = 0.8
+bloom_per_shot_deg = 0.0
+bloom_max_deg = 0.0
+projectile = 2
+projectile_speed = 45.0
+projectile_gravity = 0.12
+falloff_start = 200.0
+falloff_end = 400.0
+min_damage_scale = 1.0
+impulse = 20.0
+dismember_power = 1.0
+splash_radius = 5.5
+splash_damage = 105.0
+reload_time = 2.8
+equip_time = 0.7
+two_handed = true
+hold_distance = 0.1
+aim_fov_scale = 0.8
+recoil_pitch_deg = 7.0
+recoil_yaw_deg = 1.0
+camera_shake = 0.3
+move_speed_scale = 0.85
+sfx_fire = &"rocket_fire"
+ai_preferred_range = 24.0
+ai_max_range = 60.0
+ai_min_range = 7.0
+ai_burst = 1
+loot_weight = 0.45

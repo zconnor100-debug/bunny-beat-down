@@ -1,0 +1,45 @@
+[gd_resource type="Resource" script_class="WeaponData" format=3]
+
+[ext_resource type="Script" path="res://src/weapons/weapon_data.gd" id="1_wd"]
+
+[resource]
+script = ExtResource("1_wd")
+id = &"carrot_pistol"
+display_name = "Carrot Pistol"
+blurb = "Snappy, accurate, and always in season. Headshots bonk extra hard."
+model_path = "res://assets/weapons/carrot_pistol.glb"
+icon_color = Color(1, 0.6, 0.2, 1)
+fire_mode = 0
+ammo_type = 0
+magazine = 12
+rounds_per_minute = 400.0
+pellets = 1
+damage = 22.0
+headshot_multiplier = 2.0
+spread_hip_deg = 1.6
+spread_aim_deg = 0.35
+spread_move_deg = 1.2
+bloom_per_shot_deg = 0.45
+bloom_max_deg = 2.5
+projectile = 0
+projectile_speed = 140.0
+projectile_gravity = 0.6
+falloff_start = 25.0
+falloff_end = 70.0
+min_damage_scale = 0.6
+impulse = 5.0
+dismember_power = 0.15
+reload_time = 1.3
+equip_time = 0.25
+two_handed = false
+hold_distance = 0.34
+aim_fov_scale = 0.85
+recoil_pitch_deg = 2.2
+recoil_yaw_deg = 0.5
+camera_shake = 0.05
+move_speed_scale = 1.05
+sfx_fire = &"pistol_fire"
+ai_preferred_range = 16.0
+ai_max_range = 50.0
+ai_burst = 1
+loot_weight = 1.3

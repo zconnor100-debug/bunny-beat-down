@@ -1,0 +1,67 @@
+{
+  "id": "bun",
+  "display_name": "Bun",
+  "species": "rabbit",
+  "head_top": 0.95,
+  "eye_height": 0.855,
+  "rest_pose": "A",
+  "bones": {
+    "hips": "DEF_Hip",
+    "spine": "DEF_Spine1",
+    "chest": "DEF_Chest",
+    "neck": "DEF_Neck",
+    "head": "DEF_Head",
+    "jaw": null,
+    "l_upper_arm": "DEF_UpperArm_L",
+    "l_lower_arm": "DEF_Forearm1_L",
+    "l_hand": "DEF_Hand_L",
+    "r_upper_arm": "DEF_UpperArm_R",
+    "r_lower_arm": "DEF_Forearm1_R",
+    "r_hand": "DEF_Hand_R",
+    "l_upper_leg": "DEF_Thigh_L",
+    "l_lower_leg": "DEF_Calph_L",
+    "l_foot": "DEF_Ankle_L",
+    "r_upper_leg": "DEF_Thigh_R",
+    "r_lower_leg": "DEF_Calph_R",
+    "r_foot": "DEF_Ankle_R"
+  },
+  "chains": {
+    "ear_l": [
+      "DEF_Ear_1_L",
+      "DEF_Ear_2_L",
+      "DEF_Ear_3_L",
+      "DEF_Ear_4_L"
+    ],
+    "ear_r": [
+      "DEF_Ear_1_R",
+      "DEF_Ear_2_R",
+      "DEF_Ear_3_R",
+      "DEF_Ear_4_R"
+    ],
+    "tail": [
+      "DEF_Tail_Base",
+      "DEF_Tail_End"
+    ]
+  },
+  "radii": {
+    "hips": 0.0569,
+    "spine": 0.0997,
+    "chest": 0.0759,
+    "neck": 0.046,
+    "head": 0.1126,
+    "l_upper_arm": 0.0326,
+    "l_lower_arm": 0.0248,
+    "l_hand": 0.0292,
+    "r_upper_arm": 0.0313,
+    "r_lower_arm": 0.032,
+    "r_hand": 0.0391,
+    "l_upper_leg": 0.0763,
+    "l_lower_leg": 0.0406,
+    "l_foot": 0.033,
+    "r_upper_leg": 0.0764,
+    "r_lower_leg": 0.0406,
+    "r_foot": 0.033
+  },
+  "animations": [],
+  "notes": "Hero. No hat in the source (the acorn helmet is a separate prop). Lower arm is two bones: DEF_Forearm1 (elbow) -> DEF_Forearm2 (twist) -> DEF_Hand. Leg is rabbit-shaped: DEF_Thigh -> DEF_Calph (shin) -> DEF_Ankle (long rabbit foot, role foot) -> DEF_Ball -> DEF_Toes. DEF_Spine1_02_0 / DEF_Spine1_02_1 are two helper bones sitting on DEF_Spine1 (belt/pouch skinning). Full 3-segment fingers. Facing +Z (glTF/Godot), +Y up, metres; soles at y=0, centred between the feet. Top of skull at y=0.950 (ears/hats excluded), crown point (x -0.000, y 0.950, z 0.082); head width 0.235 m, depth 0.224 m; head bone origin at (x -0.000, y 0.775, z -0.007). Rest pose A (upper arm 66 deg below horizontal). 60 bones, 4678 triangles. Bone local axes follow Blender's convention (+Y along each bone towards its child)."
+}

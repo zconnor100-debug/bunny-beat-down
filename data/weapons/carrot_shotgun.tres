@@ -1,0 +1,45 @@
+[gd_resource type="Resource" script_class="WeaponData" format=3]
+
+[ext_resource type="Script" path="res://src/weapons/weapon_data.gd" id="1_wd"]
+
+[resource]
+script = ExtResource("1_wd")
+id = &"carrot_shotgun"
+display_name = "Carrot Shotgun"
+blurb = "Nine chunks of julienned justice. Pump, point, and ruin someone's picnic."
+model_path = "res://assets/weapons/carrot_shotgun.glb"
+icon_color = Color(0.95, 0.45, 0.15, 1)
+fire_mode = 0
+ammo_type = 1
+magazine = 5
+rounds_per_minute = 70.0
+pellets = 9
+damage = 11.0
+headshot_multiplier = 1.5
+spread_hip_deg = 6.0
+spread_aim_deg = 4.5
+spread_move_deg = 1.0
+bloom_per_shot_deg = 0.0
+bloom_max_deg = 0.0
+projectile = 1
+projectile_speed = 95.0
+projectile_gravity = 1.2
+falloff_start = 6.0
+falloff_end = 26.0
+min_damage_scale = 0.25
+impulse = 3.0
+dismember_power = 0.6
+reload_time = 2.4
+equip_time = 0.4
+two_handed = true
+hold_distance = 0.24
+aim_fov_scale = 0.9
+recoil_pitch_deg = 6.0
+recoil_yaw_deg = 1.2
+camera_shake = 0.18
+move_speed_scale = 1.0
+sfx_fire = &"shotgun_fire"
+ai_preferred_range = 7.0
+ai_max_range = 22.0
+ai_burst = 1
+loot_weight = 1.0

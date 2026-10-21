@@ -1,0 +1,67 @@
+{
+  "id": "bandit_bunny",
+  "display_name": "Bandit Bunny",
+  "species": "rabbit",
+  "head_top": 0.95,
+  "eye_height": 0.81,
+  "rest_pose": "A",
+  "bones": {
+    "hips": "DEF_Hip",
+    "spine": "DEF_Spine1",
+    "chest": "DEF_Chest",
+    "neck": "DEF_Neck",
+    "head": "DEF_Head",
+    "jaw": null,
+    "l_upper_arm": "DEF_UpperArm_L",
+    "l_lower_arm": "DEF_Forearm1_L",
+    "l_hand": "DEF_Hand_L",
+    "r_upper_arm": "DEF_UpperArm_R",
+    "r_lower_arm": "DEF_Forearm1_R",
+    "r_hand": "DEF_Hand_R",
+    "l_upper_leg": "DEF_Thigh_L",
+    "l_lower_leg": "DEF_Calph_L",
+    "l_foot": "DEF_Ankle_L",
+    "r_upper_leg": "DEF_Thigh_R",
+    "r_lower_leg": "DEF_Calph_R",
+    "r_foot": "DEF_Ankle_R"
+  },
+  "chains": {
+    "ear_l": [
+      "DEF_Ear_1_L",
+      "DEF_Ear_2_L",
+      "DEF_Ear_3_L",
+      "DEF_Ear_4_L"
+    ],
+    "ear_r": [
+      "DEF_Ear_1_R",
+      "DEF_Ear_2_R",
+      "DEF_Ear_3_R",
+      "DEF_Ear_4_R"
+    ],
+    "tail": [
+      "DEF_Tail_Base",
+      "DEF_Tail_End"
+    ]
+  },
+  "radii": {
+    "hips": 0.0559,
+    "spine": 0.0903,
+    "chest": 0.0817,
+    "neck": 0.0439,
+    "head": 0.1099,
+    "l_upper_arm": 0.0289,
+    "l_lower_arm": 0.0342,
+    "l_hand": 0.0386,
+    "r_upper_arm": 0.0289,
+    "r_lower_arm": 0.0342,
+    "r_hand": 0.0386,
+    "l_upper_leg": 0.0686,
+    "l_lower_leg": 0.0505,
+    "l_foot": 0.0362,
+    "r_upper_leg": 0.0686,
+    "r_lower_leg": 0.0505,
+    "r_foot": 0.0362
+  },
+  "animations": [],
+  "notes": "Same rig family as Bun (Arcnay's Bunny Guard) minus finger bones: the hands are clawed mitts skinned to DEF_Hand only. Keeps its hood and the small horns on the hood (part of the character). Rest pose taken from the file's node pose because the source's inverse bind matrices for the ear tips are corrupt (the node pose is the same A-pose). Facing +Z (glTF/Godot), +Y up, metres; soles at y=0, centred between the feet. Top of skull at y=0.950 (ears/hats excluded), crown point (x -0.000, y 0.950, z -0.052); head width 0.358 m, depth 0.276 m; head bone origin at (x -0.000, y 0.750, z -0.035). Rest pose A (upper arm 65 deg below horizontal). 58 bones, 4896 triangles. Bone local axes follow Blender's convention (+Y along each bone towards its child)."
+}

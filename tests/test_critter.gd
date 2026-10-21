@@ -1,0 +1,109 @@
+extends TestCase
+## Critter body: animator, hitboxes, damage, ragdoll and dismemberment, using
+## the project-owned test mannequin so it never depends on third-party art.
+
+const TEST_DEF := "res://data/critters/test_critter.tres"
+
+
+func before_each() -> void:
+	make_arena()
+
+
+func test_visual_builds_with_rig_roles() -> void:
+	var c := spawn_critter(TEST_DEF, Vector3(0, 0.1, 0))
+	await wait_physics(3)
+	check(c.visual.rig != null, "rig bound")
+	check(c.visual.hitboxes.size() >= 10, "hitboxes built (%d)" % c.visual.hitboxes.size())
+	check(c.visual.physical_bones.size() >= 10, "ragdoll bodies built (%d)" % c.visual.physical_bones.size())
+	check(c.visual.springs != null, "spring bones for ears/tail")
+
+
+func test_poser_moves_bones_within_modifier() -> void:
+	# get_bone_global_pose() must reflect poses set earlier in the same modifier
+	# pass, or the IK chain maths would read stale transforms.
+	var c := spawn_critter(TEST_DEF, Vector3(0, 0.1, 0))
+	await wait_physics(2)
+	c.look_pitch = 0.6
+	c.aim_point = c.get_eye_position() + c.look_direction() * 20.0
+	await wait_frames(4)
+	var head := c.visual.current_bone_global(c.visual.rig.bone[&"head"])
+	var rest: Transform3D = c.visual.rig.rest[&"head"]
+	check(head.basis.y.angle_to(rest.basis.y) > 0.2, "head pitched by aim (%.2f rad)" % head.basis.y.angle_to(rest.basis.y))
+	# hand should be on the gun grip when armed
+	c.give_weapon(WeaponInstance.new(WeaponDB.get_weapon(&"carrot_lmg"), 0))
+	await wait_frames(4)
+	var hand_world := c.visual.bone_world_position(&"r_hand")
+	var grip_world := c.visual.holder.global_position
+	check(hand_world.distance_to(grip_world) < 0.08, "right paw on the grip (%.3f m away)" % hand_world.distance_to(grip_world))
+
+
+func test_ray_hits_hitbox_area() -> void:
+	var c := spawn_critter(TEST_DEF, Vector3(0, 0.1, 0))
+	await wait_physics(4)
+	var from := c.get_chest_position() + Vector3(0, 0, -5)
+	var q := PhysicsRayQueryParameters3D.create(from, c.get_chest_position() + Vector3(0, 0, 5), Layers.SHOT_MASK)
+	q.collide_with_areas = true
+	var hit := get_world_3d().direct_space_state.intersect_ray(q)
+	check(not hit.is_empty(), "ray hits the critter")
+	if hit:
+		check(hit.collider is Area3D and (hit.collider as Node).has_meta(&"critter"), "hit a critter hitbox (%s)" % hit.collider)
+
+
+func test_projectile_damages_and_kills() -> void:
+	var target := spawn_critter(TEST_DEF, Vector3(0, 0.1, -6))
+	var shooter := spawn_critter(TEST_DEF, Vector3(0, 0.1, 0))
+	await wait_physics(3)
+	var w := WeaponInstance.new(WeaponDB.get_weapon(&"carrot_pistol"), 0)
+	var dir := (target.get_chest_position() - shooter.get_chest_position()).normalized()
+	for i in 8:
+		if not target.alive:
+			break
+		Projectiles.fire(shooter, w, shooter.get_chest_position() + dir * 0.5, dir, 0.0, shooter.visual.hitbox_rids)
+		await wait_physics(6)
+	check(not target.alive, "target died after pistol hits (hp %.1f)" % target.health)
+	check(target.visual.ragdolled, "target went ragdoll")
+	check(shooter.kills == 1, "shooter credited with the kill")
+
+
+func test_ragdoll_falls_to_ground() -> void:
+	var c := spawn_critter(TEST_DEF, Vector3(0, 0.1, 0))
+	await wait_physics(3)
+	var info := DamageInfo.make(500.0, DamageInfo.Kind.BULLET, null)
+	info.direction = Vector3(1, 0, 0)
+	info.impulse = 8.0
+	info.bone_role = &"chest"
+	c.take_damage(info)
+	await wait_physics(120)
+	var head := c.visual.bone_world_position(&"head")
+	check(head.y < 0.45, "head ends up near the ground (y=%.2f)" % head.y)
+	check(head.y > -0.2, "ragdoll did not fall through the floor (y=%.2f)" % head.y)
+
+
+func test_dismember_spawns_gib_and_hides_limb() -> void:
+	Settings.set_value(&"gore", Settings.Gore.BLOOD, false)
+	var c := spawn_critter(TEST_DEF, Vector3(0, 0.1, 0))
+	await wait_physics(3)
+	var info := DamageInfo.make(500.0, DamageInfo.Kind.BULLET, null)
+	info.direction = Vector3(1, 0, 0)
+	info.bone_role = &"chest"
+	c.take_damage(info)
+	await wait_physics(2)
+	var gibs_before := _count_gibs()
+	c.visual.dismember(&"l_upper_arm", Vector3(2, 3, 0))
+	await wait_physics(5)
+	check(_count_gibs() == gibs_before + 1, "one limb gib spawned")
+	var idx: int = c.visual.rig.bone[&"l_upper_arm"]
+	check(c.visual.limb_hider.hidden.has(idx), "limb hidden on the corpse")
+	check(not c.visual.physical_bones.has(&"l_upper_arm"), "limb ragdoll body removed")
+	check(not c.visual.hitboxes.has(&"l_lower_arm"), "limb hitboxes removed")
+	await wait_frames(3)
+	var hand := c.visual.attachments.get(&"l_hand") as Node3D
+	check(hand == null, "attachments in the severed limb were freed")
+
+
+func _count_gibs() -> int:
+	var n := 0
+	for node in get_tree().root.find_children("*", "RigidBody3D", true, false):
+		if node.has_meta(&"gib"):
+			n += 1
+	return n

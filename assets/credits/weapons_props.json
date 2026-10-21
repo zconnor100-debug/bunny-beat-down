@@ -1,0 +1,507 @@
+[
+  {
+    "asset": "Dark Wood (texture)",
+    "author": "Dario Barresi, Dimitrios Savva, Rico Cilliers",
+    "author_url": "https://polyhaven.com/all?a=Dario%20Barresi",
+    "source_url": "https://polyhaven.com/a/dark_wood",
+    "license": "CC0 1.0",
+    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "changes": "Sampled (box/UV projected, rescaled, tinted) inside procedural Blender materials that add edge wear, cavity dirt and paint chipping, then baked by tools/weapons into each asset's own 512-2048 px PBR atlas. The original image files are not shipped.",
+    "used_for": "Gun stocks, pistol grips and fore-ends",
+    "files": [
+      "assets/weapons/carrot_lmg.glb",
+      "assets/weapons/carrot_pistol.glb",
+      "assets/weapons/carrot_shotgun.glb"
+    ]
+  },
+  {
+    "asset": "Coated Pine (texture)",
+    "author": "Charlotte Baglioni, Rico Cilliers",
+    "author_url": "https://polyhaven.com/all?a=Charlotte%20Baglioni",
+    "source_url": "https://polyhaven.com/a/coated_pine",
+    "license": "CC0 1.0",
+    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "changes": "Sampled (box/UV projected, rescaled, tinted) inside procedural Blender materials that add edge wear, cavity dirt and paint chipping, then baked by tools/weapons into each asset's own 512-2048 px PBR atlas. The original image files are not shipped.",
+    "used_for": "Light pine parts: launcher grips, crate battens, cradle, glider handle",
+    "files": [
+      "assets/props/ammo_rocket.glb",
+      "assets/props/dropship_balloon.glb",
+      "assets/props/loot_crate.glb",
+      "assets/props/supply_drop.glb",
+      "assets/weapons/carrot_rocket_launcher.glb"
+    ]
+  },
+  {
+    "asset": "Rough Wood (texture)",
+    "author": "Rob Tuytel",
+    "author_url": "https://polyhaven.com/all?a=Rob%20Tuytel",
+    "source_url": "https://polyhaven.com/a/rough_wood",
+    "license": "CC0 1.0",
+    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "changes": "Sampled (box/UV projected, rescaled, tinted) inside procedural Blender materials that add edge wear, cavity dirt and paint chipping, then baked by tools/weapons into each asset's own 512-2048 px PBR atlas. The original image files are not shipped.",
+    "used_for": "Weathered garden-crate slats (loot crate, supply drop)",
+    "files": [
+      "assets/props/loot_crate.glb",
+      "assets/props/supply_drop.glb"
+    ]
+  },
+  {
+    "asset": "Metal Plate 02 (texture)",
+    "author": "Rob Tuytel",
+    "author_url": "https://polyhaven.com/all?a=Rob%20Tuytel",
+    "source_url": "https://polyhaven.com/a/metal_plate_02",
+    "license": "CC0 1.0",
+    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "changes": "Sampled (box/UV projected, rescaled, tinted) inside procedural Blender materials that add edge wear, cavity dirt and paint chipping, then baked by tools/weapons into each asset's own 512-2048 px PBR atlas. The original image files are not shipped.",
+    "used_for": "Blued / worn steel and brass fittings (tinted)",
+    "files": [
+      "assets/props/acorn_helmet.glb",
+      "assets/props/ammo_heavy.glb",
+      "assets/props/dropship_balloon.glb",
+      "assets/props/loot_crate.glb",
+      "assets/props/pickup_armor.glb",
+      "assets/props/supply_drop.glb",
+      "assets/weapons/carrot_lmg.glb",
+      "assets/weapons/carrot_pistol.glb",
+      "assets/weapons/carrot_rocket_launcher.glb",
+      "assets/weapons/carrot_shotgun.glb"
+    ]
+  },
+  {
+    "asset": "Green Metal Rust (texture)",
+    "author": "Rob Tuytel",
+    "author_url": "https://polyhaven.com/all?a=Rob%20Tuytel",
+    "source_url": "https://polyhaven.com/a/green_metal_rust",
+    "license": "CC0 1.0",
+    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "changes": "Sampled (box/UV projected, rescaled, tinted) inside procedural Blender materials that add edge wear, cavity dirt and paint chipping, then baked by tools/weapons into each asset's own 512-2048 px PBR atlas. The original image files are not shipped.",
+    "used_for": "Chipped painted sheet metal (hue-shifted to carrot orange / sage)",
+    "files": [
+      "assets/props/ammo_heavy.glb",
+      "assets/props/supply_drop.glb",
+      "assets/weapons/carrot_rocket_launcher.glb"
+    ]
+  },
+  {
+    "asset": "Hessian 380 (texture)",
+    "author": "colormass, Rico Cilliers",
+    "author_url": "https://polyhaven.com/all?a=colormass",
+    "source_url": "https://polyhaven.com/a/hessian_380",
+    "license": "CC0 1.0",
+    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "changes": "Sampled (box/UV projected, rescaled, tinted) inside procedural Blender materials that add edge wear, cavity dirt and paint chipping, then baked by tools/weapons into each asset's own 512-2048 px PBR atlas. The original image files are not shipped.",
+    "used_for": "Jute twine wraps, burlap pouch and shoulder pads",
+    "files": [
+      "assets/props/acorn_helmet.glb",
+      "assets/props/ammo_light.glb",
+      "assets/props/ammo_rocket.glb",
+      "assets/props/ammo_shells.glb",
+      "assets/props/dandelion_glider.glb",
+      "assets/props/dropship_balloon.glb",
+      "assets/props/loot_crate.glb",
+      "assets/props/pickup_health.glb",
+      "assets/props/supply_drop.glb",
+      "assets/weapons/carrot_lmg.glb",
+      "assets/weapons/carrot_pistol.glb",
+      "assets/weapons/carrot_rocket.glb",
+      "assets/weapons/carrot_rocket_launcher.glb",
+      "assets/weapons/carrot_shotgun.glb"
+    ]
+  },
+  {
+    "asset": "Brown Leather (texture)",
+    "author": "Rob Tuytel",
+    "author_url": "https://polyhaven.com/all?a=Rob%20Tuytel",
+    "source_url": "https://polyhaven.com/a/brown_leather",
+    "license": "CC0 1.0",
+    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "changes": "Sampled (box/UV projected, rescaled, tinted) inside procedural Blender materials that add edge wear, cavity dirt and paint chipping, then baked by tools/weapons into each asset's own 512-2048 px PBR atlas. The original image files are not shipped.",
+    "used_for": "Leather straps, butt pads, slings",
+    "files": [
+      "assets/props/acorn_helmet.glb",
+      "assets/props/ammo_heavy.glb",
+      "assets/props/dropship_balloon.glb",
+      "assets/props/pickup_armor.glb",
+      "assets/weapons/carrot_shotgun.glb"
+    ]
+  },
+  {
+    "asset": "Pine Bark (texture)",
+    "author": "Dimitrios Savva",
+    "author_url": "https://polyhaven.com/all?a=Dimitrios%20Savva",
+    "source_url": "https://polyhaven.com/a/pine_bark",
+    "license": "CC0 1.0",
+    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "changes": "Sampled (box/UV projected, rescaled, tinted) inside procedural Blender materials that add edge wear, cavity dirt and paint chipping, then baked by tools/weapons into each asset's own 512-2048 px PBR atlas. The original image files are not shipped.",
+    "used_for": "Bark armour plates (pickup_armor)",
+    "files": [
+      "assets/props/pickup_armor.glb"
+    ]
+  },
+  {
+    "asset": "Caban (texture)",
+    "author": "colormass, Rico Cilliers",
+    "author_url": "https://polyhaven.com/all?a=colormass",
+    "source_url": "https://polyhaven.com/a/caban",
+    "license": "CC0 1.0",
+    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "changes": "Sampled (box/UV projected, rescaled, tinted) inside procedural Blender materials that add edge wear, cavity dirt and paint chipping, then baked by tools/weapons into each asset's own 512-2048 px PBR atlas. The original image files are not shipped.",
+    "used_for": "Patchwork envelope panels (orange wool), dropship balloon",
+    "files": [
+      "assets/props/dropship_balloon.glb"
+    ]
+  },
+  {
+    "asset": "Fabric Pattern 07 (texture)",
+    "author": "Rob Tuytel",
+    "author_url": "https://polyhaven.com/all?a=Rob%20Tuytel",
+    "source_url": "https://polyhaven.com/a/fabric_pattern_07",
+    "license": "CC0 1.0",
+    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "changes": "Sampled (box/UV projected, rescaled, tinted) inside procedural Blender materials that add edge wear, cavity dirt and paint chipping, then baked by tools/weapons into each asset's own 512-2048 px PBR atlas. The original image files are not shipped.",
+    "used_for": "Red picnic-check panels and basket lining, dropship balloon",
+    "files": [
+      "assets/props/dropship_balloon.glb"
+    ]
+  },
+  {
+    "asset": "Gingham Check (texture)",
+    "author": "colormass, Rico Cilliers",
+    "author_url": "https://polyhaven.com/all?a=colormass",
+    "source_url": "https://polyhaven.com/a/gingham_check",
+    "license": "CC0 1.0",
+    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "changes": "Sampled (box/UV projected, rescaled, tinted) inside procedural Blender materials that add edge wear, cavity dirt and paint chipping, then baked by tools/weapons into each asset's own 512-2048 px PBR atlas. The original image files are not shipped.",
+    "used_for": "Green gingham envelope panels, dropship balloon",
+    "files": [
+      "assets/props/dropship_balloon.glb"
+    ]
+  },
+  {
+    "asset": "Waffle Pique Cotton (texture)",
+    "author": "colormass, Rico Cilliers",
+    "author_url": "https://polyhaven.com/all?a=colormass",
+    "source_url": "https://polyhaven.com/a/waffle_pique_cotton",
+    "license": "CC0 1.0",
+    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "changes": "Sampled (box/UV projected, rescaled, tinted) inside procedural Blender materials that add edge wear, cavity dirt and paint chipping, then baked by tools/weapons into each asset's own 512-2048 px PBR atlas. The original image files are not shipped.",
+    "used_for": "Yellow waffle-cotton envelope panels, dropship balloon",
+    "files": [
+      "assets/props/dropship_balloon.glb"
+    ]
+  },
+  {
+    "asset": "Stretch Poplin (texture)",
+    "author": "colormass, Rico Cilliers",
+    "author_url": "https://polyhaven.com/all?a=colormass",
+    "source_url": "https://polyhaven.com/a/stretch_poplin",
+    "license": "CC0 1.0",
+    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "changes": "Sampled (box/UV projected, rescaled, tinted) inside procedural Blender materials that add edge wear, cavity dirt and paint chipping, then baked by tools/weapons into each asset's own 512-2048 px PBR atlas. The original image files are not shipped.",
+    "used_for": "Leaf-green envelope panels, dropship balloon",
+    "files": [
+      "assets/props/dropship_balloon.glb"
+    ]
+  },
+  {
+    "asset": "Fabric Pattern 05 (texture)",
+    "author": "Rob Tuytel",
+    "author_url": "https://polyhaven.com/all?a=Rob%20Tuytel",
+    "source_url": "https://polyhaven.com/a/fabric_pattern_05",
+    "license": "CC0 1.0",
+    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "changes": "Sampled (box/UV projected, rescaled, tinted) inside procedural Blender materials that add edge wear, cavity dirt and paint chipping, then baked by tools/weapons into each asset's own 512-2048 px PBR atlas. The original image files are not shipped.",
+    "used_for": "Cream windowpane-plaid envelope panels, dropship balloon",
+    "files": [
+      "assets/props/dropship_balloon.glb"
+    ]
+  },
+  {
+    "asset": "Studio Small 09 (HDRI)",
+    "author": "Sergej Majboroda",
+    "author_url": "https://polyhaven.com/all?a=Sergej%20Majboroda",
+    "source_url": "https://polyhaven.com/a/studio_small_09",
+    "license": "CC0 1.0",
+    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "changes": "Used only to light the preview renders (preview_sheet.png / acorn_helmet_closeup.png); not included in any glb.",
+    "used_for": "Lighting for preview renders only (not shipped inside any glb)",
+    "files": [
+      "assets/weapons/preview_sheet.png",
+      "assets/props/preview_sheet.png",
+      "assets/props/acorn_helmet_closeup.png"
+    ]
+  },
+  {
+    "asset": "Carrot (photoscan)",
+    "author": "Moshe Caine",
+    "author_url": "https://sketchfab.com/moshecaine",
+    "source_url": "https://sketchfab.com/3d-models/carrot-985240a0da5848e9aa639d5e4daa38e0",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "Re-skinned by tools/weapons/blender/prep_scans.py: the scan is unwrapped onto a fitted surface of revolution (Cycles selected-to-active bake) into a cylindrical colour + normal strip (colour calibrated, normals high-passed, holes filled); the strip is mapped onto procedurally modelled geometry and baked into each asset's atlas. The scan mesh itself is not shipped.",
+    "used_for": "Photoscanned carrot skin: unwrapped by prep_scans.py into a carrot-skin strip (albedo + normal) used on every carrot surface",
+    "files": [
+      "assets/props/ammo_heavy.glb",
+      "assets/props/ammo_light.glb",
+      "assets/props/ammo_rocket.glb",
+      "assets/props/ammo_shells.glb",
+      "assets/props/loot_crate.glb",
+      "assets/props/supply_drop.glb",
+      "assets/weapons/carrot_bolt.glb",
+      "assets/weapons/carrot_lmg.glb",
+      "assets/weapons/carrot_pistol.glb",
+      "assets/weapons/carrot_rocket.glb",
+      "assets/weapons/carrot_rocket_launcher.glb",
+      "assets/weapons/carrot_shell_pellet.glb",
+      "assets/weapons/carrot_shotgun.glb"
+    ]
+  },
+  {
+    "asset": "Acorn (photoscan)",
+    "author": "Europac3d",
+    "author_url": "https://sketchfab.com/europac3d",
+    "source_url": "https://sketchfab.com/3d-models/acorn-84ad040b23644329aa142e502a1d4b14",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "Re-skinned by tools/weapons/blender/prep_scans.py: the scan is unwrapped onto a fitted surface of revolution (Cycles selected-to-active bake) into a cylindrical colour + normal strip (colour calibrated, normals high-passed, holes filled); the strip is mapped onto procedurally modelled geometry and baked into each asset's atlas. The scan mesh itself is not shipped.",
+    "used_for": "Photoscanned acorn: unwrapped by prep_scans.py into cupule-scale and nut-shell strips (albedo + normal) for the acorn helmet and acorn-shell armour",
+    "files": [
+      "assets/props/acorn_helmet.glb",
+      "assets/props/pickup_armor.glb"
+    ]
+  },
+  {
+    "asset": "Carrot Pistol",
+    "author": "Bunny Beat Down project",
+    "author_url": "",
+    "license": "MIT (project)",
+    "license_url": "",
+    "source_url": "tools/weapons/blender/assets/weapons.py",
+    "changes": "Original model generated from code (Blender Python): procedural geometry, scripted materials and a baked PBR atlas. Third-party textures/scans it samples are credited separately.",
+    "used_for": "Sidearm: six-shot carrot revolver",
+    "files": [
+      "assets/weapons/carrot_pistol.glb"
+    ]
+  },
+  {
+    "asset": "Carrot Shotgun",
+    "author": "Bunny Beat Down project",
+    "author_url": "",
+    "license": "MIT (project)",
+    "license_url": "",
+    "source_url": "tools/weapons/blender/assets/weapons.py",
+    "changes": "Original model generated from code (Blender Python): procedural geometry, scripted materials and a baked PBR atlas. Third-party textures/scans it samples are credited separately.",
+    "used_for": "Shotgun: side-by-side coach gun firing carrot_shell_pellet spreads",
+    "files": [
+      "assets/weapons/carrot_shotgun.glb"
+    ]
+  },
+  {
+    "asset": "Carrot Lmg",
+    "author": "Bunny Beat Down project",
+    "author_url": "",
+    "license": "MIT (project)",
+    "license_url": "",
+    "source_url": "tools/weapons/blender/assets/weapons.py",
+    "changes": "Original model generated from code (Blender Python): procedural geometry, scripted materials and a baked PBR atlas. Third-party textures/scans it samples are credited separately.",
+    "used_for": "Light machine gun: pan-fed baby-carrot bolts",
+    "files": [
+      "assets/weapons/carrot_lmg.glb"
+    ]
+  },
+  {
+    "asset": "Carrot Rocket Launcher",
+    "author": "Bunny Beat Down project",
+    "author_url": "",
+    "license": "MIT (project)",
+    "license_url": "",
+    "source_url": "tools/weapons/blender/assets/weapons.py",
+    "changes": "Original model generated from code (Blender Python): procedural geometry, scripted materials and a baked PBR atlas. Third-party textures/scans it samples are credited separately.",
+    "used_for": "Rocket launcher firing carrot_rocket",
+    "files": [
+      "assets/weapons/carrot_rocket_launcher.glb"
+    ]
+  },
+  {
+    "asset": "Carrot Bolt",
+    "author": "Bunny Beat Down project",
+    "author_url": "",
+    "license": "MIT (project)",
+    "license_url": "",
+    "source_url": "tools/weapons/blender/assets/projectiles.py",
+    "changes": "Original model generated from code (Blender Python): procedural geometry, scripted materials and a baked PBR atlas. Third-party textures/scans it samples are credited separately.",
+    "used_for": "Projectile for carrot_pistol and carrot_lmg",
+    "files": [
+      "assets/weapons/carrot_bolt.glb"
+    ]
+  },
+  {
+    "asset": "Carrot Shell Pellet",
+    "author": "Bunny Beat Down project",
+    "author_url": "",
+    "license": "MIT (project)",
+    "license_url": "",
+    "source_url": "tools/weapons/blender/assets/projectiles.py",
+    "changes": "Original model generated from code (Blender Python): procedural geometry, scripted materials and a baked PBR atlas. Third-party textures/scans it samples are credited separately.",
+    "used_for": "Shotgun pellet (spawn 6-8 per shot)",
+    "files": [
+      "assets/weapons/carrot_shell_pellet.glb"
+    ]
+  },
+  {
+    "asset": "Carrot Rocket",
+    "author": "Bunny Beat Down project",
+    "author_url": "",
+    "license": "MIT (project)",
+    "license_url": "",
+    "source_url": "tools/weapons/blender/assets/projectiles.py",
+    "changes": "Original model generated from code (Blender Python): procedural geometry, scripted materials and a baked PBR atlas. Third-party textures/scans it samples are credited separately.",
+    "used_for": "Projectile for carrot_rocket_launcher",
+    "files": [
+      "assets/weapons/carrot_rocket.glb"
+    ]
+  },
+  {
+    "asset": "Acorn Helmet",
+    "author": "Bunny Beat Down project",
+    "author_url": "",
+    "license": "MIT (project)",
+    "license_url": "",
+    "source_url": "tools/weapons/blender/assets/helmet.py",
+    "changes": "Original model generated from code (Blender Python): procedural geometry, scripted materials and a baked PBR atlas. Third-party textures/scans it samples are credited separately.",
+    "used_for": "Signature acorn helmet worn by the hero bunny (attach to the head at bun model-space (0, 0.875, -0.010))",
+    "files": [
+      "assets/props/acorn_helmet.glb"
+    ]
+  },
+  {
+    "asset": "Pickup Health",
+    "author": "Bunny Beat Down project",
+    "author_url": "",
+    "license": "MIT (project)",
+    "license_url": "",
+    "source_url": "tools/weapons/blender/assets/props.py",
+    "changes": "Original model generated from code (Blender Python): procedural geometry, scripted materials and a baked PBR atlas. Third-party textures/scans it samples are credited separately.",
+    "used_for": "Health pickup: dandelion-tea flask with a four-leaf clover",
+    "files": [
+      "assets/props/pickup_health.glb"
+    ]
+  },
+  {
+    "asset": "Pickup Armor",
+    "author": "Bunny Beat Down project",
+    "author_url": "",
+    "license": "MIT (project)",
+    "license_url": "",
+    "source_url": "tools/weapons/blender/assets/props.py",
+    "changes": "Original model generated from code (Blender Python): procedural geometry, scripted materials and a baked PBR atlas. Third-party textures/scans it samples are credited separately.",
+    "used_for": "Armour pickup: pine-bark breastplate with an acorn-shell boss",
+    "files": [
+      "assets/props/pickup_armor.glb"
+    ]
+  },
+  {
+    "asset": "Ammo Light",
+    "author": "Bunny Beat Down project",
+    "author_url": "",
+    "license": "MIT (project)",
+    "license_url": "",
+    "source_url": "tools/weapons/blender/assets/props.py",
+    "changes": "Original model generated from code (Blender Python): procedural geometry, scripted materials and a baked PBR atlas. Third-party textures/scans it samples are credited separately.",
+    "used_for": "Light ammo (pistol / LMG bolts): bundle of carrots tied with twine",
+    "files": [
+      "assets/props/ammo_light.glb"
+    ]
+  },
+  {
+    "asset": "Ammo Shells",
+    "author": "Bunny Beat Down project",
+    "author_url": "",
+    "license": "MIT (project)",
+    "license_url": "",
+    "source_url": "tools/weapons/blender/assets/props.py",
+    "changes": "Original model generated from code (Blender Python): procedural geometry, scripted materials and a baked PBR atlas. Third-party textures/scans it samples are credited separately.",
+    "used_for": "Shotgun ammo: burlap pouch of carrot chunks",
+    "files": [
+      "assets/props/ammo_shells.glb"
+    ]
+  },
+  {
+    "asset": "Ammo Heavy",
+    "author": "Bunny Beat Down project",
+    "author_url": "",
+    "license": "MIT (project)",
+    "license_url": "",
+    "source_url": "tools/weapons/blender/assets/props.py",
+    "changes": "Original model generated from code (Blender Python): procedural geometry, scripted materials and a baked PBR atlas. Third-party textures/scans it samples are credited separately.",
+    "used_for": "Heavy ammo (LMG): tin drum with a belt of strapped carrots",
+    "files": [
+      "assets/props/ammo_heavy.glb"
+    ]
+  },
+  {
+    "asset": "Ammo Rocket",
+    "author": "Bunny Beat Down project",
+    "author_url": "",
+    "license": "MIT (project)",
+    "license_url": "",
+    "source_url": "tools/weapons/blender/assets/props.py",
+    "changes": "Original model generated from code (Blender Python): procedural geometry, scripted materials and a baked PBR atlas. Third-party textures/scans it samples are credited separately.",
+    "used_for": "Rocket ammo: two rocket carrots on a pine cradle",
+    "files": [
+      "assets/props/ammo_rocket.glb"
+    ]
+  },
+  {
+    "asset": "Loot Crate",
+    "author": "Bunny Beat Down project",
+    "author_url": "",
+    "license": "MIT (project)",
+    "license_url": "",
+    "source_url": "tools/weapons/blender/assets/props.py",
+    "changes": "Original model generated from code (Blender Python): procedural geometry, scripted materials and a baked PBR atlas. Third-party textures/scans it samples are credited separately.",
+    "used_for": "Lootable garden crate with an opening Lid",
+    "files": [
+      "assets/props/loot_crate.glb"
+    ]
+  },
+  {
+    "asset": "Supply Drop",
+    "author": "Bunny Beat Down project",
+    "author_url": "",
+    "license": "MIT (project)",
+    "license_url": "",
+    "source_url": "tools/weapons/blender/assets/props.py",
+    "changes": "Original model generated from code (Blender Python): procedural geometry, scripted materials and a baked PBR atlas. Third-party textures/scans it samples are credited separately.",
+    "used_for": "Air-dropped supply crate under a dandelion-seed parachute (Chute)",
+    "files": [
+      "assets/props/supply_drop.glb"
+    ]
+  },
+  {
+    "asset": "Dandelion Glider",
+    "author": "Bunny Beat Down project",
+    "author_url": "",
+    "license": "MIT (project)",
+    "license_url": "",
+    "source_url": "tools/weapons/blender/assets/props.py",
+    "changes": "Original model generated from code (Blender Python): procedural geometry, scripted materials and a baked PBR atlas. Third-party textures/scans it samples are credited separately.",
+    "used_for": "Glider for the battle-royale drop: a giant dandelion seed held overhead",
+    "files": [
+      "assets/props/dandelion_glider.glb"
+    ]
+  },
+  {
+    "asset": "Dropship Balloon",
+    "author": "Bunny Beat Down project",
+    "author_url": "",
+    "license": "MIT (project)",
+    "license_url": "",
+    "source_url": "tools/weapons/blender/assets/balloon.py",
+    "changes": "Original model generated from code (Blender Python): procedural geometry, scripted materials and a baked PBR atlas. Third-party textures/scans it samples are credited separately.",
+    "used_for": "Battle-royale dropship: patchwork hot-air balloon with a picnic-basket gondola",
+    "files": [
+      "assets/props/dropship_balloon.glb"
+    ]
+  }
+]

@@ -1,0 +1,184 @@
+{
+  "pistol_fire": [
+    "sfx/pistol_fire_1.ogg",
+    "sfx/pistol_fire_2.ogg",
+    "sfx/pistol_fire_3.ogg"
+  ],
+  "shotgun_fire": [
+    "sfx/shotgun_fire_1.ogg",
+    "sfx/shotgun_fire_2.ogg",
+    "sfx/shotgun_fire_3.ogg"
+  ],
+  "shotgun_pump": [
+    "sfx/shotgun_pump_1.ogg",
+    "sfx/shotgun_pump_2.ogg"
+  ],
+  "lmg_fire": [
+    "sfx/lmg_fire_1.ogg",
+    "sfx/lmg_fire_2.ogg",
+    "sfx/lmg_fire_3.ogg",
+    "sfx/lmg_fire_4.ogg"
+  ],
+  "rocket_fire": [
+    "sfx/rocket_fire_1.ogg",
+    "sfx/rocket_fire_2.ogg"
+  ],
+  "rocket_whoosh_loop": [
+    "sfx/rocket_whoosh_loop.ogg"
+  ],
+  "explosion": [
+    "sfx/explosion_1.ogg",
+    "sfx/explosion_2.ogg",
+    "sfx/explosion_3.ogg"
+  ],
+  "reload_start": [
+    "sfx/reload_start.ogg"
+  ],
+  "reload_end": [
+    "sfx/reload_end.ogg"
+  ],
+  "dry_fire": [
+    "sfx/dry_fire.ogg"
+  ],
+  "weapon_swap": [
+    "sfx/weapon_swap_1.ogg",
+    "sfx/weapon_swap_2.ogg"
+  ],
+  "carrot_impact_dirt": [
+    "sfx/carrot_impact_dirt_1.ogg",
+    "sfx/carrot_impact_dirt_2.ogg",
+    "sfx/carrot_impact_dirt_3.ogg"
+  ],
+  "carrot_impact_wood": [
+    "sfx/carrot_impact_wood_1.ogg",
+    "sfx/carrot_impact_wood_2.ogg",
+    "sfx/carrot_impact_wood_3.ogg"
+  ],
+  "carrot_impact_flesh": [
+    "sfx/carrot_impact_flesh_1.ogg",
+    "sfx/carrot_impact_flesh_2.ogg",
+    "sfx/carrot_impact_flesh_3.ogg"
+  ],
+  "headshot": [
+    "sfx/headshot_1.ogg",
+    "sfx/headshot_2.ogg"
+  ],
+  "gore_splat": [
+    "sfx/gore_splat_1.ogg",
+    "sfx/gore_splat_2.ogg",
+    "sfx/gore_splat_3.ogg"
+  ],
+  "gore_limb_pop": [
+    "sfx/gore_limb_pop_1.ogg",
+    "sfx/gore_limb_pop_2.ogg",
+    "sfx/gore_limb_pop_3.ogg"
+  ],
+  "body_fall": [
+    "sfx/body_fall_1.ogg",
+    "sfx/body_fall_2.ogg",
+    "sfx/body_fall_3.ogg"
+  ],
+  "footstep_grass": [
+    "sfx/footstep_grass_1.ogg",
+    "sfx/footstep_grass_2.ogg",
+    "sfx/footstep_grass_3.ogg",
+    "sfx/footstep_grass_4.ogg",
+    "sfx/footstep_grass_5.ogg"
+  ],
+  "hop": [
+    "sfx/hop_1.ogg",
+    "sfx/hop_2.ogg",
+    "sfx/hop_3.ogg"
+  ],
+  "jump": [
+    "sfx/jump_1.ogg",
+    "sfx/jump_2.ogg",
+    "sfx/jump_3.ogg"
+  ],
+  "land": [
+    "sfx/land_1.ogg",
+    "sfx/land_2.ogg",
+    "sfx/land_3.ogg"
+  ],
+  "glider_open": [
+    "sfx/glider_open_1.ogg",
+    "sfx/glider_open_2.ogg"
+  ],
+  "pickup_ammo": [
+    "sfx/pickup_ammo_1.ogg",
+    "sfx/pickup_ammo_2.ogg"
+  ],
+  "pickup_health": [
+    "sfx/pickup_health.ogg"
+  ],
+  "pickup_armor": [
+    "sfx/pickup_armor.ogg"
+  ],
+  "pickup_weapon": [
+    "sfx/pickup_weapon.ogg"
+  ],
+  "crate_open": [
+    "sfx/crate_open.ogg"
+  ],
+  "armor_break": [
+    "sfx/armor_break_1.ogg",
+    "sfx/armor_break_2.ogg"
+  ],
+  "hurt_squeak": [
+    "sfx/hurt_squeak_1.ogg",
+    "sfx/hurt_squeak_2.ogg",
+    "sfx/hurt_squeak_3.ogg",
+    "sfx/hurt_squeak_4.ogg",
+    "sfx/hurt_squeak_5.ogg",
+    "sfx/hurt_squeak_6.ogg"
+  ],
+  "death_squeak": [
+    "sfx/death_squeak_1.ogg",
+    "sfx/death_squeak_2.ogg",
+    "sfx/death_squeak_3.ogg"
+  ],
+  "wind_loop": [
+    "sfx/wind_loop.ogg"
+  ],
+  "storm_loop": [
+    "sfx/storm_loop.ogg"
+  ],
+  "storm_damage_tick": [
+    "sfx/storm_damage_tick_1.ogg",
+    "sfx/storm_damage_tick_2.ogg"
+  ],
+  "ambient_forest_loop": [
+    "sfx/ambient_forest_loop.ogg"
+  ],
+  "ui_click": [
+    "sfx/ui_click_1.ogg",
+    "sfx/ui_click_2.ogg"
+  ],
+  "ui_hover": [
+    "sfx/ui_hover.ogg"
+  ],
+  "kill_confirm": [
+    "sfx/kill_confirm.ogg"
+  ],
+  "match_countdown_beep": [
+    "sfx/match_countdown_beep.ogg"
+  ],
+  "match_countdown_go": [
+    "sfx/match_countdown_go.ogg"
+  ],
+  "victory_fanfare": [
+    "sfx/victory_fanfare.ogg"
+  ],
+  "defeat_sting": [
+    "sfx/defeat_sting.ogg"
+  ],
+  "music": {
+    "menu": "music/menu_monkeys_spinning_monkeys.mp3",
+    "match": [
+      "music/match_run_amok.mp3",
+      "music/match_scheming_weasel.mp3",
+      "music/match_bushwick_tarantella.mp3"
+    ],
+    "victory": "music/victory_fluffing_a_duck.mp3"
+  }
+}

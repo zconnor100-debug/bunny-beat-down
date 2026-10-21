@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="CritterDef" format=3]
+
+[ext_resource type="Script" path="res://src/critters/critter_def.gd" id="1_cd"]
+
+[resource]
+script = ExtResource("1_cd")
+id = &"bandit_bunny"
+display_name = "Bandit Bunny"
+model_path = "res://assets/characters/bandit_bunny/bandit_bunny.glb"
+rig_path = "res://assets/characters/bandit_bunny/bandit_bunny.rig.json"
+fur_color = Color(0.55, 0.45, 0.6, 1)
+max_health = 100.0
+move_speed = 6.6
+sprint_speed = 9.8
+jump_height = 1.9
+gait = 1
+voice_pitch = 1.05
+wears_acorn_helmet = false
+spawn_weight = 1.0
+names = PackedStringArray("Thumper the Grim", "Cottontail", "Hops McGee", "Nibbles", "Lop-Eared Larry", "Bunnicula")

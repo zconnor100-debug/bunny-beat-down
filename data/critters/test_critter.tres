@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="CritterDef" format=3]
+
+[ext_resource type="Script" path="res://src/critters/critter_def.gd" id="1_cd"]
+
+[resource]
+script = ExtResource("1_cd")
+id = &"test_critter"
+display_name = "Test Critter"
+model_path = "res://assets/test/test_critter.glb"
+rig_path = "res://assets/test/test_critter.rig.json"
+fur_color = Color(0.75, 0.68, 0.6, 1)
+gait = 0
+spawn_weight = 0.0
+names = PackedStringArray("Testy")
