@@ -337,6 +337,7 @@ METALS = {
     "brass":   ("#b48f52", 0.26, 0.6),
     "copper":  ("#c7825a", 0.30, 0.6),
     "galv":    ("#a7aaab", 0.40, 0.6),
+    "gold":    ("#c79a45", 0.22, 0.55),
 }
 
 
@@ -636,12 +637,14 @@ def stencil_wood(name, stencil_png, ph="rough_wood", tint="#ffffff", paint_hex="
 
 # --------------------------------------------------------------------------- unbaked (exported as-is)
 
-def alpha_card(name, png, color_hex="#ffffff", rough=0.7, sheen=0.5, cutoff=0.4):
-    """Alpha-tested material exported directly (glTF alphaMode MASK).
+def alpha_card(name, png, color_hex="#ffffff", rough=0.7, sheen=0.5, cutoff=0.4, normal_png=None,
+               normal_strength=1.0, emission=0.0, sources=()):
+    """Two-sided alpha-tested material exported directly (glTF alphaMode MASK, doubleSided).
 
-    Not baked: used for the dandelion pappus whose hairs are far finer than any
-    atlas texel. The Math 'GREATER_THAN' on alpha is how the glTF exporter
-    recognises alpha clipping.
+    Not baked: used where the texture carries the silhouette (pappus bristles,
+    leaf / petal / flower canopies). The Math 'GREATER_THAN' on alpha is how the
+    glTF exporter recognises alpha clipping. Optional tangent normal map (on the
+    object's single UV map) and a little emission for glowing fluff.
     """
     if name in bpy.data.materials:
         return bpy.data.materials[name]
@@ -667,12 +670,131 @@ def alpha_card(name, png, color_hex="#ffffff", rough=0.7, sheen=0.5, cutoff=0.4)
     nt.links.new(gt.outputs[0], bsdf.inputs["Alpha"])
     bsdf.inputs["Roughness"].default_value = rough
     bsdf.inputs["Sheen Weight"].default_value = sheen
+    if normal_png:
+        nt_img = nt.nodes.new("ShaderNodeTexImage")
+        nt_img.image = bpy.data.images.load(normal_png, check_existing=True)
+        nt_img.image.colorspace_settings.name = "Non-Color"
+        nm = nt.nodes.new("ShaderNodeNormalMap")
+        nm.inputs["Strength"].default_value = normal_strength
+        nt.links.new(nt_img.outputs["Color"], nm.inputs["Color"])
+        nt.links.new(nm.outputs["Normal"], bsdf.inputs["Normal"])
+    if emission:
+        nt.links.new(mixc.outputs[2], bsdf.inputs["Emission Color"])
+        bsdf.inputs["Emission Strength"].default_value = emission
     mat.surface_render_method = "DITHERED"
     mat.use_backface_culling = False
-    mat["bbd_sources"] = ""
+    mat["bbd_sources"] = ",".join(sources)
     mat["bbd_nobake"] = True
     return mat
 
+
+def derived(name):
+    """Path of a texture derived from a scan by prep_scans.py."""
+    return str(DERIVED / name)
+
+
+def gilded(name, density=1.0, bole="#6e2a19"):
+    """Gold leaf over carved oak: polished gold, grain showing through, red bole in the recesses."""
+    mat, nb = _new(name, ("oak_veneer_01",))
+    if nb is None:
+        return mat
+    vec = nb.coords("Object", density / _tile("oak_veneer_01"))
+    dif = nb.image(_ph("oak_veneer_01", "Diffuse"), vec, box=True)
+    lum = nb.bw(dif.outputs["Color"])
+    gold = nb.mix(1.0, srgb(METALS["gold"][0]), nb.math("ADD", 0.75, nb.math("MULTIPLY", lum, 0.6)), blend="MULTIPLY")
+    cav = nb.cavity(0.012)
+    edge = nb.edge_mask(0.003, 3.0)
+    worn = nb.math("MULTIPLY", nb.math("SUBTRACT", 1.0, cav), 1.6, clamp=True)
+    col = nb.mix(worn, gold, srgb(bole))
+    col = nb.mix(nb.math("MULTIPLY", edge, 0.5), col, nb.mix(1.0, col, (1.3, 1.25, 1.1, 1), "MULTIPLY"))
+    nb.set("Base Color", col)
+    nb.set("Metallic", nb.math("SUBTRACT", 1.0, nb.math("MULTIPLY", worn, 0.8)))
+    nb.set("Roughness", nb.math("ADD", 0.18, nb.math("MULTIPLY", nb.math("ADD", worn, nb.math("MULTIPLY", lum, 0.3)), 0.3)))
+    nb.set("Normal", nb.bump(lum, 0.35, 0.002))
+    return mat
+
+
+def emboss_scales(name, color_hex="#c79a45", cell=0.034, metal=1.0, recess="#5b3a14"):
+    """Embossed acorn-cupule scales (imbricate rows) on src UV in metres - for gilded lids."""
+    mat, nb = _new(name)
+    if nb is None:
+        return mat
+    uv = nb.add("ShaderNodeUVMap", uv_map="src").outputs["UV"]
+    sep = nb.add("ShaderNodeSeparateXYZ")
+    nb.link(uv, sep.inputs[0])
+    row = nb.math("FLOOR", nb.math("DIVIDE", sep.outputs["Y"], cell * 0.75))
+    shift = nb.math("MULTIPLY", nb.math("MODULO", row, 2.0), 0.5)
+    fu = nb.math("SUBTRACT", nb.math("FRACT", nb.math("ADD", nb.math("DIVIDE", sep.outputs["X"], cell), shift)), 0.5)
+    fv = nb.math("FRACT", nb.math("DIVIDE", sep.outputs["Y"], cell * 0.75))
+    # shield-shaped scale: rounded at the bottom (fv = 0), tucked under the row above
+    d = nb.math("SQRT", nb.math("ADD", nb.math("POWER", nb.math("MULTIPLY", fu, 2.0), 2.0),
+                                 nb.math("POWER", nb.math("MULTIPLY", nb.math("SUBTRACT", fv, 0.15), 1.5), 2.0)))
+    h = nb.math("SUBTRACT", 1.0, d, clamp=True)
+    h = nb.math("POWER", h, 0.6)
+    col = nb.mix(nb.math("SUBTRACT", 1.0, nb.math("MULTIPLY", h, 3.0), clamp=True), srgb(color_hex), srgb(recess))
+    nz = nb.noise(nb.coords("Object", 1.0), scale=120.0, detail=3.0)
+    col = nb.mix(0.15, col, nz.outputs["Color"], blend="OVERLAY")
+    nb.set("Base Color", col)
+    nb.set("Metallic", nb.math("MULTIPLY", metal, nb.math("ADD", 0.3, nb.math("MULTIPLY", h, 2.0), clamp=True)))
+    nb.set("Roughness", nb.math("SUBTRACT", 0.42, nb.math("MULTIPLY", h, 0.22)))
+    nb.set("Normal", nb.bump(h, 0.8, 0.004))
+    return mat
+
+
+def velvet(name="velvet", color="#7d1622"):
+    return plain(name, color, rough=0.75, noise_amt=0.12, noise_scale=220.0, bump=0.05, sheen=1.0)
+
+
+def gills(name="gills", color="#efe4cf", n=180):
+    """Mushroom gills on a lathe's src UV (u around): fine radial lamellae with shadowed gaps."""
+    mat, nb = _new(name)
+    if nb is None:
+        return mat
+    uv = nb.add("ShaderNodeUVMap", uv_map="src").outputs["UV"]
+    sep = nb.add("ShaderNodeSeparateXYZ")
+    nb.link(uv, sep.inputs[0])
+    w = nb.math("ABSOLUTE", nb.math("SINE", nb.math("MULTIPLY", sep.outputs["X"], math.pi * n)))
+    lam = nb.math("POWER", w, 0.35)
+    col = nb.mix(nb.math("SUBTRACT", 1.0, lam), srgb(color), srgb("#8a7558"))
+    nb.set("Base Color", col)
+    nb.set("Roughness", 0.8)
+    nb.set("Sheen Weight", 0.3)
+    nb.set("Normal", nb.bump(lam, 0.7, 0.01))
+    return mat
+
+
+def stipe(name="stipe", base="#e9dcc3", band="#7a5a3a"):
+    """Parasol-mushroom stem: cream with brown snake-skin zigzag bands."""
+    mat, nb = _new(name)
+    if nb is None:
+        return mat
+    tc = nb.coords("Object", (1.0, 1.0, 1.0))
+    nz = nb.noise(tc, scale=14.0, detail=4.0)
+    sep = nb.add("ShaderNodeSeparateXYZ")
+    nb.link(tc, sep.inputs[0])
+    zig = nb.math("SINE", nb.math("ADD", nb.math("MULTIPLY", sep.outputs["Z"], 70.0),
+                                  nb.math("MULTIPLY", nz.outputs["Fac"], 6.0)))
+    m = nb.math("GREATER_THAN", zig, 0.55)
+    col = nb.mix(nb.math("MULTIPLY", m, 0.85), srgb(base), srgb(band))
+    nb.set("Base Color", col)
+    nb.set("Roughness", 0.7)
+    nb.set("Normal", nb.bump(nb.math("ADD", m, nz.outputs["Fac"]), 0.3, 0.004))
+    return mat
+
+
+def planar_image(name, png, sources=(), rough=0.6, tint="#ffffff", normal_png=None, normal_strength=1.0):
+    """Baked material sampling an image on the builder's src UV (planar-projected surfaces)."""
+    mat, nb = _new(name, sources)
+    if nb is None:
+        return mat
+    uv = nb.add("ShaderNodeUVMap", uv_map="src").outputs["UV"]
+    t = nb.image(png, uv, extension="EXTEND")
+    nb.set("Base Color", nb.mix(1.0, t.outputs["Color"], srgb(tint), blend="MULTIPLY"))
+    nb.set("Roughness", rough)
+    if normal_png:
+        n = nb.image(normal_png, uv, "Non-Color", extension="EXTEND")
+        nb.set("Normal", nb.normal_map(n.outputs["Color"], normal_strength))
+    return mat
 
 def twine_wrap(name="twine_wrap", pitch=0.0034, tint="#c8a266", plies=48.0):
     """Tightly coiled jute twine for wrap sleeves (lathe src UV: u around, v metres).

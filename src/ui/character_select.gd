@@ -150,10 +150,10 @@ func _build_stage() -> void:
 	_turntable = Node3D.new()
 	_stage.add_child(_turntable)
 	var cam := Camera3D.new()
-	cam.fov = 32
+	cam.fov = 30
 	_stage.add_child(cam)
-	cam.position = Vector3(0, 1.0, 4.4)
-	cam.look_at(Vector3(0, 0.62, 0), Vector3.UP)
+	cam.position = Vector3(0, 1.05, 3.3)
+	cam.look_at(Vector3(0, 0.68, 0), Vector3.UP)
 	cam.current = true
 
 

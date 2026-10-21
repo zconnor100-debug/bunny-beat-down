@@ -9,6 +9,13 @@ extends Node3D
 
 const HELMET_MODEL := "res://assets/props/acorn_helmet.glb"
 const GLIDER_MODEL := "res://assets/props/dandelion_glider.glb"
+## Big drop-in umbrellas (each critter gets one at random); authored full-size,
+## origin at the paws. The small legacy dandelion is scaled up to match.
+const GLIDER_VARIANTS := [
+	"res://assets/props/glider_dandelion_plume.glb", "res://assets/props/glider_oak_leaf.glb",
+	"res://assets/props/glider_maple_leaf.glb", "res://assets/props/glider_tulip.glb",
+	"res://assets/props/glider_daisy.glb", "res://assets/props/glider_mushroom.glb",
+]
 const GOLD_SHADER := preload("res://src/fx/golden.gdshader")
 
 static var _gold_overlay: ShaderMaterial
@@ -247,15 +254,18 @@ func _update_trick(delta: float) -> void:
 ## The dandelion-seed parachute held overhead while gliding in from the balloon.
 func set_glider(on: bool) -> void:
 	if on and _glider == null:
-		_glider = ModelUtil.instantiate(GLIDER_MODEL)
+		var choices: Array = GLIDER_VARIANTS.filter(func(p): return ResourceLoader.exists(p))
+		var path: String = choices.pick_random() if not choices.is_empty() else GLIDER_MODEL
+		_glider = ModelUtil.instantiate(path)
 		if _glider == null:
 			return
 		add_child(_glider)
-		_glider.scale = Vector3.ONE * rig.world_scale * 1.4
-		_glider.position = Vector3(0, rig.world_head_top + 0.35 * rig.world_scale, 0)
-		_glider.scale *= 0.2
+		var full := Vector3.ONE * rig.world_scale * (1.4 if path == GLIDER_MODEL else 1.0)
+		# origin = where the paws grip it, just above the head with arms raised
+		_glider.position = Vector3(0, rig.world_head_top + 0.12 * rig.world_scale, 0)
+		_glider.scale = full * 0.2
 		var tw := _glider.create_tween()
-		tw.tween_property(_glider, "scale", Vector3.ONE * rig.world_scale * 1.4, 0.35).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		tw.tween_property(_glider, "scale", full, 0.35).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	elif not on and _glider:
 		var g := _glider
 		_glider = null

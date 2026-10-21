@@ -135,7 +135,8 @@ y = 0. `assets/env/manifest.json`:
    "collision_radius_m": 0.0, "scale_range": [0.8, 1.3], "density_weight": 1.0 }]
 ```
 
-`category` ∈ tree, bush, grass, flower, mushroom, rock, log, stump, prop,
+`category` ∈ tree, bush, grass, flower, mushroom, rock, log, stump, prop, cottage
+(critter homes used as cover and landmarks), cover (low walls, log piles, hay),
 landmark. `collision` ∈ none, cylinder, convex, trimesh.
 
 Terrain layers live in `assets/textures/<layer>/` as `albedo.jpg`,

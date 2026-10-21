@@ -4,7 +4,7 @@
 extends SceneTree
 
 const MARKERS := ["Muzzle", "SupportGrip", "Sight", "Eject", "Trail", "Lid", "Chute", "Rocket",
-	"EarHole_L", "EarHole_R", "Hand_L", "Hand_R", "Burner", "Exit"]
+	"EarHole_L", "EarHole_R", "Hand_L", "Hand_R", "Burner", "Exit", "LootSpawn"]
 
 
 func rel_xform(n: Node, root: Node) -> Transform3D:

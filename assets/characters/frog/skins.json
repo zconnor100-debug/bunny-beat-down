@@ -1,0 +1,34 @@
+[
+  {
+    "id": "default",
+    "name": "Classic"
+  },
+  {
+    "id": "poison_dart",
+    "name": "Poison Dart",
+    "albedo": {
+      "frog-peasant": "skins/poison_dart_albedo.jpg"
+    }
+  },
+  {
+    "id": "tree_frog",
+    "name": "Tree Frog",
+    "albedo": {
+      "frog-peasant": "skins/tree_frog_albedo.jpg"
+    }
+  },
+  {
+    "id": "toad",
+    "name": "Toad",
+    "albedo": {
+      "frog-peasant": "skins/toad_albedo.jpg"
+    }
+  },
+  {
+    "id": "golden",
+    "name": "Golden",
+    "albedo": {
+      "frog-peasant": "skins/golden_albedo.jpg"
+    }
+  }
+]

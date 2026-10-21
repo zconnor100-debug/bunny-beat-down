@@ -192,6 +192,22 @@
     "tris": 41046
   },
   {
+    "id": "stump_b",
+    "file": "assets/env/stump_b/stump_b.glb",
+    "category": "stump",
+    "height_m": 1.44,
+    "footprint_radius_m": 4.03,
+    "collision": "convex",
+    "collision_radius_m": 3.63,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 0.6,
+    "sink_m": 1.17,
+    "tris": 24500
+  },
+  {
     "id": "stump_hollow",
     "file": "assets/env/stump_hollow/stump_hollow.glb",
     "category": "landmark",
@@ -798,5 +814,229 @@
     "density_weight": 0.05,
     "sink_m": 0.0,
     "tris": 1060
+  },
+  {
+    "id": "cottage_stone",
+    "file": "assets/env/cottage_stone/cottage_stone.glb",
+    "category": "cottage",
+    "height_m": 5.5,
+    "footprint_radius_m": 2.76,
+    "collision": "convex",
+    "collision_radius_m": 2.36,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 0.08,
+    "sink_m": 0.0,
+    "tris": 24499
+  },
+  {
+    "id": "cottage_mushroom",
+    "file": "assets/env/cottage_mushroom/cottage_mushroom.glb",
+    "category": "cottage",
+    "height_m": 6.5,
+    "footprint_radius_m": 3.48,
+    "collision": "trimesh",
+    "collision_radius_m": 2.63,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 0.08,
+    "sink_m": 0.0,
+    "tris": 11173
+  },
+  {
+    "id": "cottage_timber",
+    "file": "assets/env/cottage_timber/cottage_timber.glb",
+    "category": "cottage",
+    "height_m": 6.5,
+    "footprint_radius_m": 3.94,
+    "collision": "convex",
+    "collision_radius_m": 3.36,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 0.08,
+    "sink_m": 0.0,
+    "tris": 24418
+  },
+  {
+    "id": "cottage_shed",
+    "file": "assets/env/cottage_shed/cottage_shed.glb",
+    "category": "cottage",
+    "height_m": 5.0,
+    "footprint_radius_m": 3.61,
+    "collision": "convex",
+    "collision_radius_m": 3.07,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 0.08,
+    "sink_m": 0.0,
+    "tris": 4404
+  },
+  {
+    "id": "cottage_stump",
+    "file": "assets/env/cottage_stump/cottage_stump.glb",
+    "category": "cottage",
+    "height_m": 5.5,
+    "footprint_radius_m": 2.44,
+    "collision": "convex",
+    "collision_radius_m": 1.73,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 0.08,
+    "sink_m": 0.0,
+    "tris": 12408
+  },
+  {
+    "id": "cottage_leafhut",
+    "file": "assets/env/cottage_leafhut/cottage_leafhut.glb",
+    "category": "cottage",
+    "height_m": 4.5,
+    "footprint_radius_m": 1.77,
+    "collision": "convex",
+    "collision_radius_m": 1.6,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 0.08,
+    "sink_m": 0.0,
+    "tris": 8780
+  },
+  {
+    "id": "cottage_toadstool",
+    "file": "assets/env/cottage_toadstool/cottage_toadstool.glb",
+    "category": "cottage",
+    "height_m": 5.0,
+    "footprint_radius_m": 1.58,
+    "collision": "convex",
+    "collision_radius_m": 1.4,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 0.08,
+    "sink_m": 0.0,
+    "tris": 4293
+  },
+  {
+    "id": "stump_poplar",
+    "file": "assets/env/stump_poplar/stump_poplar.glb",
+    "category": "stump",
+    "height_m": 1.8,
+    "footprint_radius_m": 1.3,
+    "collision": "convex",
+    "collision_radius_m": 0.98,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 0.5,
+    "sink_m": 0.0,
+    "tris": 19600
+  },
+  {
+    "id": "stump_deadoak",
+    "file": "assets/env/stump_deadoak/stump_deadoak.glb",
+    "category": "stump",
+    "height_m": 2.54,
+    "footprint_radius_m": 1.3,
+    "collision": "convex",
+    "collision_radius_m": 1.04,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 0.4,
+    "sink_m": 0.06,
+    "tris": 19600
+  },
+  {
+    "id": "stump_boubin",
+    "file": "assets/env/stump_boubin/stump_boubin.glb",
+    "category": "stump",
+    "height_m": 2.28,
+    "footprint_radius_m": 5.04,
+    "collision": "convex",
+    "collision_radius_m": 3.89,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 0.3,
+    "sink_m": 0.12,
+    "tris": 23581
+  },
+  {
+    "id": "stump_mossy",
+    "file": "assets/env/stump_mossy/stump_mossy.glb",
+    "category": "stump",
+    "height_m": 1.15,
+    "footprint_radius_m": 1.19,
+    "collision": "convex",
+    "collision_radius_m": 1.11,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 0.3,
+    "sink_m": 0.05,
+    "tris": 24499
+  },
+  {
+    "id": "cover_logpile",
+    "file": "assets/env/cover_logpile/cover_logpile.glb",
+    "category": "cover",
+    "height_m": 1.4,
+    "footprint_radius_m": 2.73,
+    "collision": "convex",
+    "collision_radius_m": 2.39,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 0.3,
+    "sink_m": 0.0,
+    "tris": 3858
+  },
+  {
+    "id": "cover_haybale",
+    "file": "assets/env/cover_haybale/cover_haybale.glb",
+    "category": "cover",
+    "height_m": 1.3,
+    "footprint_radius_m": 1.26,
+    "collision": "convex",
+    "collision_radius_m": 1.21,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 0.3,
+    "sink_m": 0.0,
+    "tris": 9492
+  },
+  {
+    "id": "cover_stonewall",
+    "file": "assets/env/cover_stonewall/cover_stonewall.glb",
+    "category": "cover",
+    "height_m": 1.5,
+    "footprint_radius_m": 5.14,
+    "collision": "trimesh",
+    "collision_radius_m": 4.78,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 0.2,
+    "sink_m": 0.0,
+    "tris": 19600
   }
 ]

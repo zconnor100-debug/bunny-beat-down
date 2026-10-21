@@ -6,12 +6,17 @@
     "source_url": "https://sketchfab.com/3d-models/bunny-guard-ranger-f08f25f13e6e45fcaf41e66860961c60",
     "license": "CC BY 4.0",
     "license_url": "https://creativecommons.org/licenses/by/4.0/",
-    "changes": "Re-oriented to face +Z and rescaled so the top of the skull is at 0.95 m, feet on the ground; bones renamed Godot-safe (Sketchfab _NN suffixes dropped, '.' and ':' replaced by '_'); Sketchfab helper nodes and non-deforming root/end bones removed; meshes joined into one; colour textures re-encoded as JPEG. Geometry, UVs, texture content and skin weights unchanged.",
+    "changes": "Re-oriented to face +Z and rescaled so the top of the skull is at 0.95 m, feet on the ground; bones renamed Godot-safe (Sketchfab _NN suffixes dropped, '.' and ':' replaced by '_'); Sketchfab helper nodes and non-deforming root/end bones removed; meshes joined into one; colour textures re-encoded as JPEG. Geometry, UVs, texture content and skin weights unchanged. Recoloured skin variants (Snowshoe, Midnight, Dutch, Ginger): the base-colour texture recoloured per region (fur, markings, clothing) in the OKLab colour space, keeping the original painted shading and detail.",
     "used_for": "Player character (Bun)",
     "files": [
       "assets/characters/bun/bun.glb",
       "assets/characters/bun/bun.rig.json",
-      "assets/characters/bun/preview.png"
+      "assets/characters/bun/preview.png",
+      "assets/characters/bun/skins.json",
+      "assets/characters/bun/skins/dutch_albedo.jpg",
+      "assets/characters/bun/skins/ginger_albedo.jpg",
+      "assets/characters/bun/skins/midnight_albedo.jpg",
+      "assets/characters/bun/skins/snowshoe_albedo.jpg"
     ]
   },
   {
@@ -21,12 +26,17 @@
     "source_url": "https://sketchfab.com/3d-models/bunny-guard-corrupt-bandit-1716b70d8ff149b99ee0430f6932d59b",
     "license": "CC BY 4.0",
     "license_url": "https://creativecommons.org/licenses/by/4.0/",
-    "changes": "Re-oriented to face +Z and rescaled so the top of the skull (hood) is at 0.95 m, feet on the ground; bones renamed Godot-safe (Sketchfab _NN suffixes dropped, '.' and ':' replaced by '_'); Sketchfab helper nodes and non-deforming root/end bones removed; meshes joined into one; colour textures re-encoded as JPEG; vertex colours kept. Geometry, UVs and skin weights unchanged.",
+    "changes": "Re-oriented to face +Z and rescaled so the top of the skull (hood) is at 0.95 m, feet on the ground; bones renamed Godot-safe (Sketchfab _NN suffixes dropped, '.' and ':' replaced by '_'); Sketchfab helper nodes and non-deforming root/end bones removed; meshes joined into one; colour textures re-encoded as JPEG; vertex colours kept. Geometry, UVs and skin weights unchanged. Recoloured skin variants (Wild Hare, Frost, Shadow, Toxic): the base-colour texture recoloured per region (fur, markings, clothing) in the OKLab colour space, keeping the original painted shading and detail.",
     "used_for": "Enemy: Bandit Bunny",
     "files": [
       "assets/characters/bandit_bunny/bandit_bunny.glb",
       "assets/characters/bandit_bunny/bandit_bunny.rig.json",
-      "assets/characters/bandit_bunny/preview.png"
+      "assets/characters/bandit_bunny/preview.png",
+      "assets/characters/bandit_bunny/skins.json",
+      "assets/characters/bandit_bunny/skins/frost_albedo.jpg",
+      "assets/characters/bandit_bunny/skins/shadow_albedo.jpg",
+      "assets/characters/bandit_bunny/skins/toxic_albedo.jpg",
+      "assets/characters/bandit_bunny/skins/wild_hare_albedo.jpg"
     ]
   },
   {
@@ -36,12 +46,17 @@
     "source_url": "https://sketchfab.com/3d-models/chipku-blenders-opensourse-mascot-rigged-1d0b4641c80f49aab951948fe297c359",
     "license": "CC BY 4.0",
     "license_url": "https://creativecommons.org/licenses/by/4.0/",
-    "changes": "Rest pose rebuilt from the skin's bind pose; rescaled so the top of the skull is at 0.9 m, feet on the ground; the separate eye meshes skinned to the head bone; foot and paw bones re-parented out of the IK chains and the IK/face-control bones removed; the torso bone split into two (torso, torso_upper) with weights blended along it; skin influences limited to 4 per vertex; bones renamed Godot-safe (Sketchfab _NN suffixes dropped, '.' and ':' replaced by '_'); Sketchfab helper nodes and non-deforming root/end bones removed; meshes joined into one; colour textures re-encoded as JPEG.",
+    "changes": "Rest pose rebuilt from the skin's bind pose; rescaled so the top of the skull is at 0.9 m, feet on the ground; the separate eye meshes skinned to the head bone; foot and paw bones re-parented out of the IK chains and the IK/face-control bones removed; the torso bone split into two (torso, torso_upper) with weights blended along it; skin influences limited to 4 per vertex; bones renamed Godot-safe (Sketchfab _NN suffixes dropped, '.' and ':' replaced by '_'); Sketchfab helper nodes and non-deforming root/end bones removed; meshes joined into one; colour textures re-encoded as JPEG. Recoloured skin variants (Grey, Black, Fox Squirrel, Blueberry): the base-colour texture recoloured per region (fur, markings, clothing) in the OKLab colour space, keeping the original painted shading and detail.",
     "used_for": "Enemy: Squirrel",
     "files": [
       "assets/characters/squirrel/squirrel.glb",
       "assets/characters/squirrel/squirrel.rig.json",
-      "assets/characters/squirrel/preview.png"
+      "assets/characters/squirrel/preview.png",
+      "assets/characters/squirrel/skins.json",
+      "assets/characters/squirrel/skins/black_fur.jpg",
+      "assets/characters/squirrel/skins/blueberry_fur.jpg",
+      "assets/characters/squirrel/skins/fox_squirrel_fur.jpg",
+      "assets/characters/squirrel/skins/grey_fur.jpg"
     ]
   },
   {
@@ -51,12 +66,17 @@
     "source_url": "https://sketchfab.com/3d-models/cunning-fox-character-62f910c702eb488198e03e56bc399f67",
     "license": "CC BY 4.0",
     "license_url": "https://creativecommons.org/licenses/by/4.0/",
-    "changes": "Rest pose rebuilt from the skin's bind pose (T-pose); rescaled so the top of the skull is at 1.15 m, feet on the ground; hand, foot and head bones re-parented from IK targets into the arm, leg and neck chains; IK, pole, face-UI and helper bones removed; the Walk, Run, Sneak and RunScared clips re-baked onto the cleaned rig (Default_pose dropped); bones renamed Godot-safe (Sketchfab _NN suffixes dropped, '.' and ':' replaced by '_'); Sketchfab helper nodes and non-deforming root/end bones removed; meshes joined into one; colour textures re-encoded as JPEG (normal map kept as PNG).",
+    "changes": "Rest pose rebuilt from the skin's bind pose (T-pose); rescaled so the top of the skull is at 1.15 m, feet on the ground; hand, foot and head bones re-parented from IK targets into the arm, leg and neck chains; IK, pole, face-UI and helper bones removed; the Walk, Run, Sneak and RunScared clips re-baked onto the cleaned rig (Default_pose dropped); bones renamed Godot-safe (Sketchfab _NN suffixes dropped, '.' and ':' replaced by '_'); Sketchfab helper nodes and non-deforming root/end bones removed; meshes joined into one; colour textures re-encoded as JPEG (normal map kept as PNG). Recoloured skin variants (Arctic, Silver, Fennec, Kitsune): the base-colour texture recoloured per region (fur, markings, clothing) in the OKLab colour space, keeping the original painted shading and detail.",
     "used_for": "Enemy: Fox",
     "files": [
       "assets/characters/fox/fox.glb",
       "assets/characters/fox/fox.rig.json",
-      "assets/characters/fox/preview.png"
+      "assets/characters/fox/preview.png",
+      "assets/characters/fox/skins.json",
+      "assets/characters/fox/skins/arctic_albedo.jpg",
+      "assets/characters/fox/skins/fennec_albedo.jpg",
+      "assets/characters/fox/skins/kitsune_albedo.jpg",
+      "assets/characters/fox/skins/silver_albedo.jpg"
     ]
   },
   {
@@ -66,12 +86,17 @@
     "source_url": "https://sketchfab.com/3d-models/racoon-rigged-0d16178ccb4b4451b8afc4a2d00b3a98",
     "license": "CC BY 4.0",
     "license_url": "https://creativecommons.org/licenses/by/4.0/",
-    "changes": "Re-oriented to face +Z and rescaled so the top of the skull is at 1.05 m, feet on the ground; bones renamed Godot-safe (Sketchfab _NN suffixes dropped, '.' and ':' replaced by '_'); Sketchfab helper nodes and non-deforming root/end bones removed; meshes joined into one; colour textures re-encoded as JPEG. Geometry, UVs, texture content and skin weights unchanged.",
+    "changes": "Re-oriented to face +Z and rescaled so the top of the skull is at 1.05 m, feet on the ground; bones renamed Godot-safe (Sketchfab _NN suffixes dropped, '.' and ':' replaced by '_'); Sketchfab helper nodes and non-deforming root/end bones removed; meshes joined into one; colour textures re-encoded as JPEG. Geometry, UVs, texture content and skin weights unchanged. Recoloured skin variants (Cinnamon, Blonde, Red Panda, Starry Night): the base-colour texture recoloured per region (fur, markings, clothing) in the OKLab colour space, keeping the original painted shading and detail.",
     "used_for": "Enemy: Raccoon",
     "files": [
       "assets/characters/raccoon/raccoon.glb",
       "assets/characters/raccoon/raccoon.rig.json",
-      "assets/characters/raccoon/preview.png"
+      "assets/characters/raccoon/preview.png",
+      "assets/characters/raccoon/skins.json",
+      "assets/characters/raccoon/skins/blonde_albedo.jpg",
+      "assets/characters/raccoon/skins/cinnamon_albedo.jpg",
+      "assets/characters/raccoon/skins/red_panda_albedo.jpg",
+      "assets/characters/raccoon/skins/starry_night_albedo.jpg"
     ],
     "note": "The uploader's model page adds informal terms of use on top of CC BY (no pornographic, criminal or harmful uses; intended for positive creative projects). This project honours them; the model is used under its CC BY 4.0 license."
   },
@@ -82,12 +107,17 @@
     "source_url": "https://sketchfab.com/3d-models/frog-peasant-b06af7ff11eb485bbbcb248d2f5427f5",
     "license": "CC BY 4.0",
     "license_url": "https://creativecommons.org/licenses/by/4.0/",
-    "changes": "Rest pose rebuilt from the skin's bind pose (T-pose) and turned to face +Z; rescaled so the top of the skull is at 0.85 m, feet on the ground; the idle, run and punch clips re-baked onto the cleaned rig (renamed Idle, Run, Punch); bones renamed Godot-safe (Sketchfab _NN suffixes dropped, '.' and ':' replaced by '_'); Sketchfab helper nodes and non-deforming root/end bones removed; meshes joined into one; colour textures re-encoded as JPEG.",
+    "changes": "Rest pose rebuilt from the skin's bind pose (T-pose) and turned to face +Z; rescaled so the top of the skull is at 0.85 m, feet on the ground; the idle, run and punch clips re-baked onto the cleaned rig (renamed Idle, Run, Punch); bones renamed Godot-safe (Sketchfab _NN suffixes dropped, '.' and ':' replaced by '_'); Sketchfab helper nodes and non-deforming root/end bones removed; meshes joined into one; colour textures re-encoded as JPEG. Recoloured skin variants (Poison Dart, Tree Frog, Toad, Golden): the base-colour texture recoloured per region (fur, markings, clothing) in the OKLab colour space, keeping the original painted shading and detail.",
     "used_for": "Enemy: Frog",
     "files": [
       "assets/characters/frog/frog.glb",
       "assets/characters/frog/frog.rig.json",
-      "assets/characters/frog/preview.png"
+      "assets/characters/frog/preview.png",
+      "assets/characters/frog/skins.json",
+      "assets/characters/frog/skins/golden_albedo.jpg",
+      "assets/characters/frog/skins/poison_dart_albedo.jpg",
+      "assets/characters/frog/skins/toad_albedo.jpg",
+      "assets/characters/frog/skins/tree_frog_albedo.jpg"
     ]
   },
   {
@@ -97,12 +127,20 @@
     "source_url": "https://sketchfab.com/3d-models/happy-beaver-a43fc138613c4de3aeb138ce02b79890",
     "license": "CC BY 4.0",
     "license_url": "https://creativecommons.org/licenses/by/4.0/",
-    "changes": "Rest pose rebuilt from the skin's bind pose (T-pose); rescaled so the top of the skull is at 1.0 m, feet on the ground; IK target, pole and guide bones removed; the spine bone split into two (coluna, coluna_upper) with weights blended along it; skin influences limited to 4 per vertex; bones renamed Godot-safe (Sketchfab _NN suffixes dropped, '.' and ':' replaced by '_'); Sketchfab helper nodes and non-deforming root/end bones removed; meshes joined into one; colour textures re-encoded as JPEG.",
+    "changes": "Rest pose rebuilt from the skin's bind pose (T-pose); rescaled so the top of the skull is at 1.0 m, feet on the ground; IK target, pole and guide bones removed; the spine bone split into two (coluna, coluna_upper) with weights blended along it; skin influences limited to 4 per vertex; bones renamed Godot-safe (Sketchfab _NN suffixes dropped, '.' and ':' replaced by '_'); Sketchfab helper nodes and non-deforming root/end bones removed; meshes joined into one; colour textures re-encoded as JPEG. Recoloured skin variants (Chocolate, Honey, Lumberjack, Bubblegum): the base-colour texture recoloured per region (fur, markings, clothing) in the OKLab colour space, keeping the original painted shading and detail.",
     "used_for": "Enemy: Beaver",
     "files": [
       "assets/characters/beaver/beaver.glb",
       "assets/characters/beaver/beaver.rig.json",
-      "assets/characters/beaver/preview.png"
+      "assets/characters/beaver/preview.png",
+      "assets/characters/beaver/skins.json",
+      "assets/characters/beaver/skins/bubblegum_body.jpg",
+      "assets/characters/beaver/skins/bubblegum_shirt.jpg",
+      "assets/characters/beaver/skins/chocolate_body.jpg",
+      "assets/characters/beaver/skins/chocolate_shirt.jpg",
+      "assets/characters/beaver/skins/honey_body.jpg",
+      "assets/characters/beaver/skins/honey_shirt.jpg",
+      "assets/characters/beaver/skins/lumberjack_shirt.jpg"
     ]
   },
   {
@@ -112,26 +150,32 @@
     "source_url": "https://sketchfab.com/3d-models/hamster-remake-c9433cb2268f497491a3dfb5bab1870e",
     "license": "CC BY 4.0",
     "license_url": "https://creativecommons.org/licenses/by/4.0/",
-    "changes": "Rest pose rebuilt from the skin's bind pose (T-pose); rescaled so the top of the skull is at 0.8 m, feet on the ground; arm, leg and thumb bones re-parented to the torso, hips and palms; each arm and leg bone split into upper and lower segments with weights blended along it; skin influences limited to 4 per vertex; bones renamed Godot-safe (Sketchfab _NN suffixes dropped, '.' and ':' replaced by '_'); Sketchfab helper nodes and non-deforming root/end bones removed; meshes joined into one; colour textures re-encoded as JPEG (normal map kept as PNG).",
+    "changes": "Rest pose rebuilt from the skin's bind pose (T-pose); rescaled so the top of the skull is at 0.8 m, feet on the ground; arm, leg and thumb bones re-parented to the torso, hips and palms; each arm and leg bone split into upper and lower segments with weights blended along it; skin influences limited to 4 per vertex; bones renamed Godot-safe (Sketchfab _NN suffixes dropped, '.' and ':' replaced by '_'); Sketchfab helper nodes and non-deforming root/end bones removed; meshes joined into one; colour textures re-encoded as JPEG (normal map kept as PNG). Recoloured skin variants (Panda, Dove, Black Bear, Cotton Candy): the base-colour texture recoloured per region (fur, markings, clothing) in the OKLab colour space, keeping the original painted shading and detail.",
     "used_for": "Enemy: Hamster",
     "files": [
       "assets/characters/hamster/hamster.glb",
       "assets/characters/hamster/hamster.rig.json",
-      "assets/characters/hamster/preview.png"
+      "assets/characters/hamster/preview.png",
+      "assets/characters/hamster/skins.json",
+      "assets/characters/hamster/skins/black_bear_albedo.jpg",
+      "assets/characters/hamster/skins/cotton_candy_albedo.jpg",
+      "assets/characters/hamster/skins/dove_albedo.jpg",
+      "assets/characters/hamster/skins/panda_albedo.jpg"
     ]
   },
   {
-    "asset": "Character pipeline tools (Sketchfab fetch, bind-pose rebuild, normalization, previews, lineup)",
+    "asset": "Character pipeline tools (Sketchfab fetch, bind-pose rebuild, normalization, skin recolouring, previews, lineups)",
     "author": "Bunny Beat Down project",
     "author_url": "",
     "source_url": "",
     "license": "MIT (project)",
     "license_url": "",
-    "changes": "Original project work. preview.png and lineup.png are renders of the credited models above.",
+    "changes": "Original project work. preview.png, lineup.png and skins_lineup.png are renders of the credited models above.",
     "used_for": "Asset pipeline (characters)",
     "files": [
       "tools/characters/",
-      "assets/characters/lineup.png"
+      "assets/characters/lineup.png",
+      "assets/characters/skins_lineup.png"
     ]
   }
 ]

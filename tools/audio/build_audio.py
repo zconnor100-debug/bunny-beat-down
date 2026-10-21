@@ -49,8 +49,10 @@ VORBIS_BITRATE = 128000
 # --------------------------------------------------------------------------
 # audio I/O through Audaspace
 # --------------------------------------------------------------------------
-def load_mono(path):
-    s = aud.Sound(path).resample(SR, False).rechannel(1)
+def load_mono(path, hq=False):
+    """Decode any audio file to mono float64 at SR. hq=True uses Audaspace's
+    high-quality resampler (used for the 96 kHz OpenGameArt recordings)."""
+    s = aud.Sound(path).resample(SR, hq).rechannel(1)
     return s.data()[:, 0].astype(np.float64)
 
 
@@ -123,10 +125,30 @@ class Ctx:
         self._raw = {}
         self.rng = None
         self.used = set()
+        self.used_oga = set()
 
     def begin(self, key, v):
         self.rng = np.random.default_rng(zlib.crc32(f"{key}:{v}".encode()))
         self.used = set()
+        self.used_oga = set()
+
+    def o(self, oid, rel):
+        """Whole OpenGameArt recording -> peak-normalised mono array at SR.
+        `rel` is the path inside tools/_cache/audio/oga/<oid>/ (or '' for a
+        single-file source)."""
+        meta = sources.OGA[oid]
+        if meta["archive"]:
+            path = os.path.join(CACHE, "oga", oid, rel)
+        else:
+            path = os.path.join(CACHE, "oga", oid + os.path.splitext(meta["url"])[1])
+            rel = os.path.basename(meta["url"])
+        if not os.path.exists(path):
+            raise SystemExit(f"missing {path} -- run tools/audio/fetch_sources.py oga")
+        if path not in self._raw:
+            self._raw[path] = load_mono(path, hq=True)
+        self.used_oga.add((oid, rel))
+        x = self._raw[path]
+        return x / (np.max(np.abs(x)) + 1e-12)
 
     def k(self, pack, stem, speed=1.0, start=0.0, dur=None):
         """Kenney clip -> peak-normalised mono array (optionally sped up / sliced)."""
@@ -178,7 +200,8 @@ def build(only=None):
             c.begin(key, v)
             x = finish(spec["fn"](c, v), spec)
             write_ogg(os.path.join(OUT, rel), x)
-            provenance[rel] = {"src": spec["src"], "kenney": sorted(c.used), "key": key}
+            provenance[rel] = {"src": spec["src"], "kenney": sorted(c.used), "key": key,
+                               "oga": sorted(c.used_oga)}
             pk = 20 * np.log10(np.max(np.abs(x)) + 1e-12)
             report.append((rel, len(x) / SR, pk, dsp.loudness_db(x),
                            os.path.getsize(os.path.join(OUT, rel))))
@@ -238,6 +261,30 @@ def write_credits(provenance):
             "source_files": src_files,
         })
 
+    for oid, meta in sources.OGA.items():
+        files = sorted(rel for rel, p in provenance.items() if any(u[0] == oid for u in p["oga"]))
+        if not files:
+            continue
+        keys = sorted({provenance[r]["key"] for r in files})
+        src_files = sorted({u[1] for r in files for u in provenance[r]["oga"] if u[0] == oid})
+        lic, lic_url = meta["license"]
+        entries.append({
+            "asset": f"{meta['title']} (OpenGameArt)",
+            "author": meta["author"],
+            "author_url": meta["author_url"],
+            "source_url": meta["page"],
+            "license": lic,
+            "license_url": lic_url,
+            "changes": ("Single shots/takes cut from the recordings, downmixed to mono, resampled to "
+                        "44.1 kHz, tails shortened or extended, pitch-shifted, EQ'd, saturated, "
+                        "level-normalised and layered with original synthesized transient/boom/echo "
+                        "layers and small Kenney CC0 layers (see tools/audio/recipes.py); re-encoded "
+                        "as Ogg Vorbis."),
+            "used_for": "Sound effects: " + ", ".join(keys),
+            "files": [f"assets/audio/{r}" for r in files],
+            "source_files": src_files,
+        })
+
     synth_files = sorted(r for r, p in provenance.items() if p["src"] in ("synth", "mixed"))
     synth_keys = sorted({provenance[r]["key"] for r in synth_files})
     entries.append({
@@ -248,8 +295,8 @@ def write_credits(provenance):
         "license": "MIT (project)",
         "license_url": "https://opensource.org/licenses/MIT",
         "changes": ("Original sounds generated from code (oscillators, filtered noise, Karplus-Strong "
-                    "plucks, formant voices, bells); files marked 'mixed' in recipes.py also contain "
-                    "Kenney CC0 layers credited above."),
+                    "plucks, formant voices, bells, gunshot transient/boom/echo layers); files marked "
+                    "'mixed' in recipes.py also contain the Kenney / OpenGameArt layers credited above."),
         "used_for": "Sound effects (fully or partly synthesized): " + ", ".join(synth_keys),
         "files": [f"assets/audio/{r}" for r in synth_files],
     })

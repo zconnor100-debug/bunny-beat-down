@@ -206,6 +206,156 @@
     "notes": "Loaded rocket is the separate node `Rocket` (hide it after firing, show on reload). Eject marks the rear exhaust bell = backblast origin. Sight is the centre of the rear peep ring."
   },
   {
+    "id": "carrot_smg",
+    "file": "assets/weapons/carrot_smg.glb",
+    "kind": "weapon",
+    "use": "Submachine gun: side magazine of baby carrots, folding wire stock",
+    "size_m": [
+      0.21,
+      0.144,
+      0.451
+    ],
+    "max_extent_m": 0.451,
+    "aabb_min": [
+      -0.1733,
+      -0.044,
+      -0.241
+    ],
+    "aabb_max": [
+      0.0363,
+      0.0997,
+      0.2103
+    ],
+    "origin": "main (trigger) grip",
+    "orientation": "barrel along -Z, +Y up",
+    "tris": 5074,
+    "texture_px": 1024,
+    "markers": {
+      "Muzzle": [
+        0.0,
+        0.058,
+        -0.241
+      ],
+      "SupportGrip": [
+        -0.03,
+        0.056,
+        -0.036
+      ],
+      "Sight": [
+        0.0,
+        0.0925,
+        0.048
+      ],
+      "Eject": [
+        0.021,
+        0.064,
+        -0.04
+      ]
+    },
+    "nodes": {},
+    "notes": "Sten-style SMG; the open-frame magazine of baby carrots sticks out to the LEFT. SupportGrip sits on the magazine well (Sten hold); Sight = rear peep centre, front post co-witnessed."
+  },
+  {
+    "id": "carrot_rifle",
+    "file": "assets/weapons/carrot_rifle.glb",
+    "kind": "weapon",
+    "use": "Assault rifle: bent-carrot banana magazine, greens front sight, reflex sight",
+    "size_m": [
+      0.054,
+      0.29,
+      0.828
+    ],
+    "max_extent_m": 0.828,
+    "aabb_min": [
+      -0.0314,
+      -0.1293,
+      -0.527
+    ],
+    "aabb_max": [
+      0.023,
+      0.1605,
+      0.3007
+    ],
+    "origin": "main (trigger) grip",
+    "orientation": "barrel along -Z, +Y up",
+    "tris": 4882,
+    "texture_px": 1024,
+    "markers": {
+      "Muzzle": [
+        0.0,
+        0.072,
+        -0.527
+      ],
+      "SupportGrip": [
+        0.0,
+        0.05,
+        -0.262
+      ],
+      "Sight": [
+        0.0,
+        0.122,
+        -0.02
+      ],
+      "Eject": [
+        0.022,
+        0.076,
+        -0.097
+      ]
+    },
+    "nodes": {},
+    "notes": "Assault rifle; the banana magazine is a bent carrot. Sight = rear of the reflex tube, co-witnessed with the front post under the greens tuft."
+  },
+  {
+    "id": "carrot_sniper",
+    "file": "assets/weapons/carrot_sniper.glb",
+    "kind": "weapon",
+    "use": "Sniper rifle 'The Long Carrot': bolt action, brass scope (ADS through the scope)",
+    "size_m": [
+      0.095,
+      0.291,
+      1.179
+    ],
+    "max_extent_m": 1.179,
+    "aabb_min": [
+      -0.0353,
+      -0.0721,
+      -0.877
+    ],
+    "aabb_max": [
+      0.06,
+      0.2193,
+      0.3025
+    ],
+    "origin": "main (trigger) grip",
+    "orientation": "barrel along -Z, +Y up",
+    "tris": 5530,
+    "texture_px": 1024,
+    "markers": {
+      "Muzzle": [
+        0.0,
+        0.088,
+        -0.876
+      ],
+      "SupportGrip": [
+        0.0,
+        0.058,
+        -0.335
+      ],
+      "Sight": [
+        0.0,
+        0.152,
+        0.081
+      ],
+      "Eject": [
+        0.018,
+        0.094,
+        -0.103
+      ]
+    },
+    "nodes": {},
+    "notes": "Bolt-action sniper. Sight = just behind the scope eyepiece on the scope axis (ADS looks through the scope, 0.064 m above the bore). The carrot-slice lens cap is flipped up and clear of the view."
+  },
+  {
     "id": "carrot_bolt",
     "file": "assets/weapons/carrot_bolt.glb",
     "kind": "projectile",
@@ -681,5 +831,327 @@
     },
     "nodes": {},
     "notes": "Origin at the basket floor centre; flies toward -Z. Basket interior ~3.76 x 2.76 m with 0.78 m walls (critters see over them). `Burner` marks the flame VFX point (3.4 m up), `Exit` the front rim where critters jump. One 2048 px atlas (basket parts get 2.6x texel density)."
+  },
+  {
+    "id": "treasure_chest",
+    "file": "assets/props/treasure_chest.glb",
+    "kind": "prop",
+    "use": "Treasure chest (better loot, slow 5 s open): banded oak, carrot hasp, carved lid",
+    "size_m": [
+      0.95,
+      0.639,
+      0.613
+    ],
+    "max_extent_m": 0.95,
+    "aabb_min": [
+      -0.475,
+      0.0,
+      -0.302
+    ],
+    "aabb_max": [
+      0.475,
+      0.6394,
+      0.3107
+    ],
+    "origin": "bottom centre (rests on the ground)",
+    "orientation": "front faces +Z",
+    "tris": 7920,
+    "texture_px": 1024,
+    "markers": {
+      "LootSpawn": [
+        0.0,
+        0.46,
+        -0.0
+      ]
+    },
+    "nodes": {
+      "Lid": [
+        0.0,
+        0.402,
+        -0.288
+      ]
+    },
+    "notes": "Origin at the bottom centre, front faces +Z. `Lid` pivots on the back hinge line (rotate its X towards -110 deg to open). `LootSpawn` is centred just above the open box."
+  },
+  {
+    "id": "treasure_chest_golden",
+    "file": "assets/props/treasure_chest_golden.glb",
+    "kind": "prop",
+    "use": "Rare golden treasure chest: gilded oak, acorn-cap embossing and medallions",
+    "size_m": [
+      0.954,
+      0.639,
+      0.609
+    ],
+    "max_extent_m": 0.954,
+    "aabb_min": [
+      -0.4769,
+      0.0,
+      -0.302
+    ],
+    "aabb_max": [
+      0.4769,
+      0.6394,
+      0.3075
+    ],
+    "origin": "bottom centre (rests on the ground)",
+    "orientation": "front faces +Z",
+    "tris": 7496,
+    "texture_px": 1024,
+    "markers": {
+      "LootSpawn": [
+        0.0,
+        0.46,
+        -0.0
+      ]
+    },
+    "nodes": {
+      "Lid": [
+        0.0,
+        0.402,
+        -0.288
+      ]
+    },
+    "notes": "Origin at the bottom centre, front faces +Z. `Lid` pivots on the back hinge line (rotate its X towards -110 deg to open). `LootSpawn` is centred just above the open box."
+  },
+  {
+    "id": "glider_dandelion_plume",
+    "file": "assets/props/glider_dandelion_plume.glb",
+    "kind": "glider",
+    "use": "Drop glider: giant glowing dandelion clock",
+    "size_m": [
+      1.602,
+      1.946,
+      1.729
+    ],
+    "max_extent_m": 1.946,
+    "aabb_min": [
+      -0.6505,
+      -0.1503,
+      -0.7851
+    ],
+    "aabb_max": [
+      0.9511,
+      1.796,
+      0.944
+    ],
+    "origin": "hand grip on the stem / handle",
+    "orientation": "canopy overhead along +Y",
+    "tris": 4444,
+    "texture_px": 512,
+    "markers": {
+      "Hand_L": [
+        0.0,
+        0.045,
+        -0.0
+      ],
+      "Hand_R": [
+        0.0,
+        -0.045,
+        -0.0
+      ]
+    },
+    "nodes": {},
+    "notes": "Origin at the hand grip on the stalk; a giant dandelion clock of glowing alpha-scissor pappus tufts (~1.9 m across), centre 0.86 m overhead."
+  },
+  {
+    "id": "glider_oak_leaf",
+    "file": "assets/props/glider_oak_leaf.glb",
+    "kind": "glider",
+    "use": "Drop glider: giant curled autumn oak leaf held by its stalk",
+    "size_m": [
+      1.421,
+      1.13,
+      2.199
+    ],
+    "max_extent_m": 2.199,
+    "aabb_min": [
+      -0.7249,
+      -0.15,
+      -1.2522
+    ],
+    "aabb_max": [
+      0.6959,
+      0.98,
+      0.9464
+    ],
+    "origin": "hand grip on the stem / handle",
+    "orientation": "canopy overhead along +Y",
+    "tris": 932,
+    "texture_px": 512,
+    "markers": {
+      "Hand_L": [
+        0.0,
+        0.045,
+        -0.0
+      ],
+      "Hand_R": [
+        0.0,
+        -0.045,
+        -0.0
+      ]
+    },
+    "nodes": {},
+    "notes": "Origin at the hand grip on the leaf stalk; the oak leaf canopy is a two-sided alpha-scissor card (scanned leaf texture) ~1 m overhead, stalk curving down to the hands."
+  },
+  {
+    "id": "glider_maple_leaf",
+    "file": "assets/props/glider_maple_leaf.glb",
+    "kind": "glider",
+    "use": "Drop glider: giant red maple leaf",
+    "size_m": [
+      2.443,
+      1.129,
+      2.289
+    ],
+    "max_extent_m": 2.443,
+    "aabb_min": [
+      -1.2645,
+      -0.15,
+      -1.1616
+    ],
+    "aabb_max": [
+      1.1783,
+      0.9792,
+      1.1273
+    ],
+    "origin": "hand grip on the stem / handle",
+    "orientation": "canopy overhead along +Y",
+    "tris": 1318,
+    "texture_px": 512,
+    "markers": {
+      "Hand_L": [
+        0.0,
+        0.045,
+        -0.0
+      ],
+      "Hand_R": [
+        0.0,
+        -0.045,
+        -0.0
+      ]
+    },
+    "nodes": {},
+    "notes": "Origin at the hand grip on the leaf stalk; the maple leaf canopy is a two-sided alpha-scissor card (scanned leaf texture) ~1 m overhead, stalk curving down to the hands."
+  },
+  {
+    "id": "glider_tulip",
+    "file": "assets/props/glider_tulip.glb",
+    "kind": "glider",
+    "use": "Drop glider: upside-down tulip bell, held by the pistil",
+    "size_m": [
+      1.972,
+      1.933,
+      1.83
+    ],
+    "max_extent_m": 1.972,
+    "aabb_min": [
+      -0.9633,
+      -0.15,
+      -0.9152
+    ],
+    "aabb_max": [
+      1.0087,
+      1.7834,
+      0.9152
+    ],
+    "origin": "hand grip on the stem / handle",
+    "orientation": "canopy overhead along +Y",
+    "tris": 2088,
+    "texture_px": 512,
+    "markers": {
+      "Hand_L": [
+        0.0,
+        0.045,
+        -0.0
+      ],
+      "Hand_R": [
+        0.0,
+        -0.045,
+        -0.0
+      ]
+    },
+    "nodes": {},
+    "notes": "Origin at the hand grip on the pistil; upside-down tulip bell (petals from the tulip scan, two-sided) ~2 m across, mouth 0.4 m above the grip, top 1.8 m."
+  },
+  {
+    "id": "glider_daisy",
+    "file": "assets/props/glider_daisy.glb",
+    "kind": "glider",
+    "use": "Drop glider: daisy-head parasol",
+    "size_m": [
+      2.34,
+      1.211,
+      2.34
+    ],
+    "max_extent_m": 2.34,
+    "aabb_min": [
+      -1.17,
+      -0.1505,
+      -1.17
+    ],
+    "aabb_max": [
+      1.17,
+      1.06,
+      1.17
+    ],
+    "origin": "hand grip on the stem / handle",
+    "orientation": "canopy overhead along +Y",
+    "tris": 1876,
+    "texture_px": 512,
+    "markers": {
+      "Hand_L": [
+        0.0,
+        0.045,
+        -0.0
+      ],
+      "Hand_R": [
+        0.0,
+        -0.045,
+        -0.0
+      ]
+    },
+    "nodes": {},
+    "notes": "Origin at the hand grip; daisy-head parasol (ambientCG CC0 daisy, two-sided alpha-scissor) 2.2 m across, ~0.95 m overhead."
+  },
+  {
+    "id": "glider_mushroom",
+    "file": "assets/props/glider_mushroom.glb",
+    "kind": "glider",
+    "use": "Drop glider: parasol-mushroom cap",
+    "size_m": [
+      2.002,
+      1.43,
+      2.012
+    ],
+    "max_extent_m": 2.012,
+    "aabb_min": [
+      -1.0009,
+      -0.16,
+      -1.012
+    ],
+    "aabb_max": [
+      1.0009,
+      1.27,
+      1.0
+    ],
+    "origin": "hand grip on the stem / handle",
+    "orientation": "canopy overhead along +Y",
+    "tris": 1744,
+    "texture_px": 1024,
+    "markers": {
+      "Hand_L": [
+        0.0,
+        0.045,
+        -0.0
+      ],
+      "Hand_R": [
+        0.0,
+        -0.045,
+        -0.0
+      ]
+    },
+    "nodes": {},
+    "notes": "Origin at the hand grip on the stipe; parasol-mushroom cap (re-skinned from a shaggy parasol scan) 2 m across, ~0.9-1.3 m overhead."
   }
 ]

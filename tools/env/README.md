@@ -77,7 +77,10 @@ cp tools/env/godot_eyelevel.gd /tmp/bbd-envcheck/ && \
   recorded as `sink_m` in the manifest, so the game can place the origin on the terrain surface.
 * Textures ≤ 2048 px: JPEG colour and ORM, PNG normal maps, RGBA PNG for cut-out foliage.
   Foliage uses glTF `alphaMode: MASK` (Godot imports it as alpha scissor) and is double-sided.
-* Extra manifest fields beyond the contract: `sink_m`, `tris`.
+* Extra manifest fields beyond the contract: `sink_m`, `tris`. Extra categories requested by the
+  lead dev: `cottage` (critter homes used as cover) and `cover` (low crouch-height cover props).
+* `"level": true` rotates a scan so its captured ground patch is horizontal (sloped scans otherwise
+  float on one side once grounded at their lowest vertex).
 
 ## Godot import note
 

@@ -68,6 +68,8 @@ func _run() -> void:
 		var x := (i - (IDS.size() - 1) * 0.5) * spacing
 		c.place_at(Vector3(x, 0.05, 0), 0.0)
 		c.give_weapon(WeaponInstance.new(WeaponDB.get_weapon(GUNS[i % GUNS.size()]), i % 5))
+		var skins: Array = c.def.skins()
+		c.visual.apply_skin(String(skins[(i + 1) % skins.size()].get("id")))
 		critters.append(c)
 	print("critters spawned")
 	var cam := Camera3D.new()

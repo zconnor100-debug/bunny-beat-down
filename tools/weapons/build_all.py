@@ -27,16 +27,21 @@ ROOT = HERE.parent.parent
 CACHE = ROOT / "tools" / "_cache" / "weapons"
 BUILD = CACHE / "build"
 BLENDER_DIR = HERE / "blender"
-WEAPON_SHEET = ["carrot_pistol", "carrot_shotgun", "carrot_lmg", "carrot_rocket_launcher", "carrot_bolt",
+WEAPON_SHEET = ["carrot_pistol", "carrot_shotgun", "carrot_lmg", "carrot_rocket_launcher", "carrot_smg",
+                "carrot_rifle", "carrot_sniper", "carrot_bolt",
                 "carrot_shell_pellet", "carrot_rocket"]
 PROP_SHEET = ["acorn_helmet", "pickup_health", "pickup_armor", "ammo_light", "ammo_shells", "ammo_heavy",
               "ammo_rocket", "loot_crate", "supply_drop", "dandelion_glider", "dropship_balloon"]
+CHEST_GLIDER_SHEET = ["treasure_chest", "treasure_chest_golden", "glider_dandelion_plume", "glider_oak_leaf",
+                      "glider_maple_leaf", "glider_tulip", "glider_daisy", "glider_mushroom"]
+CRITTER_CAPSULE = set(CHEST_GLIDER_SHEET)   # previewed next to a 1.1 m critter capsule
 ORIGINS = {
     "weapon": ("main (trigger) grip", "barrel along -Z, +Y up"),
     "projectile": ("centre of the projectile", "tip / flight direction -Z"),
     "pickup": ("bottom centre (rests on the ground)", "front faces +Z"),
     "prop": ("bottom centre (rests on the ground)", "front faces +Z"),
     "vehicle": ("centre of the basket floor", "flies toward -Z"),
+    "glider": ("hand grip on the stem / handle", "canopy overhead along +Y"),
 }
 ORIGIN_OVERRIDES = {
     "acorn_helmet": ("helmet attach point: put it at bun model space (0, 0.875, -0.010), upright, scale 1",
@@ -78,7 +83,7 @@ def rel(p) -> str:
 
 def write_manifest(reports: dict) -> Path:
     entries = []
-    for i in WEAPON_SHEET + PROP_SHEET:
+    for i in WEAPON_SHEET + PROP_SHEET + CHEST_GLIDER_SHEET:
         r = reports.get(i)
         if not r:
             continue
@@ -114,13 +119,16 @@ CHANGES = {
                          "own 512-2048 px PBR atlas. The original image files are not shipped.",
     "polyhaven_hdri": "Used only to light the preview renders (preview_sheet.png / acorn_helmet_closeup.png); not "
                       "included in any glb.",
+    "ambientcg_material": "Colour, opacity and normal maps cropped to single flower heads, resized to <= 1024 px "
+                          "and used as the two-sided alpha-scissor petal texture.",
     "sketchfab_model": "Re-skinned by tools/weapons/blender/prep_scans.py: the scan is unwrapped onto a fitted "
                        "surface of revolution (Cycles selected-to-active bake) into a cylindrical colour + normal "
                        "strip (colour calibrated, normals high-passed, holes filled); the strip is mapped onto "
                        "procedurally modelled geometry and baked into each asset's atlas. The scan mesh itself is "
                        "not shipped.",
 }
-KIND_LABEL = {"polyhaven_texture": "texture", "polyhaven_hdri": "HDRI", "sketchfab_model": "photoscan"}
+KIND_LABEL = {"polyhaven_texture": "texture", "polyhaven_hdri": "HDRI", "sketchfab_model": "photoscan",
+              "ambientcg_material": "texture"}
 
 
 def write_credits(reports: dict) -> Path:
@@ -145,16 +153,16 @@ def write_credits(reports: dict) -> Path:
             "used_for": m["used_for"],
             "files": files,
         })
-    for i in WEAPON_SHEET + PROP_SHEET:
+    for i in WEAPON_SHEET + PROP_SHEET + CHEST_GLIDER_SHEET:
         r = reports.get(i)
         if not r:
             continue
-        module = {"weapon": "weapons.py", "projectile": "projectiles.py", "vehicle": "balloon.py"}.get(r["kind"],
-                                                                                                         "props.py")
+        module = {"weapon": "weapons.py", "projectile": "projectiles.py", "vehicle": "balloon.py",
+                  "glider": "gliders.py"}.get(r["kind"], "chests.py" if i.startswith("treasure") else "props.py")
         if i == "acorn_helmet":
             module = "helmet.py"
         entries.append({
-            "asset": i.replace("_", " ").title(),
+            "asset": " ".join(w.upper() if w in ("smg", "lmg") else w.capitalize() for w in i.split("_")),
             **PROJECT,
             "source_url": f"tools/weapons/blender/assets/{module}",
             "changes": "Original model generated from code (Blender Python): procedural geometry, scripted "
@@ -172,9 +180,12 @@ def previews(ids: list[str], blender_bin: str, samples: int) -> None:
     sys.path.insert(0, str(HERE))
     import compose_sheet
     tiles = BUILD / "previews"
-    glbs = [str(ROOT / "assets" / ("weapons" if i in WEAPON_SHEET else "props") / f"{i}.glb") for i in ids]
-    blender("render_preview.py", "--out", str(tiles), "--tile", "400", "--samples", str(samples), *glbs,
-            blender_bin=blender_bin)
+    for group, cap in (([i for i in ids if i not in CRITTER_CAPSULE], "1.0"), ([i for i in ids if i in CRITTER_CAPSULE], "1.1")):
+        if not group:
+            continue
+        glbs = [str(ROOT / "assets" / ("weapons" if i in WEAPON_SHEET else "props") / f"{i}.glb") for i in group]
+        blender("render_preview.py", "--out", str(tiles), "--tile", "400", "--samples", str(samples), "--capsule", cap,
+                *glbs, blender_bin=blender_bin)
     if "acorn_helmet" in ids:
         blender("render_preview.py", "--out", str(tiles), "--tile", "320", "--samples", str(samples * 2), "--hero",
                 str(ROOT / "assets" / "props" / "acorn_helmet.glb"), blender_bin=blender_bin)
@@ -191,6 +202,10 @@ def previews(ids: list[str], blender_bin: str, samples: int) -> None:
                         ROOT / "assets" / "weapons" / "preview_sheet.png", cols=4, tile=260)
     compose_sheet.sheet("Bunny Beat Down - props & pickups", present(PROP_SHEET), tiles, BUILD,
                         ROOT / "assets" / "props" / "preview_sheet.png", cols=4, tile=260)
+    if present(CHEST_GLIDER_SHEET):
+        compose_sheet.sheet("Bunny Beat Down - treasure chests & gliders", present(CHEST_GLIDER_SHEET), tiles, BUILD,
+                            ROOT / "assets" / "props" / "preview_sheet_chests_gliders.png", cols=4, tile=260,
+                            subtitle="generated by tools/weapons - grey capsule = 1.1 m critter")
 
 
 def main() -> int:
@@ -205,12 +220,13 @@ def main() -> int:
     args = ap.parse_args()
     sys.stdout.reconfigure(line_buffering=True)
 
-    ids = args.only or (WEAPON_SHEET + PROP_SHEET)
+    ids = args.only or (WEAPON_SHEET + PROP_SHEET + CHEST_GLIDER_SHEET)
     print("1/6 sources")
     if not args.skip_fetch or not (CACHE / "sources_meta.json").exists():
         subprocess.run([sys.executable, str(HERE / "fetch_sources.py")], check=True)
     print("2/6 photoscan strips")
-    if args.rescan or not (CACHE / "derived" / "acorn_strip.json").exists():
+    if args.rescan or not all((CACHE / "derived" / f).exists() for f in
+                              ("acorn_strip.json", "tulip_strip.json", "maple_leaf.json", "daisy_head_albedo.png")):
         blender("prep_scans.py", blender_bin=args.blender)
     print(f"3/6 build {len(ids)} assets")
     blender("build_asset.py", *ids, blender_bin=args.blender)

@@ -23,6 +23,10 @@ for dir in "$ROOT"/assets/characters/*/; do
   [ -f "$dir/$id.glb" ] || continue
   mkdir -p "$WORK/chars/$id"
   cp "$dir/$id.glb" "$dir/$id.rig.json" "$WORK/chars/$id/"
+  if [ -f "$dir/skins.json" ]; then
+    cp "$dir/skins.json" "$WORK/chars/$id/"
+    cp -r "$dir/skins" "$WORK/chars/$id/"
+  fi
 done
 "$GODOT" --headless --path "$WORK" --import >/dev/null 2>&1
 "$GODOT" --headless --path "$WORK" -s res://check.gd 2>&1 | grep -v '^Godot Engine' | grep -v '^$'

@@ -5,6 +5,9 @@ extends SceneTree
 # bone named in <id>.rig.json exists; prints bone count, triangles, AABB,
 # animation clips and the bone-axis convention (median dot product between a
 # bone's rest +Y and the direction to its first child; 1.0 = +Y along bones).
+# If chars/<id>/skins.json exists, checks that every skin's albedo key is the
+# resource_name of one of the model's surface materials and that the texture
+# loads, then swaps it in (duplicate material + albedo_texture) like the game.
 
 func ids() -> Array:
 	var out := []
@@ -85,6 +88,39 @@ func _initialize() -> void:
 			"OK  " if ok else "FAIL", id, sk.get_bone_count(), names.size(), str(missing), tris,
 			str(aabb.position.snapped(Vector3.ONE * 0.001)), str(aabb.size.snapped(Vector3.ONE * 0.001)), str(clips), meshes.size(),
 			dots[dots.size() / 2] if dots.size() > 0 else 0.0, sk.get_bone_parent(hips), lu.x])
+		# skins.json: every albedo key must be a surface material resource_name
+		# and every texture must load; then apply the swap like the game will
+		var skin_report := ""
+		var sj := "res://chars/%s/skins.json" % id
+		if FileAccess.file_exists(sj):
+			var skins = JSON.parse_string(FileAccess.get_file_as_string(sj))
+			var mat_names := {}
+			for mi in meshes:
+				for s in mi.mesh.get_surface_count():
+					mat_names[mi.get_active_material(s).resource_name] = true
+			var bad := []
+			for skin in skins:
+				if not skin.has("albedo"):
+					continue
+				for mname in skin["albedo"]:
+					var tex = load("res://chars/%s/%s" % [id, skin["albedo"][mname]])
+					if not mat_names.has(mname):
+						bad.append("%s: no material %s" % [skin["id"], mname])
+					elif not (tex is Texture2D):
+						bad.append("%s: cannot load %s" % [skin["id"], skin["albedo"][mname]])
+					else:
+						for mi in meshes:
+							for s in mi.mesh.get_surface_count():
+								var m: BaseMaterial3D = mi.get_active_material(s)
+								if m.resource_name == mname:
+									var dup: BaseMaterial3D = m.duplicate()
+									dup.albedo_texture = tex
+									mi.set_surface_override_material(s, dup)
+			ok = ok and bad.is_empty()
+			all_ok = all_ok and bad.is_empty()
+			skin_report = " skins=%d materials=%s skin_errors=%s" % [skins.size(), str(mat_names.keys()), str(bad)]
+		if skin_report != "":
+			print("     %s%s" % [id, skin_report])
 		root.queue_free()
 	print("ALL_OK" if all_ok else "SOME_FAILED")
 	quit()

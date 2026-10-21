@@ -35,7 +35,10 @@ python3 (stdlib only for the non-Blender scripts), a Sketchfab API token in
 | `render_lineup.py` | Blender | all characters side by side at true relative scale -> `assets/characters/lineup.png`. |
 | `write_credits.py` | python3 | writes `assets/credits/characters.json` from the cached API metadata + the roster's `used_for` / `changes` text. |
 | `godot_check.sh` / `godot_check.gd` | Godot 4 | copies the GLBs into `/tmp/bbd-charcheck`, imports them headless and checks every rig.json bone exists in the `Skeleton3D`. Never touches the real project's import cache. |
-| `build_all.sh` | bash | fetch (if missing) -> normalize -> previews -> lineup -> credits. |
+| `skin_maps.py` | Blender (numpy) | texture-space maps of a GLB: rasterizes every material's triangles into its albedo texture so each texel knows its triangle, UV island, dominant bone, 3D rest position and vertex colour; OKLab colour conversion. |
+| `make_skins.py` | Blender | recoloured skin variants from `skins_recipe.json` -> `assets/characters/<id>/skins/*.jpg` + `skins.json`. `--debug DIR` writes region masks, `--only a,b` rebuilds some skins. |
+| `render_skins.py` | Blender | every skin of every character (front and back three-quarter), swapping albedo textures by material name like the game -> `assets/characters/skins_lineup.png`. `--head` for close-ups. |
+| `build_all.sh` | bash | fetch (if missing) -> normalize -> skins -> previews -> lineups -> credits. |
 
 ## What `normalize.py` does
 
@@ -73,6 +76,44 @@ python3 (stdlib only for the non-Blender scripts), a Sketchfab API token in
    bone segment to the vertices that belong to it), eye height, rest pose
    (T if the upper arm is < 25 deg below horizontal, else A), head size; write
    `<id>.glb` and `<id>.rig.json`.
+
+## Skin variants
+
+The player picks species + skin; AI critters get a random one. Each skin is a
+recoloured copy of the albedo texture(s); geometry, UVs and the other maps are
+shared. `assets/characters/<id>/skins.json`:
+
+```json
+[{"id": "default", "name": "Classic"},
+ {"id": "snowshoe", "name": "Snowshoe", "albedo": {"Base": "skins/snowshoe_albedo.jpg"}}]
+```
+
+Keys of `albedo` are material names exactly as Godot imports them
+(`StandardMaterial3D.resource_name`); paths are relative to the character
+folder. Materials a skin doesn't list keep the GLB's texture. The game swaps
+`albedo_texture` on a duplicated material (`godot_check.gd` does exactly that).
+
+How `make_skins.py` recolours (recipe: `skins_recipe.json`):
+
+* **Regions** pick texels by material, dominant bone (regex), 3D rest position,
+  colour in OKLCh (lightness / chroma / hue ranges) and 3D procedural patterns
+  (`noise` for warts, `blob` for a Dutch-rabbit blaze, `stripes` for plaid).
+  Selectors are soft and regions are claimed in order, so `keep_*` regions
+  (eyes, mouths, noses, pink paws) listed first are never recoloured.
+* **Skins** move each region's mean OKLab colour to a target (absolute `L`/`C`/`h`
+  or relative `dL`/`Cs`/`dh`) while every texel keeps its offset from that mean:
+  lightness offsets scaled by the available headroom, colour offsets rotated
+  with the hue. Painted shading, fur strands, folds and texture noise survive.
+  Regions driven by the same key (`"fur*"`) share statistics, so they land on
+  one tone without seams.
+* UV-island bleed padding is refilled from the nearest recoloured texel, so
+  mip-maps don't show the old colour at seams.
+* The bandit bunny's material multiplies its vertex colours (baked AO) into
+  the albedo; skins only change the texture, so that shading still applies.
+
+To add a skin: add regions if needed (check them with `--debug`), add an entry
+to the character's `skins` list, run `make_skins.py <id>`, look at
+`render_skins.py` output, then `godot_check.sh`.
 
 ## Adding a character
 

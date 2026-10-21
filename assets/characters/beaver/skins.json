@@ -1,0 +1,37 @@
+[
+  {
+    "id": "default",
+    "name": "Classic"
+  },
+  {
+    "id": "chocolate",
+    "name": "Chocolate",
+    "albedo": {
+      "defaultMat.001": "skins/chocolate_shirt.jpg",
+      "defaultMat": "skins/chocolate_body.jpg"
+    }
+  },
+  {
+    "id": "honey",
+    "name": "Honey",
+    "albedo": {
+      "defaultMat.001": "skins/honey_shirt.jpg",
+      "defaultMat": "skins/honey_body.jpg"
+    }
+  },
+  {
+    "id": "lumberjack",
+    "name": "Lumberjack",
+    "albedo": {
+      "defaultMat.001": "skins/lumberjack_shirt.jpg"
+    }
+  },
+  {
+    "id": "bubblegum",
+    "name": "Bubblegum",
+    "albedo": {
+      "defaultMat.001": "skins/bubblegum_shirt.jpg",
+      "defaultMat": "skins/bubblegum_body.jpg"
+    }
+  }
+]

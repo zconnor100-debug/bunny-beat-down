@@ -1,14 +1,21 @@
 # tools/audio — sound effects, music and audio credits
 
 Builds everything in `assets/audio/` plus `assets/credits/audio.json`.
-Every sound is either CC0 (Kenney.nl), CC BY 4.0 (Kevin MacLeod, music only) or
-original synthesis written here (MIT, project).
+Every sound is CC0 (Kenney.nl; The Free Firearm Sound Library via OpenGameArt),
+CC BY 3.0 (Michel Baradari via OpenGameArt: rocket launch + explosion layers),
+CC BY 4.0 (Kevin MacLeod, music only) or original synthesis written here (MIT, project).
+
+Weapon fire sounds are built around real near-perspective firearm recordings
+(one gun model per weapon class, several takes = variants), sharpened with
+synthesized transient/boom layers, given outdoor slap-back echoes + reverb tails,
+and carry only a faint Kenney wood "carrot crunch" underneath.
 
 ## Rebuild
 
 ```sh
-# 1. download raw sources into tools/_cache/audio/ (git-ignored, re-runnable)
-python3 -I tools/audio/fetch_sources.py            # or: ... kenney | music
+# 1. download raw sources into tools/_cache/audio/ (git-ignored, re-runnable;
+#    includes the ~194 MB Free Firearm Sound Library archive)
+python3 -I tools/audio/fetch_sources.py            # or: ... kenney | oga | music
 
 # 2. render all SFX, copy the music, write manifest + credits (takes ~3 s)
 /snap/bin/blender -b --factory-startup --python-exit-code 1 \
@@ -29,7 +36,7 @@ encodes our output through Blender's bundled FFmpeg. Builds are deterministic
 | file | what it does |
 |---|---|
 | `sources.py` | every third-party source: Kenney pack zip URLs, incompetech tracks (title, ISRC, slot, why it was picked) |
-| `fetch_sources.py` | downloads + safely extracts sources into `tools/_cache/audio/` |
+| `fetch_sources.py` | downloads + safely extracts sources into `tools/_cache/audio/` (zip via `zipfile`, 7z via the system libarchive through ctypes) |
 | `dsp.py` | small numpy DSP kit: FFT/STFT filters, varispeed, reverb, Karplus-Strong pluck, bells, seamless-loop helpers, K-weighted loudness normaliser |
 | `blocks.py` | synthesized building blocks: thumps, noise bursts, cork pops, bonks, boings, squelches, droplets, crackles, whooshes, formant critter voices, birds, crickets |
 | `recipes.py` | one function per manifest key (`@recipe(key, variants, loud, src)`) layering Kenney clips and synth blocks |
@@ -65,6 +72,8 @@ attribution line in `attribution`). Recipes declare `src="synth" | "kenney" |
 1. Add a `@recipe("new_key", variants=N, loud=-14, src="mixed")` function to
    `recipes.py` (use `c.k(pack, stem, speed=…, start=…, dur=…)` for Kenney clips,
    `c.rng` for randomness, `mix(min_len, (signal, offset_s, gain_db), …)` to layer).
-2. Only Kenney packs listed in `sources.py` may be used; new third-party sources
-   must be CC0 or CC BY and get an entry in `sources.py` + the credits writer.
+2. Only sources listed in `sources.py` may be used (`c.k(...)` for Kenney packs,
+   `c.o(oga_id, path)` for OpenGameArt recordings -- usage is tracked into the
+   credits automatically). New third-party sources must be CC0 or CC BY (check the
+   licence on the page *and* inside the pack) and get an entry in `sources.py`.
 3. Rebuild (full build, so the manifest and credits are refreshed).

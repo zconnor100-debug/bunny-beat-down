@@ -128,6 +128,42 @@ def fetch_polyhaven_hdri(asset_id: str, spec: dict, force: bool) -> dict:
     }
 
 
+def fetch_ambientcg(asset_id: str, spec: dict, force: bool) -> dict:
+    """ambientCG (CC0): download the zip into its own folder and extract the maps safely."""
+    import zipfile
+    res = spec.get("res", "1K-PNG")
+    folder = CACHE / "ambientcg" / asset_id
+    zpath = folder / f"{asset_id}_{res}.zip"
+    if force or not zpath.exists():
+        print(f"   ambientcg {asset_id} {res}")
+        _download(f"https://ambientcg.com/get?file={asset_id}_{res}.zip", zpath)
+    files = {}
+    with zipfile.ZipFile(zpath) as z:
+        for name in z.namelist():
+            base = Path(name).name                    # flatten; never trust archive paths
+            if not base or base.startswith(".") or not base.lower().endswith((".png", ".jpg")):
+                continue
+            dest = folder / "maps" / base
+            if force or not dest.exists():
+                dest.parent.mkdir(parents=True, exist_ok=True)
+                dest.write_bytes(z.read(name))
+            for key in ("Color", "Opacity", "NormalGL", "Roughness"):
+                if f"_{key}." in base:
+                    files[key] = str(dest.relative_to(CACHE))
+    info = _get_json(f"https://ambientcg.com/api/v2/full_json?id={asset_id}")["foundAssets"][0]
+    return {
+        "kind": "ambientcg_material",
+        "title": info.get("displayName", asset_id),
+        "author": "ambientCG (Lennart Demes)",
+        "author_url": "https://ambientcg.com",
+        "source_url": f"https://ambientcg.com/view?id={asset_id}",
+        "license": "CC0 1.0",
+        "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+        "files": files,
+        "used_for": spec["used_for"],
+    }
+
+
 def fetch_sketchfab(key: str, spec: dict, token: str, force: bool) -> dict:
     uid = spec["uid"]
     auth = {"Authorization": "Token " + token}
@@ -172,6 +208,9 @@ def main() -> int:
     print("Poly Haven HDRIs:")
     for aid, s in spec["polyhaven_hdris"].items():
         meta[aid] = fetch_polyhaven_hdri(aid, s, args.force)
+    print("ambientCG materials:")
+    for aid, s in spec.get("ambientcg_materials", {}).items():
+        meta[aid] = fetch_ambientcg(aid, s, args.force)
     print("Sketchfab models:")
     token = TOKEN_FILE.read_text().strip() if TOKEN_FILE.exists() else ""
     for key, s in spec["sketchfab_models"].items():

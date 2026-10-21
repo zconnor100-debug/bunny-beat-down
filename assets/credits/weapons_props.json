@@ -11,7 +11,9 @@
     "files": [
       "assets/weapons/carrot_lmg.glb",
       "assets/weapons/carrot_pistol.glb",
-      "assets/weapons/carrot_shotgun.glb"
+      "assets/weapons/carrot_rifle.glb",
+      "assets/weapons/carrot_shotgun.glb",
+      "assets/weapons/carrot_sniper.glb"
     ]
   },
   {
@@ -28,7 +30,8 @@
       "assets/props/dropship_balloon.glb",
       "assets/props/loot_crate.glb",
       "assets/props/supply_drop.glb",
-      "assets/weapons/carrot_rocket_launcher.glb"
+      "assets/weapons/carrot_rocket_launcher.glb",
+      "assets/weapons/carrot_smg.glb"
     ]
   },
   {
@@ -61,10 +64,15 @@
       "assets/props/loot_crate.glb",
       "assets/props/pickup_armor.glb",
       "assets/props/supply_drop.glb",
+      "assets/props/treasure_chest.glb",
+      "assets/props/treasure_chest_golden.glb",
       "assets/weapons/carrot_lmg.glb",
       "assets/weapons/carrot_pistol.glb",
+      "assets/weapons/carrot_rifle.glb",
       "assets/weapons/carrot_rocket_launcher.glb",
-      "assets/weapons/carrot_shotgun.glb"
+      "assets/weapons/carrot_shotgun.glb",
+      "assets/weapons/carrot_smg.glb",
+      "assets/weapons/carrot_sniper.glb"
     ]
   },
   {
@@ -98,14 +106,23 @@
       "assets/props/ammo_shells.glb",
       "assets/props/dandelion_glider.glb",
       "assets/props/dropship_balloon.glb",
+      "assets/props/glider_daisy.glb",
+      "assets/props/glider_dandelion_plume.glb",
+      "assets/props/glider_maple_leaf.glb",
+      "assets/props/glider_mushroom.glb",
+      "assets/props/glider_oak_leaf.glb",
+      "assets/props/glider_tulip.glb",
       "assets/props/loot_crate.glb",
       "assets/props/pickup_health.glb",
       "assets/props/supply_drop.glb",
       "assets/weapons/carrot_lmg.glb",
       "assets/weapons/carrot_pistol.glb",
+      "assets/weapons/carrot_rifle.glb",
       "assets/weapons/carrot_rocket.glb",
       "assets/weapons/carrot_rocket_launcher.glb",
-      "assets/weapons/carrot_shotgun.glb"
+      "assets/weapons/carrot_shotgun.glb",
+      "assets/weapons/carrot_smg.glb",
+      "assets/weapons/carrot_sniper.glb"
     ]
   },
   {
@@ -122,7 +139,8 @@
       "assets/props/ammo_heavy.glb",
       "assets/props/dropship_balloon.glb",
       "assets/props/pickup_armor.glb",
-      "assets/weapons/carrot_shotgun.glb"
+      "assets/weapons/carrot_shotgun.glb",
+      "assets/weapons/carrot_sniper.glb"
     ]
   },
   {
@@ -217,6 +235,20 @@
     ]
   },
   {
+    "asset": "Oak Veneer 01 (texture)",
+    "author": "Jenelle van Heerden",
+    "author_url": "https://polyhaven.com/all?a=Jenelle%20van%20Heerden",
+    "source_url": "https://polyhaven.com/a/oak_veneer_01",
+    "license": "CC0 1.0",
+    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "changes": "Sampled (box/UV projected, rescaled, tinted) inside procedural Blender materials that add edge wear, cavity dirt and paint chipping, then baked by tools/weapons into each asset's own 512-2048 px PBR atlas. The original image files are not shipped.",
+    "used_for": "Oak planks of the treasure chests",
+    "files": [
+      "assets/props/treasure_chest.glb",
+      "assets/props/treasure_chest_golden.glb"
+    ]
+  },
+  {
     "asset": "Studio Small 09 (HDRI)",
     "author": "Sergej Majboroda",
     "author_url": "https://polyhaven.com/all?a=Sergej%20Majboroda",
@@ -229,6 +261,19 @@
       "assets/weapons/preview_sheet.png",
       "assets/props/preview_sheet.png",
       "assets/props/acorn_helmet_closeup.png"
+    ]
+  },
+  {
+    "asset": "Flower Set 001 (texture)",
+    "author": "ambientCG (Lennart Demes)",
+    "author_url": "https://ambientcg.com",
+    "source_url": "https://ambientcg.com/view?id=FlowerSet001",
+    "license": "CC0 1.0",
+    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "changes": "Colour, opacity and normal maps cropped to single flower heads, resized to <= 1024 px and used as the two-sided alpha-scissor petal texture.",
+    "used_for": "Daisy heads (colour + opacity + normal) for the glider_daisy petal canopy",
+    "files": [
+      "assets/props/glider_daisy.glb"
     ]
   },
   {
@@ -250,10 +295,13 @@
       "assets/weapons/carrot_bolt.glb",
       "assets/weapons/carrot_lmg.glb",
       "assets/weapons/carrot_pistol.glb",
+      "assets/weapons/carrot_rifle.glb",
       "assets/weapons/carrot_rocket.glb",
       "assets/weapons/carrot_rocket_launcher.glb",
       "assets/weapons/carrot_shell_pellet.glb",
-      "assets/weapons/carrot_shotgun.glb"
+      "assets/weapons/carrot_shotgun.glb",
+      "assets/weapons/carrot_smg.glb",
+      "assets/weapons/carrot_sniper.glb"
     ]
   },
   {
@@ -268,6 +316,58 @@
     "files": [
       "assets/props/acorn_helmet.glb",
       "assets/props/pickup_armor.glb"
+    ]
+  },
+  {
+    "asset": "Red Maple Leaf (photoscan)",
+    "author": "Lassi Kaukonen",
+    "author_url": "https://sketchfab.com/thesidekick",
+    "source_url": "https://sketchfab.com/3d-models/red-maple-leaf-d5b2de071a0e4aa08156ddf183674385",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "Re-skinned by tools/weapons/blender/prep_scans.py: the scan is unwrapped onto a fitted surface of revolution (Cycles selected-to-active bake) into a cylindrical colour + normal strip (colour calibrated, normals high-passed, holes filled); the strip is mapped onto procedurally modelled geometry and baked into each asset's atlas. The scan mesh itself is not shipped.",
+    "used_for": "Red maple leaf scan, re-skinned by a top-down planar bake into an alpha leaf texture for glider_maple_leaf",
+    "files": [
+      "assets/props/glider_maple_leaf.glb"
+    ]
+  },
+  {
+    "asset": "Realistic HD Red oak leaf litter (34/36) (photoscan)",
+    "author": "PlantCatalog",
+    "author_url": "https://sketchfab.com/PlantCatalog",
+    "source_url": "https://sketchfab.com/3d-models/realistic-hd-red-oak-leaf-litter-3436-01fdc814864d4ea6805907839b4b6757",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "Re-skinned by tools/weapons/blender/prep_scans.py: the scan is unwrapped onto a fitted surface of revolution (Cycles selected-to-active bake) into a cylindrical colour + normal strip (colour calibrated, normals high-passed, holes filled); the strip is mapped onto procedurally modelled geometry and baked into each asset's atlas. The scan mesh itself is not shipped.",
+    "used_for": "Red oak autumn leaf (single leaf card), re-skinned by a top-down planar bake into the alpha leaf texture of glider_oak_leaf",
+    "files": [
+      "assets/props/glider_oak_leaf.glb"
+    ]
+  },
+  {
+    "asset": "Red Tulip (photoscan)",
+    "author": "Lassi Kaukonen",
+    "author_url": "https://sketchfab.com/thesidekick",
+    "source_url": "https://sketchfab.com/3d-models/red-tulip-651e57a3728b4208b77d6d765260d018",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "Re-skinned by tools/weapons/blender/prep_scans.py: the scan is unwrapped onto a fitted surface of revolution (Cycles selected-to-active bake) into a cylindrical colour + normal strip (colour calibrated, normals high-passed, holes filled); the strip is mapped onto procedurally modelled geometry and baked into each asset's atlas. The scan mesh itself is not shipped.",
+    "used_for": "Red tulip scan, unwrapped into a petal colour strip for glider_tulip",
+    "files": [
+      "assets/props/glider_tulip.glb"
+    ]
+  },
+  {
+    "asset": "Shaggy Parasol Mushroom (Chlorophyllum rhacodes) (photoscan)",
+    "author": "samuelnorth",
+    "author_url": "https://sketchfab.com/samnorth",
+    "source_url": "https://sketchfab.com/3d-models/shaggy-parasol-mushroom-chlorophyllum-rhacodes-251e85668daf45ccb6f14d51c584920b",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "Re-skinned by tools/weapons/blender/prep_scans.py: the scan is unwrapped onto a fitted surface of revolution (Cycles selected-to-active bake) into a cylindrical colour + normal strip (colour calibrated, normals high-passed, holes filled); the strip is mapped onto procedurally modelled geometry and baked into each asset's atlas. The scan mesh itself is not shipped.",
+    "used_for": "Shaggy parasol mushroom scan, re-skinned by a top-down planar bake into the scaly cap texture of glider_mushroom",
+    "files": [
+      "assets/props/glider_mushroom.glb"
     ]
   },
   {
@@ -297,7 +397,7 @@
     ]
   },
   {
-    "asset": "Carrot Lmg",
+    "asset": "Carrot LMG",
     "author": "Bunny Beat Down project",
     "author_url": "",
     "license": "MIT (project)",
@@ -320,6 +420,45 @@
     "used_for": "Rocket launcher firing carrot_rocket",
     "files": [
       "assets/weapons/carrot_rocket_launcher.glb"
+    ]
+  },
+  {
+    "asset": "Carrot SMG",
+    "author": "Bunny Beat Down project",
+    "author_url": "",
+    "license": "MIT (project)",
+    "license_url": "",
+    "source_url": "tools/weapons/blender/assets/weapons.py",
+    "changes": "Original model generated from code (Blender Python): procedural geometry, scripted materials and a baked PBR atlas. Third-party textures/scans it samples are credited separately.",
+    "used_for": "Submachine gun: side magazine of baby carrots, folding wire stock",
+    "files": [
+      "assets/weapons/carrot_smg.glb"
+    ]
+  },
+  {
+    "asset": "Carrot Rifle",
+    "author": "Bunny Beat Down project",
+    "author_url": "",
+    "license": "MIT (project)",
+    "license_url": "",
+    "source_url": "tools/weapons/blender/assets/weapons.py",
+    "changes": "Original model generated from code (Blender Python): procedural geometry, scripted materials and a baked PBR atlas. Third-party textures/scans it samples are credited separately.",
+    "used_for": "Assault rifle: bent-carrot banana magazine, greens front sight, reflex sight",
+    "files": [
+      "assets/weapons/carrot_rifle.glb"
+    ]
+  },
+  {
+    "asset": "Carrot Sniper",
+    "author": "Bunny Beat Down project",
+    "author_url": "",
+    "license": "MIT (project)",
+    "license_url": "",
+    "source_url": "tools/weapons/blender/assets/weapons.py",
+    "changes": "Original model generated from code (Blender Python): procedural geometry, scripted materials and a baked PBR atlas. Third-party textures/scans it samples are credited separately.",
+    "used_for": "Sniper rifle 'The Long Carrot': bolt action, brass scope (ADS through the scope)",
+    "files": [
+      "assets/weapons/carrot_sniper.glb"
     ]
   },
   {
@@ -502,6 +641,110 @@
     "used_for": "Battle-royale dropship: patchwork hot-air balloon with a picnic-basket gondola",
     "files": [
       "assets/props/dropship_balloon.glb"
+    ]
+  },
+  {
+    "asset": "Treasure Chest",
+    "author": "Bunny Beat Down project",
+    "author_url": "",
+    "license": "MIT (project)",
+    "license_url": "",
+    "source_url": "tools/weapons/blender/assets/chests.py",
+    "changes": "Original model generated from code (Blender Python): procedural geometry, scripted materials and a baked PBR atlas. Third-party textures/scans it samples are credited separately.",
+    "used_for": "Treasure chest (better loot, slow 5 s open): banded oak, carrot hasp, carved lid",
+    "files": [
+      "assets/props/treasure_chest.glb"
+    ]
+  },
+  {
+    "asset": "Treasure Chest Golden",
+    "author": "Bunny Beat Down project",
+    "author_url": "",
+    "license": "MIT (project)",
+    "license_url": "",
+    "source_url": "tools/weapons/blender/assets/chests.py",
+    "changes": "Original model generated from code (Blender Python): procedural geometry, scripted materials and a baked PBR atlas. Third-party textures/scans it samples are credited separately.",
+    "used_for": "Rare golden treasure chest: gilded oak, acorn-cap embossing and medallions",
+    "files": [
+      "assets/props/treasure_chest_golden.glb"
+    ]
+  },
+  {
+    "asset": "Glider Dandelion Plume",
+    "author": "Bunny Beat Down project",
+    "author_url": "",
+    "license": "MIT (project)",
+    "license_url": "",
+    "source_url": "tools/weapons/blender/assets/gliders.py",
+    "changes": "Original model generated from code (Blender Python): procedural geometry, scripted materials and a baked PBR atlas. Third-party textures/scans it samples are credited separately.",
+    "used_for": "Drop glider: giant glowing dandelion clock",
+    "files": [
+      "assets/props/glider_dandelion_plume.glb"
+    ]
+  },
+  {
+    "asset": "Glider Oak Leaf",
+    "author": "Bunny Beat Down project",
+    "author_url": "",
+    "license": "MIT (project)",
+    "license_url": "",
+    "source_url": "tools/weapons/blender/assets/gliders.py",
+    "changes": "Original model generated from code (Blender Python): procedural geometry, scripted materials and a baked PBR atlas. Third-party textures/scans it samples are credited separately.",
+    "used_for": "Drop glider: giant curled autumn oak leaf held by its stalk",
+    "files": [
+      "assets/props/glider_oak_leaf.glb"
+    ]
+  },
+  {
+    "asset": "Glider Maple Leaf",
+    "author": "Bunny Beat Down project",
+    "author_url": "",
+    "license": "MIT (project)",
+    "license_url": "",
+    "source_url": "tools/weapons/blender/assets/gliders.py",
+    "changes": "Original model generated from code (Blender Python): procedural geometry, scripted materials and a baked PBR atlas. Third-party textures/scans it samples are credited separately.",
+    "used_for": "Drop glider: giant red maple leaf",
+    "files": [
+      "assets/props/glider_maple_leaf.glb"
+    ]
+  },
+  {
+    "asset": "Glider Tulip",
+    "author": "Bunny Beat Down project",
+    "author_url": "",
+    "license": "MIT (project)",
+    "license_url": "",
+    "source_url": "tools/weapons/blender/assets/gliders.py",
+    "changes": "Original model generated from code (Blender Python): procedural geometry, scripted materials and a baked PBR atlas. Third-party textures/scans it samples are credited separately.",
+    "used_for": "Drop glider: upside-down tulip bell, held by the pistil",
+    "files": [
+      "assets/props/glider_tulip.glb"
+    ]
+  },
+  {
+    "asset": "Glider Daisy",
+    "author": "Bunny Beat Down project",
+    "author_url": "",
+    "license": "MIT (project)",
+    "license_url": "",
+    "source_url": "tools/weapons/blender/assets/gliders.py",
+    "changes": "Original model generated from code (Blender Python): procedural geometry, scripted materials and a baked PBR atlas. Third-party textures/scans it samples are credited separately.",
+    "used_for": "Drop glider: daisy-head parasol",
+    "files": [
+      "assets/props/glider_daisy.glb"
+    ]
+  },
+  {
+    "asset": "Glider Mushroom",
+    "author": "Bunny Beat Down project",
+    "author_url": "",
+    "license": "MIT (project)",
+    "license_url": "",
+    "source_url": "tools/weapons/blender/assets/gliders.py",
+    "changes": "Original model generated from code (Blender Python): procedural geometry, scripted materials and a baked PBR atlas. Third-party textures/scans it samples are credited separately.",
+    "used_for": "Drop glider: parasol-mushroom cap",
+    "files": [
+      "assets/props/glider_mushroom.glb"
     ]
   }
 ]

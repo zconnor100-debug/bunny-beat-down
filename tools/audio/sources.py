@@ -6,6 +6,7 @@ Only CC0 / CC BY sources are allowed here -- see docs/ASSET_PIPELINE.md.
 
 CC0 = ("CC0 1.0", "https://creativecommons.org/publicdomain/zero/1.0/")
 CC_BY_4 = ("CC BY 4.0", "https://creativecommons.org/licenses/by/4.0/")
+CC_BY_3 = ("CC BY 3.0", "https://creativecommons.org/licenses/by/3.0/")
 
 # Kenney.nl audio packs (all CC0). The zip URLs are the "Download" links on each
 # asset page; the hashed path segment is how kenney.nl versions its files.
@@ -83,3 +84,37 @@ MUSIC = [
            "Short (1:07) goofy trombone/tuba strut -- a triumphant-but-silly "
            "'you are the last bunny standing' victory lap."),
 ]
+
+
+# OpenGameArt.org audio used for the weapon sounds. Each entry's licence was
+# checked on its OGA page (and in the pack text) -- only CC0 / CC BY allowed.
+# "archive" is zip | 7z | None (single file).
+OGA = {
+    "free-firearm-sound-library": {
+        "title": "The Free Firearm Sound Library, Prepared set",
+        "author": "Ben Jaszczak, et al. (The Free Firearm Sound Library team)",
+        "author_url": "https://web.archive.org/web/20141217041948/http://freefirearmsfx.com/",
+        "page": "https://opengameart.org/content/the-free-firearm-sound-library",
+        "url": "https://opengameart.org/sites/default/files/Prepared%20SFX%20Library.7z",
+        "archive": "7z",
+        "license": CC0,
+    },
+    "baradari-explosions": {
+        "title": "2 High Quality Explosions",
+        "author": "Michel Baradari",
+        "author_url": "http://apollo-music.de",
+        "page": "https://opengameart.org/content/2-high-quality-explosions",
+        "url": "https://opengameart.org/sites/default/files/explosions.7z",
+        "archive": "7z",
+        "license": CC_BY_3,
+    },
+    "baradari-launches": {
+        "title": "4 projectile launches",
+        "author": "Michel Baradari",
+        "author_url": "http://apollo-music.de",
+        "page": "https://opengameart.org/content/4-projectile-launches",
+        "url": "https://opengameart.org/sites/default/files/launches.7z",
+        "archive": "7z",
+        "license": CC_BY_3,
+    },
+}

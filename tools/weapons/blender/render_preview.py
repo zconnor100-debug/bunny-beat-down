@@ -23,7 +23,7 @@ from bbd import util  # noqa: E402
 def parse():
     args = util.script_args()
     out, tile, hero, files, samples = None, 448, False, [], 96
-    global FOCUS
+    global FOCUS, CAPSULE
     FOCUS = None
     it = iter(args)
     for a in it:
@@ -35,6 +35,8 @@ def parse():
             samples = int(next(it))
         elif a == "--hero":
             hero = True
+        elif a == "--capsule":   # reference capsule height in metres (1.0 default, 1.1 = critter)
+            CAPSULE = float(next(it))
         elif a == "--focus":  # xmin,ymin,zmin,xmax,ymax,zmax (Blender coords, after floor drop)
             FOCUS = [float(x) for x in next(it).split(",")]
         else:
@@ -87,13 +89,16 @@ def studio(tile, samples):
     return floor
 
 
+CAPSULE = 1.0
+
+
 def capsule():
     import bmesh
     me = bpy.data.meshes.new("capsule")
     bm = bmesh.new()
     bmesh.ops.create_uvsphere(bm, u_segments=32, v_segments=16, radius=0.15)
     for v in bm.verts:
-        v.co.z += 0.7 if v.co.z > 0 else 0.15
+        v.co.z += (CAPSULE - 0.30) + 0.15 if v.co.z > 0 else 0.15
     bm.to_mesh(me)
     bm.free()
     for p in me.polygons:

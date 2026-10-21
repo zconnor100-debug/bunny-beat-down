@@ -127,6 +127,15 @@
         "Rough"
       ],
       "used_for": "Cream windowpane-plaid envelope panels, dropship balloon"
+    },
+    "oak_veneer_01": {
+      "res": "2k",
+      "maps": [
+        "Diffuse",
+        "nor_gl",
+        "Rough"
+      ],
+      "used_for": "Oak planks of the treasure chests"
     }
   },
   "polyhaven_hdris": {
@@ -143,6 +152,28 @@
     "acorn_scan": {
       "uid": "84ad040b23644329aa142e502a1d4b14",
       "used_for": "Photoscanned acorn: unwrapped by prep_scans.py into cupule-scale and nut-shell strips (albedo + normal) for the acorn helmet and acorn-shell armour"
+    },
+    "maple_leaf_scan": {
+      "uid": "d5b2de071a0e4aa08156ddf183674385",
+      "used_for": "Red maple leaf scan, re-skinned by a top-down planar bake into an alpha leaf texture for glider_maple_leaf"
+    },
+    "oak_leaf": {
+      "uid": "01fdc814864d4ea6805907839b4b6757",
+      "used_for": "Red oak autumn leaf (single leaf card), re-skinned by a top-down planar bake into the alpha leaf texture of glider_oak_leaf"
+    },
+    "tulip_scan": {
+      "uid": "651e57a3728b4208b77d6d765260d018",
+      "used_for": "Red tulip scan, unwrapped into a petal colour strip for glider_tulip"
+    },
+    "parasol_scan": {
+      "uid": "251e85668daf45ccb6f14d51c584920b",
+      "used_for": "Shaggy parasol mushroom scan, re-skinned by a top-down planar bake into the scaly cap texture of glider_mushroom"
+    }
+  },
+  "ambientcg_materials": {
+    "FlowerSet001": {
+      "res": "2K-PNG",
+      "used_for": "Daisy heads (colour + opacity + normal) for the glider_daisy petal canopy"
     }
   }
 }

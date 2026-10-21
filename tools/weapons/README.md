@@ -23,7 +23,7 @@ optionally `~/bin/godot4` for the import check.
 | step | file | what it does |
 |---|---|---|
 | 1 | `fetch_sources.py` + `sources.json` | Downloads the Poly Haven CC0 textures/HDRI and the Sketchfab scans into `tools/_cache/weapons/` (git-ignored) and records title / author / licence for the credits. Sketchfab licences are re-checked at download time; only CC0 and CC BY pass. |
-| 2 | `blender/prep_scans.py` | **Re-skins the photoscans.** Scan atlases are fragmented, so each scan is unwrapped instead: PCA finds the symmetry axis, a surface of revolution is fitted just inside the scan (following its bend), and Cycles bakes scan -> proxy into clean cylindrical strips (u = around, v = crown -> tip). Normals are high-passed, holes push-pull filled, the carrot colour calibrated. Output: `carrot_skin_*`, `acorn_strip_*` in `_cache/weapons/derived/`. |
+| 2 | `blender/prep_scans.py` | **Re-skins the photoscans.** Scan atlases are fragmented, so each scan is unwrapped instead: PCA finds the symmetry axis, a surface of revolution is fitted just inside the scan (following its bend), and Cycles bakes scan -> proxy into clean cylindrical strips (u = around, v = crown -> tip). Normals are high-passed, holes push-pull filled, the carrot colour calibrated. Output: `carrot_skin_*`, `acorn_strip_*`, `tulip_strip_*` in `_cache/weapons/derived/`. Flat things (leaves, a mushroom cap) get a **planar re-skin** instead: the scan is baked orthographically onto a plane above it into colour + alpha + high-passed normal (`maple_leaf_*`, `oak_leaf_*`, `parasol_cap_*`); the daisy head is cut out of an ambientCG (CC0) flower atlas. |
 | 3 | `blender/build_asset.py` | Runs one builder from `blender/assets/`, then `bbd/bake.py`: seeds an `atlas` UV (clean lathe UVs or smart-project), normalises texel density (with optional per-part emphasis), joins parts per output node, packs, and bakes base colour / roughness / metallic (via emission re-routing) + tangent normals + AO on the GPU. numpy composes albedo, ORM (R=AO, G=rough, B=metal) and normal maps; a single material replaces the source materials; named empties are added; `.glb` exported. A JSON report (tris, bounds, markers in Godot axes, sources used) goes to `_cache/weapons/build/`. |
 | 4 | `blender/render_preview.py`, `compose_sheet.py` | Imports the **exported** glbs (so previews show exactly what ships), renders a scale shot next to a 1 m capsule plus a turnaround, and composes `preview_sheet.png` cards; `--hero` renders the acorn helmet close-up. |
 | 5 | `build_all.py` | Writes `assets/props/manifest.json` and `assets/credits/weapons_props.json` from the reports, so manifest and credits always match what was built. |
@@ -69,6 +69,12 @@ Godot as forward **-Z**, up **+Y**.
 * `dandelion_glider`: origin at the hand grip, `Hand_L/R` IK targets.
 * `dropship_balloon`: origin at the basket floor centre, flies toward -Z,
   `Burner` (flame VFX) and `Exit` (jump point) markers.
+* `treasure_chest`, `treasure_chest_golden`: origin at the bottom centre, front
+  +Z, `Lid` node on the back hinge (X towards -110 deg opens) and a
+  `LootSpawn` marker just above the open box.
+* `glider_*` (dandelion plume, oak leaf, maple leaf, tulip, daisy, mushroom):
+  1.7-2.4 m canopies, origin at the hand grip with `Hand_L/R`; thin canopies
+  use two-sided alpha-scissor materials made from the scans (not baked).
 
 Budgets: guns <= 8k triangles, bolt/pellet <= 600, rocket <= 2k; 1024 px atlases
 for weapons/props, 512 px for small pickups and projectiles, 2048 px for the

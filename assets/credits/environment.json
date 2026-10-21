@@ -193,6 +193,19 @@
     ]
   },
   {
+    "asset": "Tree Stump 02 (Poly Haven model)",
+    "author": "Rob Tuytel",
+    "author_url": "https://polyhaven.com/all?a=Rob%20Tuytel",
+    "source_url": "https://polyhaven.com/a/tree_stump_02",
+    "license": "CC0 1.0",
+    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "changes": "stump_b: rescaled x5 to critter-world size, grounded and centred; decimated 62345 -> 24500 triangles (seams welded first, no cracks); normal map re-baked from the full-detail source onto the decimated mesh; textures re-encoded <= 2048px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Environment scenery: low wide tree stump (stump_b)",
+    "files": [
+      "assets/env/stump_b/stump_b.glb"
+    ]
+  },
+  {
     "asset": "Hollowed Tree Trunk",
     "author": "Terrie Simmons-Ehrhardt",
     "author_url": "https://sketchfab.com/terrielsimmons",
@@ -624,6 +637,188 @@
     "used_for": "Environment scenery: garden picket fence section (fence_picket)",
     "files": [
       "assets/env/fence_picket/fence_picket.glb"
+    ]
+  },
+  {
+    "asset": "Fairy House",
+    "author": "cherrondesautels",
+    "author_url": "https://sketchfab.com/cherrondesautels",
+    "source_url": "https://sketchfab.com/3d-models/fairy-house-639a0f3c67764d0d9847ba8982de93b8",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "cottage_stone: rescaled x1.4145 to critter-world size, grounded and centred; decimated 100152 -> 24499 triangles (seams welded first, no cracks); normal map re-baked from the full-detail source onto the decimated mesh; textures re-encoded <= 1024px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Environment scenery: stone fairy cottage (cottage_stone)",
+    "files": [
+      "assets/env/cottage_stone/cottage_stone.glb"
+    ]
+  },
+  {
+    "asset": "Mushroom house",
+    "author": "mRiot",
+    "author_url": "https://sketchfab.com/malgorzatariot",
+    "source_url": "https://sketchfab.com/3d-models/mushroom-house-d89df90165754c5492d9a4c90e099fa0",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "cottage_mushroom: rescaled x0.6109 to critter-world size, grounded and centred; removed baked emission map; textures re-encoded <= 1024px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Environment scenery: toadstool house with a round door (cottage_mushroom)",
+    "files": [
+      "assets/env/cottage_mushroom/cottage_mushroom.glb"
+    ]
+  },
+  {
+    "asset": "Medieval house",
+    "author": "DoniTodorov",
+    "author_url": "https://sketchfab.com/DoniTodorov",
+    "source_url": "https://sketchfab.com/3d-models/medieval-house-a8ad9d2723444b1b8ac054c232e61f12",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "cottage_timber: rescaled x0.9399 to critter-world size, grounded and centred; decimated 26967 -> 24418 triangles (seams welded first, no cracks); textures re-encoded <= 1024px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Environment scenery: stone and timber cottage (cottage_timber)",
+    "files": [
+      "assets/env/cottage_timber/cottage_timber.glb"
+    ]
+  },
+  {
+    "asset": "Wooden Cabin",
+    "author": "donnichols",
+    "author_url": "https://sketchfab.com/donnichols",
+    "source_url": "https://sketchfab.com/3d-models/wooden-cabin-c90674a377864ac1b8fd141ad1917ee3",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "cottage_shed: rescaled x0.0156 to critter-world size, grounded and centred; textures re-encoded <= 1024px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Environment scenery: weathered wooden garden shed (cottage_shed)",
+    "files": [
+      "assets/env/cottage_shed/cottage_shed.glb"
+    ]
+  },
+  {
+    "asset": "Stump living",
+    "author": "Luxx_",
+    "author_url": "https://sketchfab.com/Luxx_",
+    "source_url": "https://sketchfab.com/3d-models/stump-living-75ece63da0f646e088deb5a9809a92e6",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "cottage_stump: rescaled x0.0508 to critter-world size, grounded and centred; textures re-encoded <= 1024px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Environment scenery: tree-stump house with door and windows (cottage_stump)",
+    "files": [
+      "assets/env/cottage_stump/cottage_stump.glb"
+    ]
+  },
+  {
+    "asset": "Gnome House Model",
+    "author": "kshimer",
+    "author_url": "https://sketchfab.com/kshimer",
+    "source_url": "https://sketchfab.com/3d-models/gnome-house-model-e538667323864f868e3a055299a32e3e",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "cottage_leafhut: rescaled x15.903 to critter-world size, grounded and centred; removed baked emission map; foliage materials converted to alpha-clip (cut-out) with bled RGBA albedo; textures re-encoded <= 1024px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Environment scenery: leaf-roofed gnome hut (cottage_leafhut)",
+    "files": [
+      "assets/env/cottage_leafhut/cottage_leafhut.glb"
+    ]
+  },
+  {
+    "asset": "Mushroom House",
+    "author": "Horton",
+    "author_url": "https://sketchfab.com/Horton",
+    "source_url": "https://sketchfab.com/3d-models/mushroom-house-b416d76c69e142cc914b303829ba58fb",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "cottage_toadstool: rescaled x0.005 to critter-world size, grounded and centred; textures re-encoded <= 1024px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Environment scenery: white toadstool cottage (cottage_toadstool)",
+    "files": [
+      "assets/env/cottage_toadstool/cottage_toadstool.glb"
+    ]
+  },
+  {
+    "asset": "Old Poplar tree stump -free",
+    "author": "matousekfoto",
+    "author_url": "https://sketchfab.com/matousekfoto",
+    "source_url": "https://sketchfab.com/3d-models/old-poplar-tree-stump-free-604a5c25e3b84fa0ae520460112c9f92",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "stump_poplar: rescaled x0.2861 to critter-world size, grounded and centred; unlit material 'material0' rebuilt as lit PBR (roughness 0.9); unlit material 'material1' rebuilt as lit PBR (roughness 0.9); unlit material 'material2' rebuilt as lit PBR (roughness 0.9); decimated 78646 -> 19600 triangles (seams welded first, no cracks); normal map re-baked from the full-detail source onto the decimated mesh; textures re-encoded <= 1024px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Environment scenery: old poplar stump (stump_poplar)",
+    "files": [
+      "assets/env/stump_poplar/stump_poplar.glb"
+    ]
+  },
+  {
+    "asset": "Photoscanned Dead Oak Stump",
+    "author": "chrisg4919",
+    "author_url": "https://sketchfab.com/chrisg4919",
+    "source_url": "https://sketchfab.com/3d-models/photoscanned-dead-oak-stump-c6b6469facad4fc3b77d866bfc2bd913",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "stump_deadoak: levelled the scanned ground patch (tilt 3.3 deg); rescaled x2.9215 to critter-world size, grounded and centred; decimated 53907 -> 19600 triangles (seams welded first, no cracks); normal map re-baked from the full-detail source onto the decimated mesh; textures re-encoded <= 1024px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Environment scenery: jagged dead oak stump (stump_deadoak)",
+    "files": [
+      "assets/env/stump_deadoak/stump_deadoak.glb"
+    ]
+  },
+  {
+    "asset": "Boubín Stump",
+    "author": "3dhdscan",
+    "author_url": "https://sketchfab.com/3dhdscan",
+    "source_url": "https://sketchfab.com/3d-models/boubin-stump-b968b5dc462148989cb87b072885da85",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "stump_boubin: levelled the scanned ground patch (tilt 7.2 deg); rescaled x0.1367 to critter-world size, grounded and centred; textures re-encoded <= 1024px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Environment scenery: big mossy stump with roots (stump_boubin)",
+    "files": [
+      "assets/env/stump_boubin/stump_boubin.glb"
+    ]
+  },
+  {
+    "asset": "Mossy tree stump",
+    "author": "nedo",
+    "author_url": "https://sketchfab.com/nedo",
+    "source_url": "https://sketchfab.com/3d-models/mossy-tree-stump-f91647d2969049329a605095febd1c96",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "stump_mossy: levelled the scanned ground patch (tilt 11.9 deg); rescaled x1.7027 to critter-world size, grounded and centred; unlit material 'Baumpstump02_Material_u2_v2' rebuilt as lit PBR (roughness 0.9); unlit material 'Baumpstump02_Material_u1_v1' rebuilt as lit PBR (roughness 0.9); unlit material 'Baumpstump02_Material_u1_v2' rebuilt as lit PBR (roughness 0.9); unlit material 'Baumpstump02_Material_u2_v1' rebuilt as lit PBR (roughness 0.9); decimated 292890 -> 24499 triangles (seams welded first, no cracks); textures re-encoded <= 1024px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Environment scenery: small moss-covered stump (stump_mossy)",
+    "files": [
+      "assets/env/stump_mossy/stump_mossy.glb"
+    ]
+  },
+  {
+    "asset": "Log Pile (Game Ready / 2K PBR)",
+    "author": "Meerschaum Digital",
+    "author_url": "https://sketchfab.com/meerschaumdigital",
+    "source_url": "https://sketchfab.com/3d-models/log-pile-game-ready-2k-pbr-3f4205a30a7d4adda50c775fb8cce06c",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "cover_logpile: rescaled x1.9391 to critter-world size, grounded and centred; textures re-encoded <= 1024px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Environment scenery: pile of cut logs (cover_logpile)",
+    "files": [
+      "assets/env/cover_logpile/cover_logpile.glb"
+    ]
+  },
+  {
+    "asset": "Hay bale",
+    "author": "NoodlePoodle",
+    "author_url": "https://sketchfab.com/NoodePoodle",
+    "source_url": "https://sketchfab.com/3d-models/hay-bale-e01a6a0f9ed843279adfac2427c99679",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "cover_haybale: rescaled x1.339 to critter-world size, grounded and centred; foliage materials converted to alpha-clip (cut-out) with bled RGBA albedo; textures re-encoded <= 1024px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Environment scenery: hay bale (cover_haybale)",
+    "files": [
+      "assets/env/cover_haybale/cover_haybale.glb"
+    ]
+  },
+  {
+    "asset": "Mossy Stone Wall",
+    "author": "Danylo Tyupa",
+    "author_url": "https://sketchfab.com/danzl0",
+    "source_url": "https://sketchfab.com/3d-models/mossy-stone-wall-238c2af61ece44d5869a766d13764bfa",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "cover_stonewall: rescaled x0.0109 to critter-world size, grounded and centred; decimated 56366 -> 19600 triangles (seams welded first, no cracks); normal map re-baked from the full-detail source onto the decimated mesh; textures re-encoded <= 1024px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Environment scenery: mossy dry-stone wall section (cover_stonewall)",
+    "files": [
+      "assets/env/cover_stonewall/cover_stonewall.glb"
     ]
   },
   {

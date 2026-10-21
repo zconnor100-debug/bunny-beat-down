@@ -412,12 +412,48 @@ def bake_normals(high, low, asset_id: str, size: int) -> int:
     return len(baked)
 
 
+def level_ground(obj, cfg: dict) -> None:
+    """Rotate a scan so its captured ground patch is horizontal.
+
+    Photo-scans of stumps often include a skirt of soil that was captured on a
+    slope; grounded at its lowest point, the rest of the skirt (and the stump)
+    then floats.  The lowest vertex in each of 24 angular sectors of the outer
+    ring approximates the ground; a least-squares plane through them is rotated
+    level.
+    """
+    me = obj.data
+    v = verts(obj)
+    c = v[:, :2].mean(0)
+    d = v[:, :2] - c
+    r = np.hypot(d[:, 0], d[:, 1])
+    ang = np.arctan2(d[:, 1], d[:, 0])
+    ring = r > 0.55 * r.max()
+    pts = []
+    for k in range(24):
+        lo, hi = -math.pi + k * math.pi / 12, -math.pi + (k + 1) * math.pi / 12
+        sel = ring & (ang >= lo) & (ang < hi)
+        if sel.any():
+            pts.append(v[np.nonzero(sel)[0][np.argmin(v[sel, 2])]])
+    pts = np.array(pts)
+    A = np.column_stack([pts[:, 0], pts[:, 1], np.ones(len(pts))])
+    a, b, _ = np.linalg.lstsq(A, pts[:, 2], rcond=None)[0]
+    from mathutils import Vector
+    n = Vector((-a, -b, 1.0)).normalized()
+    q = n.rotation_difference(Vector((0, 0, 1)))
+    me.transform(q.to_matrix().to_4x4())
+    me.update()
+    cfg.setdefault("_notes", []).append(
+        f"levelled the scanned ground patch (tilt {math.degrees(math.acos(min(1.0, n.z))):.1f} deg)")
+
+
 def place(obj, cfg: dict) -> dict:
     """Rotate, scale to in-game size, ground at z=0, footprint centred. Returns info."""
     me = obj.data
     if cfg.get("rotate_deg"):
         rx, ry, rz = (math.radians(a) for a in cfg["rotate_deg"])
         me.transform(Euler((rx, ry, rz), "XYZ").to_matrix().to_4x4())
+    if cfg.get("level"):
+        level_ground(obj, cfg)
     v = verts(obj)
     zmin, zmax = float(v[:, 2].min()), float(v[:, 2].max())
     ground_mode = cfg.get("ground", "min")
@@ -880,6 +916,7 @@ def build(cfg: dict, order: list[str]) -> None:
         obj = pick_loose_parts(obj, cfg["loose_parts"])
         notes.append(f"separated loose part(s) {cfg['loose_parts']} of the source mesh")
     placed = place(obj, cfg)
+    notes.extend(cfg.pop("_notes", []))
     notes.append(f"rescaled x{placed['scale_factor']:g} to critter-world size, grounded and centred")
     if cfg.get("prune"):
         prune_tree(obj, cfg, notes)

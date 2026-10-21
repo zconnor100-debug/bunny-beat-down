@@ -1,0 +1,318 @@
+{
+  "_doc": "Skin variants per character, read by make_skins.py. textures: Godot material name -> label used in output file names (materials sharing an image share the file). regions: ordered, first match wins (soft); 'where' ANDs selectors: material, bones / not_bones (regex on the texel's dominant bone), pos (x = character's left, y = up, z = forward, metres, with soft), color (OKLCh ranges: L 0..1, C chroma, h hue degrees, lo > hi wraps; soft; blur), patterns (noise / blob / stripes in 3D rest space), invert. skins[].set: region name or glob -> target L / C / h (absolute) or dL / Cs / dh (relative), contrast (lightness detail), dev (colour-detail scale). Regions not set keep their original colour.",
+
+  "bun": {
+    "textures": {"Base": "albedo"},
+    "regions": [
+      {"name": "keep_eyes", "where": {"bones": ["Head"], "color": {"L": [0.0, 0.42], "soft": {"L": 0.05}, "blur": 0}}},
+      {"name": "keep_iris", "where": {"color": {"C": [0.085, 1.0], "h": [100, 185], "soft": {"C": 0.02}, "blur": 0}}},
+      {"name": "keep_mouth", "where": {"color": {"C": [0.07, 1.0], "h": [285, 360], "blur": 0}}},
+      {"name": "scarf", "where": {"color": {"h": [48, 82], "C": [0.075, 1.0], "L": [0.55, 0.9]}}},
+      {"name": "tail", "where": {"bones": ["Tail"]}},
+      {"name": "fur_light", "where": {"bones": ["Head", "Ear"], "color": {"L": [0.93, 1.0], "C": [0.0, 0.035], "h": [40, 105]}}},
+      {"name": "fur_blaze", "where": {"bones": ["Head"], "color": {"L": [0.64, 0.9], "C": [0.012, 0.05], "h": [40, 95]}, "patterns": [{"type": "blob", "center": [0.0, 0.88, 0.12], "radius": [0.028, 0.085, 0.1], "soft": 0.35}]}},
+      {"name": "fur_muzzle", "where": {"bones": ["Head"], "color": {"L": [0.64, 0.9], "C": [0.012, 0.05], "h": [40, 95]}, "pos": {"y": [0.6, 0.835], "z": [0.0, 0.5], "soft": 0.02}}},
+      {"name": "fur_paws", "where": {"bones": ["Hand", "Middle", "Pinky", "Pointer", "Thumb", "Toes", "Ball"], "color": {"L": [0.64, 0.9], "C": [0.012, 0.05], "h": [40, 95]}}},
+      {"name": "fur", "where": {"color": {"L": [0.64, 0.9], "C": [0.012, 0.05], "h": [40, 95]}}},
+      {"name": "shirt", "where": {"not_bones": ["Head", "Ear", "Hand", "Tail"], "color": {"L": [0.86, 1.0], "C": [0.012, 0.045], "h": [78, 118]}}},
+      {"name": "wraps", "where": {"not_bones": ["Head", "Ear"], "color": {"L": [0.78, 1.0], "C": [0.0, 0.016]}}},
+      {"name": "sleeves", "where": {"color": {"h": [108, 155], "C": [0.03, 0.11]}}},
+      {"name": "pants", "where": {"color": {"h": [220, 295], "C": [0.012, 0.1]}}},
+      {"name": "leather", "where": {"color": {"h": [10, 75], "C": [0.02, 0.1], "L": [0.28, 0.72]}}}
+    ],
+    "skins": [
+      {"id": "snowshoe", "name": "Snowshoe", "set": {
+        "fur*": {"L": 0.95, "C": 0.008, "h": 85},
+        "fur_light": {"L": 0.985, "C": 0.004},
+        "tail": {"L": 0.97, "C": 0.005, "h": 85},
+        "scarf": {"L": 0.58, "C": 0.12, "h": 255},
+        "sleeves": {"L": 0.8, "C": 0.035, "h": 235},
+        "pants": {"L": 0.38, "C": 0.07, "h": 265}
+      }},
+      {"id": "midnight", "name": "Midnight", "set": {
+        "fur*": {"L": 0.34, "C": 0.012, "h": 285},
+        "fur_light": {"L": 0.55, "C": 0.012, "h": 285},
+        "tail": {"L": 0.5, "C": 0.012, "h": 285},
+        "scarf": {"L": 0.55, "C": 0.15, "h": 318},
+        "sleeves": {"L": 0.45, "C": 0.1, "h": 300},
+        "shirt": {"L": 0.62, "C": 0.035, "h": 300},
+        "pants": {"L": 0.27, "C": 0.05, "h": 290},
+        "leather": {"L": 0.3, "C": 0.02, "h": 300},
+        "wraps": {"L": 0.72, "C": 0.012, "h": 300}
+      }},
+      {"id": "dutch", "name": "Dutch", "set": {
+        "fur*": {"L": 0.45, "C": 0.07, "h": 55},
+        "fur_blaze": {"L": 0.96, "C": 0.01, "h": 85},
+        "fur_muzzle": {"L": 0.96, "C": 0.01, "h": 85},
+        "fur_paws": {"L": 0.96, "C": 0.01, "h": 85},
+        "fur_light": {"L": 0.97, "C": 0.008},
+        "tail": {"L": 0.5, "C": 0.06, "h": 55},
+        "scarf": {"L": 0.55, "C": 0.16, "h": 25}
+      }},
+      {"id": "ginger", "name": "Ginger", "set": {
+        "fur*": {"L": 0.72, "C": 0.13, "h": 58},
+        "fur_light": {"L": 0.95, "C": 0.03, "h": 80},
+        "tail": {"L": 0.93, "C": 0.03, "h": 80},
+        "scarf": {"L": 0.6, "C": 0.12, "h": 150},
+        "sleeves": {"L": 0.82, "C": 0.05, "h": 85},
+        "pants": {"L": 0.42, "C": 0.06, "h": 55}
+      }}
+    ]
+  },
+
+  "bandit_bunny": {
+    "textures": {"Base": "albedo", "Base.001": "albedo"},
+    "regions": [
+      {"name": "keep_eyes", "where": {"color": {"C": [0.12, 1.0], "h": [270, 330], "blur": 0}}},
+      {"name": "keep_dark", "where": {"color": {"L": [0.0, 0.2], "blur": 0}}},
+      {"name": "hood", "where": {"color": {"h": [340, 35], "C": [0.045, 1.0], "L": [0.15, 0.55]}}},
+      {"name": "belt", "where": {"bones": ["Spine1$"], "color": {"h": [20, 70], "C": [0.012, 0.06], "L": [0.28, 0.5]}}},
+      {"name": "pants", "where": {"bones": ["Thigh", "Calph", "Hip", "Spine1$"], "color": {"C": [0.0, 0.026], "L": [0.22, 0.44]}}},
+      {"name": "face", "where": {"bones": ["Head"], "color": {"h": [260, 330], "C": [0.0, 0.048], "L": [0.48, 0.9]}}},
+      {"name": "shirt", "where": {"bones": ["Chest", "Spine2", "Shoulder", "UpperArm", "Spine1"], "color": {"h": [260, 330], "C": [0.0, 0.048], "L": [0.48, 0.9]}}},
+      {"name": "fur_light", "where": {"color": {"h": [260, 330], "C": [0.0, 0.048], "L": [0.5, 0.95]}}},
+      {"name": "fur", "where": {"color": {"h": [255, 340], "C": [0.045, 0.12]}}}
+    ],
+    "skins": [
+      {"id": "wild_hare", "name": "Wild Hare", "set": {
+        "fur": {"L": 0.5, "C": 0.06, "h": 62},
+        "fur_light": {"L": 0.74, "C": 0.04, "h": 75},
+        "face": {"L": 0.76, "C": 0.035, "h": 75},
+        "hood": {"L": 0.38, "C": 0.06, "h": 118},
+        "shirt": {"L": 0.72, "C": 0.04, "h": 90}
+      }},
+      {"id": "frost", "name": "Frost", "set": {
+        "fur": {"L": 0.9, "C": 0.012, "h": 250},
+        "fur_light": {"L": 0.95, "C": 0.008, "h": 250},
+        "face": {"L": 0.93, "C": 0.008, "h": 250},
+        "hood": {"L": 0.34, "C": 0.08, "h": 262},
+        "shirt": {"L": 0.78, "C": 0.03, "h": 240},
+        "pants": {"L": 0.42, "C": 0.025, "h": 250}
+      }},
+      {"id": "shadow", "name": "Shadow", "set": {
+        "fur": {"L": 0.24, "C": 0.012, "h": 290},
+        "fur_light": {"L": 0.42, "C": 0.012, "h": 290},
+        "face": {"L": 0.42, "C": 0.01, "h": 290},
+        "hood": {"L": 0.5, "C": 0.18, "h": 27},
+        "shirt": {"L": 0.4, "C": 0.01, "h": 290},
+        "pants": {"L": 0.2, "C": 0.008}
+      }},
+      {"id": "toxic", "name": "Toxic", "set": {
+        "fur": {"L": 0.72, "C": 0.18, "h": 135},
+        "fur_light": {"L": 0.88, "C": 0.08, "h": 130},
+        "face": {"L": 0.88, "C": 0.07, "h": 130},
+        "hood": {"L": 0.22, "C": 0.01, "h": 290},
+        "shirt": {"L": 0.5, "C": 0.1, "h": 305},
+        "belt": {"L": 0.25, "C": 0.01}
+      }}
+    ]
+  },
+
+  "squirrel": {
+    "textures": {"Material.003": "fur"},
+    "regions": [
+      {"name": "keep_white", "where": {"color": {"L": [0.88, 1.0], "C": [0.0, 0.06], "blur": 0}}},
+      {"name": "fur_dark", "where": {"color": {"L": [0.0, 0.42], "soft": {"L": 0.06}}}},
+      {"name": "fur_light", "where": {"color": {"L": [0.74, 0.9], "h": [52, 90], "soft": {"L": 0.04, "h": 6}}}},
+      {"name": "fur", "where": {"color": {"C": [0.06, 1.0], "h": [15, 90]}}}
+    ],
+    "skins": [
+      {"id": "grey", "name": "Grey", "set": {
+        "fur": {"L": 0.6, "C": 0.012, "h": 250},
+        "fur_light": {"L": 0.88, "C": 0.01, "h": 80},
+        "fur_dark": {"L": 0.3, "C": 0.01, "h": 250}
+      }},
+      {"id": "black", "name": "Black", "set": {
+        "fur": {"L": 0.28, "C": 0.015, "h": 40},
+        "fur_light": {"L": 0.4, "C": 0.02, "h": 50},
+        "fur_dark": {"L": 0.14, "C": 0.008}
+      }},
+      {"id": "fox_squirrel", "name": "Fox Squirrel", "set": {
+        "fur": {"L": 0.56, "C": 0.045, "h": 60},
+        "fur_light": {"L": 0.72, "C": 0.13, "h": 60},
+        "fur_dark": {"L": 0.28, "C": 0.04, "h": 50}
+      }},
+      {"id": "blueberry", "name": "Blueberry", "set": {
+        "fur": {"L": 0.58, "C": 0.14, "h": 262},
+        "fur_light": {"L": 0.84, "C": 0.07, "h": 310},
+        "fur_dark": {"L": 0.28, "C": 0.08, "h": 270}
+      }}
+    ]
+  },
+
+  "fox": {
+    "textures": {"M_fox.001": "albedo"},
+    "regions": [
+      {"name": "keep_eyes", "where": {"bones": ["Eyeball"]}},
+      {"name": "keep_red", "where": {"color": {"h": [8, 34], "C": [0.09, 1.0], "L": [0.15, 0.58], "soft": {"h": 6}}}},
+      {"name": "keep_nose", "where": {"bones": ["Nose_2"], "color": {"L": [0.0, 0.5]}}},
+      {"name": "fur_dark", "where": {"color": {"L": [0.0, 0.46], "C": [0.0, 0.075], "h": [30, 95]}}},
+      {"name": "fur_cream", "where": {"color": {"L": [0.7, 1.0], "C": [0.0, 0.065]}}},
+      {"name": "fur", "where": {"color": {"h": [30, 72], "C": [0.07, 1.0]}}}
+    ],
+    "skins": [
+      {"id": "arctic", "name": "Arctic", "set": {
+        "fur": {"L": 0.9, "C": 0.012, "h": 245},
+        "fur_cream": {"L": 0.97, "C": 0.006, "h": 245},
+        "fur_dark": {"L": 0.62, "C": 0.012, "h": 245}
+      }},
+      {"id": "silver", "name": "Silver", "set": {
+        "fur": {"L": 0.27, "C": 0.012, "h": 260},
+        "fur_cream": {"L": 0.88, "C": 0.006, "h": 250},
+        "fur_dark": {"L": 0.16, "C": 0.008, "h": 260}
+      }},
+      {"id": "fennec", "name": "Fennec", "set": {
+        "fur": {"L": 0.8, "C": 0.065, "h": 76},
+        "fur_cream": {"L": 0.94, "C": 0.025, "h": 85},
+        "fur_dark": {"L": 0.55, "C": 0.06, "h": 62}
+      }},
+      {"id": "kitsune", "name": "Kitsune", "set": {
+        "fur": {"L": 0.93, "C": 0.01, "h": 80},
+        "fur_cream": {"L": 0.97, "C": 0.006, "h": 80},
+        "fur_dark": {"L": 0.5, "C": 0.18, "h": 25}
+      }}
+    ]
+  },
+
+  "raccoon": {
+    "textures": {"fefef": "albedo"},
+    "regions": [
+      {"name": "keep_eyes", "where": {"bones": ["Head$"], "pos": {"ax": [0.03, 0.19], "y": [0.68, 0.84], "z": [0.25, 1.0], "soft": 0.015}}},
+      {"name": "keep_nose", "where": {"color": {"L": [0.0, 0.16], "blur": 0}}},
+      {"name": "fur_white", "where": {"color": {"L": [0.8, 1.0]}}},
+      {"name": "fur_black", "where": {"color": {"L": [0.0, 0.32], "soft": {"L": 0.04}}}},
+      {"name": "fur", "where": {}}
+    ],
+    "skins": [
+      {"id": "cinnamon", "name": "Cinnamon", "set": {
+        "fur": {"L": 0.52, "C": 0.07, "h": 55},
+        "fur_white": {"L": 0.9, "C": 0.035, "h": 80},
+        "fur_black": {"L": 0.28, "C": 0.045, "h": 45}
+      }},
+      {"id": "blonde", "name": "Blonde", "set": {
+        "fur": {"L": 0.8, "C": 0.04, "h": 82},
+        "fur_white": {"L": 0.95, "C": 0.012, "h": 85},
+        "fur_black": {"L": 0.55, "C": 0.04, "h": 65}
+      }},
+      {"id": "red_panda", "name": "Red Panda", "set": {
+        "fur": {"L": 0.56, "C": 0.14, "h": 45},
+        "fur_white": {"L": 0.94, "C": 0.01, "h": 85},
+        "fur_black": {"L": 0.24, "C": 0.05, "h": 35}
+      }},
+      {"id": "starry_night", "name": "Starry Night", "set": {
+        "fur": {"L": 0.38, "C": 0.09, "h": 275},
+        "fur_white": {"L": 0.85, "C": 0.08, "h": 200},
+        "fur_black": {"L": 0.2, "C": 0.06, "h": 285}
+      }}
+    ]
+  },
+
+  "frog": {
+    "textures": {"frog-peasant": "albedo"},
+    "regions": [
+      {"name": "keep_eyes", "where": {"bones": ["head"], "color": {"L": [0.0, 0.3], "blur": 0}}},
+      {"name": "skin_warts", "where": {"color": {"h": [95, 175], "C": [0.05, 1.0]}, "patterns": [{"type": "noise", "scale": 0.018, "threshold": 0.6, "soft": 0.05, "seed": 7, "octaves": 2}]}},
+      {"name": "skin_green", "where": {"color": {"h": [95, 175], "C": [0.05, 1.0]}}},
+      {"name": "skin_orange", "where": {"color": {"h": [25, 82], "C": [0.08, 1.0], "L": [0.4, 1.0]}}},
+      {"name": "armor", "where": {"not_bones": ["head"], "color": {"C": [0.0, 0.065], "L": [0.15, 0.68]}}}
+    ],
+    "skins": [
+      {"id": "poison_dart", "name": "Poison Dart", "set": {
+        "skin_*": {"L": 0.6, "C": 0.17, "h": 252},
+        "skin_warts": {"L": 0.2, "C": 0.02, "h": 260, "contrast": 0.6},
+        "skin_orange": {"L": 0.22, "C": 0.02, "h": 260},
+        "armor": {"L": 0.24, "C": 0.015, "h": 250}
+      }},
+      {"id": "tree_frog", "name": "Tree Frog", "set": {
+        "skin_*": {"L": 0.8, "C": 0.2, "h": 128},
+        "skin_orange": {"L": 0.68, "C": 0.19, "h": 48}
+      }},
+      {"id": "toad", "name": "Toad", "set": {
+        "skin_*": {"L": 0.52, "C": 0.055, "h": 70},
+        "skin_warts": {"L": 0.36, "C": 0.05, "h": 55},
+        "skin_orange": {"L": 0.6, "C": 0.08, "h": 72},
+        "armor": {"L": 0.36, "C": 0.05, "h": 62}
+      }},
+      {"id": "golden", "name": "Golden", "set": {
+        "skin_*": {"L": 0.84, "C": 0.17, "h": 92},
+        "skin_orange": {"L": 0.66, "C": 0.17, "h": 58},
+        "armor": {"L": 0.42, "C": 0.06, "h": 70}
+      }}
+    ]
+  },
+
+  "beaver": {
+    "textures": {"defaultMat": "body", "defaultMat.001": "shirt"},
+    "regions": [
+      {"name": "keep_pink", "texture": "body", "where": {"color": {"h": [350, 24], "C": [0.07, 1.0], "L": [0.58, 0.9], "soft": {"h": 4, "L": 0.03}}}},
+      {"name": "keep_features", "texture": "body", "where": {"not_bones": ["Bone_00[5-8]"], "color": {"L": [0.0, 0.46], "h": [15, 40], "soft": {"L": 0.05}}}},
+      {"name": "tail", "texture": "body", "where": {"bones": ["Bone_00[5-8]"], "color": {"L": [0.0, 0.5], "soft": {"L": 0.05}}}},
+      {"name": "fur_light", "texture": "body", "where": {"color": {"L": [0.8, 1.0], "h": [62, 95]}}},
+      {"name": "fur", "texture": "body", "where": {"color": {"h": [33, 64], "C": [0.1, 1.0]}}},
+      {"name": "shirt_trim", "texture": "shirt", "where": {"color": {"L": [0.95, 1.0], "C": [0.0, 0.06], "blur": 0}}},
+      {"name": "shirt_cross", "texture": "shirt", "where": {"patterns": [{"type": "stripes", "axis": "x", "period": 0.07, "duty": 0.32, "soft": 0.03}, {"type": "stripes", "axis": "y", "period": 0.07, "duty": 0.32, "soft": 0.03, "offset": 0.02}]}},
+      {"name": "shirt_band", "texture": "shirt", "where": {"patterns": [{"type": "stripes", "axis": "x", "period": 0.07, "duty": 0.32, "soft": 0.03}]}},
+      {"name": "shirt_band2", "texture": "shirt", "where": {"patterns": [{"type": "stripes", "axis": "y", "period": 0.07, "duty": 0.32, "soft": 0.03, "offset": 0.02}]}},
+      {"name": "shirt", "texture": "shirt", "where": {}}
+    ],
+    "skins": [
+      {"id": "chocolate", "name": "Chocolate", "set": {
+        "fur": {"L": 0.4, "C": 0.09, "h": 42},
+        "fur_light": {"L": 0.76, "C": 0.06, "h": 62},
+        "tail": {"L": 0.22, "C": 0.03, "h": 35},
+        "shirt*": {"L": 0.55, "C": 0.19, "h": 27},
+        "shirt_trim": {"L": 0.96, "C": 0.01}
+      }},
+      {"id": "honey", "name": "Honey", "set": {
+        "fur": {"L": 0.74, "C": 0.11, "h": 72},
+        "fur_light": {"L": 0.93, "C": 0.04, "h": 88},
+        "tail": {"L": 0.42, "C": 0.06, "h": 45},
+        "shirt*": {"L": 0.42, "C": 0.12, "h": 262}
+      }},
+      {"id": "lumberjack", "name": "Lumberjack", "set": {
+        "shirt": {"L": 0.52, "C": 0.19, "h": 27},
+        "shirt_band*": {"L": 0.3, "C": 0.08, "h": 25},
+        "shirt_cross": {"L": 0.16, "C": 0.02, "h": 25},
+        "shirt_trim": {"L": 0.92, "C": 0.01}
+      }},
+      {"id": "bubblegum", "name": "Bubblegum", "set": {
+        "fur": {"L": 0.74, "C": 0.13, "h": 355},
+        "fur_light": {"L": 0.95, "C": 0.03, "h": 355},
+        "tail": {"L": 0.45, "C": 0.15, "h": 340},
+        "shirt*": {"L": 0.9, "C": 0.16, "h": 100}
+      }}
+    ]
+  },
+
+  "hamster": {
+    "textures": {"Hamster": "albedo"},
+    "regions": [
+      {"name": "keep_eye", "where": {"color": {"L": [0.0, 0.36], "blur": 0}}},
+      {"name": "keep_pink", "where": {"color": {"h": [0, 44], "C": [0.055, 1.0], "soft": {"h": 5}}}},
+      {"name": "fur_patch_head", "where": {"pos": {"y": [0.47, 2.0], "soft": 0.05}, "patterns": [{"type": "blob", "center": [0.0, 0.65, 0.12], "radius": [0.11, 0.1, 0.1], "soft": 0.4, "invert": true}]}},
+      {"name": "fur_patch_rear", "where": {"pos": {"y": [-1.0, 0.2], "soft": 0.05}}},
+      {"name": "fur_light", "where": {"color": {"L": [0.785, 1.0], "C": [0.0, 0.066], "h": [55, 100]}}},
+      {"name": "fur", "where": {}}
+    ],
+    "skins": [
+      {"id": "panda", "name": "Panda", "set": {
+        "fur*": {"L": 0.93, "C": 0.008, "h": 85},
+        "fur_light": {"L": 0.95, "C": 0.006, "h": 85},
+        "fur_patch*": {"L": 0.24, "C": 0.01, "h": 40}
+      }},
+      {"id": "dove", "name": "Dove", "set": {
+        "fur*": {"L": 0.72, "C": 0.02, "h": 300},
+        "fur_light": {"L": 0.88, "C": 0.012, "h": 300}
+      }},
+      {"id": "black_bear", "name": "Black Bear", "set": {
+        "fur*": {"L": 0.24, "C": 0.015, "h": 50},
+        "fur_light": {"L": 0.36, "C": 0.02, "h": 55}
+      }},
+      {"id": "cotton_candy", "name": "Cotton Candy", "set": {
+        "fur*": {"L": 0.82, "C": 0.1, "h": 350},
+        "fur_light": {"L": 0.88, "C": 0.08, "h": 230}
+      }}
+    ]
+  }
+
+}

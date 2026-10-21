@@ -1,0 +1,34 @@
+[
+  {
+    "id": "default",
+    "name": "Classic"
+  },
+  {
+    "id": "cinnamon",
+    "name": "Cinnamon",
+    "albedo": {
+      "fefef": "skins/cinnamon_albedo.jpg"
+    }
+  },
+  {
+    "id": "blonde",
+    "name": "Blonde",
+    "albedo": {
+      "fefef": "skins/blonde_albedo.jpg"
+    }
+  },
+  {
+    "id": "red_panda",
+    "name": "Red Panda",
+    "albedo": {
+      "fefef": "skins/red_panda_albedo.jpg"
+    }
+  },
+  {
+    "id": "starry_night",
+    "name": "Starry Night",
+    "albedo": {
+      "fefef": "skins/starry_night_albedo.jpg"
+    }
+  }
+]

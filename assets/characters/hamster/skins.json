@@ -1,0 +1,34 @@
+[
+  {
+    "id": "default",
+    "name": "Classic"
+  },
+  {
+    "id": "panda",
+    "name": "Panda",
+    "albedo": {
+      "Hamster": "skins/panda_albedo.jpg"
+    }
+  },
+  {
+    "id": "dove",
+    "name": "Dove",
+    "albedo": {
+      "Hamster": "skins/dove_albedo.jpg"
+    }
+  },
+  {
+    "id": "black_bear",
+    "name": "Black Bear",
+    "albedo": {
+      "Hamster": "skins/black_bear_albedo.jpg"
+    }
+  },
+  {
+    "id": "cotton_candy",
+    "name": "Cotton Candy",
+    "albedo": {
+      "Hamster": "skins/cotton_candy_albedo.jpg"
+    }
+  }
+]

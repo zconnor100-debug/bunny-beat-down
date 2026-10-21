@@ -1,0 +1,34 @@
+[
+  {
+    "id": "default",
+    "name": "Classic"
+  },
+  {
+    "id": "snowshoe",
+    "name": "Snowshoe",
+    "albedo": {
+      "Base": "skins/snowshoe_albedo.jpg"
+    }
+  },
+  {
+    "id": "midnight",
+    "name": "Midnight",
+    "albedo": {
+      "Base": "skins/midnight_albedo.jpg"
+    }
+  },
+  {
+    "id": "dutch",
+    "name": "Dutch",
+    "albedo": {
+      "Base": "skins/dutch_albedo.jpg"
+    }
+  },
+  {
+    "id": "ginger",
+    "name": "Ginger",
+    "albedo": {
+      "Base": "skins/ginger_albedo.jpg"
+    }
+  }
+]

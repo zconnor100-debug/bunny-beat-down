@@ -19,10 +19,12 @@ var _wind: Node
 func setup(island_radius: float, rng: RandomNumberGenerator) -> void:
 	duration = DURATION * sqrt(island_radius / 215.0)
 	var a := rng.randf() * TAU
-	var offset := Vector2(rng.randf_range(-0.35, 0.35), 0.0).rotated(a) * island_radius
+	# the route stays inside the boundary wall (island_radius + 45) so anyone
+	# who jumps at the very start or end still lands in reach of the shore
 	var dir := Vector2(cos(a), sin(a))
-	var s := -dir * (island_radius + 30.0) + offset
-	var f := dir * (island_radius + 30.0) + offset
+	var offset := dir.orthogonal() * rng.randf_range(-0.25, 0.25) * island_radius
+	var s := -dir * (island_radius + 10.0) + offset
+	var f := dir * (island_radius + 10.0) + offset
 	start = Vector3(s.x, ALTITUDE, s.y)
 	finish = Vector3(f.x, ALTITUDE, f.y)
 	global_position = start

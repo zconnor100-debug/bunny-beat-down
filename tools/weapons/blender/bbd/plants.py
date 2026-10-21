@@ -11,7 +11,8 @@ from mathutils import Matrix, Vector
 from . import geo, mats, textures
 
 
-def pappus(name, center, radius, n=110, rise=0.30, droop=0.08, width=0.11, seed=1):
+def pappus(name, center, radius, n=110, rise=0.30, droop=0.08, width=0.11, seed=1, axis=(0, 0, 1), segs=3,
+           emission=0.0, mat_name="pappus"):
     """Fluffy crown of alpha-tested bristle cards radiating from `center` (dandelion pappus).
 
     Bristles fan out at varied elevations (a shallow, upward-open crown like a
@@ -22,11 +23,10 @@ def pappus(name, center, radius, n=110, rise=0.30, droop=0.08, width=0.11, seed=
     """
     rng = random.Random(seed)
     tex = textures.pappus_bristle()
-    mat = mats.alpha_card("pappus", tex, "#fbf9f2", rough=0.8, sheen=0.7)
+    mat = mats.alpha_card(mat_name, tex, "#fbf9f2", rough=0.8, sheen=0.7, emission=emission)
     bm = bmesh.new()
     uvl = bm.loops.layers.uv.new("src")
     c = Vector(center)
-    segs = 3
     for k in range(n):
         az = 2 * math.pi * (k + rng.uniform(-0.45, 0.45)) / n
         rad = radius * rng.uniform(0.82, 1.05)
@@ -56,6 +56,10 @@ def pappus(name, center, radius, n=110, rise=0.30, droop=0.08, width=0.11, seed=
                 uvs = {a0: (0.0, qa), b0: (0.0, qb), b1: (1.0, qb), a1: (1.0, qa)}
                 for loop in f.loops:
                     loop[uvl].uv = uvs[loop.vert]
+    ax = Vector(axis).normalized()
+    if (ax - Vector((0, 0, 1))).length > 1e-6:   # tilt the whole tuft about its centre
+        rot = Vector((0, 0, 1)).rotation_difference(ax).to_matrix().to_4x4()
+        bm.transform(Matrix.Translation(c) @ rot @ Matrix.Translation(-c))
     obj = geo.finish(bm, name, mat, sharp_angle=None)
     obj["bbd_bake"] = False
     return obj

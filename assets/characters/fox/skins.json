@@ -1,0 +1,34 @@
+[
+  {
+    "id": "default",
+    "name": "Classic"
+  },
+  {
+    "id": "arctic",
+    "name": "Arctic",
+    "albedo": {
+      "M_fox.001": "skins/arctic_albedo.jpg"
+    }
+  },
+  {
+    "id": "silver",
+    "name": "Silver",
+    "albedo": {
+      "M_fox.001": "skins/silver_albedo.jpg"
+    }
+  },
+  {
+    "id": "fennec",
+    "name": "Fennec",
+    "albedo": {
+      "M_fox.001": "skins/fennec_albedo.jpg"
+    }
+  },
+  {
+    "id": "kitsune",
+    "name": "Kitsune",
+    "albedo": {
+      "M_fox.001": "skins/kitsune_albedo.jpg"
+    }
+  }
+]

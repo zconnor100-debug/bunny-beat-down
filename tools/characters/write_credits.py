@@ -7,7 +7,9 @@ For every character in tools/characters/roster.json that has been normalized
 (assets/characters/<id>/<id>.glb exists) this takes the real title, author,
 profile URL, model URL and license from tools/_cache/characters/<id>/meta.json
 (written by sketchfab_fetch.py from the Sketchfab API) and the "used_for" /
-"changes" text from the roster. Only CC-BY and CC0 sources are accepted; any
+"changes" text from the roster; recoloured skin variants listed in
+assets/characters/<id>/skins.json are added to that model's entry (they are
+derivatives of the same CC-BY work). Only CC-BY and CC0 sources are accepted; any
 other license aborts. A final entry credits the tool scripts and generated
 preview images as project work. Output follows docs/ASSET_PIPELINE.md.
 """
@@ -38,6 +40,18 @@ def main():
         if meta["license_slug"] not in LICENSES:
             sys.exit("%s: license %r is not allowed" % (cid, meta["license_label"]))
         label, url = LICENSES[meta["license_slug"]]
+        changes = cfg["changes"]
+        files = [rel + cid + ".glb", rel + cid + ".rig.json", rel + "preview.png"]
+        skins_path = os.path.join(ROOT, rel, "skins.json")
+        if os.path.exists(skins_path):
+            with open(skins_path) as f:
+                skins = [e for e in json.load(f) if e.get("albedo")]
+            if skins:
+                changes += (" Recoloured skin variants (%s): the base-colour texture recoloured per region "
+                            "(fur, markings, clothing) in the OKLab colour space, keeping the original "
+                            "painted shading and detail." % ", ".join(e["name"] for e in skins))
+                files.append(rel + "skins.json")
+                files += sorted({rel + p for e in skins for p in e["albedo"].values()})
         out.append({
             "asset": meta["name"],
             "author": meta["author"],
@@ -45,22 +59,22 @@ def main():
             "source_url": meta["viewer_url"],
             "license": label,
             "license_url": url,
-            "changes": cfg["changes"],
+            "changes": changes,
             "used_for": cfg["used_for"],
-            "files": [rel + cid + ".glb", rel + cid + ".rig.json", rel + "preview.png"],
+            "files": files,
         })
         if cfg.get("note"):
             out[-1]["note"] = cfg["note"]
     out.append({
-        "asset": "Character pipeline tools (Sketchfab fetch, bind-pose rebuild, normalization, previews, lineup)",
+        "asset": "Character pipeline tools (Sketchfab fetch, bind-pose rebuild, normalization, skin recolouring, previews, lineups)",
         "author": "Bunny Beat Down project",
         "author_url": "",
         "source_url": "",
         "license": "MIT (project)",
         "license_url": "",
-        "changes": "Original project work. preview.png and lineup.png are renders of the credited models above.",
+        "changes": "Original project work. preview.png, lineup.png and skins_lineup.png are renders of the credited models above.",
         "used_for": "Asset pipeline (characters)",
-        "files": ["tools/characters/", "assets/characters/lineup.png"],
+        "files": ["tools/characters/", "assets/characters/lineup.png", "assets/characters/skins_lineup.png"],
     })
     dst = os.path.join(ROOT, "assets", "credits", "characters.json")
     with open(dst, "w") as f:

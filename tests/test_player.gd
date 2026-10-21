@@ -70,3 +70,35 @@ func test_walk_over_ammo_and_heal() -> void:
 	await _press(&"heal")
 	check_near(player.health, 70.0, 0.01, "a clover heals 40")
 	check(player.inventory.clovers == 1, "one clover used")
+
+
+func test_treasure_chest_needs_a_held_unlock() -> void:
+	var chest := TreasureChest.new(false)
+	add_child(chest)
+	chest.global_position = Vector3(0, 0, -1.6)
+	await wait_physics(10)
+	# a tap does nothing
+	await _press(&"interact")
+	await wait_physics(5)
+	check(not chest.opened, "a tap doesn't open a treasure chest")
+	# holding for most of the time, then letting go, resets the lock
+	Input.action_press(&"interact")
+	await wait_physics(int(chest.open_time * 60 * 0.6))
+	Input.action_release(&"interact")
+	check(chest.progress > 0.4 and not chest.opened, "progress builds while held (%.2f)" % chest.progress)
+	await wait_physics(40)
+	check(chest.progress < 0.05, "letting go resets the lock (%.2f)" % chest.progress)
+	# holding for the full time opens it and spills high-tier loot
+	var before := get_tree().get_nodes_in_group(&"pickups").size()
+	Input.action_press(&"interact")
+	await wait_physics(int(chest.open_time * 60) + 10)
+	Input.action_release(&"interact")
+	check(chest.opened, "held for %.1f s → opened" % chest.open_time)
+	var weapons := 0
+	var best := 0
+	for p in get_tree().get_nodes_in_group(&"pickups"):
+		if (p as Pickup).is_weapon():
+			weapons += 1
+			best = maxi(best, (p as Pickup).rarity_tier())
+	check(get_tree().get_nodes_in_group(&"pickups").size() >= before + 4, "chest spills plenty of loot")
+	check(weapons >= 2 and best >= Rarity.Tier.PRIZE, "two guns, Prize tier or better (%d guns, best tier %d)" % [weapons, best])

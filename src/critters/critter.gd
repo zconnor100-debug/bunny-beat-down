@@ -280,6 +280,11 @@ func _air_drop_move(delta: float) -> void:
 	move_and_slide()
 	if _slide_off_slippery():
 		return
+	# splash-down: gliding into the sea or a pond ends the drop (swimming takes over)
+	var level := Island.current.water_level_at(global_position) if Island.current else -INF
+	if global_position.y <= level + 0.3:
+		_set_state(State.GROUND)
+		return
 	if is_on_floor():
 		_set_state(State.GROUND)
 		visual.poser.on_landed(8.0)
@@ -305,10 +310,13 @@ func _slide_off_slippery() -> bool:
 	return false
 
 
+## Height above whatever we'd land on: the ground, or the water surface.
 func _height_above_ground() -> float:
 	var q := PhysicsRayQueryParameters3D.create(global_position, global_position + Vector3.DOWN * 400.0, Layers.WORLD | Layers.WATER)
 	var hit := get_world_3d().direct_space_state.intersect_ray(q)
-	return global_position.y - (hit.position.y as float) if hit else 999.0
+	var ground := global_position.y - (hit.position.y as float) if hit else 999.0
+	var water := global_position.y - (Island.current.water_level_at(global_position) if Island.current else -INF)
+	return minf(ground, water)
 
 
 func _update_facing(delta: float) -> void:

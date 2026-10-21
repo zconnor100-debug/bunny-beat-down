@@ -27,6 +27,7 @@ from pathlib import Path
 
 import bpy
 import numpy as np
+from mathutils import Vector
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from bbd import bake, util  # noqa: E402
@@ -35,12 +36,22 @@ SCANS = {
     #  key           out prefix      size (u, v)    passes                    crown rule
     "carrot_scan": ("carrot_skin", (1024, 1024), ("albedo", "normal"), "fat"),    # carrot top is the fat end
     "acorn_scan": ("acorn_strip", (1024, 1024), ("albedo", "normal", "rough"), "stem"),  # acorn: stem end
+    "tulip_scan": ("tulip_strip", (1024, 1024), ("albedo", "normal"), "fat"),      # flower end (v = 0) vs stem
 }
 SLICES = 72
 # Calibrated mean albedo (sRGB) per scan. The carrot scan's texture is quite
 # dark/red (baked shading), so its colour is rescaled per channel to a fresh
 # carrot's albedo while keeping all of its natural variation.
 TARGET_MEAN = {"carrot_scan": (226, 108, 30)}
+
+# Top-down planar re-skins (leaves, mushroom cap): key -> (prefix, px, frame rule)
+#   "pca": project along the scan's thinnest axis, long axis -> image v, stalk end at v = 0
+#   "up":  look straight down Blender -Z (object scanned upright)
+PLANAR = {
+    "maple_leaf_scan": ("maple_leaf", 1024, "pca"),
+    "oak_leaf": ("oak_leaf", 1024, "pca"),
+    "parasol_scan": ("parasol_cap", 1024, "up"),
+}
 
 
 def load_scan(key):
@@ -241,9 +252,174 @@ def bake_strip(scan, proxy, prefix, size, passes, rmax):
     return out
 
 
+def _emit_const(mats, rgb):
+    """Route a constant colour to the output (coverage pass); undo with bake._restore."""
+    for m in mats:
+        nt = m.node_tree
+        em = nt.nodes.new("ShaderNodeEmission")
+        em.name = "BAKE_EMIT"
+        em.inputs["Color"].default_value = (*rgb, 1.0)
+        nt.links.new(em.outputs[0], bake._output(nt).inputs["Surface"])
+
+
+def _save_rgba(name, rgba, path):
+    img = bpy.data.images.new(name, rgba.shape[1], rgba.shape[0], alpha=True)
+    img.alpha_mode = "STRAIGHT"
+    img.pixels.foreach_set(np.clip(rgba, 0, 1).astype(np.float32).ravel())
+    img.file_format = "PNG"
+    img.filepath_raw = str(path)
+    img.save(filepath=str(path))
+    bpy.data.images.remove(img)
+
+
+def planar(key, prefix, size, rule):
+    """Orthographic re-skin: bake the scan seen from one side onto a plane -> RGBA + normal."""
+    import bmesh
+    scan = load_scan(key)
+    n_v = len(scan.data.vertices)
+    P = np.empty(n_v * 3)
+    scan.data.vertices.foreach_get("co", P)
+    P = P.reshape(-1, 3)
+    c = P.mean(0)
+    if rule == "pca":
+        w, V = np.linalg.eigh(np.cov((P - c).T))
+        n, a = V[:, 0], V[:, 2]                      # thinnest axis = view, longest = image v
+        if n[2] < 0:
+            n = -n
+    else:
+        n, a = np.array([0, 0, 1.0]), np.array([0, 1.0, 0])
+    b = np.cross(a, n)                               # image u; (u, v, n) right-handed
+    pu, pv, pn = (P - c) @ b, (P - c) @ a, (P - c) @ n
+    if rule == "pca":                                # stalk (narrow end) -> v = 0
+        lo_end = pv < np.percentile(pv, 6)
+        hi_end = pv > np.percentile(pv, 94)
+        if np.ptp(pu[lo_end]) > np.ptp(pu[hi_end]):
+            a, b, pv, pu = -a, -b, -pv, -pu
+    side = max(np.ptp(pu), np.ptp(pv)) * 1.04
+    cu, cv = 0.5 * (pu.max() + pu.min()), 0.5 * (pv.max() + pv.min())
+    h = pn.max() + side * 0.02
+    bm = bmesh.new()
+    uvl = bm.loops.layers.uv.new("UVMap")
+    corners = []
+    for du, dv in ((-0.5, -0.5), (0.5, -0.5), (0.5, 0.5), (-0.5, 0.5)):
+        p = c + b * (cu + du * side) + a * (cv + dv * side) + n * h
+        corners.append(bm.verts.new(p.tolist()))
+    f = bm.faces.new(corners)
+    for loop, uv in zip(f.loops, ((0, 0), (1, 0), (1, 1), (0, 1))):
+        loop[uvl].uv = uv
+    me = bpy.data.meshes.new("plane")
+    bm.to_mesh(me)
+    bm.free()
+    plane = util.new_object("plane", me)
+    me.update()
+    if me.polygons[0].normal.dot(Vector(n.tolist())) < 0:
+        me.flip_normals()
+    util.setup_cycles(32)
+    mats = [s_.material for s_ in scan.material_slots if s_.material]
+    alpha_src = {}
+    for m in mats:
+        nt = m.node_tree
+        bsdf = next((nd for nd in nt.nodes if nd.type == "BSDF_PRINCIPLED"), None)
+        if bsdf is None:   # unlit / emission scans: rebuild a Principled fed by the colour image
+            bsdf = nt.nodes.new("ShaderNodeBsdfPrincipled")
+            tex = next(nd for nd in nt.nodes if nd.type == "TEX_IMAGE")
+            nt.links.new(tex.outputs["Color"], bsdf.inputs["Base Color"])
+            nt.links.new(bsdf.outputs[0], bake._output(nt).inputs["Surface"])
+        bsdf.name = "BSDF"
+        alpha_src[m.name] = bool(bsdf.inputs["Alpha"].links)
+    pm = bpy.data.materials.new("plane_mat")
+    pm.use_nodes = True
+    me.materials.append(pm)
+    tgt = pm.node_tree.nodes.new("ShaderNodeTexImage")
+    pm.node_tree.nodes.active = tgt
+    reach = (h - pn.min()) + side * 0.02
+
+    def run(kind, rewire=None):
+        img = bpy.data.images.new(f"{prefix}_{kind}", size, size, float_buffer=True)
+        img.colorspace_settings.name = "Non-Color"
+        tgt.image = img
+        if rewire:
+            rewire()
+        util.select_only([scan, plane], plane)
+        bpy.ops.object.bake(type=kind, use_selected_to_active=True, cage_extrusion=0.0, max_ray_distance=reach,
+                            margin=0, normal_space="TANGENT", use_clear=True)
+        if rewire:
+            bake._restore(mats)
+        a_ = bake._pixels(img)
+        bpy.data.images.remove(img)
+        return a_
+
+    cover = run("EMIT", lambda: _emit_const(mats, (1, 1, 1)))[..., 0]
+    col = run("EMIT", lambda: bake._rewire(mats, "Base Color"))[..., :3]
+    alpha = cover
+    if any(alpha_src.values()):
+        alpha = alpha * run("EMIT", lambda: bake._rewire(mats, "Alpha"))[..., 0]
+    nrm = run("NORMAL")[..., :3]
+    valid = alpha > 0.5
+    col = fill_holes(col, valid)
+    nrm = fill_holes(nrm * 2 - 1, valid)
+    # keep only surface relief: the builders model their own curvature
+    nrm = nrm - blur(nrm, max(4, size // 24)) + np.array([0, 0, 1.0], np.float32)
+    nrm /= np.maximum(np.linalg.norm(nrm, axis=-1, keepdims=True), 1e-6)
+    _save_rgba(f"{prefix}_albedo", np.concatenate([bake._lin2srgb(col), alpha[..., None]], -1),
+               util.DERIVED / f"{prefix}_albedo.png")
+    bake.save_image(f"{prefix}_normal", nrm * 0.5 + 0.5, util.DERIVED / f"{prefix}_normal.png", "PNG", "Non-Color")
+    rows = np.where(valid.any(1))[0]
+    cols_ = np.where(valid.any(0))[0]
+    info = {"side_m": float(side), "alpha_bbox_uv": [float(cols_.min() / size), float(rows.min() / size),
+                                                      float(cols_.max() / size), float(rows.max() / size)]}
+    (util.DERIVED / f"{prefix}.json").write_text(json.dumps(info, indent=2) + "\n")
+    print(prefix, json.dumps(info))
+
+
+def daisy_crop(size=1024):
+    """Cut the largest daisy head out of ambientCG FlowerSet001 -> RGBA + normal, centred."""
+    meta = util.sources_meta()["FlowerSet001"]["files"]
+
+    def load(rel, cs):
+        img = bpy.data.images.load(util.cache_file(rel))
+        img.colorspace_settings.name = cs
+        a_ = bake._pixels(img)
+        bpy.data.images.remove(img)
+        return a_
+    col = load(meta["Color"], "Non-Color")[..., :3]          # keep sRGB-encoded values as stored
+    op = load(meta["Opacity"], "Non-Color")[..., 0]
+    nrm = load(meta["NormalGL"], "Non-Color")[..., :3]
+    mask = op > 0.5
+
+    def runs(v):
+        on = np.concatenate([[False], v, [False]])
+        d = np.diff(on.astype(int))
+        return list(zip(np.where(d == 1)[0], np.where(d == -1)[0]))
+    best = None
+    for r0, r1 in runs(mask.any(1)):
+        for c0, c1 in runs(mask[r0:r1].any(0)):
+            area = mask[r0:r1, c0:c1].sum()
+            if best is None or area > best[0]:
+                best = (area, r0, r1, c0, c1)
+    _, r0, r1, c0, c1 = best
+    cy, cx = (r0 + r1) / 2, (c0 + c1) / 2
+    half = max(r1 - r0, c1 - c0) * 0.53
+    ys = np.clip((cy - half + (np.arange(size) + 0.5) * (2 * half / size)).astype(int), 0, op.shape[0] - 1)
+    xs = np.clip((cx - half + (np.arange(size) + 0.5) * (2 * half / size)).astype(int), 0, op.shape[1] - 1)
+    C, A, N = col[ys][:, xs], op[ys][:, xs], nrm[ys][:, xs]
+    C = fill_holes(C, A > 0.5)
+    _save_rgba("daisy_head_albedo", np.concatenate([C, A[..., None]], -1), util.DERIVED / "daisy_head_albedo.png")
+    bake.save_image("daisy_head_normal", N, util.DERIVED / "daisy_head_normal.png", "PNG", "Non-Color")
+    print("daisy_head crop", r0, r1, c0, c1)
+
+
 def main():
     util.DERIVED.mkdir(parents=True, exist_ok=True)
+    only = set(util.script_args())
+    for key, (prefix, size, rule) in PLANAR.items():
+        if not only or key in only:
+            planar(key, prefix, size, rule)
+    if not only or "FlowerSet001" in only:
+        daisy_crop()
     for key, (prefix, size, passes, rule) in SCANS.items():
+        if only and key not in only:
+            continue
         scan = load_scan(key)
         c, ax, ts, radii, centers = analyse(scan, rule)
         rmax = float(radii.max())

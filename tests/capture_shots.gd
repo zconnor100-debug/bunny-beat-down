@@ -56,12 +56,34 @@ func _run() -> void:
 		await _wait(2.5)
 		await _snap("04_freefall")
 		var p = mm.player
+		p.want_jump = true   # pop the glider
+		await _wait(1.2)
+		game.rig.pitch = 0.35   # look up at the umbrella
+		await _wait(0.4)
+		await _snap("04b_gliding")
+		game.rig.pitch = -0.2
 		var t0 := Time.get_ticks_msec()
 		while p.state != 3 and Time.get_ticks_msec() - t0 < 40000:   # GROUND
-			p.want_jump = p.state == 1
 			await process_frame
 		await _wait(1.0)
 		await _snap("05_landed")
+		# treasure: an oak chest and a golden one right in front, then start unlocking
+		var fwd0: Vector3 = -Basis(Vector3.UP, game.rig.yaw).z
+		var side0: Vector3 = fwd0.cross(Vector3.UP)
+		var chest_cls = load("res://src/world/treasure_chest.gd")
+		for k in 2:
+			var ch = chest_cls.new(k == 1)
+			game.match_manager.world_root.add_child(ch)
+			var cp: Vector3 = p.global_position + fwd0 * 2.2 + side0 * (k * 1.6 - 0.8)
+			cp.y = game.island.terrain.height_at(cp.x, cp.z)
+			ch.global_position = cp
+			ch.rotation.y = game.rig.yaw
+		game.rig.pitch = -0.3
+		await _wait(1.0)
+		Input.action_press(&"interact")
+		await _wait(1.6)
+		await _snap("05b_unlocking")
+		Input.action_release(&"interact")
 		# stage a fight: give Bun a shotgun and bring the nearest bot close
 		p.give_weapon(WeaponInstance.new(WeaponDB.get_weapon(&"carrot_shotgun"), 2))
 		var rig = game.rig

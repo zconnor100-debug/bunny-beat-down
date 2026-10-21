@@ -1,0 +1,34 @@
+[
+  {
+    "id": "default",
+    "name": "Classic"
+  },
+  {
+    "id": "grey",
+    "name": "Grey",
+    "albedo": {
+      "Material.003": "skins/grey_fur.jpg"
+    }
+  },
+  {
+    "id": "black",
+    "name": "Black",
+    "albedo": {
+      "Material.003": "skins/black_fur.jpg"
+    }
+  },
+  {
+    "id": "fox_squirrel",
+    "name": "Fox Squirrel",
+    "albedo": {
+      "Material.003": "skins/fox_squirrel_fur.jpg"
+    }
+  },
+  {
+    "id": "blueberry",
+    "name": "Blueberry",
+    "albedo": {
+      "Material.003": "skins/blueberry_fur.jpg"
+    }
+  }
+]

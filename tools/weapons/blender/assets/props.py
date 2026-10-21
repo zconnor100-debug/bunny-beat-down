@@ -9,6 +9,7 @@ from __future__ import annotations
 import math
 import random
 
+import bpy
 from mathutils import Matrix, Vector
 
 from bbd import geo, mats, parts, plants, textures
@@ -292,6 +293,7 @@ def build_ammo_rocket():
     for k, sx in enumerate((1, -1)):
         rp, L = carrot_rocket_parts(scale=0.85, fin_spread=0.25)
         xf = Matrix.Translation((0.0, sx * 0.048, 0.072)) @ Matrix.Rotation(math.radians(-90), 4, "Z")
+        bpy.context.view_layer.update()   # make matrix_world reflect orient()'s loc/rot first
         for o in rp:
             o.name = f"r{k}_{o.name}"
             o.matrix_world = xf @ o.matrix_world      # lie along X, tips toward +X

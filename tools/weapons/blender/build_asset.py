@@ -27,7 +27,7 @@ def build(asset_id: str) -> dict:
     report = bake.assemble_and_export(asset_id, spec, out_dir / f"{asset_id}.glb", size=entry.get("tex", 1024),
                                       ao_distance=entry.get("ao", 0.08))
     report.update({"kind": entry["kind"], "use": entry["use"], "target_size_m": entry.get("target"),
-                   "tri_budget": entry.get("budget")})
+                   "tri_budget": entry.get("budget"), "capsule_m": entry.get("capsule", 1.0)})
     (util.BUILD / f"{asset_id}.json").write_text(json.dumps(report, indent=2) + "\n")
     return report
 

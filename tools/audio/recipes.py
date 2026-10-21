@@ -18,8 +18,8 @@ import numpy as np
 import blocks as B
 from dsp import (SR, additive, bandpass, bell, bp_gain, colored, env_exp, env_pts,
                  fold_circular, highpass, lowpass, make_loop, midi_hz, mix, n_of,
-                 pad_to, pluck, reverb, saturate, saw_bl, sine, smooth_rand,
-                 stft_filter, times, white)
+                 pad_to, peak_eq, pluck, reverb, saturate, saw_bl, sine, smooth_rand,
+                 stft_filter, times, varispeed, white)
 
 RECIPES = []
 
@@ -36,42 +36,73 @@ def _pick(seq, v):
 
 
 # ==========================================================================
-# WEAPONS -- "carrot launchers": pneumatic thwump + veggie crunch + body
+# WEAPONS -- real firearm recordings + synth transient/boom/tail shaping,
+#            with only a faint carrot crunch underneath
 # ==========================================================================
+# Real-firearm core layers come from The Free Firearm Sound Library (CC0, via
+# OpenGameArt): 96 kHz near-perspective recordings, several takes per file.
+FF = "free-firearm-sound-library"
+FFP = "Prepared SFX Library/"
+PRE = 0.004  # every take() starts 4 ms before the shot's onset
+
+
+def take(x, t, dur, hold=0.1, tau=0.2):
+    """Cut one shot out of a multi-take recording.
+
+    Finds the exact onset within +-30 ms of `t` (s), keeps PRE before it and
+    `dur` after, and shapes the tail: unity for `hold` s, then an exponential
+    fade with time constant `tau` (shortens long outdoor tails to taste).
+    """
+    i = n_of(t)
+    w0, w1 = max(0, i - n_of(0.03)), min(len(x), i + n_of(0.03))
+    seg = np.abs(x[w0:w1])
+    on = w0 + int(np.argmax(seg > 0.2 * seg.max()))
+    a = max(0, on - n_of(PRE))
+    y = x[a : a + n_of(PRE + dur)].copy()
+    tt = times(len(y))
+    y *= np.where(tt < PRE + hold, 1.0, np.exp(-(tt - PRE - hold) / tau))
+    return y / (np.max(np.abs(y)) + 1e-12)
+
+
+def _rolling_echoes(x, rng, taps):
+    """Forest slap-back: delayed, progressively darker copies (delay_s, gain_db, lowpass_hz)."""
+    out = x.copy()
+    for d, g, lp in taps:
+        out = mix(0, (out, 0, 0), (lowpass(x, lp, 2), d, g))
+    return out
+
+
 @recipe("pistol_fire", variants=3, loud=-10.0)
 def pistol_fire(c, v):
+    """9 mm pistol: sharp snappy crack, slide clack, short outdoor tail."""
     r = c.rng
-    p = [1.0, 1.06, 0.95][v]
-    thump = B.thump(220 * p, 90, 0.02, 0.04, 0.3)
-    tube = B.thump(430 * p, 300 * p, 0.02, 0.03, 0.2, partial2=0.3)  # spud-gun 'thoonk'
-    pop = B.burst(r, 0.12, 1250 * p, 0.8, 0.012)
-    crk = B.crack(r, 0.005, 3200)
-    hiss = B.burst(r, 0.25, 2600, 0.5, 0.06, attack=0.004)
-    crunch = highpass(c.k("impact-sounds", f"impactWood_light_00{v}", speed=1.3 * p), 300)
-    body = lowpass(c.k("impact-sounds", f"impactPunch_medium_00{v + 1}", speed=1.15 * p), 3000)
-    x = mix(0.5, (thump, 0, -7), (tube, 0, -8), (pop, 0, -1), (crk, 0, -4), (hiss, 0.003, -14),
-            (crunch, 0.004, -3), (body, 0, -8))
-    x = saturate(x, 1.6)
-    return reverb(x, r, decay=0.35, mix_db=-16, tail=0.1)
+    rec = c.o(FF, FFP + "Walther PPQ/X_39P.wav")  # near perspective, 3 takes
+    shot = take(rec, [1.41, 6.455, 10.68][v], 0.8, hold=0.06, tau=0.16)
+    shot = peak_eq(shot, 3500, 2.5, q=0.8)  # a touch more snap
+    crk = B.crack(r, 0.0022, 3800)
+    punch = B.thump(120, 65, 0.02, 0.03, 0.2)
+    slide = highpass(c.k("rpg-audio", "metalLatch", speed=1.35), 1500)
+    crunch = highpass(c.k("impact-sounds", f"impactWood_light_00{v}", speed=1.4), 400)
+    x = mix(0.7, (shot, 0, 0), (crk, PRE, -11), (punch, PRE, -15), (slide, PRE + 0.035, -21),
+            (crunch, PRE + 0.004, -22))
+    x = saturate(x, 1.3)
+    return reverb(x, r, decay=0.55, mix_db=-17, tail=0.05)
 
 
 @recipe("shotgun_fire", variants=3, loud=-8.5)
 def shotgun_fire(c, v):
+    """12-gauge pump: big boom, low-end punch, long rolling outdoor tail."""
     r = c.rng
-    p = [1.0, 0.94, 1.05][v]
-    thump = B.thump(140 * p, 55, 0.04, 0.09, 0.6)
-    boom = B.lp_burst(r, 0.6, 800, 0.08, attack=0.001)
-    pop = B.burst(r, 0.15, 900 * p, 0.7, 0.025)
-    crk = B.crack(r, 0.01, 2500)
-    plank = c.k("impact-sounds", f"impactPlank_medium_00{v}", speed=1.1 * p)
-    mining = highpass(c.k("impact-sounds", f"impactMining_00{v + 1}", speed=1.15), 400)
-    punch = c.k("impact-sounds", f"impactPunch_heavy_00{v}", speed=0.9 * p)
-    # spray of carrot chunks leaving the barrel
-    pellets = B.grains(r, 0.4, 14, 900, 3500, glen=(0.004, 0.012), t_tau=0.025)
-    x = mix(0.9, (thump, 0, -7), (boom, 0, -11), (pop, 0, 0), (crk, 0, -3),
-            (plank, 0.004, -3), (mining, 0.006, -4), (highpass(punch, 150), 0, -9), (pellets, 0.004, -6))
-    x = saturate(x, 1.8)
-    return reverb(x, r, decay=0.75, mix_db=-13, tail=0.2)
+    path, t = [("Nova/O_21P.wav", 0.43), ("Nova/O_21P.wav", 3.47), ("Model 12/K_22P.wav", 0.84)][v]
+    shot = take(c.o(FF, FFP + path), t, 2.2, hold=0.3, tau=0.9)
+    sub = B.thump(72, 40, 0.04, 0.12, 0.7)
+    boom = B.lp_burst(r, 0.8, 180, 0.15, attack=0.002)
+    crk = B.crack(r, 0.003, 3000)
+    pellets = highpass(c.k("impact-sounds", f"impactWood_light_00{(v + 3) % 5}", speed=1.2), 400)
+    x = mix(2.0, (shot, 0, 0), (sub, PRE, -8), (boom, PRE, -13), (crk, PRE, -12), (pellets, PRE + 0.005, -22))
+    x = saturate(x, 1.4)
+    x = _rolling_echoes(x, r, [(0.21, -14, 2000), (0.52, -18, 1300), (0.93, -23, 900)])
+    return reverb(x, r, decay=1.8, mix_db=-13, tail=0.1)[: n_of(2.4)]
 
 
 @recipe("shotgun_pump", variants=2, loud=-15.0, src="kenney")
@@ -85,35 +116,115 @@ def shotgun_pump(c, v):
 
 @recipe("lmg_fire", variants=4, loud=-11.0)
 def lmg_fire(c, v):
+    """LMG (7.62): heavier and chunkier, a little lower than the rifle, short per shot."""
     r = c.rng
-    p = [1.0, 1.04, 0.97, 1.08][v]
-    thump = B.thump(240 * p, 100, 0.02, 0.025, 0.2)
-    tube = B.thump(480 * p, 330 * p, 0.015, 0.02, 0.12, partial2=0.3)
-    pop = B.burst(r, 0.08, 1500 * p, 0.9, 0.008)
-    crk = B.crack(r, 0.004, 3800)
-    crunch = highpass(c.k("impact-sounds", f"impactWood_light_00{v}", speed=1.5 * p), 400)
-    tick = c.k("impact-sounds", f"impactGeneric_light_00{v}", speed=1.2 * p)
-    x = mix(0.24, (thump, 0, -7), (tube, 0, -9), (pop, 0, -1), (crk, 0, -4), (crunch, 0.003, -4), (tick, 0, -6))
+    rec = c.o(FF, FFP + "AK-47/C_28P.wav")  # near perspective, 4 single takes
+    shot = take(rec, [0.61, 3.26, 6.03, 9.175][v], 0.5, hold=0.05, tau=0.09)
+    shot = varispeed(shot, [0.95, 0.93, 0.96, 0.94][v])
+    shot = peak_eq(shot, 130, 4.0, q=0.9)  # chunkier low end
+    crk = B.crack(r, 0.0025, 3200)
+    body = B.thump(85, 50, 0.02, 0.04, 0.2)
+    links = highpass(c.k("rpg-audio", "beltHandle1", speed=1.2), 1500)  # belt-feed rattle
+    latch = highpass(c.k("rpg-audio", "metalLatch", dur=0.12, speed=1.1), 1200)
+    crunch = highpass(c.k("impact-sounds", f"impactWood_light_00{v % 5}", speed=1.25), 400)
+    x = mix(0.5, (shot, 0, 0), (crk, PRE, -11), (body, PRE, -10), (links, PRE + 0.05, -24),
+            (latch, PRE + 0.04, -23), (crunch, PRE + 0.004, -22))
     x = saturate(x, 1.5)
-    # short tail only, so rapid back-to-back shots stay tight
-    x = reverb(x, r, decay=0.15, mix_db=-20, tail=0.02)
-    return x[: n_of(0.24)]
+    return reverb(x, r, decay=0.35, mix_db=-22, tail=0.03)[: n_of(0.5)]
+
+
+@recipe("smg_fire", variants=4, loud=-12.0)
+def smg_fire(c, v):
+    """SMG: tight, light, rapid pops -- tail clamped so ~900 rpm stays crisp."""
+    r = c.rng
+    rec = c.o(FF, FFP + "PPSh/P_30P.wav")  # near perspective, single shots
+    shot = take(rec, [0.97, 4.395, 8.26, 11.445][v], 0.3, hold=0.025, tau=0.045)
+    shot = varispeed(shot, [1.0, 1.03, 0.98, 1.05][v])
+    shot = highpass(shot, 90)  # lighter than the rifles
+    crk = B.crack(r, 0.0018, 4200)
+    crunch = highpass(c.k("impact-sounds", f"impactWood_light_00{(v + 1) % 5}", speed=1.7), 500)
+    x = mix(0.3, (shot, 0, 0), (crk, PRE, -12), (crunch, PRE + 0.003, -23))
+    x = saturate(x, 1.25)
+    return reverb(x, r, decay=0.25, mix_db=-20, tail=0.0)
+
+
+@recipe("rifle_fire", variants=3, loud=-10.0)
+def rifle_fire(c, v):
+    """Assault rifle (5.56): sharp crack + body thump, medium outdoor tail."""
+    r = c.rng
+    # two near-perspective AR-15 takes; the third variant re-uses take 1 a few % brighter
+    t, sp = [(0.705, 1.0), (5.66, 1.0), (0.705, 1.035)][v]
+    shot = varispeed(take(c.o(FF, FFP + "AR-15/D_32P.wav"), t, 1.2, hold=0.14, tau=0.4), sp)
+    crk = B.crack(r, 0.0025, 3500)
+    body = B.thump(95, 55, 0.025, 0.05, 0.3)
+    bolt = highpass(c.k("rpg-audio", "metalClick", start=0.085, dur=0.07, speed=1.2), 1200)
+    crunch = highpass(c.k("impact-sounds", f"impactWood_light_00{(v + 2) % 5}", speed=1.3), 400)
+    x = mix(1.1, (shot, 0, 0), (crk, PRE, [-9, -9, -8][v]), (body, PRE, [-11, -11, -12][v]),
+            (bolt, PRE + 0.03, -21), (crunch, PRE + 0.004, -22))
+    x = saturate(x, 1.4)
+    x = _rolling_echoes(x, r, [(0.17, -20, 2200)])
+    return reverb(x, r, decay=1.0, mix_db=-15, tail=0.1)
+
+
+@recipe("sniper_fire", variants=2, loud=-8.0)
+def sniper_fire(c, v):
+    """.30-06 bolt rifle: huge crack + deep boom + long rolling echo."""
+    r = c.rng
+    near = take(c.o(FF, FFP + "Tikka/W_29P.wav"), [0.575, 5.675][v], 2.9, hold=0.35, tau=0.9)
+    far = take(c.o(FF, FFP + "Tikka/W_24P.wav"), [0.755, 5.385][v], 2.9, hold=0.5, tau=1.0)
+    snap = B.crack(r, 0.0015, 5000)            # supersonic snap on top
+    hiss = B.burst(r, 0.1, 7000, 0.7, 0.01)
+    deep = B.thump(80, 46, 0.05, 0.22, 1.2)    # deep boom (kept above ~40 Hz so it reads on speakers)
+    rumble = B.lp_burst(r, 2.6, 200, 0.7, attack=0.06)
+    crunch = highpass(c.k("impact-sounds", f"impactWood_light_00{v + 1}", speed=1.1), 400)
+    x = mix(2.9, (near, 0, 0), (lowpass(far, 3000, 1), 0.012, -9), (snap, PRE, -7), (hiss, PRE, -15),
+            (deep, PRE, -6), (rumble, 0.03, -17), (crunch, PRE + 0.004, -23))
+    x = saturate(highpass(x, 40, 2), 1.5)
+    x = _rolling_echoes(x, r, [(0.32, -15, 2200), (0.71, -19, 1400), (1.15, -24, 900), (1.7, -29, 650)])
+    return reverb(x, r, decay=1.6, mix_db=-16, tail=0.0)[: n_of(3.0)]
+
+
+@recipe("sniper_bolt", loud=-15.0, src="kenney")
+def sniper_bolt(c, v):
+    """Bolt cycle: lift - pull back - push forward - lock down (+ spent carrot stub)."""
+    lift = c.k("rpg-audio", "metalClick", start=0.05, speed=1.1)
+    back = c.k("rpg-audio", "metalLatch", speed=0.82)
+    fwd = c.k("rpg-audio", "metalLatch", speed=1.0)
+    lock = c.k("rpg-audio", "metalClick", start=0.05, speed=0.9)
+    knock = c.k("impact-sounds", "impactWood_light_004", speed=1.3)
+    stub = c.k("impact-sounds", "impactWood_light_002", speed=1.8)
+    return mix(0.9, (lift, 0, -4), (back, 0.11, 0), (stub, 0.24, -16), (fwd, 0.33, -1),
+               (lock, 0.47, -3), (knock, 0.47, -9))
+
+
+@recipe("scope_in", loud=-20.0, src="synth")
+def scope_in(c, v):
+    """Soft lens/zoom 'zip' when aiming down the sniper scope."""
+    r = c.rng
+    zip_ = B.whoosh(r, 0.2, 1400, 5200, q=2.0, peak=0.7, slope=-1.0)
+    n = n_of(0.2)
+    glide_ = sine(np.geomspace(900, 1500, n), n) * env_pts(n, [(0, 0), (0.12, 1), (0.2, 0)])
+    click = B.crack(r, 0.0015, 3000)
+    return mix(0.3, (zip_, 0, 0), (glide_, 0, -18), (click, 0.19, -12))
 
 
 @recipe("rocket_fire", variants=2, loud=-9.0)
 def rocket_fire(c, v):
+    """Launcher: deep whoosh-thump back-blast, rocket motor roaring away, sizzle."""
     r = c.rng
-    thump = B.thump(110, 50, 0.06, 0.12, 0.9)
-    whomp = B.lp_burst(r, 0.9, 320, 0.2, attack=0.002)
-    pop = B.burst(r, 0.2, 700, 0.7, 0.025)
-    hiss = B.whoosh(r, 1.2, 500, 3000, q=1.2, peak=0.12, slope=-1.5)
-    sputter = B.crackle(r, 0.7, 70, 1200, 5000)
-    thr = c.k("sci-fi-sounds", f"thrusterFire_00{[0, 3][v]}", start=0.8, dur=1.3)
-    thr = thr * env_pts(len(thr), [(0, 0), (0.05, 1), (0.4, 0.7), (1.3, 0)])
-    x = mix(1.4, (thump, 0, -4), (whomp, 0, -7), (pop, 0, -3), (hiss, 0.01, -4),
-            (sputter, 0.03, -10), (thr, 0.02, -5))
+    rec = c.o(FF, FFP + "Mossberg/N_30P.wav")  # 12-ga blast, slowed into a deep launch thump
+    blast = varispeed(take(rec, [1.7, 4.97][v], 1.6, hold=0.12, tau=0.3), [0.7, 0.66][v])
+    motor = c.o("baradari-launches", "launches/rlaunch.wav")
+    motor = varispeed(motor, [1.0, 0.92][v])
+    motor = motor * env_pts(len(motor), [(0, 1), (0.6, 0.8), (len(motor) / SR, 0)])
+    thump = B.thump(85, 42, 0.05, 0.14, 0.9)
+    whoosh = B.whoosh(r, 1.3, 350, 2400, q=1.1, peak=0.18, slope=-1.5)
+    sizzle = B.crackle(r, 1.4, 110, 1500, 7000)
+    sizzle = sizzle * env_pts(len(sizzle), [(0, 0.3), (0.1, 1), (1.4, 0)])
+    x = mix(2.0, (blast, 0, 0), (motor, PRE + 0.01, -5), (thump, PRE, -6), (whoosh, PRE, -9),
+            (sizzle, PRE + 0.03, -13))
     x = saturate(x, 1.4)
-    return reverb(x, r, decay=0.8, mix_db=-14, tail=0.1)
+    return reverb(x, r, decay=1.0, mix_db=-15, tail=0.1)[: n_of(2.4)]
 
 
 @recipe("rocket_whoosh_loop", loud=-16.0, loop=True)
@@ -138,6 +249,9 @@ def rocket_whoosh_loop(c, v):
 @recipe("explosion", variants=3, loud=-7.5)
 def explosion(c, v):
     r = c.rng
+    body = c.o("baradari-explosions", ["explosions/explode.wav", "explosions/explodemini.wav",
+                                       "explosions/explode.wav"][v])
+    body = varispeed(body, [1.0, 0.95, 0.9][v])
     crunch = c.k("sci-fi-sounds", f"explosionCrunch_00{[0, 1, 3][v]}")
     sub = lowpass(c.k("sci-fi-sounds", f"lowFrequency_explosion_00{[1, 0, 1][v]}"), 300)
     boom = B.lp_burst(r, 2.0, 200, 0.35, attack=0.004)
@@ -146,10 +260,10 @@ def explosion(c, v):
     debris = B.grains(r, 2.0, 30, 300, 3000, glen=(0.01, 0.03), t_tau=0.35, start=0.12)
     clump1 = c.k("impact-sounds", f"footstep_grass_00{v}", speed=0.9)
     clump2 = c.k("impact-sounds", f"impactSoft_medium_00{v + 1}", speed=1.1)
-    x = mix(2.2, (crunch, 0, 0), (highpass(sub, 40), 0, -3), (boom, 0, -5), (kick, 0, -5), (poof, 0, -4),
-            (debris, 0, -7), (clump1, 0.55 + 0.1 * v, -11), (clump2, 0.8, -13))
-    x = saturate(x, 1.7)
-    return reverb(x, r, decay=1.3, mix_db=-11, tail=0.3)[: n_of(2.6)]
+    x = mix(2.2, (body, 0, 0), (crunch, 0, -5), (highpass(sub, 40), 0, -4), (boom, 0, -7), (kick, 0, -5),
+            (poof, 0, -9), (debris, 0, -9), (clump1, 0.55 + 0.1 * v, -13), (clump2, 0.8, -15))
+    x = saturate(highpass(x, 40, 2), 1.7)
+    return reverb(x, r, decay=1.3, mix_db=-12, tail=0.3)[: n_of(2.6)]
 
 
 @recipe("reload_start", loud=-16.0, src="kenney")

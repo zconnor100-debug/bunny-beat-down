@@ -618,3 +618,17 @@ def pinnate_leaf(name, base, direction, normal, length, pairs=4, lobes=3, leaf_w
     bmesh.ops.triangulate(bm, faces=bm.faces[:], quad_method="BEAUTY", ngon_method="EAR_CLIP")
     leaves = finish(bm, f"{name}_leaflets", mat, sharp_angle=None)
     return join([stem, leaves], name)
+
+
+def bend_yz(obj, radius):
+    """Bend a mesh laid out along +Y (from y = 0) into an arc of `radius` curving toward +Z.
+
+    Vertices keep their distance from the neutral axis, so cross-sections stay round.
+    """
+    me = obj.data
+    for v in me.vertices:
+        x, y, z = v.co
+        th = y / radius
+        v.co = Vector((x, (radius - z) * math.sin(th), radius - (radius - z) * math.cos(th)))
+    me.update()
+    return obj

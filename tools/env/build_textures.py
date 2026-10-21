@@ -46,6 +46,9 @@ LAYERS = {
     "bark":         ("ph_bark_brown_02", 1024, "generic tree bark for custom meshes/shaders"),
 }
 
+# Noise-like normal maps gain little from 2K but cost ~10 MB as PNG: cap them lower.
+NORMAL_CAP = {"grass": 1024}
+
 HDRIS = ["kloofendal_48d_partly_cloudy_puresky", "qwantani_late_afternoon_puresky"]
 HDRI_4K: set[str] = set()  # 4K copies dropped to stay inside the repo size budget (2K is used in game)
 
@@ -72,7 +75,8 @@ def build_layers() -> list[dict]:
         maps = source_maps(CACHE / folder)
         dst = TEX / layer
         dst.mkdir(parents=True, exist_ok=True)
-        spec = {"albedo": ("albedo.jpg", "rgb", size), "normal": ("normal.png", "rgb", size),
+        nsize = NORMAL_CAP.get(layer, size)
+        spec = {"albedo": ("albedo.jpg", "rgb", size), "normal": ("normal.png", "rgb", nsize),
                 "roughness": ("roughness.jpg", "gray", size), "ao": ("ao.jpg", "gray", 1024),
                 "height": ("height.jpg", "gray", 1024)}
         for key, (name, mode, cap) in spec.items():

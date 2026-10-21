@@ -22,6 +22,8 @@ PROJ = Path("/tmp/bbd-propcheck")
 REQUIRED = {
     "weapon": ["Muzzle", "SupportGrip", "Sight"],
     "loot_crate": ["Lid"], "supply_drop": ["Lid", "Chute"], "carrot_rocket_launcher": ["Rocket"],
+    "treasure_chest": ["Lid", "LootSpawn"], "treasure_chest_golden": ["Lid", "LootSpawn"],
+    "dandelion_glider": ["Hand_L", "Hand_R"],
 }
 
 
@@ -43,11 +45,12 @@ def main() -> int:
     run = subprocess.run([args.godot, "--headless", "--path", str(PROJ), "-s", "res://check_glbs.gd"],
                          capture_output=True, text=True, timeout=900)
     rows = [json.loads(l.split(" ", 1)[1]) for l in run.stdout.splitlines() if l.startswith("GLBCHECK ")]
-    weapons = {"carrot_pistol", "carrot_shotgun", "carrot_lmg", "carrot_rocket_launcher"}
+    weapons = {"carrot_pistol", "carrot_shotgun", "carrot_lmg", "carrot_rocket_launcher", "carrot_smg",
+               "carrot_rifle", "carrot_sniper"}
     problems = []
     for r in rows:
         name = r["file"][:-4]
-        need = list(REQUIRED.get(name, []))
+        need = list(REQUIRED.get(name, [])) + (["Hand_L", "Hand_R"] if name.startswith("glider_") else [])
         if name in weapons:
             need += REQUIRED["weapon"]
         missing = [n for n in need if n not in r.get("markers", {})]

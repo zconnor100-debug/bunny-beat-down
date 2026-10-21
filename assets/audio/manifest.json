@@ -19,6 +19,27 @@
     "sfx/lmg_fire_3.ogg",
     "sfx/lmg_fire_4.ogg"
   ],
+  "smg_fire": [
+    "sfx/smg_fire_1.ogg",
+    "sfx/smg_fire_2.ogg",
+    "sfx/smg_fire_3.ogg",
+    "sfx/smg_fire_4.ogg"
+  ],
+  "rifle_fire": [
+    "sfx/rifle_fire_1.ogg",
+    "sfx/rifle_fire_2.ogg",
+    "sfx/rifle_fire_3.ogg"
+  ],
+  "sniper_fire": [
+    "sfx/sniper_fire_1.ogg",
+    "sfx/sniper_fire_2.ogg"
+  ],
+  "sniper_bolt": [
+    "sfx/sniper_bolt.ogg"
+  ],
+  "scope_in": [
+    "sfx/scope_in.ogg"
+  ],
   "rocket_fire": [
     "sfx/rocket_fire_1.ogg",
     "sfx/rocket_fire_2.ogg"

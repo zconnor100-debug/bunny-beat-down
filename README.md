@@ -48,10 +48,19 @@ Built in **Godot 4.6** (GDScript, Jolt physics, Forward+).
     hamsters barrel-roll.
 
   ![Jump tricks](docs/screenshots/jump_tricks.gif)
-- **Battle royale for 1 player and up to 49 bots**: a balloon drop, freefall
-  and dandelion glider, floor loot and garden crates, the shrinking **Briar**,
-  a kill feed, a minimap and full map, spectating, and *Winner Winner Carrot
-  Dinner*.
+- **Pick your critter** on the loading screen while the island grows:
+  - all eight species (bunnies, squirrel, fox, raccoon, frog, beaver, hamster),
+    each with several skins;
+  - a live 3D preview showing the species' jump trick.
+- **Battle royale for 1 player and up to 49 bots** on a 660 m island:
+  - a balloon drop, freefall, and a giant leaf, flower or dandelion umbrella
+    to glide down on;
+  - floor loot, garden crates and **treasure chests**: hold E for up to 5 s,
+    out in the open, for the best gear;
+  - critter cottages, stumps, log piles and stone walls for cover;
+  - the shrinking **Briar** and supply drops;
+  - a kill feed, a minimap and full map, spectating, and *Winner Winner Carrot
+    Dinner*.
 - **Small-critter physics**:
   - Jolt ragdolls with per-limb joint limits.
   - Spring-bone ears and tails.

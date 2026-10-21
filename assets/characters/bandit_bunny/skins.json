@@ -1,0 +1,38 @@
+[
+  {
+    "id": "default",
+    "name": "Classic"
+  },
+  {
+    "id": "wild_hare",
+    "name": "Wild Hare",
+    "albedo": {
+      "Base.001": "skins/wild_hare_albedo.jpg",
+      "Base": "skins/wild_hare_albedo.jpg"
+    }
+  },
+  {
+    "id": "frost",
+    "name": "Frost",
+    "albedo": {
+      "Base.001": "skins/frost_albedo.jpg",
+      "Base": "skins/frost_albedo.jpg"
+    }
+  },
+  {
+    "id": "shadow",
+    "name": "Shadow",
+    "albedo": {
+      "Base.001": "skins/shadow_albedo.jpg",
+      "Base": "skins/shadow_albedo.jpg"
+    }
+  },
+  {
+    "id": "toxic",
+    "name": "Toxic",
+    "albedo": {
+      "Base.001": "skins/toxic_albedo.jpg",
+      "Base": "skins/toxic_albedo.jpg"
+    }
+  }
+]
