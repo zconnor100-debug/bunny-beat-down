@@ -30,3 +30,8 @@ assets/props/*_*_*.png
 assets/props/*_*_*.jpg
 assets/props/*_*_*.png.import
 assets/props/*_*_*.jpg.import
+# ...but keep hand-made previews that happen to match those patterns
+!assets/props/acorn_helmet_closeup.png
+!assets/props/acorn_helmet_closeup.png.import
+!assets/props/preview_sheet*.png
+!assets/props/preview_sheet*.png.import
