@@ -52,6 +52,9 @@ Built in **Godot 4.6** (GDScript, Jolt physics, Forward+).
   - all eight species (bunnies, squirrel, fox, raccoon, frog, beaver, hamster),
     each with several skins;
   - a live 3D preview showing the species' jump trick.
+
+  ![Choosing a critter on the loading screen](docs/screenshots/picker.jpg)
+  ![All 40 critter skins](docs/screenshots/skins.jpg)
 - **Battle royale for 1 player and up to 49 bots** on a 660 m island:
   - a balloon drop, freefall, and a giant leaf, flower or dandelion umbrella
     to glide down on;
