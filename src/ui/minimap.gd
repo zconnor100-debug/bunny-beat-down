@@ -12,6 +12,23 @@ var full := false
 var map_tex: ImageTexture
 var _world_size := 1.0
 
+## Red blips: an enemy shows up for SHOT_BLIP_TIME after it fires (anywhere on
+## the island), and continuously while it is moving within NEAR_RADIUS of you.
+const SHOT_BLIP_TIME := 2.5
+const NEAR_RADIUS := 20.0
+const BLIP_COLOR := Color(1.0, 0.18, 0.12)
+var _last_shot: Dictionary = {}   # Critter -> msec of its last shot
+
+
+func _ready() -> void:
+	Events.shot_fired.connect(_on_shot_fired)
+	Events.critter_died.connect(func(victim, _info): _last_shot.erase(victim))
+
+
+func _on_shot_fired(shooter: Node, _origin: Vector3, _weapon_id: StringName) -> void:
+	if shooter != player:
+		_last_shot[shooter] = Time.get_ticks_msec()
+
 
 func build(island_: Island) -> void:
 	island = island_
@@ -83,6 +100,7 @@ func _draw() -> void:
 			var mp := world_to_map(p.center)
 			draw_string_outline(font, mp + Vector2(-60, 4), p.name, HORIZONTAL_ALIGNMENT_CENTER, 120, 15, 5, Color(UITheme.INK, 0.9))
 			draw_string(font, mp + Vector2(-60, 4), p.name, HORIZONTAL_ALIGNMENT_CENTER, 120, 15, UITheme.CREAM)
+	_draw_enemy_blips()
 	if player and is_instance_valid(player):
 		var pp := world_to_map(Vector2(player.global_position.x, player.global_position.z))
 		var yaw := player.look_yaw
@@ -91,3 +109,37 @@ func _draw() -> void:
 		var s := 9.0 if full else 7.0
 		draw_colored_polygon(PackedVector2Array([pp + fwd * s, pp - fwd * s * 0.6 + side * s * 0.7, pp - fwd * s * 0.3, pp - fwd * s * 0.6 - side * s * 0.7]), UITheme.CARROT)
 		draw_polyline(PackedVector2Array([pp + fwd * s, pp - fwd * s * 0.6 + side * s * 0.7, pp - fwd * s * 0.3, pp - fwd * s * 0.6 - side * s * 0.7, pp + fwd * s]), UITheme.INK, 1.5)
+
+
+## Enemies that should show as red blips right now: [{critter, firing, near, age}].
+func enemy_blips() -> Array:
+	var out := []
+	if player == null or not is_instance_valid(player):
+		return out
+	var now := Time.get_ticks_msec()
+	var pp := player.global_position
+	for n in get_tree().get_nodes_in_group(&"critters"):
+		var c := n as Critter
+		if c == null or c == player or not c.alive or c.state != Critter.State.GROUND:
+			continue
+		var since_shot := (now - int(_last_shot.get(c, -1000000))) / 1000.0
+		var firing := since_shot < SHOT_BLIP_TIME
+		var flat := Vector2(c.global_position.x - pp.x, c.global_position.z - pp.z)
+		var near := flat.length() <= NEAR_RADIUS and Vector2(c.velocity.x, c.velocity.z).length() > 0.5
+		if firing or near:
+			out.append({"critter": c, "firing": firing, "near": near, "age": since_shot})
+	return out
+
+
+func _draw_enemy_blips() -> void:
+	var pulse := 0.5 + 0.5 * sin(Time.get_ticks_msec() * 0.012)
+	for b in enemy_blips():
+		var c: Critter = b.critter
+		var mp := world_to_map(Vector2(c.global_position.x, c.global_position.z))
+		var r := (5.5 if full else 4.0)
+		var alpha := 1.0 if b.near else clampf(1.0 - b.age / SHOT_BLIP_TIME, 0.25, 1.0)
+		if b.firing:
+			# a ring that pulses outward while they're shooting
+			draw_arc(mp, r + 3.0 + pulse * 4.0, 0.0, TAU, 20, Color(BLIP_COLOR, 0.6 * alpha), 1.5)
+		draw_circle(mp, r + 1.5, Color(0, 0, 0, 0.7 * alpha))
+		draw_circle(mp, r, Color(BLIP_COLOR, alpha))

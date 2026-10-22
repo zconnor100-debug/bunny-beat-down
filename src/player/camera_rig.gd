@@ -20,6 +20,7 @@ var scoped := false           ## looking through a sniper scope (HUD draws the o
 var spectate_target: Node3D
 
 var camera: Camera3D
+var listener: AudioListener3D   ## at the critter's head, facing where you look
 var _arm: SpringArm3D
 var _pivot: Node3D
 var _trauma := 0.0
@@ -55,6 +56,11 @@ func _ready() -> void:
 	_arm.add_child(camera)
 	_viewmodel_root = Node3D.new()
 	camera.add_child(_viewmodel_root)
+	listener = AudioListener3D.new()
+	listener.top_level = true
+	add_child(listener)
+	listener.make_current()
+	Audio.listener = listener
 	_noise.frequency = 2.0
 	Events.explosion.connect(_on_explosion)
 	Events.shot_fired.connect(_on_shot)
@@ -137,6 +143,11 @@ func _process(delta: float) -> void:
 		_noise.get_noise_2d(_t * 25.0, 1.0) * 0.06 * s,
 		_noise.get_noise_2d(_t * 25.0, 2.0) * 0.06 * s,
 		_noise.get_noise_2d(_t * 25.0, 3.0) * 0.08 * s)
+	# hear the world from the critter's head (not from the camera behind it),
+	# turned the way the camera looks, so stereo direction matches the screen
+	var ear_src: Node3D = follow if (not alive or dropping) else target.visual
+	if ear_src and is_instance_valid(ear_src):
+		listener.global_transform = Transform3D(Basis(Vector3.UP, yaw), ear_src.global_position + Vector3.UP * eye_h)
 	var w := target.current_weapon()
 	var fov_scale := lerpf(1.0, w.data.aim_fov_scale if w else 0.85, _aim_blend)
 	camera.fov = Settings.fov * fov_scale

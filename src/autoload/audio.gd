@@ -48,6 +48,16 @@ func _setup_buses() -> void:
 			var idx := AudioServer.bus_count - 1
 			AudioServer.set_bus_name(idx, bus_name)
 			AudioServer.set_bus_send(idx, &"Master")
+	# sounds behind the listener go through a low-pass, so front/back is audible
+	# (stereo panning alone can't tell them apart)
+	if AudioServer.get_bus_index(&"SFXBehind") == -1:
+		AudioServer.add_bus()
+		var b := AudioServer.bus_count - 1
+		AudioServer.set_bus_name(b, &"SFXBehind")
+		AudioServer.set_bus_send(b, &"SFX")
+		var lp := AudioEffectLowPassFilter.new()
+		lp.cutoff_hz = 1700.0
+		AudioServer.add_bus_effect(b, lp)
 
 
 func _apply_volumes() -> void:
@@ -95,7 +105,9 @@ func _pick(key: StringName) -> AudioStream:
 
 
 ## Positional one-shot. Returns the player so loops can be stopped by the caller.
-func play_at(key: StringName, pos: Vector3, volume_db := 0.0, pitch_jitter := 0.08) -> AudioStreamPlayer3D:
+## opts (all optional): unit_size, max_distance, panning (panning_strength),
+## directional (true: muffle it when it's behind the listener).
+func play_at(key: StringName, pos: Vector3, volume_db := 0.0, pitch_jitter := 0.08, opts := {}) -> AudioStreamPlayer3D:
 	var stream := _pick(key)
 	if stream == null:
 		return null
@@ -105,8 +117,35 @@ func play_at(key: StringName, pos: Vector3, volume_db := 0.0, pitch_jitter := 0.
 	p.global_position = pos
 	p.volume_db = volume_db
 	p.pitch_scale = 1.0 + randf_range(-pitch_jitter, pitch_jitter)
+	p.unit_size = opts.get("unit_size", 6.0)
+	p.max_distance = opts.get("max_distance", 140.0)
+	p.panning_strength = opts.get("panning", 1.0)
+	p.bus = &"SFXBehind" if opts.get("directional", false) and is_behind_listener(pos) else &"SFX"
 	p.play()
 	return p
+
+
+## Where the player hears from (CameraRig keeps this at the critter's head,
+## facing where they look). Falls back to the active camera.
+var listener: Node3D
+
+
+func listener_transform() -> Transform3D:
+	if listener and is_instance_valid(listener) and listener.is_inside_tree():
+		return listener.global_transform
+	var cam := get_viewport().get_camera_3d()
+	return cam.global_transform if cam else Transform3D.IDENTITY
+
+
+func is_behind_listener(pos: Vector3) -> bool:
+	var xf := listener_transform()
+	var to := pos - xf.origin
+	to.y = 0.0
+	var fwd := -xf.basis.z
+	fwd.y = 0.0
+	if to.length_squared() < 1.0 or fwd.length_squared() < 1e-6:
+		return false
+	return to.normalized().dot(fwd.normalized()) < -0.35
 
 
 ## Non-positional one-shot (UI, the local player's own gun, pickups).

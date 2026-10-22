@@ -42,6 +42,7 @@ func setup(world_root_: Node3D, island_: Island, opponents: int, difficulty: int
 		var def: CritterDef = _pick_def(defs)
 		var n := _unique_name(def, used_names)
 		var c := _spawn_critter(def, n)
+		c.visual.set_enemy_highlight(n)
 		var skins := def.skins()
 		c.visual.apply_skin(String(skins[rng.randi() % skins.size()].get("id", "default")))
 		var brain := AIBrain.new()
@@ -63,6 +64,9 @@ func spawn_player(def: CritterDef, skin_id: String) -> Critter:
 	var pc := PlayerController.new()
 	pc.name = "PlayerController"
 	player.add_child(pc)
+	# _spawn_critter already registered it; keep the player first in the list
+	# (registering it twice put it on the balloon twice: a second drop at the end of the route)
+	critters.erase(player)
 	critters.push_front(player)
 	total = critters.size()
 	Events.alive_count_changed.emit(total, total)

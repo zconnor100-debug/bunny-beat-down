@@ -30,6 +30,11 @@ var _stats: Label
 var _go: Button
 var _t := 0.0
 var _next_trick := 2.5
+## Turntable angle added to "facing the camera" (critters face −Z; the camera
+## is at +Z, so PI turns them to face it). Dragging spins it freely.
+var _spin := 0.0
+var _dragging := false
+const SPIN_PER_PIXEL := TAU / 420.0   # one preview-width drag = a full turn
 
 
 func _ready() -> void:
@@ -48,16 +53,37 @@ func _ready() -> void:
 	h.add_theme_constant_override("separation", 26)
 	add_child(h)
 	# --- 3D preview
+	# The 3D preview sits in a SubViewportContainer, which swallows mouse events
+	# into its viewport; a transparent drag surface on top catches them instead.
+	var stage := Control.new()
+	stage.custom_minimum_size = Vector2(420, 460)
+	h.add_child(stage)
 	var svc := SubViewportContainer.new()
 	svc.stretch = true
-	svc.custom_minimum_size = Vector2(420, 460)
-	h.add_child(svc)
+	svc.set_anchors_preset(Control.PRESET_FULL_RECT)
+	svc.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	stage.add_child(svc)
+	var drag := Control.new()
+	drag.name = "DragSurface"
+	drag.set_anchors_preset(Control.PRESET_FULL_RECT)
+	drag.mouse_filter = Control.MOUSE_FILTER_STOP
+	drag.mouse_default_cursor_shape = Control.CURSOR_DRAG
+	drag.gui_input.connect(_on_preview_input)
+	stage.add_child(drag)
 	_viewport = SubViewport.new()
 	_viewport.own_world_3d = true
 	_viewport.transparent_bg = true
 	_viewport.msaa_3d = Viewport.MSAA_4X
 	svc.add_child(_viewport)
 	_build_stage()
+	var hint := UITheme.label("⟲  drag to spin", 16, Color(UITheme.CREAM, 0.6))
+	hint.set_anchors_and_offsets_preset(Control.PRESET_CENTER_BOTTOM)
+	hint.offset_top = -30
+	hint.offset_left = -80
+	hint.offset_right = 80
+	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	hint.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	stage.add_child(hint)
 	# --- details
 	var v := VBoxContainer.new()
 	v.add_theme_constant_override("separation", 12)
@@ -152,8 +178,8 @@ func _build_stage() -> void:
 	var cam := Camera3D.new()
 	cam.fov = 30
 	_stage.add_child(cam)
-	cam.position = Vector3(0, 1.05, 3.3)
-	cam.look_at(Vector3(0, 0.68, 0), Vector3.UP)
+	cam.position = Vector3(0, 1.0, 4.3)
+	cam.look_at(Vector3(0, 0.7, 0), Vector3.UP)
 	cam.current = true
 
 
@@ -182,6 +208,7 @@ func _show() -> void:
 		_preview.visual.rig.world_head_top if _preview.visual.rig else 1.0]
 	Settings.set_value(&"player_character", String(d.id))
 	_next_trick = 1.5
+	_spin = 0.0
 
 
 func _apply_skin() -> void:
@@ -213,15 +240,32 @@ func _process(delta: float) -> void:
 	if _preview == null or not is_instance_valid(_preview):
 		return
 	_t += delta
-	# turn slowly to show the critter off; hop now and then to show the trick
-	var yaw := sin(_t * 0.5) * 0.9
+	# face the camera, turned however far the player has dragged; hop now and
+	# then to show off the species' jump trick
+	var yaw := PI + _spin
 	_preview.look_yaw = yaw
 	_preview.rotation.y = yaw
-	_preview.aim_point = _preview.get_eye_position() + _preview.look_direction() * 6.0
+	# hero pose: body square to the camera, gun angled off to the side so it
+	# doesn't hide the face
+	var aim := Basis(Vector3.UP, yaw + 0.65) * Vector3(0, 0.05, -1)
+	_preview.aim_point = _preview.get_eye_position() + aim * 6.0
 	_next_trick -= delta
 	if _next_trick <= 0.0:
 		_next_trick = 3.5
 		_preview.want_jump = true
+
+
+## Click (or touch) and drag on the preview to spin the critter 360° either way.
+func _on_preview_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
+		_dragging = event.pressed
+		accept_event()
+	elif event is InputEventMouseMotion and _dragging:
+		_spin = wrapf(_spin + event.relative.x * SPIN_PER_PIXEL, -PI, PI)
+		accept_event()
+	elif event is InputEventScreenDrag:
+		_spin = wrapf(_spin + event.relative.x * SPIN_PER_PIXEL, -PI, PI)
+		accept_event()
 
 
 func _unhandled_input(event: InputEvent) -> void:

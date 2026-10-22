@@ -162,6 +162,8 @@ func _physics_process(delta: float) -> void:
 	_weapon_tick(delta)
 	_update_facing(delta)
 	_update_visual(delta)
+	if state == State.GROUND:
+		_check_stuck(delta)
 	visual.physics_tick(global_transform)
 
 
@@ -223,7 +225,9 @@ func _update_swimming() -> void:
 	var level := Island.current.water_level_at(global_position) if Island.current else -INF
 	_water_level = level
 	var h := visual.rig.world_head_top if visual and visual.rig else 1.0
-	swimming = level - global_position.y > h * 0.55
+	var depth := level - global_position.y
+	# hysteresis: start swimming when chest-deep, stop once we're wading out
+	swimming = depth > h * (0.42 if was else 0.55)
 	if swimming and not was:
 		FX.impact(Vector3(global_position.x, level, global_position.z), Vector3.UP, &"water")
 		Audio.play_at(&"land", global_position, -4.0)
@@ -238,13 +242,82 @@ func _swim_move(delta: float) -> void:
 	var hv := Vector3(velocity.x, 0, velocity.z).move_toward(wish * def.move_speed * 0.5, 18.0 * delta)
 	velocity.x = hv.x
 	velocity.z = hv.z
-	var float_y := _water_level - h * 0.6
+	var float_y := _water_level - h * 0.5
 	velocity.y = move_toward(velocity.y, clampf((float_y - global_position.y) * 4.0, -3.0, 3.0), 30.0 * delta)
 	if want_jump:
 		velocity.y = 4.0   # a little hop to clamber out onto the bank
 	want_jump = false
 	move_and_slide()
+	# swimming into a bank: clamber up it instead of bumping against the edge
+	if wish.length() > 0.3 and (is_on_wall() or is_on_floor()):
+		velocity.y = maxf(velocity.y, 3.5)
+		global_position.y += 0.05
 	_was_on_floor = false
+
+
+## Rescue for critters wedged between rocks, logs or terrain: if one keeps
+## trying to move but goes nowhere, first hop, then pop it onto the nearest
+## walkable navmesh spot (a little way out into the open).
+const STUCK_HOP_AFTER := 1.5
+const STUCK_RESCUE_AFTER := 4.0
+## how many times this critter was lifted out of a trap (diagnostics + tests)
+var rescues := 0
+var _stuck_t := 0.0
+var _stuck_from := Vector3.ZERO
+
+
+func _check_stuck(delta: float) -> void:
+	var real := get_real_velocity()
+	# moving freely (incl. strafing back and forth in a fight) is never "stuck"
+	if move_input.length() < 0.3 or Vector2(real.x, real.z).length() > 0.9:
+		_stuck_t = 0.0
+		_stuck_from = global_position
+		return
+	# only horizontal progress counts (the escape hop must not reset the timer)
+	if Vector2(global_position.x - _stuck_from.x, global_position.z - _stuck_from.z).length() > 1.2:
+		_stuck_t = 0.0
+		_stuck_from = global_position
+		return
+	_stuck_t += delta
+	if _stuck_t > STUCK_HOP_AFTER and _stuck_t - delta <= STUCK_HOP_AFTER:
+		want_jump = true
+	if _stuck_t > STUCK_RESCUE_AFTER:
+		_stuck_t = 0.0
+		_stuck_from = global_position
+		rescue_to_open_ground()
+
+
+func rescue_to_open_ground() -> bool:
+	var map := get_world_3d().navigation_map
+	if not NavigationServer3D.map_is_active(map) or NavigationServer3D.map_get_iteration_id(map) == 0:
+		return false
+	var best := Vector3.INF
+	var space := get_world_3d().direct_space_state
+	# try spots in a widening ring and keep the first one with room to stand
+	for radius in [1.5, 2.5, 4.0, 6.0, 10.0, 15.0]:
+		for i in 8:
+			var a := TAU * i / 8.0 + randf() * 0.3
+			var probe: Vector3 = global_position + Vector3(cos(a), 0, sin(a)) * radius
+			var p := NavigationServer3D.map_get_closest_point(map, probe)
+			if p.distance_to(probe) > 2.0:
+				continue
+			var shape := PhysicsShapeQueryParameters3D.new()
+			var cap := ($Body as CollisionShape3D).shape
+			shape.shape = cap
+			shape.transform = Transform3D(Basis(), p + Vector3.UP * ((cap as CapsuleShape3D).height * 0.5 + 0.08))
+			shape.collision_mask = Layers.WORLD
+			if space.intersect_shape(shape, 1).is_empty():
+				best = p
+				break
+		if best != Vector3.INF:
+			break
+	if best == Vector3.INF:
+		return false
+	global_position = best + Vector3.UP * 0.1
+	velocity = Vector3.ZERO
+	visual.physics_tick(global_transform, true)
+	rescues += 1
+	return true
 
 
 func _on_touchdown() -> void:
@@ -341,14 +414,22 @@ func _update_visual(delta: float) -> void:
 	p.recoil = _recoil
 
 
+## Footsteps are a gameplay cue: other critters' steps are loud, strongly panned
+## and muffled when behind you, so you can hear where someone is and turn.
+const FOOTSTEP_RANGE := 34.0
+
+
 func _on_footstep(hop: bool) -> void:
-	var cam := get_viewport().get_camera_3d()
-	if cam == null or cam.global_position.distance_squared_to(global_position) > 45.0 * 45.0:
+	var key := &"hop" if hop else &"footstep_grass"
+	if is_player:
+		Audio.play_at(key, global_position, -20.0 if not want_crouch else -26.0, 0.12)
 		return
-	var vol := -12.0 if is_player else -16.0
-	if want_crouch:
-		vol -= 8.0
-	Audio.play_at(&"hop" if hop else &"footstep_grass", global_position, vol + (2.0 if hop else 0.0), 0.12)
+	var ear := Audio.listener_transform().origin
+	if ear.distance_squared_to(global_position) > FOOTSTEP_RANGE * FOOTSTEP_RANGE:
+		return
+	var vol := (1.0 if hop else -1.0) - (7.0 if want_crouch else 0.0)
+	Audio.play_at(key, global_position, vol, 0.12,
+		{"unit_size": 3.5, "max_distance": FOOTSTEP_RANGE, "panning": 1.8, "directional": true})
 
 
 func _set_state(s: State) -> void:

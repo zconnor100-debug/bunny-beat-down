@@ -149,7 +149,7 @@
     "category": "log",
     "height_m": 3.64,
     "footprint_radius_m": 10.19,
-    "collision": "trimesh",
+    "collision": "convex",
     "collision_radius_m": 9.2,
     "scale_range": [
       0.85,
@@ -213,7 +213,7 @@
     "category": "landmark",
     "height_m": 11.0,
     "footprint_radius_m": 6.08,
-    "collision": "trimesh",
+    "collision": "convex",
     "collision_radius_m": 5.16,
     "scale_range": [
       0.85,
@@ -277,7 +277,7 @@
     "category": "landmark",
     "height_m": 16.0,
     "footprint_radius_m": 11.79,
-    "collision": "trimesh",
+    "collision": "convex",
     "collision_radius_m": 9.81,
     "scale_range": [
       0.85,
@@ -581,7 +581,7 @@
     "category": "landmark",
     "height_m": 2.6,
     "footprint_radius_m": 1.91,
-    "collision": "trimesh",
+    "collision": "convex",
     "collision_radius_m": 1.84,
     "scale_range": [
       0.85,
@@ -597,7 +597,7 @@
     "category": "landmark",
     "height_m": 3.73,
     "footprint_radius_m": 9.39,
-    "collision": "trimesh",
+    "collision": "convex",
     "collision_radius_m": 8.85,
     "scale_range": [
       0.85,
@@ -693,7 +693,7 @@
     "category": "prop",
     "height_m": 0.9,
     "footprint_radius_m": 1.64,
-    "collision": "trimesh",
+    "collision": "convex",
     "collision_radius_m": 1.64,
     "scale_range": [
       0.85,
@@ -725,7 +725,7 @@
     "category": "prop",
     "height_m": 1.4,
     "footprint_radius_m": 0.85,
-    "collision": "trimesh",
+    "collision": "convex",
     "collision_radius_m": 0.84,
     "scale_range": [
       0.85,
@@ -773,7 +773,7 @@
     "category": "landmark",
     "height_m": 7.0,
     "footprint_radius_m": 1.96,
-    "collision": "trimesh",
+    "collision": "convex",
     "collision_radius_m": 1.65,
     "scale_range": [
       0.85,
@@ -1029,7 +1029,7 @@
     "category": "cover",
     "height_m": 1.5,
     "footprint_radius_m": 5.14,
-    "collision": "trimesh",
+    "collision": "convex",
     "collision_radius_m": 4.78,
     "scale_range": [
       0.85,

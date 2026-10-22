@@ -311,7 +311,10 @@ func _scatter_forest() -> void:
 				continue
 			var sr: Array = e.get("scale_range", [0.85, 1.15])
 			var s := rng.randf_range(sr[0], sr[1])
-			if scatter.blocked(p, float(e.get("collision_radius_m", 0.5)) * s + 0.8):
+			# keep a critter-wide gap (or none) between solid things, so no
+			# crevice can trap anyone: use the larger of footprint and collider
+			var r := maxf(float(e.get("collision_radius_m", 0.5)), float(e.get("footprint_radius_m", 0.5)) * 0.8) * s
+			if scatter.blocked(p, r + 2.2):
 				continue
 			_put_entry(e, p, rng.randf() * TAU, s)
 
@@ -487,6 +490,8 @@ func _plan_loot() -> void:
 	for i in int(40 * terrain.area_scale):
 		var lp := _random_land(2.0)
 		loot_points.append({"pos": Vector3(lp.x, terrain.height_at(lp.x, lp.y), lp.y), "crate": false, "poi": ""})
+	# never leave loot inside a rock, log or cottage (it would be unreachable)
+	loot_points = loot_points.filter(func(l): return not scatter.blocked(Vector2(l.pos.x, l.pos.z), 0.9))
 	_plan_treasure()
 
 
@@ -533,7 +538,7 @@ func random_land_point(min_h := 2.0, inside_center := Vector2.ZERO, inside_radiu
 func _bake_navigation() -> void:
 	var template := NavigationMesh.new()
 	template.agent_radius = 0.5
-	template.agent_height = 1.25
+	template.agent_height = 1.75
 	template.agent_max_climb = 0.75
 	template.agent_max_slope = 44.0
 	template.cell_size = 0.5

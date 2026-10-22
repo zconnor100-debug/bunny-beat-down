@@ -17,6 +17,10 @@ const GLIDER_VARIANTS := [
 	"res://assets/props/glider_daisy.glb", "res://assets/props/glider_mushroom.glb",
 ]
 const GOLD_SHADER := preload("res://src/fx/golden.gdshader")
+const ENEMY_RIM_SHADER := preload("res://src/fx/enemy_rim.gdshader")
+const NAME_TAG_RANGE := 45.0
+
+static var _enemy_rim: ShaderMaterial
 
 static var _gold_overlay: ShaderMaterial
 const BASE_MASS := 12.0
@@ -189,6 +193,45 @@ func set_weapon(w: WeaponInstance) -> void:
 	muzzle = ModelUtil.find_named(weapon_model, "Muzzle")
 	poser.support_marker = ModelUtil.find_named(weapon_model, "SupportGrip")
 	_loaded_round = ModelUtil.find_named(weapon_model, "Rocket")
+
+
+# --- enemy readability ----------------------------------------------------------------------
+
+var name_tag: Label3D
+
+## Warm rim light + a name tag above the head (only within NAME_TAG_RANGE, and
+## hidden behind cover by the depth test) so opponents are easy to pick out.
+func set_enemy_highlight(display_name: String) -> void:
+	if _enemy_rim == null:
+		_enemy_rim = ShaderMaterial.new()
+		_enemy_rim.shader = ENEMY_RIM_SHADER
+	for m in meshes:
+		m.material_overlay = _enemy_rim
+	if name_tag == null:
+		name_tag = Label3D.new()
+		name_tag.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+		name_tag.fixed_size = true
+		name_tag.pixel_size = 0.0016
+		name_tag.font_size = 30
+		name_tag.outline_size = 10
+		name_tag.modulate = Color(1.0, 0.42, 0.3)
+		name_tag.outline_modulate = Color(0.1, 0.03, 0.02, 0.9)
+		name_tag.no_depth_test = false
+		name_tag.visibility_range_end = NAME_TAG_RANGE
+		name_tag.visibility_range_end_margin = 4.0
+		name_tag.visibility_range_fade_mode = GeometryInstance3D.VISIBILITY_RANGE_FADE_SELF
+		name_tag.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		add_child(name_tag)
+	name_tag.text = "▼ " + display_name
+	name_tag.position = Vector3(0, (rig.world_head_top if rig else 1.2) + 0.35, 0)
+
+
+func clear_enemy_highlight() -> void:
+	for m in meshes:
+		m.material_overlay = null
+	if name_tag:
+		name_tag.queue_free()
+		name_tag = null
 
 
 # --- skins --------------------------------------------------------------------------------
@@ -494,6 +537,7 @@ func go_ragdoll(velocity: Vector3) -> void:
 		return
 	ragdolled = true
 	poser.active = false
+	clear_enemy_highlight()
 	for area in hitboxes.values():
 		(area as Area3D).collision_layer = 0
 	for pb in physical_bones.values():

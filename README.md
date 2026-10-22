@@ -73,6 +73,13 @@ Built in **Godot 4.6** (GDScript, Jolt physics, Forward+).
   - Any limb or head can come off any critter, as a real skinned body part.
   - Blood fountains, splat decals, fur tufts and acorn helmets that fly off.
   - Three settings: **Full**, **Plushie** (stuffing instead of blood) and **Off**.
+- **Situational awareness**:
+  - Enemies have a warm rim light and a name tag within 45 m, which cover still hides.
+  - Red minimap blips show anyone firing, anywhere on the island, and anyone
+    moving within 20 m of you.
+  - Enemy footsteps are directional: loud, strongly panned, and muffled when
+    they're behind you. The audio listener sits at your critter's head, so you
+    can hear where someone is and turn to take the shot.
 - **AI opponents** drive the same controls as you:
   - They loot, choose guns by range, strafe and jump in fights, lead targets,
     hear gunshots and react to being hit.

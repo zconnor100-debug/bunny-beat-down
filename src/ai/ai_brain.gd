@@ -43,6 +43,13 @@ var _fire_toggle := false
 var _clock := 0.0
 var _heard_pos := Vector3.INF
 var _heard_t := -100.0
+## Loot we couldn't reach (behind rocks, on a roof…): ignored for a while.
+var _unreachable: Dictionary = {}   # node -> clock time it can be tried again
+var _goal_since := 0.0
+var _goal_best := INF
+var _goal_tracked: Node3D   # patience is per loot node: re-picking the same one doesn't reset it
+const GOAL_PATIENCE := 8.0
+const UNREACHABLE_FOR := 60.0
 
 
 func _ready() -> void:
@@ -142,7 +149,14 @@ func _on_damaged(victim: Node, info: DamageInfo) -> void:
 
 func _choose_mode() -> void:
 	var armed := me.inventory.has_any_weapon() and _usable_weapon_slot() >= 0
-	if match_manager and match_manager.has_method("storm_threat") and match_manager.storm_threat(me.global_position) > 0.0:
+	var threatened := _storm_unsafe(me.global_position)
+	if not threatened and mode == Mode.FLEE_STORM:
+		# keep running until comfortably inside, or bots dither on the edge
+		# (step in → loot just outside looks good → step out → flee → …)
+		var c: Vector2 = match_manager.safe_center()
+		var away := Vector3(me.global_position.x - c.x, 0.0, me.global_position.z - c.y)
+		threatened = away.length() > 0.5 and _storm_unsafe(me.global_position + away.normalized() * STORM_MARGIN)
+	if threatened:
 		if target == null or not armed or me.health < 40.0:
 			mode = Mode.FLEE_STORM
 			return
@@ -165,6 +179,13 @@ func _choose_mode() -> void:
 	mode = Mode.ROAM
 
 
+const STORM_MARGIN := 8.0
+
+
+func _storm_unsafe(pos: Vector3) -> bool:
+	return match_manager != null and match_manager.has_method("storm_threat") and match_manager.storm_threat(pos) > 0.0
+
+
 func _wants_loot() -> bool:
 	_loot_goal = _find_loot()
 	return _loot_goal != null
@@ -183,7 +204,7 @@ func _find_loot() -> Node3D:
 		if p == null:
 			continue
 		var d := p.global_position.distance_to(pos)
-		if d >= best_d:
+		if d >= best_d or _clock < float(_unreachable.get(p, -1.0)) or _storm_unsafe(p.global_position):
 			continue
 		# never re-grab what we just dropped (prevents swap ping-pong)
 		if p.dropped_by == me and Time.get_ticks_msec() - p.dropped_msec < 30000:
@@ -207,13 +228,13 @@ func _find_loot() -> Node3D:
 	for n in me.get_tree().get_nodes_in_group(&"supply_crates"):
 		var sc := n as LootCrate
 		var sd := sc.global_position.distance_to(pos)
-		if sc and not sc.opened and sd < 60.0 + skill * 60.0 and sd * 0.5 < best_d:
+		if sc and not sc.opened and sd < 60.0 + skill * 60.0 and sd * 0.5 < best_d and not _storm_unsafe(sc.global_position):
 			best_d = sd * 0.5
 			best = sc
 	# treasure chests are worth a detour even when armed (but not mid-storm)
 	for n in me.get_tree().get_nodes_in_group(&"treasure"):
 		var tc := n as LootCrate
-		if tc and not tc.opened and (tc.channeler() == null or tc.channeler() == me):
+		if tc and not tc.opened and (tc.channeler() == null or tc.channeler() == me) and _clock >= float(_unreachable.get(tc, -1.0)) and not _storm_unsafe(tc.global_position):
 			var td := tc.global_position.distance_to(pos) * 0.6
 			if td < best_d:
 				best_d = td
@@ -221,7 +242,7 @@ func _find_loot() -> Node3D:
 	if me.inventory.weapon_count() < 2:
 		for n in me.get_tree().get_nodes_in_group(&"crates"):
 			var c := n as LootCrate
-			if c and not c.opened:
+			if c and not c.opened and _clock >= float(_unreachable.get(c, -1.0)) and not _storm_unsafe(c.global_position):
 				var d := c.global_position.distance_to(pos)
 				if d < best_d:
 					best_d = d
@@ -305,14 +326,30 @@ func _loot(delta: float) -> void:
 		if _loot_goal == null:
 			mode = Mode.ROAM
 			return
+	if _loot_goal != _goal_tracked:
+		_goal_tracked = _loot_goal
+		_goal_since = _clock
+		_goal_best = INF
 	_set_dest(_loot_goal.global_position)
-	if me.global_position.distance_to(_loot_goal.global_position) < 1.7:
+	var d := me.global_position.distance_to(_loot_goal.global_position)
+	# give up on loot we aren't getting any closer to
+	if d < _goal_best - 1.0:
+		_goal_best = d
+		_goal_since = _clock
+	elif _clock - _goal_since > GOAL_PATIENCE:
+		_unreachable[_loot_goal] = _clock + UNREACHABLE_FOR
+		_loot_goal = null
+		mode = Mode.ROAM
+		return
+	if d < 1.7 * maxf(me.visual.rig.world_scale, 1.0):
 		if _loot_goal is Pickup:
 			var pk := _loot_goal as Pickup
 			if pk.is_weapon() and me.inventory.first_free_slot() < 0:
 				# hands full: swap out the weakest gun, not whatever is held
 				me.switch_to(_worst_slot())
-			pk.try_collect(me)
+			if not pk.try_collect(me):
+				# couldn't take it (full up, or it's lodged somewhere): stop circling it
+				_unreachable[pk] = _clock + UNREACHABLE_FOR
 		elif _loot_goal is LootCrate:
 			var crate := _loot_goal as LootCrate
 			if crate.open_time > 0.0 and not crate.opened:
@@ -325,6 +362,8 @@ func _loot(delta: float) -> void:
 			else:
 				crate.open(me)
 		_loot_goal = null
+		_progress_t = 0.0
+		_progress_from = me.global_position
 		_think_t = 0.4   # glance around before grabbing the next thing
 		return
 	me.want_sprint = target != null
@@ -481,6 +520,43 @@ func _unstick(delta: float) -> void:
 				_set_dest(_dest + Vector3(randf_range(-4, 4), 0, randf_range(-4, 4)))
 		_stuck_t = 0.0
 		_stuck_pos = me.global_position
+	_check_progress(delta)
+
+
+## Long-window check for bots that keep moving but get nowhere (circling a
+## waypoint they can't reach, walking a loop inside a hollow landmark…):
+## no 4.5 m of net progress in 10 s → abandon the goal; by 16 s → hop to open ground.
+const PROGRESS_WINDOW := 10.0
+const PROGRESS_RESCUE := 16.0
+const PROGRESS_RADIUS := 4.5
+var _progress_t := 0.0
+var _progress_from := Vector3.ZERO
+
+
+func _check_progress(delta: float) -> void:
+	if mode == Mode.FIGHT or me.move_input.length() < 0.3:
+		_progress_t = 0.0
+		_progress_from = me.global_position
+		return
+	# a wide radius: bots that hop back and forth against a wall travel a few
+	# metres each way without getting anywhere
+	var moved := Vector2(me.global_position.x - _progress_from.x, me.global_position.z - _progress_from.z).length()
+	if moved > PROGRESS_RADIUS:
+		_progress_t = 0.0
+		_progress_from = me.global_position
+		return
+	_progress_t += delta
+	if _progress_t > PROGRESS_WINDOW and _progress_t - delta <= PROGRESS_WINDOW:
+		if _loot_goal and is_instance_valid(_loot_goal):
+			_unreachable[_loot_goal] = _clock + UNREACHABLE_FOR
+		_loot_goal = null
+		_dest = Vector3.INF
+		mode = Mode.ROAM
+	elif _progress_t > PROGRESS_RESCUE:
+		_progress_t = 0.0
+		_progress_from = me.global_position
+		me.rescue_to_open_ground()
+		_dest = Vector3.INF
 
 
 # ---- the drop -------------------------------------------------------------------------------------------------

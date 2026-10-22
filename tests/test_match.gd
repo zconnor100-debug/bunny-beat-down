@@ -23,6 +23,11 @@ func test_full_match_with_bots() -> void:
 	check(mm != null and mm.phase == MatchManager.Phase.DROPPING, "match reached the drop")
 	if mm == null:
 		return
+	# the player must be registered (and on the balloon) exactly once
+	check(mm.critters.count(mm.player) == 1, "player is in the match exactly once (%d)" % mm.critters.count(mm.player))
+	check(mm.dropship.passengers.count(mm.player) <= 1, "player boarded the balloon once")
+	var states: Array = []
+	mm.player.state_changed.connect(func(st): states.append(st))
 	# the player jumps right away and then stands still (a sitting duck)
 	await wait_physics(30)
 	mm.player_jump()
@@ -38,6 +43,8 @@ func test_full_match_with_bots() -> void:
 			break
 	print("    simulated %.0f s: phase=%s pickups=%d deaths=%d alive=%d" % [sim, MatchManager.Phase.keys()[mm.phase], picked[0], deaths[0], mm.alive_critters().size()])
 	check(mm.phase != MatchManager.Phase.DROPPING, "everyone left the balloon")
+	var landed := states.find(Critter.State.GROUND)
+	check(landed >= 0 and not states.slice(landed).has(Critter.State.FREEFALL), "no second drop after landing (states %s)" % [states])
 	for c in mm.critters:
 		if is_instance_valid(c) and c.alive:
 			check(c.state == Critter.State.GROUND, "%s landed (state %d)" % [c.display_name, c.state])

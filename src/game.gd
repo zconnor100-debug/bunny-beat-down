@@ -135,10 +135,14 @@ func _smoke_test() -> void:
 		t += get_process_delta_time()
 	await get_tree().create_timer(3.0).timeout
 	var ok := p.state == Critter.State.GROUND and match_manager.phase != MatchManager.Phase.LOADING
-	var img := get_viewport().get_texture().get_image()
-	img.save_png("user://smoke_test.png")
+	# headless runs have no framebuffer to grab (and release builds crash on the null image)
+	var img := get_viewport().get_texture().get_image() if DisplayServer.get_name() != "headless" else null
+	var shot := "none (headless)"
+	if img:
+		img.save_png("user://smoke_test.png")
+		shot = ProjectSettings.globalize_path("user://smoke_test.png")
 	print("SMOKE TEST %s: landed=%s phase=%s fps=%d shot=%s" % ["PASS" if ok else "FAIL", p.state == Critter.State.GROUND,
-		MatchManager.Phase.keys()[match_manager.phase], Engine.get_frames_per_second(), ProjectSettings.globalize_path("user://smoke_test.png")])
+		MatchManager.Phase.keys()[match_manager.phase], Engine.get_frames_per_second(), shot])
 	get_tree().quit(0 if ok else 1)
 
 

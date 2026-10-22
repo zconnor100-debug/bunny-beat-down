@@ -61,6 +61,8 @@ func _fallback_balloon() -> Node3D:
 
 
 func board(c: Critter) -> void:
+	if passengers.has(c):
+		return
 	passengers.append(c)
 	c.board_dropship()
 
@@ -75,7 +77,8 @@ func launch() -> void:
 
 ## Throws a passenger out of the basket.
 func eject(c: Critter) -> void:
-	if not passengers.has(c):
+	if not passengers.has(c) or c.state != Critter.State.IN_DROPSHIP:
+		passengers.erase(c)
 		return
 	passengers.erase(c)
 	var fwd := (finish - start).normalized()

@@ -110,10 +110,12 @@ func _count_gibs() -> int:
 
 
 func test_scaled_critter_hitboxes_and_ragdoll() -> void:
-	# the frog is scaled ×1.4: hit capsules and ragdoll bodies inherit that scale
+	# the frog is scaled up a lot: hit capsules and ragdoll bodies inherit that scale
 	var c := spawn_critter("res://data/critters/frog.tres", Vector3(0, 0.1, 0))
 	await wait_physics(4)
-	check_near(c.visual.rig.world_head_top, 0.85 * 1.4, 0.01, "frog is ~1.19 m tall")
+	var want := 0.85 * c.def.body_scale
+	check(c.def.body_scale >= 1.4, "frogs are scaled up to be hittable (×%.2f)" % c.def.body_scale)
+	check_near(c.visual.rig.world_head_top, want, 0.01, "frog is %.2f m tall" % want)
 	var space := get_world_3d().direct_space_state
 	# a ray at the top of the (scaled) head must hit, and one well above must miss
 	for probe in [[c.visual.rig.world_head_top * 0.92, true], [c.visual.rig.world_head_top * 1.5, false]]:
@@ -125,7 +127,7 @@ func test_scaled_critter_hitboxes_and_ragdoll() -> void:
 	# hit capsules are wider than the body for small critters
 	var area: Area3D = c.visual.hitboxes[&"chest"]
 	var shape_node := area.get_child(0) as CollisionShape3D
-	check(shape_node.global_basis.get_scale().x > 1.35, "hit capsule inherits the ×1.4 body scale (%s)" % shape_node.global_basis.get_scale())
+	check(shape_node.global_basis.get_scale().x > c.def.body_scale - 0.05, "hit capsule inherits the body scale (%s)" % shape_node.global_basis.get_scale())
 	var info := DamageInfo.make(500.0, DamageInfo.Kind.BULLET, null)
 	info.direction = Vector3(1, 0, 0)
 	info.impulse = 8.0
