@@ -34,11 +34,18 @@ notes file:
     page says so; one with entries the player has to tidy up is copied to
     review_notes.json.repaired-<time> first;
   * notes for sounds that left the manifest are kept as "orphans" until deleted;
-  * the file as it was when the server started is kept as review_notes.json.bak.
+  * the file as it was when the server started is kept as review_notes.json.bak;
+  * every audio file in /api/data has a content fingerprint ("h", the first 16
+    hex digits of its sha256), and giving a verdict records the fingerprints of
+    that sound's files in its note ("heard"), so a sound rebuilt since its
+    verdict is shown as such until it gets a new one. Notes saved before that
+    existed take theirs from review_baseline.json next to the notes file
+    (read-only; {"files": {audio path: sha256}}).
 """
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import re
@@ -70,7 +77,11 @@ VERDICTS = ("good", "tweak", "replace")
 MAX_BODY_BYTES = 512 * 1024
 MAX_NOTE_CHARS = 4000
 MAX_VARIANT = 64
-PROTOCOL = 2                # save protocol: 2 = field-level changes + per-key "rejected"
+PROTOCOL = 3                # save protocol: 2 = field-level changes + per-key "rejected"; 3 = + fingerprints, "heard"
+BASELINE_NAME = "review_baseline.json"   # next to the notes file: what notes saved before "heard" were made on
+MAX_HEARD = 64              # files recorded in one note's "heard"
+HEX16 = re.compile(r"[0-9a-f]{16}")
+HEX64 = re.compile(r"[0-9a-fA-F]{64}")
 PRESENCE_GRACE = 20.0       # --idle-exit: seconds with no open review tab (or other use) before stopping
 NEVER_CONNECTED = 180.0     # --idle-exit: give up if no tab ever connects
 REQUEST_TIMEOUT = 30.0      # a request (line, headers and body) must arrive in full within this long
@@ -188,26 +199,108 @@ def build_catalog() -> dict:
     return {"groups": groups, "music": music}
 
 
-def with_versions(catalog: dict, audio_dir: Path = AUDIO_DIR) -> dict:
-    """The catalogue plus each audio file's version ("v": size-mtime, "" if it's
-    missing), read fresh on every call: a rebuilt sound keeps its name (and the
-    manifest may not change), so the page needs this to notice it. Doesn't touch
-    the cached catalogue."""
-    def v(f: str) -> str:
+class Fingerprints:
+    """An audio file's content fingerprint: the first 16 hex digits of its sha256
+    ("" if it's missing). Cached by (path, size, mtime_ns), so only a new or
+    rebuilt file is ever read again and /api/data stays cheap."""
+
+    def __init__(self):
+        self._lock = threading.Lock()
+        self._cache: dict[str, tuple[tuple[int, int], str]] = {}
+        self.reads = 0   # files hashed so far (the tests check the cache with it)
+
+    def get(self, path: Path, st: os.stat_result | None = None) -> str:
         try:
-            st = (audio_dir / f).stat()
+            st = st or path.stat()
         except OSError:
             return ""
-        return f"{st.st_size:x}-{st.st_mtime_ns:x}"
-    groups = [{**g, "keys": [{**k, "files": [{**f, "v": v(f["file"])} for f in k["files"]]} for k in g["keys"]]}
+        sig = (st.st_size, st.st_mtime_ns)
+        with self._lock:
+            hit = self._cache.get(str(path))
+        if hit and hit[0] == sig:
+            return hit[1]
+        digest = hashlib.sha256()
+        try:
+            with open(path, "rb") as fh:
+                for chunk in iter(lambda: fh.read(1 << 20), b""):
+                    digest.update(chunk)
+            after = path.stat()
+        except OSError:
+            return ""
+        fp = digest.hexdigest()[:16]
+        with self._lock:
+            self.reads += 1
+            if (after.st_size, after.st_mtime_ns) == sig:   # not rewritten while it was read
+                self._cache[str(path)] = (sig, fp)
+        return fp
+
+
+FINGERPRINTS = Fingerprints()
+
+
+def with_versions(catalog: dict, audio_dir: Path = AUDIO_DIR) -> dict:
+    """The catalogue plus each audio file's version ("v": size-mtime) and content
+    fingerprint ("h", see Fingerprints), both "" if it's missing, read fresh on
+    every call: a rebuilt sound keeps its name (and the manifest may not change),
+    so the page needs "v" to reload it and "h" to tell whether it is still what
+    was reviewed. Doesn't touch the cached catalogue."""
+    def info(f: str) -> dict:
+        p = audio_dir / f
+        try:
+            st = p.stat()
+        except OSError:
+            return {"v": "", "h": ""}
+        return {"v": f"{st.st_size:x}-{st.st_mtime_ns:x}", "h": FINGERPRINTS.get(p, st)}
+    groups = [{**g, "keys": [{**k, "files": [{**f, **info(f["file"])} for f in k["files"]]} for k in g["keys"]]}
               for g in catalog["groups"]]
-    return {**catalog, "groups": groups, "music": [{**m, "v": v(m["file"])} for m in catalog["music"]]}
+    return {**catalog, "groups": groups, "music": [{**m, **info(m["file"])} for m in catalog["music"]]}
 
 
 def catalog_keys(catalog: dict) -> set[str]:
     keys = {k["key"] for g in catalog["groups"] for k in g["keys"]}
     keys.update(m["key"] for m in catalog["music"])
     return keys
+
+
+def catalog_files(catalog: dict) -> dict[str, list[str]]:
+    """sound key -> its audio files in take order (a music key: its one track)."""
+    files = {k["key"]: [f["file"] for f in k["files"]] for g in catalog["groups"] for k in g["keys"]}
+    files.update((m["key"], [m["file"]]) for m in catalog["music"])
+    return files
+
+
+def key_fingerprints(files: list[str], audio_dir: Path = AUDIO_DIR) -> dict[str, str]:
+    """What a note's "heard" records: {file: fingerprint} of the files there are now."""
+    out = {}
+    for f in files:
+        fp = FINGERPRINTS.get(audio_dir / f)
+        if fp:
+            out[f] = fp
+    return out
+
+
+def rebuilt_takes(entry: dict, files: list[str], audio_dir: Path = AUDIO_DIR) -> list[int]:
+    """Takes (1-based) rebuilt since the entry's verdict: the file exists and its
+    fingerprint isn't the one "heard" recorded (or none was recorded for it). An
+    entry without a verdict, or without "heard", is never rebuilt. The page
+    (rebuiltTakes in app.js) uses the same rule."""
+    heard = entry.get("heard")
+    if not entry.get("verdict") or not isinstance(heard, dict):
+        return []
+    out = []
+    for n, f in enumerate(files, 1):
+        fp = FINGERPRINTS.get(audio_dir / f)
+        if fp and heard.get(f) != fp:
+            out.append(n)
+    return out
+
+
+def rebuilt_label(key: str, takes: list[int]) -> str:
+    """' — rebuilt since this verdict (takes 2, 3)' (a music track: '(new file)'), or ''."""
+    if not takes:
+        return ""
+    what = "new file" if key.startswith("music:") else "takes " + ", ".join(map(str, takes))
+    return f" — rebuilt since this verdict ({what})"
 
 
 def catalog_audio(catalog: dict) -> set[str]:
@@ -229,6 +322,7 @@ class Catalog:
         self.error: str | None = None
         self.keys: set[str] = set()
         self.audio: set[str] = set()
+        self.files: dict[str, list[str]] = {}   # key -> its audio files (see catalog_files)
 
     def _inputs_stamp(self):
         paths = [MANIFEST, CHECKLIST, *sorted(WEAPONS_DIR.glob("*.tres"))]
@@ -240,8 +334,8 @@ class Catalog:
                 stamp = self._inputs_stamp()
                 if stamp != self._stamp:
                     data = build_catalog()
-                    keys, audio = catalog_keys(data), catalog_audio(data)
-                    self._data, self.keys, self.audio, self._stamp = data, keys, audio, stamp
+                    keys, audio, files = catalog_keys(data), catalog_audio(data), catalog_files(data)
+                    self._data, self.keys, self.audio, self.files, self._stamp = data, keys, audio, files, stamp
                 self.error = None
             except (OSError, ValueError, KeyError, TypeError, AttributeError) as e:
                 # _stamp is left as it was, so the next call tries again
@@ -268,8 +362,8 @@ class NotesUnavailable(NotesError):
 
 
 NOTES_FIELDS = ("version", "updated", "keys", "orphans")
-ENTRY_FIELDS = ("verdict", "note", "bad_variants")
-CHANGE_FIELDS = ("verdict", "note", "bad_add", "bad_remove", "bad_variants")
+ENTRY_FIELDS = ("verdict", "note", "bad_variants", "heard")
+CHANGE_FIELDS = ("verdict", "note", "bad_add", "bad_remove", "bad_variants", "heard")
 
 
 def empty_notes() -> dict:
@@ -297,6 +391,15 @@ def _check_takes(v: object) -> set[int]:
     if not isinstance(v, list) or not all(type(n) is int and 1 <= n <= MAX_VARIANT for n in v):
         raise NotesError(f"flagged takes must be a list of take numbers 1-{MAX_VARIANT}")
     return set(v)
+
+
+def _check_heard(v: object) -> dict[str, str]:
+    """A note's "heard": {audio file: 16-hex fingerprint}, at most MAX_HEARD of them."""
+    if (not isinstance(v, dict) or len(v) > MAX_HEARD
+            or not all(isinstance(f, str) and 0 < len(f) <= 256 and isinstance(fp, str) and HEX16.fullmatch(fp)
+                       for f, fp in v.items())):
+        raise NotesError("its record of which version of the sound you reviewed ('heard') isn't in the expected format")
+    return dict(v)
 
 
 def _clean_entry(entry: object, strict: bool) -> dict | None:
@@ -332,16 +435,29 @@ def _clean_entry(entry: object, strict: bool) -> dict | None:
     except NotesError as e:
         bad(e)
         variants = {n for n in raw_bad if type(n) is int and 1 <= n <= MAX_VARIANT} if isinstance(raw_bad, list) else set()
+    heard = None
+    if "heard" in entry:
+        try:
+            heard = _check_heard(entry["heard"])
+        except NotesError as e:
+            bad(e)   # dropped: the sound just isn't checked for rebuilds until its next verdict
     if verdict is None and not note.strip() and not variants:
-        return None   # empty: nothing worth keeping
-    return {"verdict": verdict, "note": note, "bad_variants": sorted(variants)}
+        return None   # empty: nothing worth keeping ("heard" alone isn't)
+    out = {"verdict": verdict, "note": note, "bad_variants": sorted(variants)}
+    if heard is not None:
+        out["heard"] = heard
+    return out
 
 
-def apply_change(entry: dict | None, change: object) -> dict | None:
+def apply_change(entry: dict | None, change: object, stamp=None) -> dict | None:
     """Merge one field-level change into a stored entry (None = no entry yet).
     `change` holds any subset of CHANGE_FIELDS: verdict (null clears it), note,
-    bad_variants (replace the list), then bad_add / bad_remove. A legacy whole
-    entry {verdict, note, bad_variants} is just a change that sets all three.
+    bad_variants (replace the list), then bad_add / bad_remove, and "heard": true
+    ("I listened to the sound as it is now"). A legacy whole entry {verdict, note,
+    bad_variants} is just a change that sets all three. After the other fields,
+    "heard": true, or any change that sets a verdict, records stamp() (the
+    fingerprints of the sound's files now) as the entry's "heard"; without a
+    stamp (a note for a sound no longer in the game) "heard" is left as it was.
     Raises NotesError (plain words) if anything in it is invalid, so a change is
     applied whole or not at all; returns None if nothing worth keeping is left."""
     if not isinstance(change, dict):
@@ -349,8 +465,11 @@ def apply_change(entry: dict | None, change: object) -> dict | None:
     unknown = sorted(str(f) for f in change if f not in CHANGE_FIELDS)
     if unknown:
         raise NotesError(f"the change has fields the player doesn't use ({', '.join(unknown)})")
+    if "heard" in change and change["heard"] is not True:
+        raise NotesError("'heard' can only be true (it means you listened to the sound as it is now)")
     cur = entry or {"verdict": None, "note": "", "bad_variants": []}
     verdict, note, takes = cur["verdict"], cur["note"], set(cur["bad_variants"])
+    heard = cur.get("heard")
     if "verdict" in change:
         _check_verdict(change["verdict"])
         verdict = change["verdict"]
@@ -365,7 +484,12 @@ def apply_change(entry: dict | None, change: object) -> dict | None:
         takes -= _check_takes(change["bad_remove"])
     if verdict is None and not note.strip() and not takes:
         return None
-    return {"verdict": verdict, "note": note, "bad_variants": sorted(takes)}
+    if stamp is not None and (change.get("heard") is True or change.get("verdict") is not None):
+        heard = stamp()
+    out = {"verdict": verdict, "note": note, "bad_variants": sorted(takes)}
+    if heard is not None:
+        out["heard"] = heard
+    return out
 
 
 def notes_repairs(data: dict) -> list[str]:
@@ -445,6 +569,74 @@ def write_notes(path: Path, notes: dict) -> None:
         raise
 
 
+def read_baseline(path: Path) -> dict[str, str]:
+    """review_baseline.json: {"about": …, "files": {audio path: sha256}} -> {audio
+    path: fingerprint}. Raises NotesError (plain words) if it can't be used."""
+    try:
+        with open(path, encoding="utf-8") as f:
+            data = json.load(f)
+    except (OSError, ValueError, RecursionError) as e:
+        raise NotesError(f"{path} could not be read ({e})") from e
+    files = data.get("files") if isinstance(data, dict) else None
+    if not isinstance(files, dict) or not all(isinstance(f, str) and isinstance(sha, str) and HEX64.fullmatch(sha)
+                                              for f, sha in files.items()):
+        raise NotesError(f'{path} isn\'t in the expected format ({{"files": {{audio file: sha256}}}})')
+    return {f: sha[:16].lower() for f, sha in files.items()}
+
+
+class Baseline:
+    """review_baseline.json next to the notes file: the fingerprints of the audio as
+    it was when notes saved before "heard" existed were written. Only ever read
+    (re-read when it changes). A missing one is simply none; one that can't be
+    used is ignored, with a console line once and `error` for the page."""
+
+    def __init__(self, path: Path, log=None):
+        self.path = path
+        self.log = log or (lambda line: print(line, flush=True))
+        self._lock = threading.Lock()
+        self._stamp: object = None
+        self._files: dict[str, str] = {}
+        self.error: str | None = None
+
+    def get(self) -> dict[str, str]:
+        with self._lock:
+            try:
+                st = self.path.stat()
+                stamp: object = (st.st_size, st.st_mtime_ns)
+            except FileNotFoundError:
+                self._stamp, self._files, self.error = None, {}, None   # the usual case: there is none
+                return self._files
+            except OSError as e:
+                stamp = f"stat: {e}"
+            if stamp != self._stamp:
+                self._stamp = stamp
+                try:
+                    if isinstance(stamp, str):
+                        raise NotesError(f"{self.path} could not be read ({stamp[6:]})")
+                    self._files, error = read_baseline(self.path), None
+                except NotesError as e:
+                    self._files, error = {}, str(e)
+                if error and error != self.error:
+                    self.log(f"review baseline ignored: {error}")
+                self.error = error
+            return self._files
+
+
+def fill_heard(notes: dict, key_files: dict[str, list[str]], baseline: dict[str, str]) -> None:
+    """Notes saved before "heard" existed: each entry without one gets the
+    baseline's fingerprints of its sound's files (the ones the baseline lists; a
+    sound with none listed gets no "heard"). An upgrade, not a repair: nothing is
+    reported, and it reaches the file with the next save."""
+    if not baseline:
+        return
+    for key, entry in notes["keys"].items():
+        if "heard" in entry:
+            continue
+        heard = {f: baseline[f] for f in key_files.get(key, []) if f in baseline}
+        if heard:
+            entry["heard"] = heard
+
+
 class NotesStore:
     """Owns the notes file for one server: startup recovery, backups, merges."""
 
@@ -454,6 +646,8 @@ class NotesStore:
         self.lock = threading.Lock()
         self.warnings: list[str] = []
         self.delivered: list[str] = []   # ids of close-time saves applied since startup, newest last
+        self.baseline = Baseline(path.with_name(BASELINE_NAME))
+        self.baseline.get()   # says so now if it can't be used
         self._startup()
 
     def _sibling(self, label: str) -> Path:
@@ -512,7 +706,15 @@ class NotesStore:
             print(f"notes file problem: {e}", flush=True)
             raise NotesUnavailable(f"Saving is paused because {self.path} could not be read; fix or move that "
                                    "file, then reload the page (your edits stay in this browser meanwhile).") from e
-        return normalise_notes(data, self.catalog.keys)
+        notes = normalise_notes(data, self.catalog.keys)
+        fill_heard(notes, self.catalog.files, self.baseline.get())
+        return notes
+
+    def baseline_warning(self) -> str | None:
+        if not self.baseline.error:
+            return None
+        return (f"{self.baseline.path.name} couldn't be used, so sounds reviewed before the player recorded which "
+                f"version you heard aren't checked for rebuilds — {self.baseline.error}. Your notes are fine.")
 
     def apply(self, changes: object, save_id: str | None = None) -> tuple[dict, dict[str, str]]:
         """Merge {key: change | null} into the file on disk, key by key (see
@@ -520,9 +722,12 @@ class NotesStore:
         keys are saved even when others are refused. null deletes a note, and
         deleting one that isn't there is a no-op (two tabs may both delete the
         same orphan). Notes for sounds no longer in the catalogue ("orphans") can
-        be changed or deleted; a key that is neither is refused. The file is only
-        rewritten when something actually changed. `save_id` (a tab's close-time
-        save) is remembered once applied, so the next page can tell it arrived."""
+        be changed or deleted; a key that is neither is refused. A verdict or
+        "heard": true records what the sound's files are now (see apply_change).
+        The file is only rewritten when something actually changed (a "heard"
+        stamped again with the same fingerprints isn't a change). `save_id` (a
+        tab's close-time save) is remembered once applied, so the next page can
+        tell it arrived."""
         if not isinstance(changes, dict):
             raise NotesError('expected {"changes": {sound key: change or null}}')
         rejected: dict[str, str] = {}
@@ -539,8 +744,12 @@ class NotesStore:
                 if section is None:
                     rejected[key] = "this sound isn't in the sound list any more (it was renamed or removed)"
                     continue
+                stamp = None
+                if section == "keys":
+                    def stamp(files=self.catalog.files.get(key, [])):
+                        return key_fingerprints(files)
                 try:
-                    entry = apply_change(notes[section].get(key), change)
+                    entry = apply_change(notes[section].get(key), change, stamp)
                 except NotesError as e:
                     rejected[key] = str(e)
                     continue
@@ -807,6 +1016,9 @@ class Handler(BaseHTTPRequestHandler):
             except NotesError as e:
                 notes, notes_error = empty_notes(), str(e)
             warnings = list(self.server.store.warnings)
+            baseline = self.server.store.baseline_warning()
+            if baseline:
+                warnings.append(baseline)
             if self.server.catalog.error:
                 warnings.append("The sound list couldn't be re-read, so the page shows it as it was — "
                                 f"{self.server.catalog.error}. Notes still save meanwhile.")
@@ -976,6 +1188,16 @@ def existing_instance(port: int, notes_path: Path) -> str | None:
     return None
 
 
+def instance_protocol(url: str) -> int:
+    """The save protocol a running review server reports (an old one says none: 1)."""
+    try:
+        with urllib.request.urlopen(url + "api/ping", timeout=0.8) as r:
+            p = json.loads(r.read()).get("protocol")
+        return p if type(p) is int else 1
+    except Exception:
+        return PROTOCOL   # can't tell: say nothing
+
+
 def serve(port: int | None, open_browser: bool, idle_exit: bool) -> None:
     notes_path = NOTES
     want = DEFAULT_PORT if port is None else port
@@ -983,6 +1205,11 @@ def serve(port: int | None, open_browser: bool, idle_exit: bool) -> None:
         running = existing_instance(want, notes_path)
         if running:
             print(f"Audio review is already running at {running} — opening it.", flush=True)
+            if instance_protocol(running) < PROTOCOL:
+                # every tab counts: one left open from before keeps the old server running
+                print("That review server is an older version, so rebuilt sounds aren't marked there: close every "
+                      "Audio Review tab (any opened earlier too), wait a minute for it to stop, then start Audio "
+                      "Review again.", flush=True)
             if open_browser:
                 webbrowser.open(running)
             return
@@ -1128,7 +1355,10 @@ def summary() -> int:
     except NotesError as e:
         print(f"error: {e}", file=sys.stderr)
         return 1
-    notes = normalise_notes(raw, catalog_keys(build_catalog()))
+    catalog = build_catalog()
+    notes = normalise_notes(raw, catalog_keys(catalog))
+    files = catalog_files(catalog)
+    fill_heard(notes, files, Baseline(NOTES.with_name(BASELINE_NAME), log=lambda s: print(s, file=sys.stderr)).get())
     if not notes["keys"] and not notes["orphans"]:
         print("No review notes yet — run python3 tools/audio/review.py")
         return 0
@@ -1138,7 +1368,8 @@ def summary() -> int:
         bad = e.get("bad_variants") or []
         extra = f" — bad takes: {', '.join(map(str, bad))}" if bad else ""
         note = f": {e['note'].strip()}" if e.get("note", "").strip() else ""
-        return f"- **{key}** [{(e.get('verdict') or 'unrated').upper()}]{extra}{note}"
+        stale = rebuilt_label(key, rebuilt_takes(e, files[key])) if key in files else ""
+        return f"- **{key}** [{(e.get('verdict') or 'unrated').upper()}]{extra}{note}{stale}"
 
     print(f"# Audio review notes ({notes.get('updated')})\n")
     for key, e in sorted(notes["keys"].items(), key=lambda kv: (order.get(kv[1].get("verdict"), 2), kv[0])):

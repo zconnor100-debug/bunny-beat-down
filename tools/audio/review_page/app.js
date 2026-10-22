@@ -8,12 +8,15 @@
 // An older review.py (no "protocol": 2 in /api/data) gets whole entries, as it
 // expects. Unsynced edits are also kept in localStorage (one slot per tab) and
 // restored on the next visit, unless the notes file has newer changes for them.
+// A protocol-3 review.py also sends each file's content fingerprint ("h") and,
+// per note, the fingerprints its verdict was given on ("heard"): a sound rebuilt
+// since then is marked and counts as not reviewed until it gets a verdict again.
 "use strict";
 
 const state = {
   data: null,
   notesId: "",
-  protocol: 1,            // the server's save protocol: 2 = field-level changes + per-key "rejected"
+  protocol: 1,            // the server's save protocol: 2 = field-level changes + per-key "rejected"; 3 = + "heard"
   server: { keys: {}, orphans: {} },   // the notes as the server last sent them
   serverUpdated: null,    // their "updated" stamp
   delivered: null,        // ids of close-time saves the server got (a current review.py only)
@@ -27,6 +30,7 @@ const state = {
   refusedNow: new Map(),  // key -> reason: refused during this visit (the banner lists them)
   refusedSinceSave: 0,    // refused by an older review.py since the save status last said so
   restoreSkipped: new Set(),   // keys the restore line names (not restored from this browser)
+  reflagged: new Set(),   // "key\ntake": flagged (again) in this tab since that take was rebuilt
   helpFromKeys: false,    // the shortcuts dialog was opened from its button with the keyboard
   cards: [],              // [{key, el, entry, music}]
   byKey: new Map(),       // key -> index in cards
@@ -74,7 +78,12 @@ const PRESENCE_LOCK = "bbd-audio-review-presence";
 // it; an older one refuses the whole save over it (unknown key) before writing
 // anything, so field-level changes are never mistaken for whole entries there.
 const PROTOCOL_GUARD = "(protocol 2 page)";
+const HEARD_PROTOCOL = 3;     // servers from this protocol on send fingerprints and take "heard": true
 const FILTER_NAMES = { todo: "To review", work: "Needs work", good: "Good" };
+const VERDICT_NAMES = { good: "Good", tweak: "Tweak", replace: "Replace" };
+const VERDICT_TITLES = { good: "Good (G)", tweak: "Needs a tweak (T)", replace: "Replace it (R)" };
+const OLD_SERVER_LINE = "This review server is an older version, so rebuilt sounds aren't marked. " +
+  "Close every Audio Review tab (this one and any opened earlier), wait a minute for it to stop, then open Audio Review again.";
 
 // ---------------------------------------------------------------------------
 // small helpers
@@ -95,6 +104,7 @@ function h(tag, attrs = {}, ...children) {
 }
 
 function cssId(s) { return s.replace(/[^a-zA-Z0-9_-]/g, "_"); }
+function soundName(key) { const c = cardOf(key); return c && c.music && c.entry.title ? `“${c.entry.title}”` : key; }
 function cardIndex(key) { return state.byKey.has(key) ? state.byKey.get(key) : -1; }
 function cardOf(key) { return state.cards[cardIndex(key)]; }
 function plural(n, word) { return `${n} ${word}${n === 1 ? "" : "s"}`; }
@@ -150,9 +160,10 @@ function dismissedKey() { return `bbd-audio-review:dismissed:${state.notesId}`; 
 
 function dismissBanner() {
   for (const [id, text] of state.banner) state.dismissed.add(`${id}\n${text}`);
-  // server warnings and the earlier-edits reminder come back on every reload: remember those
+  // server warnings, the earlier-edits reminder and the older-server line come back
+  // on every reload: remember those
   try {
-    const keep = [...state.dismissed].filter((d) => d.startsWith("warn:") || d.startsWith("kept\n")).slice(-20);
+    const keep = [...state.dismissed].filter((d) => d.startsWith("warn:") || d.startsWith("kept\n") || d.startsWith("old-server\n")).slice(-20);
     localStorage.setItem(dismissedKey(), JSON.stringify(keep));
   } catch (_) { /* storage blocked: dismissed for this visit only */ }
   renderBanner();
@@ -418,7 +429,7 @@ const waveObserver = new IntersectionObserver((entries) => {
     waveObserver.unobserve(e.target);
     const canvas = e.target;
     const url = canvas.dataset.url;
-    const stats = canvas.parentElement.querySelector(".stats");
+    const stats = canvas.closest(".variant").querySelector(".stats");
     buffer(url).then((buf) => {
       if (canvas.dataset.url !== url) return;     // the file was rebuilt meanwhile
       drawWave(canvas, buf);
@@ -434,12 +445,15 @@ const waveObserver = new IntersectionObserver((entries) => {
 /** Pick up rebuilt sound files (their version changed in /api/data): drop the
  *  cached decode and redraw the waveform + stats (the old stats stay until the
  *  new ones are ready, so nothing jumps). A server that sends no versions (an
- *  older review.py) changes nothing. Returns how many changed. */
+ *  older review.py) changes nothing. A file's fingerprint ("h") is taken along
+ *  with its version (or on its own, from a server that only now sends it), and
+ *  the "rebuilt since your review" marks follow. Returns how many changed. */
 function applyAudioVersions(data) {
   const fresh = new Map();
   for (const g of data.groups || []) for (const k of g.keys) fresh.set(k.key, k);
   for (const m of data.music || []) fresh.set(m.key, m);
   let changed = 0;
+  const marked = new Set();   // cards whose fingerprints changed
   for (const c of state.cards) {
     const n = fresh.get(c.key);
     if (!n) continue;
@@ -447,17 +461,28 @@ function applyAudioVersions(data) {
       const player = c.el.querySelector("audio");
       if (n.v && n.v !== c.entry.v && player.paused) {     // a playing track switches once it's paused
         c.entry.v = n.v;
+        c.entry.h = n.h;
         player.src = fileUrl(c.entry);
         changed++;
+        marked.add(c.key);
+      } else if ((!n.v || n.v === c.entry.v) && n.h !== c.entry.h) {
+        c.entry.h = n.h;
+        marked.add(c.key);
       }
       continue;
     }
     for (const f of c.entry.files) {
       const nf = (n.files || []).find((x) => x.file === f.file);
-      if (!nf || !nf.v || nf.v === f.v) continue;
+      if (!nf) continue;
+      if (!nf.v || nf.v === f.v) {
+        if (nf.h !== f.h) { f.h = nf.h; marked.add(c.key); }   // the same audio, (no longer) fingerprinted
+        continue;
+      }
       state.buffers.delete(fileUrl(f));
       f.v = nf.v;
+      f.h = nf.h;
       changed++;
+      marked.add(c.key);
       const canvas = c.el.querySelector(`canvas[data-n="${f.n}"]`);
       if (canvas) {
         canvas.dataset.url = fileUrl(f);
@@ -465,6 +490,14 @@ function applyAudioVersions(data) {
       }
     }
   }
+  // a sound that now counts as not reviewed shows up under "To review" at once (a
+  // card is never hidden here: one that no longer matches drops out when you move on)
+  for (const k of marked) {
+    const c = cardOf(k);
+    paintReview(c);
+    if (c && c.el.classList.contains("hidden") && matches(c)) c.el.classList.remove("hidden");
+  }
+  if (marked.size) { updateSections(); updateProgress(); }
   return changed;
 }
 
@@ -473,22 +506,85 @@ function applyAudioVersions(data) {
 // ---------------------------------------------------------------------------
 //
 // An op is one sound's unsynced edit, field by field:
-//   {verdict?: "good"|"tweak"|"replace"|null, note?: text, bad?: {take: true|false}}
+//   {verdict?: "good"|"tweak"|"replace"|null, note?: text, bad?: {take: true|false}, heard?: true, heardOn?: {file: h}}
 // null deletes the whole note (only used for notes of sounds no longer in the game).
+// heard: true = "I listened to the sound as it is now" (a verdict on a rebuilt
+// sound); only a protocol-3 server is sent it. heardOn (never sent) = the
+// fingerprints of the files the page had loaded when the verdict was given, so a
+// sound rebuilt before the verdict reaches the server isn't recorded as heard
+// (see checkFingerprints).
 
 function blankEntry() { return { verdict: null, note: "", bad_variants: [] }; }
 
-/** An op applied to a stored entry (null = none): the new entry, or null if nothing is left. */
-function applyOp(entry, op) {
+/** Does this op make the server record "heard" (a verdict, or "heard": true)? */
+function stamps(op) { return !!op && (op.heard === true || ("verdict" in op && !!op.verdict)); }
+
+/** {file: fingerprint} as one comparable string (files without one left out). */
+function heardSig(heard) {
+  return JSON.stringify(Object.entries(heard || {}).filter(([, h]) => h).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)));
+}
+
+/** An op that changes nothing any more. */
+function emptyOp(op) { return !("verdict" in op) && !("note" in op) && !Object.keys(op.bad || {}).length; }
+
+/** The files of a sound card in take order, each {n, file, h} (music: its one track). */
+function takeFiles(card) {
+  return card.music ? [{ n: 1, file: card.entry.file, h: card.entry.h }] : card.entry.files;
+}
+
+/** What the server records as "heard" for a sound right now: {file: fingerprint}
+ *  of its files (undefined for a note of a sound no longer in the game). */
+function currentHeard(key) {
+  const card = cardOf(key);
+  if (!card) return undefined;
+  const out = {};
+  for (const f of takeFiles(card)) if (f.h) out[f.file] = f.h;
+  return out;
+}
+
+/** Takes (numbers) of a sound rebuilt since its verdict: the file has a
+ *  fingerprint and the note's "heard" has a different one for it, or none. Never
+ *  for a sound without a verdict (it's "to review" anyway) or without "heard",
+ *  nor while the server doesn't do fingerprints. Same rule as review.py. */
+function rebuiltTakes(key, entry = state.notes.keys[key]) {
+  if (state.protocol < HEARD_PROTOCOL) return [];
+  const card = cardOf(key);
+  if (!card || !entry || !entry.verdict || !entry.heard || typeof entry.heard !== "object") return [];
+  return takeFiles(card).filter((f) => f.h && entry.heard[f.file] !== f.h).map((f) => f.n);
+}
+
+function isRebuilt(key) { return rebuiltTakes(key).length > 0; }
+
+/** Takes flagged bad before they were rebuilt (and not flagged again since, in
+ *  this tab): the flag was about the take before, so a new verdict clears it. */
+function earlierFlags(key) {
+  const flagged = noteFor(key).bad_variants || [];
+  return rebuiltTakes(key).filter((n) => flagged.includes(n) && !state.reflagged.has(`${key}\n${n}`));
+}
+
+/** The verdict that counts: none for a sound rebuilt since it was given. */
+function currentVerdict(key) { return isRebuilt(key) ? null : noteFor(key).verdict || null; }
+
+/** "takes 2, 3" / "new file" (music), as review.py --summary says it. */
+function rebuiltWhat(key, takes) { return key.startsWith("music:") ? "new file" : `takes ${takes.join(", ")}`; }
+
+/** An op applied to a stored entry (null = none): the new entry, or null if nothing
+ *  is left. Like the server, a verdict or heard: true records the sound's
+ *  fingerprints as "heard" (protocol 3): the ones the verdict was given on, so a
+ *  rebuilt mark clears at once. */
+function applyOp(entry, op, key) {
   if (op === null) return null;
   const e = entry || blankEntry();
-  let verdict = e.verdict || null, note = e.note || "";
+  let verdict = e.verdict || null, note = e.note || "", heard = e.heard;
   const takes = new Set(e.bad_variants || []);
   if ("verdict" in op) verdict = op.verdict || null;
   if ("note" in op) note = op.note;
   for (const [n, on] of Object.entries(op.bad || {})) { if (on) takes.add(Number(n)); else takes.delete(Number(n)); }
   if (!verdict && !note.trim() && !takes.size) return null;
-  return { verdict, note, bad_variants: [...takes].sort((a, b) => a - b) };
+  if (state.protocol >= HEARD_PROTOCOL && stamps(op)) heard = op.heardOn || currentHeard(key) || heard;
+  const out = { verdict, note, bad_variants: [...takes].sort((a, b) => a - b) };
+  if (heard && typeof heard === "object") out.heard = heard;
+  return out;
 }
 
 /** An older op followed by a newer one for the same sound (the newer wins field by field). */
@@ -499,8 +595,8 @@ function mergeOps(older, newer) {
   return { ...older, ...newer, bad: { ...(older.bad || {}), ...(newer.bad || {}) } };
 }
 
-/** Protocol-2 wire form: only what changed. */
-function opToChange(op) {
+/** Protocol-2 wire form: only what changed ("heard" only for a server that takes it). */
+function opToChange(op, protocol = HEARD_PROTOCOL) {
   if (op === null) return null;
   const c = {};
   if ("verdict" in op) c.verdict = op.verdict || null;
@@ -510,6 +606,7 @@ function opToChange(op) {
   const remove = bad.filter(([, on]) => !on).map(([n]) => Number(n));
   if (add.length) c.bad_add = add;
   if (remove.length) c.bad_remove = remove;
+  if (op.heard === true && protocol >= HEARD_PROTOCOL) c.heard = true;
   return c;
 }
 
@@ -517,7 +614,7 @@ function opToChange(op) {
  *  review.py the whole entry as this page shows it (null = delete), exactly as
  *  the page used to send it. */
 function wireChange(key, op, protocol) {
-  if (protocol >= 2) return opToChange(op);
+  if (protocol >= 2) return opToChange(op, protocol);
   if (op === null) return null;
   const n = state.notes.keys[key];
   return n ? { verdict: n.verdict || null, note: n.note || "", bad_variants: [...(n.bad_variants || [])] } : null;
@@ -531,9 +628,23 @@ function noteFor(key) {
 
 /** What /api/data says about the server itself (an older review.py says less). */
 function serverInfo(data) {
-  state.protocol = data.protocol || 1;
+  setProtocol(data.protocol || 1);
   state.delivered = Array.isArray(data.delivered) ? data.delivered : null;
   state.serverStarted = Number(data.started) || 0;
+}
+
+/** The server's save protocol. Below 3 it can't tell rebuilt sounds apart: the
+ *  marks go (and come back once a current review.py answers) and the banner says
+ *  how to get one. */
+function setProtocol(p) {
+  const had = state.protocol >= HEARD_PROTOCOL;
+  state.protocol = p;
+  bannerSet("old-server", p < HEARD_PROTOCOL ? OLD_SERVER_LINE : null);
+  if (had !== (p >= HEARD_PROTOCOL) && state.cards.length) {
+    rebuildView();   // a verdict's local "heard" depends on it
+    for (const c of state.cards) paintReview(c);
+    updateProgress();
+  }
 }
 
 /** Take the server's notes as the new base (edits in other tabs show up this way). */
@@ -559,7 +670,7 @@ function rebuildView() {
   for (const ops of [state.inflight, state.pending]) {
     for (const [k, op] of ops) {
       const into = k in state.server.orphans && !state.byKey.has(k) ? orphans : keys;
-      const e = applyOp(into[k] || null, op);
+      const e = applyOp(into[k] || null, op, k);
       if (e) into[k] = e; else delete into[k];
     }
   }
@@ -608,15 +719,93 @@ function reviewBox(key) {
   });
   ta.value = n.note || "";
   const hint = h("div", { class: "count-hint" });
+  // "Rebuilt since your review": shown by paintReview (protocol 3 only). Under the
+  // verdict buttons, so a verdict that clears it never moves them from under the pointer.
+  const rebuilt = h("div", { class: "rebuilt", id: `rb-${cssId(key)}`, hidden: true },
+    h("span", { class: "rebuilt-badge", text: "Rebuilt since your review" }),
+    h("span", { class: "rebuilt-was" }));
   return h("div", { class: "review" },
     h("div", { class: "verdict", role: "group", "aria-label": `Verdict for ${key}` },
       ["good", "tweak", "replace"].map((v) => h("button", {
         "data-v": v, class: n.verdict === v ? "on" : "", "aria-pressed": String(n.verdict === v),
-        title: { good: "Good (G)", tweak: "Needs a tweak (T)", replace: "Replace it (R)" }[v],
+        title: VERDICT_TITLES[v],
         onclick: (e) => { afterClick(e, key); setVerdict(key, v); },
         text: { good: "👍 Good", tweak: "🔧 Tweak", replace: "👎 Replace" }[v],
       }))),
+    rebuilt,
     ta, hint);
+}
+
+/** "take 2", "takes 2 and 3", "takes 1, 2 and 4". */
+function takeList(takes) {
+  if (takes.length === 1) return `take ${takes[0]}`;
+  return `takes ${takes.slice(0, -1).join(", ")} and ${takes[takes.length - 1]}`;
+}
+
+/** A card's verdict buttons, flags and its "rebuilt since your review" marks, from
+ *  state.notes and the files' fingerprints. A rebuilt sound's verdict shows as the
+ *  earlier one (not pressed), with a badge under the buttons and "new" on each
+ *  rebuilt take; any verdict button then sets the verdict for the new version. A
+ *  flag on a rebuilt take shows as earlier too (a new verdict clears it); clicking
+ *  it flags the new take instead. */
+function paintReview(card) {
+  if (!card) return;
+  const key = card.key;
+  const n = noteFor(key);
+  const takes = rebuiltTakes(key);
+  const stale = takes.length > 0;
+  const oldFlags = earlierFlags(key);
+  card.el.querySelectorAll(".badtake").forEach((b) => {
+    const t = Number(b.dataset.n);
+    const earlier = oldFlags.includes(t);
+    const on = (n.bad_variants || []).includes(t) && !earlier;
+    b.classList.toggle("on", on);
+    b.classList.toggle("earlier", earlier);
+    b.setAttribute("aria-pressed", String(on));
+    b.setAttribute("aria-label", `Flag ${key} take ${t} as bad${earlier ? " (flagged before this take was rebuilt)" : ""}`);
+    b.title = earlier ? "Flagged before this take was rebuilt — click to flag the new take too"
+      : "Flag this take as bad (the others may be fine)";
+  });
+  card.el.dataset.verdict = n.verdict || "";
+  if (stale) card.el.dataset.rebuilt = "1"; else delete card.el.dataset.rebuilt;
+  card.el.querySelectorAll(".verdict button").forEach((b) => {
+    const mine = b.dataset.v === n.verdict;
+    const on = mine && !stale, earlier = mine && stale;
+    b.classList.toggle("on", on);
+    b.classList.toggle("earlier", earlier);
+    b.setAttribute("aria-pressed", String(on));
+    b.title = earlier ? `${VERDICT_TITLES[b.dataset.v]} — your verdict before the rebuild; click to give it to the new version`
+      : VERDICT_TITLES[b.dataset.v];
+    const sr = b.querySelector(".sr-only");
+    if (earlier && !sr) b.append(h("span", { class: "sr-only", text: " (your verdict before the rebuild)" }));
+    else if (!earlier && sr) sr.remove();
+  });
+  const box = card.el.querySelector(".rebuilt");
+  const group = card.el.querySelector(".verdict");
+  if (box) {
+    box.hidden = !stale;
+    if (stale) {
+      const files = takeFiles(card).length;
+      const some = files > 1 && takes.length < files
+        ? `Only ${takeList(takes)} ${takes.length === 1 ? "is" : "are"} new. ` : "";
+      const one = oldFlags.length === 1;
+      const flags = oldFlags.length ? `, with ${takeList(oldFlags)} flagged as bad (a new verdict clears ${one ? "that flag" : "those flags"}; ` +
+        `click ${one ? "its" : "a"} ⚑ to flag the new take too)` : "";
+      box.querySelector(".rebuilt-was").textContent =
+        `${some}Your verdict before the rebuild: ${VERDICT_NAMES[n.verdict]}${flags}. Listen again, then pick a verdict.`;
+      group.setAttribute("aria-describedby", box.id);
+    } else {
+      group.removeAttribute("aria-describedby");
+    }
+  }
+  if (card.music) return;
+  for (const f of card.entry.files) {
+    const isNew = takes.includes(f.n);
+    const mark = card.el.querySelector(`.new-take[data-n="${f.n}"]`);
+    if (mark) mark.hidden = !isNew;
+    const play = card.el.querySelector(`.play[data-n="${f.n}"]`);
+    if (play) play.setAttribute("aria-label", `Play ${key} variant ${f.n}${isNew ? " (new since your review)" : ""}`);
+  }
 }
 
 function renderCard(entry) {
@@ -640,7 +829,10 @@ function renderCard(entry) {
       h("span", { class: "stats", text: "…" }),
       h("button", { class: `badtake${bad ? " on" : ""}`, "data-n": f.n, title: "Flag this take as bad (the others may be fine)",
         "aria-pressed": String(bad), "aria-label": `Flag ${key} take ${f.n} as bad`,
-        onclick: (e) => { afterClick(e, key); toggleBadTake(key, f.n); }, text: "⚑" })));
+        onclick: (e) => { afterClick(e, key); toggleBadTake(key, f.n); }, text: "⚑" }),
+      // over the waveform's corner (out of the row's flow); paintReview shows it
+      h("span", { class: "new-take", "data-n": f.n, hidden: true },
+        "new", h("span", { class: "sr-only", text: ` — take ${f.n} was rebuilt since your review` }))));
     waveObserver.observe(canvas);
   }
   card.append(variants);
@@ -758,6 +950,7 @@ function render() {
   list.append(ms);
   toc.append(h("a", { href: "#g-music", text: "Music" }));
   state.shape = catalogShape(state.data);
+  for (const c of state.cards) paintReview(c);
   renderOrphans();
   applyFilter();
   updateProgress();
@@ -768,17 +961,7 @@ function refreshCardUI(key) {
   const card = cardOf(key);
   if (!card) return;
   const n = noteFor(key);
-  card.el.dataset.verdict = n.verdict || "";
-  card.el.querySelectorAll(".verdict button").forEach((b) => {
-    const on = b.dataset.v === n.verdict;
-    b.classList.toggle("on", on);
-    b.setAttribute("aria-pressed", String(on));
-  });
-  card.el.querySelectorAll(".badtake").forEach((b) => {
-    const on = (n.bad_variants || []).includes(Number(b.dataset.n));
-    b.classList.toggle("on", on);
-    b.setAttribute("aria-pressed", String(on));
-  });
+  paintReview(card);   // verdict buttons, flags, rebuilt marks
   const ta = card.el.querySelector("textarea");
   const want = n.note || "";
   if (!ta || ta.value === want) return;
@@ -815,9 +998,23 @@ function cancelAdvance() {
   state.advanceTimer = null;
 }
 
+/** A verdict button or G/T/R. Pressing the current verdict again clears it, but on
+ *  a sound rebuilt since its verdict every button (the earlier verdict's too) means
+ *  "I listened to the new version and this is my verdict": it sets that verdict
+ *  and records what was heard, and flags given to takes before they were rebuilt
+ *  go (the new verdict starts clean; a take flagged again since stays flagged). */
 function setVerdict(key, v) {
-  const now = noteFor(key).verdict === v ? null : v;
-  edit(key, { verdict: now });
+  const stale = isRebuilt(key);
+  const now = !stale && noteFor(key).verdict === v ? null : v;
+  const op = { verdict: now };
+  if (stale) {
+    op.heard = true;
+    const old = earlierFlags(key);
+    if (old.length) op.bad = Object.fromEntries(old.map((n) => [n, false]));
+  }
+  if (now && state.protocol >= HEARD_PROTOCOL) op.heardOn = currentHeard(key);   // what it was given on
+  for (const id of [...state.reflagged]) if (id.startsWith(`${key}\n`)) state.reflagged.delete(id);
+  edit(key, op);
   // The card stays visible even if the filter would now hide it; it drops out
   // when you move on (see moveFocus), so you can still add a note.
   cancelAdvance();
@@ -826,8 +1023,19 @@ function setVerdict(key, v) {
   }
 }
 
+/** ⚑ on a take. On a take flagged before it was rebuilt (shown as earlier) it flags
+ *  the new take instead: it is flagged already, so nothing is sent, but the new
+ *  verdict then keeps that flag. */
 function toggleBadTake(key, n) {
-  edit(key, { bad: { [n]: !(noteFor(key).bad_variants || []).includes(n) } });
+  const id = `${key}\n${n}`;
+  if (earlierFlags(key).includes(n)) {
+    state.reflagged.add(id);
+    paintReview(cardOf(key));
+    return;
+  }
+  const on = !(noteFor(key).bad_variants || []).includes(n);
+  if (on && rebuiltTakes(key).includes(n)) state.reflagged.add(id); else state.reflagged.delete(id);
+  edit(key, { bad: { [n]: on } });
 }
 
 function deleteOrphan(key) {
@@ -915,12 +1123,69 @@ function showKept() {
 
 function retryDelay() { return Math.min(RETRY_MAX, RETRY_DELAY * 2 ** Math.max(0, state.failures - 1)); }
 
+/** The fingerprints /api/data gives each sound's files: key -> {file: h}. */
+function freshHeard(data) {
+  const out = new Map();
+  for (const g of data.groups || []) for (const k of g.keys || []) out.set(k.key, Object.fromEntries((k.files || []).map((f) => [f.file, f.h])));
+  for (const m of data.music || []) out.set(m.key, { [m.file]: m.h });
+  return out;
+}
+
+/** A verdict makes the server record the fingerprints the sound's files have at
+ *  that moment. So before one is sent, check they are still the ones the page had
+ *  loaded when it was given: a sound rebuilt since the page last looked (the tab
+ *  stayed in view, so nothing re-read /api/data) is reloaded instead and its
+ *  verdict held back, since it was given to the build before; the owner is told
+ *  to listen again. Its note and flag edits still go. If the check can't be made
+ *  (server away), the save goes ahead as it would have. Returns the held keys. */
+async function checkFingerprints() {
+  let data;
+  try {
+    const res = await fetchJson("/api/data", {}, 4000);   // (it takes milliseconds: fingerprints are cached)
+    if (!res.ok || !(res.body.protocol >= HEARD_PROTOCOL)) return [];
+    data = res.body;
+  } catch (_) {
+    return [];
+  }
+  const fresh = freshHeard(data);
+  const held = [];
+  for (const [k, op] of [...state.pending]) {
+    if (!stamps(op) || !fresh.has(k) || !state.byKey.has(k)) continue;
+    if (heardSig(fresh.get(k)) === heardSig(op.heardOn || currentHeard(k))) continue;
+    const rest = { ...op };
+    delete rest.heard;
+    delete rest.heardOn;
+    if (rest.verdict) delete rest.verdict;   // (clearing a verdict records nothing: that still goes)
+    if (emptyOp(rest)) { state.pending.delete(k); state.editedAt.delete(k); } else state.pending.set(k, rest);
+    held.push(k);
+  }
+  const reloaded = applyAudioVersions(data);
+  if (held.length) {
+    rebuildView();
+    persistLocal();
+    const one = held.length === 1;
+    flash(`${held.map(soundName).join(", ")} ${one ? "was" : "were"} just rebuilt, so your verdict wasn't saved — ` +
+      `listen to the new version, then pick a verdict again.`, 10000);
+  } else if (reloaded) {
+    flash(`Reloaded ${plural(reloaded, "rebuilt sound file")}`);
+  }
+  return held;
+}
+
 async function save() {
   if (state.saving || !state.pending.size) return;
   state.saving = true;
   state.saveGen++;
   clearTimeout(state.retryTimer);
   state.retryTimer = null;
+  if (state.protocol >= HEARD_PROTOCOL && [...state.pending.values()].some(stamps)) {
+    const held = await checkFingerprints();
+    if (!state.pending.size) {   // only held-back verdicts were waiting
+      state.saving = false;
+      if (held.length) setStatus("Verdict not saved — the sound was just rebuilt", false, el("#message").textContent);
+      return;
+    }
+  }
   const protocol = state.protocol;
   const { batch, changes } = takeBatch(protocol);
   state.inflight = batch;
@@ -945,21 +1210,43 @@ async function save() {
 }
 
 function saved(batch, body) {
-  if (typeof body.protocol === "number") state.protocol = body.protocol;
+  const protocol = typeof body.protocol === "number" ? body.protocol : state.protocol;
   const refused = [];
   const rejected = body.rejected && typeof body.rejected === "object" ? body.rejected : {};
   for (const [k, why] of Object.entries(rejected)) {
     if (!batch.has(k) || batch.get(k) === null) continue;
-    refuse(k, batch.get(k), String(why));
+    const op = batch.get(k);
+    if (op.heard === true && protocol < HEARD_PROTOCOL) {
+      // a review.py that doesn't record "heard" (protocol 2) refused the whole
+      // change over it: the rest goes again without it
+      const rest = { ...op };
+      delete rest.heard;
+      state.pending.set(k, state.pending.has(k) ? mergeOps(rest, state.pending.get(k)) : rest);
+      continue;
+    }
+    refuse(k, op, String(why));
     refused.push([k, String(why)]);
   }
   for (const k of batch.keys()) {
     if (!state.pending.has(k)) state.editedAt.delete(k);
     if (!(k in rejected)) delete state.rejected[k];   // a later save of that sound went through
   }
+  // a rebuild that landed after checkFingerprints (or with no check made): the
+  // server recorded the build it has, which this page hasn't loaded; load it now
+  // rather than show the verdict just given as one "before the rebuild"
+  const keys = body.notes && body.notes.keys && typeof body.notes.keys === "object" ? body.notes.keys : {};
+  const raced = [...batch].filter(([k, op]) => stamps(op) && !(k in rejected) && state.byKey.has(k) && keys[k] && keys[k].heard
+    && heardSig(keys[k].heard) !== heardSig(op.heardOn || currentHeard(k))).map(([k]) => k);
   adoptServer(body.notes);
+  setProtocol(protocol);
   rebuildView();
   persistLocal();
+  if (raced.length) {
+    state.refreshedAt = -Infinity;
+    refresh();
+    flash(`${raced.map(soundName).join(", ")} ${raced.length === 1 ? "was" : "were"} rebuilt just as you gave your verdict, so it counts ` +
+      "for the newest build — give it another listen.", 10000);
+  }
   state.failures = 0;
   state.batchKeys = Infinity;
   // the problems the banner reported are over once a save gets through, and if
@@ -984,8 +1271,8 @@ function failed(batch, protocol, status, reason) {
   if (permanent && unknown && unknown[2] === PROTOCOL_GUARD) {
     // an older review.py: it refused everything over the guard key, so nothing was
     // written; send the same edits again as whole entries
-    state.protocol = 1;
     putBack(batch);
+    setProtocol(1);
     return;
   }
   if (permanent && protocol >= 2) {
@@ -1128,6 +1415,11 @@ function resolveRecord(key, rec) {
     if (untouched(now, (b.bad_variants || []).includes(Number(n)))) (out.bad ||= {})[n] = Boolean(on);
     else conflict = true;
   }
+  // a verdict given to a rebuilt sound: still to record while the server's note is
+  // the one the edit was made on and is still marked rebuilt (a newer verdict
+  // since then recorded its own)
+  if (rec.op.heard === true && state.protocol >= HEARD_PROTOCOL && rebuiltTakes(key, cur).length
+      && untouched(JSON.stringify(c.heard || null), JSON.stringify(b.heard || null))) out.heard = true;
   return { op: Object.keys(out).length ? out : undefined, conflict };
 }
 
@@ -1331,14 +1623,22 @@ function holdLocks() {
   navigator.locks.request(PRESENCE_LOCK, () => { presence(); return new Promise(() => {}); }).catch(presence);
 }
 
+/** "N / M reviewed · K need work · R rebuilt since your review": a sound rebuilt
+ *  since its verdict counts as not reviewed (and not as needing work). */
 function updateProgress() {
   const total = state.cards.length;
-  const rated = state.cards.filter((c) => noteFor(c.key).verdict).length;
-  const work = state.cards.filter((c) => ["tweak", "replace"].includes(noteFor(c.key).verdict)).length;
+  let rated = 0, work = 0, rebuilt = 0;
+  for (const c of state.cards) {
+    const v = currentVerdict(c.key);
+    if (v) rated++;
+    if (v === "tweak" || v === "replace") work++;
+    if (!v && noteFor(c.key).verdict) rebuilt++;
+  }
   el("#progress-fill").style.width = `${total ? (100 * rated) / total : 0}%`;
   const t = el("#progress-text");
   t.textContent = "";
-  t.append(`${rated} / ${total}`, h("span", { class: "wide", text: " reviewed" }), work ? ` · ${work} need work` : "");
+  t.append(`${rated} / ${total}`, h("span", { class: "wide", text: " reviewed" }), work ? ` · ${work} need work` : "",
+    rebuilt ? h("span", { class: "rebuilt-count" }, ` · ${rebuilt} rebuilt`, h("span", { class: "wide", text: " since your review" })) : "");
 }
 
 // ---------------------------------------------------------------------------
@@ -1355,7 +1655,7 @@ function passes(text, verdict) {
 }
 
 function matches(c) {
-  return passes(`${c.key} ${c.entry.expect} ${c.entry.when} ${c.entry.title || ""}`, noteFor(c.key).verdict);
+  return passes(`${c.key} ${c.entry.expect} ${c.entry.when} ${c.entry.title || ""}`, currentVerdict(c.key));
 }
 
 function filterOrphans() {
@@ -1489,7 +1789,7 @@ function nextUnreviewed() {
   const total = state.cards.length;
   for (let d = 1; d <= total; d++) {
     const j = (Math.max(state.focus, 0) + d) % total;
-    if (isVisible(j) && !noteFor(state.cards[j].key).verdict) { focusCard(j); return; }
+    if (isVisible(j) && !currentVerdict(state.cards[j].key)) { focusCard(j); return; }   // rebuilt ones too
   }
   // nothing left to review here: keep a visible card highlighted
   if (!isVisible(state.focus)) { const n = nearestVisible(state.focus, 1); if (n >= 0) focusCard(n); }
@@ -1608,12 +1908,23 @@ function onTocClick(e) {
 // export
 // ---------------------------------------------------------------------------
 
+/** Sounds rebuilt since their verdict: key -> "rebuilt since this verdict (takes 2, 3)". */
+function rebuiltSinceVerdict() {
+  const out = {};
+  for (const c of state.cards) {
+    const takes = rebuiltTakes(c.key);
+    if (takes.length) out[c.key] = `rebuilt since this verdict (${rebuiltWhat(c.key, takes)})`;
+  }
+  return out;
+}
+
 function summaryMarkdown() {
   const order = { replace: 0, tweak: 1, good: 3 };
+  const stale = rebuiltSinceVerdict();
   const line = (key, n) => {
     const bad = (n.bad_variants || []).length ? ` — bad takes: ${n.bad_variants.join(", ")}` : "";
     const note = n.note && n.note.trim() ? `: ${n.note.trim()}` : "";
-    return `- **${key}** [${(n.verdict || "unrated").toUpperCase()}]${bad}${note}`;
+    return `- **${key}** [${(n.verdict || "unrated").toUpperCase()}]${bad}${note}${stale[key] ? ` — ${stale[key]}` : ""}`;
   };
   const rows = state.cards
     .map((c) => ({ key: c.key, n: noteFor(c.key) }))
@@ -1632,6 +1943,9 @@ async function copySummary() {
 
 function downloadNotes() {
   const out = { version: 1, keys: state.notes.keys, orphans: state.notes.orphans };
+  // verdicts given before the sound was rebuilt (as review.py --summary marks them)
+  const stale = rebuiltSinceVerdict();
+  if (Object.keys(stale).length) out.rebuilt_since_verdict = stale;
   const refused = Object.entries(state.rejected);
   // edits the server refused (or that a newer change replaced): kept so nothing is silently lost
   if (refused.length) out.not_saved = Object.fromEntries(refused.map(([k, r]) => [k, { change: opToChange(r.op), reason: r.reason }]));

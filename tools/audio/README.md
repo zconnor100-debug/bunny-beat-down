@@ -45,7 +45,7 @@ doesn't use) as `.repaired-<time>`. While `review_checklist.json` or the manifes
 can't be read (a typo, a build half-way through writing it) it keeps serving the
 last good sound list, says so in the page, and saves carry on. Saves
 are field-level changes merged per sound (`POST /api/notes` with
-`{"changes": {key: {"verdict"|"note"|"bad_add"|"bad_remove"|"bad_variants": …} | null}}`),
+`{"changes": {key: {"verdict"|"note"|"bad_add"|"bad_remove"|"bad_variants"|"heard": …} | null}}`),
 so two tabs never erase each other's edits; each key is saved or refused on its
 own (`"rejected": {key: reason}` in the reply), and deleting a note that is
 already gone is fine. A tab's last-chance save as it closes also carries a
@@ -65,6 +65,32 @@ that line) and kept under `not_saved` in Download notes. Only one tab per browse
 holds the presence connection that `--idle-exit` watches. After a mouse click on
 a toolbar control, Space and Enter go back to playing the highlighted sound; a
 control reached with Tab keeps them.
+
+**Rebuilt sounds** (save protocol 3). `/api/data` gives every audio file a
+content fingerprint, `"h"` (the first 16 hex digits of its sha256, cached by
+size + mtime; `""` if the file is missing). Whenever a sound gets a verdict, its
+note records the fingerprints of that sound's files as `"heard"`
+(`{"sfx/hop_1.ogg": "<16 hex>", …}`); a change can also say `"heard": true`
+("I listened to it as it is now"; any other value is refused for that sound).
+A sound with a verdict whose file's fingerprint isn't the one `"heard"` recorded
+(or a take that isn't in it at all, like a new `hop_5`) is **rebuilt since your
+review**: the page marks it (badge, "new" on each rebuilt take, the old verdict
+shown as earlier), counts it as not reviewed (To review, the progress line, `U`)
+until it gets a verdict again — any verdict button, the earlier one included,
+gives the new version that verdict — and `--summary`, Copy summary and Download
+notes add "rebuilt since this verdict (takes 2, 3)" ("new file" for music).
+Editing only the note or the flags leaves the mark. A flag on a rebuilt take is
+shown as earlier too, and the new verdict clears it unless you click that ⚑ to
+flag the new take. Before a verdict is saved the page checks the sound's
+fingerprints once more: if the sound was rebuilt after the page last loaded it,
+the verdict is held back (it was given to the build before) and the page says
+to listen again. Notes saved before
+`"heard"` existed take theirs from `review_baseline.json` next to the notes file
+(git-ignored too; `{"about": …, "files": {"sfx/x.ogg": "<sha256>", …}}`, only ever read; an
+unreadable one is ignored with a warning); that fill-in is written with the next
+save. Against an older `review.py` (protocol 1 or 2) the page marks nothing,
+never sends `"heard"`, and says to close the tab and reopen Audio Review once the
+old server has stopped.
 
 ## Rebuild
 

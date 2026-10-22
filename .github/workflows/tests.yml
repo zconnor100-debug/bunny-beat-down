@@ -11,7 +11,7 @@ jobs:
     env:
       GODOT_VERSION: 4.6.2
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Credits file is up to date
         run: python3 tools/gen_credits.py --check

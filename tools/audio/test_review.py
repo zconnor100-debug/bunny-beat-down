@@ -7,16 +7,23 @@ the owner's tools/audio/review_notes.json is never touched. Covers: corrupt
 notes moved aside, repaired notes kept once, per-key merging between tabs,
 field-level changes (two tabs editing different fields of one sound), per-key
 rejection, idempotent deletes, close-time save ids, orphans, the protocol
-marker, audio file versions (so the page reloads a rebuilt sound), security
+marker, audio file versions (so the page reloads a rebuilt sound), content
+fingerprints (cached until a file changes) and "heard" (recorded by a verdict
+or "heard": true, only when it changes; anything but true refused per key; a
+malformed one repaired), the review_baseline.json fill-in (no repair, written
+with the next save, a bad baseline ignored) and --summary's "rebuilt since this
+verdict" marks, security
 headers, smuggled request bodies (also behind a doubled Content-Length), foreign
 origins, presence (HEAD, cap, cross-origin), malformed requests, the connection
-cap and slow-drip clients, single-instance reuse, unknown top-level fields,
+cap and slow-drip clients, single-instance reuse (and what a launch says when it
+finds an older review server running), unknown top-level fields,
 --idle-exit (presence and relaunch grace), --summary errors, the launcher
 (quoting, control characters, sandboxed removal) and saving while the checklist
 can't be read (in a sandbox copy). Exits non-zero on any failure (CI).
 """
 import atexit
 import contextlib
+import hashlib
 import http.client
 import io
 import json
@@ -30,6 +37,7 @@ import threading
 import time
 import urllib.error
 import urllib.request
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[2]
@@ -144,7 +152,7 @@ aside = list(SCRATCH.glob("notes.json.corrupt-*"))
 check(len(aside) == 1 and "pistol_fire" in aside[0].read_text(), "corrupt notes moved aside intact")
 check(any("was damaged" in w and str(aside[0]) in w for w in data["warnings"]),
       "page gets a plain warning naming the full path")
-check(data.get("protocol") == 2, "/api/data says protocol 2")
+check(data.get("protocol") == 3, "/api/data says protocol 3")
 files = [f for g in data["groups"] for k in g["keys"] for f in k["files"]] + data["music"]
 check(files and all(f.get("v") for f in files), "/api/data gives every audio file a version")
 snd = SCRATCH / "audio" / "sfx"
@@ -203,15 +211,17 @@ check(st == 403, "POST with Origin: null refused")
 # 5. field-level changes: two tabs editing different fields of one sound both survive
 post({"lmg_fire": {"note": "belt rattle too loud"}})            # tab A types a note
 post({"lmg_fire": {"verdict": "good"}})                          # stale tab B clicks Good
-e = disk()["keys"]["lmg_fire"]
-check(e == {"verdict": "good", "note": "belt rattle too loud", "bad_variants": []}, f"note and verdict patches both kept ({e})")
+e = dict(disk()["keys"]["lmg_fire"])
+lmg_heard = e.pop("heard", None)                                 # what the verdict was given on (see 6b)
+check(e == {"verdict": "good", "note": "belt rattle too loud", "bad_variants": []} and lmg_heard,
+      f"note and verdict patches both kept ({e})")
 post({"hop": {"bad_add": [1]}})                                  # tab A flags take 1
 post({"hop": {"bad_add": [3, 3]}})                               # tab B flags take 3
 check(disk()["keys"]["hop"]["bad_variants"] == [1, 3], "bad_add from two tabs merges (sorted, unique)")
 post({"hop": {"bad_remove": [1, 2]}})
 check(disk()["keys"]["hop"]["bad_variants"] == [3], "bad_remove removes just those takes")
 post({"lmg_fire": {"verdict": None}})
-check(disk()["keys"]["lmg_fire"] == {"verdict": None, "note": "belt rattle too loud", "bad_variants": []},
+check(disk()["keys"]["lmg_fire"] == {"verdict": None, "note": "belt rattle too loud", "bad_variants": [], "heard": lmg_heard},
       "verdict: null clears only the verdict")
 post({"hop": {"bad_remove": [3]}})
 check("hop" not in disk()["keys"], "an entry left with nothing in it is removed")
@@ -241,6 +251,185 @@ check(st == 200 and "retired_sound" not in disk().get("orphans", {}), "orphan ca
 st, body = post({"retired_sound": None, "scope_in": {"verdict": "tweak", "note": "too quiet"}})
 check(st == 200 and body["rejected"] == {} and disk()["keys"]["scope_in"]["note"] == "too quiet",
       "a second tab deleting the same orphan succeeds and its other edits save")
+
+# 6b. protocol 3: every file's content fingerprint ("h"), and "heard" — what a verdict was given on
+AUDIO = REPO / "assets" / "audio"
+
+
+def sha16(p):
+    return hashlib.sha256(Path(p).read_bytes()).hexdigest()[:16]
+
+
+data = json.loads(get("/api/data")[2])
+files = [f for g in data["groups"] for k in g["keys"] for f in k["files"]] + data["music"]
+check(files and all(f.get("h") == sha16(AUDIO / f["file"]) for f in files),
+      "/api/data gives every audio file its fingerprint (first 16 hex digits of its sha256)")
+check(json.loads(get("/api/ping")[2]).get("protocol") == 3, "/api/ping says protocol 3")
+reads = review.FINGERPRINTS.reads
+x1 = review.with_versions(cat, SCRATCH / "audio")["groups"][0]["keys"][0]["files"][0]
+x2 = review.with_versions(cat, SCRATCH / "audio")["groups"][0]["keys"][0]["files"][0]
+cached = review.FINGERPRINTS.reads == reads   # (x.ogg was read in 1 already)
+xs = (snd / "x.ogg").stat()
+(snd / "x.ogg").write_bytes(b"tw0!")   # rebuilt again: same size, and (forced) a later mtime
+os.utime(snd / "x.ogg", ns=(xs.st_atime_ns, xs.st_mtime_ns + 5_000_000))
+x3 = review.with_versions(cat, SCRATCH / "audio")
+check(x1["h"] == x2["h"] == hashlib.sha256(b"two!").hexdigest()[:16] and cached and review.FINGERPRINTS.reads == reads + 1
+      and x3["groups"][0]["keys"][0]["files"][0]["h"] == hashlib.sha256(b"tw0!").hexdigest()[:16] and x3["music"][0]["h"] == "",
+      "fingerprints are cached by size + mtime and read again once the file changes; a missing file has none")
+key_files = {k["key"]: [f["file"] for f in k["files"]] for g in data["groups"] for k in g["keys"]}
+key_files.update((m["key"], [m["file"]]) for m in data["music"])
+
+
+def now_heard(key):
+    return {f: sha16(AUDIO / f) for f in key_files[key]}
+
+
+STALE = {"sfx/hop_1.ogg": "0" * 16}
+
+
+def set_on_disk(key, entry):
+    d = disk()
+    d["keys"][key] = entry
+    NOTES.write_text(json.dumps(d))
+
+
+post({"hop": {"verdict": "replace"}})
+check(disk()["keys"]["hop"].get("heard") == now_heard("hop"), "a verdict records the fingerprints of the sound's files ('heard')")
+set_on_disk("hop", {"verdict": "replace", "note": "", "bad_variants": [], "heard": STALE})
+post({"hop": {"note": "boing"}})
+post({"hop": {"bad_add": [2]}})
+check(disk()["keys"]["hop"]["heard"] == STALE, "a note or a flagged take alone doesn't record 'heard'")
+post({"hop": {"verdict": None}})
+check(disk()["keys"]["hop"]["heard"] == STALE, "clearing the verdict doesn't record 'heard'")
+st, body = post({"hop": {"heard": True}})
+check(st == 200 and body["rejected"] == {} and disk()["keys"]["hop"] == {"verdict": None, "note": "boing", "bad_variants": [2],
+                                                                         "heard": now_heard("hop")},
+      "'heard': true records the fingerprints and changes nothing else")
+before, mtime, updated = NOTES.read_bytes(), NOTES.stat().st_mtime_ns, disk()["updated"]
+time.sleep(1.1)   # "updated" has whole seconds
+st, body = post({"hop": {"heard": True}, "jump": None})
+check(st == 200 and NOTES.read_bytes() == before and NOTES.stat().st_mtime_ns == mtime and body["updated"] == updated,
+      "recording the same 'heard' again isn't a change (file not rewritten, 'updated' kept)")
+set_on_disk("hop", {"verdict": "tweak", "note": "boing", "bad_variants": [], "heard": STALE})
+post({"hop": {"verdict": "tweak", "note": "boing!", "bad_variants": []}})   # an older page's whole entry
+check(disk()["keys"]["hop"]["heard"] == now_heard("hop"), "a legacy whole-entry save (it carries the verdict) records 'heard'")
+set_on_disk("hop", {"verdict": "replace", "note": "", "bad_variants": [], "heard": STALE})
+post({"hop": {"verdict": "replace", "heard": True}})   # the earlier verdict, given again to the rebuilt sound
+check(disk()["keys"]["hop"] == {"verdict": "replace", "note": "", "bad_variants": [], "heard": now_heard("hop")},
+      "giving a rebuilt sound its earlier verdict again records 'heard'")
+before = NOTES.read_text()
+for val in (False, "true", 1, None, {}, ["sfx/hop_1.ogg"]):
+    st, body = post({"hop": {"heard": val, "note": "not saved"}, "jump": {"note": f"saved {val!r}"}})
+    why = body.get("rejected", {}).get("hop", "")
+    check(st == 200 and "heard" in why and list(body["rejected"]) == ["hop"] and disk()["keys"]["jump"]["note"] == f"saved {val!r}",
+          f"'heard': {json.dumps(val)} is refused for that sound only ({why[:60]})")
+check(disk()["keys"]["hop"] == json.loads(before)["keys"]["hop"], "a refused 'heard' change leaves that note untouched")
+music_key = data["music"][0]["key"]
+post({music_key: {"verdict": "good"}})
+check(disk()["keys"][music_key]["heard"] == now_heard(music_key), "a music track's verdict records that track's fingerprint")
+st, body = post({"land": {"heard": True}})
+check(st == 200 and "land" not in disk()["keys"], "'heard' alone doesn't create a note")
+set_on_disk("land", {"verdict": None, "note": " ", "bad_variants": [], "heard": now_heard("land")})
+check("land" not in json.loads(get("/api/data")[2])["notes"]["keys"], "a note with only 'heard' in it is dropped like an empty one")
+d = disk()
+d["orphans"]["retired_sound"] = {"verdict": "tweak", "note": "old", "bad_variants": []}
+NOTES.write_text(json.dumps(d))
+st, body = post({"retired_sound": {"verdict": "good", "heard": True}})
+check(st == 200 and disk()["orphans"]["retired_sound"] == {"verdict": "good", "note": "old", "bad_variants": []},
+      "a note for a sound no longer in the game takes 'heard' but has nothing to record")
+post({"retired_sound": None, "land": None, "hop": None, "jump": None, music_key: None})
+
+# 6c. review_baseline.json next to the notes: notes saved before "heard" existed take it from
+# there (an upgrade: no warning, no .repaired copy, written with the next save); read-only
+BL = SCRATCH / "baseline"
+BL.mkdir()
+bl_notes, bl_file = BL / "review_notes.json", BL / "review_baseline.json"
+ex, hop_f, mus = key_files["explosion"], key_files["hop"], key_files[music_key][0]
+
+
+def full(f):
+    return hashlib.sha256((AUDIO / f).read_bytes()).hexdigest()
+
+
+bl_file.write_text(json.dumps({"about": "test baseline", "files": {
+    ex[0]: full(ex[0]), ex[1]: "ab" * 32, ex[2]: full(ex[2]).upper(),   # take 2 rebuilt since; case doesn't matter
+    **{f: full(f) for f in hop_f[:3]},                                   # takes 4 and 5 are new files
+    mus: "cd" * 32, key_files["rocket_fire"][0]: full(key_files["rocket_fire"][0]),
+    key_files["rocket_fire"][1]: full(key_files["rocket_fire"][1]), "sfx/gone.ogg": "ef" * 32}}))
+bl_bytes, bl_mtime = bl_file.read_bytes(), bl_file.stat().st_mtime_ns
+own = {key_files["land"][0]: "1" * 16}
+bl_notes.write_text(json.dumps({"version": 1, "updated": "2026-10-21T20:55:22", "keys": {
+    "explosion": {"verdict": "good", "note": "", "bad_variants": [2]},
+    "hop": {"verdict": "replace", "note": "", "bad_variants": []},
+    "jump": {"verdict": "good", "note": "", "bad_variants": []},
+    "land": {"verdict": "good", "note": "", "bad_variants": [], "heard": own},
+    "rocket_fire": {"verdict": "good", "note": "", "bad_variants": []},
+    music_key: {"verdict": "tweak", "note": "more fiddle", "bad_variants": []}}, "orphans": {}}))
+notes_bytes = bl_notes.read_bytes()
+port3 = free_port()
+proc3 = start(port=port3, notes=bl_notes)
+with urllib.request.urlopen(f"http://127.0.0.1:{port3}/api/data", timeout=10) as r:
+    data3 = json.loads(r.read())
+k3 = data3["notes"]["keys"]
+check(k3["explosion"].get("heard") == {ex[0]: sha16(AUDIO / ex[0]), ex[1]: "abababababababab", ex[2]: sha16(AUDIO / ex[2])}
+      and k3["hop"].get("heard") == {f: sha16(AUDIO / f) for f in hop_f[:3]} and k3[music_key].get("heard") == {mus: "cdcdcdcdcdcdcdcd"},
+      "notes without 'heard' take the baseline's fingerprints of their files (the ones it lists)")
+check("heard" not in k3["jump"] and k3["land"]["heard"] == own,
+      "a sound the baseline doesn't list gets no 'heard'; a note's own 'heard' wins over the baseline")
+check(data3["warnings"] == [] and not list(BL.glob("review_notes.json.repaired-*")) and bl_notes.read_bytes() == notes_bytes,
+      "filling 'heard' in from the baseline is no repair (no warning, no .repaired copy) and doesn't write the file by itself")
+st, _ = post({"jump": {"note": "lands softly"}}, base=f"http://127.0.0.1:{port3}")
+d3 = json.loads(bl_notes.read_text())["keys"]
+check(st == 200 and d3["explosion"].get("heard") == k3["explosion"]["heard"] and d3["hop"].get("heard") == k3["hop"]["heard"]
+      and "heard" not in d3["jump"], "the filled-in 'heard' is written with the next save")
+r = subprocess.run([sys.executable, str(REPO / "tools/audio/review.py"), "--notes", str(bl_notes), "--summary"],
+                   capture_output=True, text=True)
+lines = {ln.split("**")[1]: ln for ln in r.stdout.splitlines() if ln.startswith("- **")}
+check(r.returncode == 0 and lines["explosion"].endswith(" — bad takes: 2 — rebuilt since this verdict (takes 2)")
+      and lines["hop"].endswith("[REPLACE] — rebuilt since this verdict (takes 4, 5)")
+      and lines[music_key].endswith(": more fiddle — rebuilt since this verdict (new file)")
+      and lines["land"].endswith(f"(takes {', '.join(str(n) for n in range(1, len(key_files['land']) + 1))})")
+      and "rebuilt" not in lines["jump"] + lines["rocket_fire"],
+      "--summary marks verdicts given before a rebuild, with the takes (music: new file)\n    " + "\n    ".join(
+          lines.get(k, "?") for k in ("explosion", "hop", music_key, "land", "jump", "rocket_fire")))
+stop(proc3)
+check(bl_file.read_bytes() == bl_bytes and bl_file.stat().st_mtime_ns == bl_mtime, "the baseline file is never written")
+for bad_bl, why in [("{ broken", "not JSON"), (json.dumps({"files": {ex[0]: "not a sha256"}}), "a bad fingerprint"),
+                    (json.dumps(["files"]), "not an object")]:
+    for p in BL.glob("review_notes.json*"):
+        p.unlink()
+    bl_notes.write_text(notes_bytes.decode())
+    bl_file.write_text(bad_bl)
+    proc3 = start(port=port3, notes=bl_notes)
+    with urllib.request.urlopen(f"http://127.0.0.1:{port3}/api/data", timeout=10) as r:
+        data3 = json.loads(r.read())
+    stop(proc3)
+    log = proc3.stdout.read()
+    check({k for k, e in data3["notes"]["keys"].items() if "heard" in e} == {"land"}   # only its own
+          and not list(BL.glob("review_notes.json.repaired-*"))
+          and len(data3["warnings"]) == 1 and "review_baseline.json" in data3["warnings"][0] and "review baseline ignored" in log,
+          f"a baseline that can't be used ({why}) is ignored, with a console line and a plain warning ({data3['warnings'][0][:70]}…)")
+r = subprocess.run([sys.executable, str(REPO / "tools/audio/review.py"), "--notes", str(bl_notes), "--summary"],
+                   capture_output=True, text=True)
+lines = {ln.split("**")[1]: ln for ln in r.stdout.splitlines() if ln.startswith("- **")}
+check(r.returncode == 0 and "review baseline ignored" in r.stderr and "rebuilt since" in lines["land"]   # its own "heard"
+      and not any("rebuilt" in lines[k] for k in ("explosion", "hop", music_key, "jump", "rocket_fire")),
+      "--summary ignores a baseline that can't be used (and says so on stderr)")
+bl_file.unlink()
+bl_notes.write_text(json.dumps({"version": 1, "keys": {
+    "jump": {"verdict": "good", "note": "", "bad_variants": [], "heard": {"sfx/jump_1.ogg": "XYZ"}},
+    "land": {"verdict": "good", "note": "", "bad_variants": [], "heard": {f"sfx/{n}.ogg": "0" * 16 for n in range(65)}},
+    "hop": {"verdict": "good", "note": "", "bad_variants": [], "heard": now_heard("hop")}}}))
+bad_heard = bl_notes.read_text()
+proc3 = start(port=port3, notes=bl_notes)
+with urllib.request.urlopen(f"http://127.0.0.1:{port3}/api/data", timeout=10) as r:
+    data3 = json.loads(r.read())
+stop(proc3)
+kept = list(BL.glob("review_notes.json.repaired-*"))
+k3 = data3["notes"]["keys"]
+check(len(kept) == 1 and kept[0].read_text() == bad_heard and "heard" not in k3["jump"] and "heard" not in k3["land"]
+      and k3["hop"]["heard"] == now_heard("hop") and any("jump" in w and "land" in w and "heard" in w for w in data3["warnings"]),
+      "a malformed 'heard' is dropped like other bad fields (warning + .repaired copy); a good one is kept")
 
 # 7. headers + misc requests
 st, hdrs, _ = get("/")
@@ -353,8 +542,35 @@ check(dropped >= 8 and get("/api/ping")[0] == 200, f"connections over the cap ar
 # 11. single instance: a second launch on the same port/notes reuses the first
 second = subprocess.run([sys.executable, str(REPO / "tools/audio/review.py"), "--no-browser", "--port", str(PORT), "--notes", str(NOTES)],
                         capture_output=True, text=True, timeout=10)
-check("already running" in second.stdout, "second launch reuses the running server")
+check("already running" in second.stdout and "older version" not in second.stdout, "second launch reuses the running server")
+ping = json.loads(get("/api/ping")[2])
 stop(proc)
+
+
+class OlderServer(BaseHTTPRequestHandler):
+    """An older review.py on the same port and notes: its ping says no "protocol"."""
+
+    def do_GET(self):
+        body = json.dumps({"app": ping["app"], "notes": ping["notes"]}).encode()
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def log_message(self, *args):
+        pass
+
+
+older = ThreadingHTTPServer(("127.0.0.1", PORT), OlderServer)
+threading.Thread(target=older.serve_forever, daemon=True).start()
+third = subprocess.run([sys.executable, str(REPO / "tools/audio/review.py"), "--no-browser", "--port", str(PORT), "--notes", str(NOTES)],
+                       capture_output=True, text=True, timeout=10)
+older.shutdown()
+older.server_close()
+check("already running" in third.stdout and "older version" in third.stdout and "close every Audio Review tab" in third.stdout
+      and "any opened earlier too" in third.stdout,
+      "a launch that finds an older review server running says to close every review tab (an earlier one keeps it running)")
 
 # 12. notes the player has to tidy up: original kept once as .repaired-*, page warned
 NOTES.write_text(json.dumps({"version": 1, "keys": {
