@@ -1,0 +1,113 @@
+/* Bunny Beat Down — game notes page. Same garden-shed palette as the audio review. */
+:root {
+  --bg: #f6efe2;
+  --panel: #fffaf1;
+  --ink: #2b2118;
+  --on-accent: #2b2118;
+  --muted: #5f503f;
+  --line: #e2d5bf;
+  --control: #9a8668;
+  --carrot: #e87a17;
+  --carrot-soft: #fbe2c8;
+  --leaf-soft: #dcefd2;
+  --leaf-ink: #246a17;
+  --berry-soft: #f6d5d1;
+  --berry-ink: #a32e25;
+  --amber-soft: #f7e7bf;
+  --amber-ink: #8a5d00;
+  --sky-soft: #dbe8f7;
+  --sky-ink: #1f5596;
+  --focus: #2f6fd6;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #1b1712;
+    --panel: #26201a;
+    --ink: #f3e9da;
+    --on-accent: #1b1712;
+    --muted: #c4b49c;
+    --line: #3a3128;
+    --control: #806e58;
+    --carrot: #ff9d42;
+    --carrot-soft: #4a3020;
+    --leaf-soft: #23361d;
+    --leaf-ink: #7fcf62;
+    --berry-soft: #45221f;
+    --berry-ink: #ff7b70;
+    --amber-soft: #43361a;
+    --amber-ink: #f2c14e;
+    --sky-soft: #1d2b3f;
+    --sky-ink: #8fbcf5;
+    --focus: #6ea2ff;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #1b1712; --panel: #26201a; --ink: #f3e9da; --on-accent: #1b1712; --muted: #c4b49c; --line: #3a3128;
+  --control: #806e58; --carrot: #ff9d42; --carrot-soft: #4a3020; --leaf-soft: #23361d; --leaf-ink: #7fcf62;
+  --berry-soft: #45221f; --berry-ink: #ff7b70; --amber-soft: #43361a; --amber-ink: #f2c14e;
+  --sky-soft: #1d2b3f; --sky-ink: #8fbcf5; --focus: #6ea2ff; color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink);
+  font: 15px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+.top { padding: 14px 16px 6px; max-width: 900px; margin: 0 auto; }
+.top h1 { margin: 0; font-size: 22px; }
+.sub { margin: 2px 0 0; color: var(--muted); }
+
+.bar { position: sticky; top: 0; z-index: 5; background: var(--bg); border-bottom: 1px solid var(--line); }
+.status, .watch { max-width: 900px; margin: 0 auto; padding: 0 16px; }
+.status { padding-top: 8px; font-weight: 600; }
+.watch { padding-bottom: 8px; color: var(--muted); font-size: 13px; }
+.watch .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; background: var(--control); }
+.watch.on .dot { background: var(--leaf-ink); }
+
+main { max-width: 900px; margin: 0 auto; padding: 12px 16px 60px; }
+.add { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px; margin-bottom: 14px; }
+textarea { width: 100%; resize: vertical; min-height: 4.5em; padding: 8px 10px; border-radius: 8px;
+  border: 1px solid var(--control); background: var(--bg); }
+.add-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 8px; }
+select { padding: 5px 8px; border-radius: 8px; border: 1px solid var(--control); background: var(--panel); }
+.save { flex: 1; min-width: 8em; color: var(--muted); font-size: 13px; }
+.save.err { color: var(--berry-ink); font-weight: 600; }
+
+.btn { border: 1px solid var(--control); background: var(--panel); padding: 6px 12px; border-radius: 8px; cursor: pointer; }
+.btn:hover { border-color: var(--carrot); }
+.btn.primary { background: var(--carrot); border-color: var(--carrot); color: var(--on-accent); font-weight: 600; }
+.btn.small { padding: 3px 10px; font-size: 13px; }
+
+.seg { display: inline-flex; border: 1px solid var(--control); border-radius: 8px; overflow: hidden; margin-bottom: 10px; }
+.seg button { border: 0; background: var(--panel); padding: 6px 12px; cursor: pointer; }
+.seg button + button { border-left: 1px solid var(--control); }
+.seg button.on { background: var(--carrot); color: var(--on-accent); font-weight: 600; }
+.seg button:focus-visible { outline: 2px solid transparent; outline-offset: -2px;
+  box-shadow: inset 0 0 0 2px var(--focus), inset 0 0 0 4px var(--panel); }
+
+.list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.note { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; }
+.note.working { border-color: var(--sky-ink); }
+.note.needs_you { border-color: var(--amber-ink); }
+.head { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; font-size: 13px; color: var(--muted); }
+.id { font-weight: 600; color: var(--ink); }
+.chip { padding: 1px 8px; border-radius: 999px; font-weight: 600; }
+.chip.cat { background: var(--carrot-soft); color: var(--ink); font-weight: 400; }
+.chip.new { background: var(--line); color: var(--ink); }
+.chip.working { background: var(--sky-soft); color: var(--sky-ink); }
+.chip.done { background: var(--leaf-soft); color: var(--leaf-ink); }
+.chip.needs_you { background: var(--amber-soft); color: var(--amber-ink); }
+.when { margin-left: auto; }
+.msg { margin: 8px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.msg.claude { border-left: 3px solid var(--carrot); padding: 4px 0 4px 10px; }
+.msg.claude::before { content: "Claude: "; font-weight: 600; }
+.msg.you + .msg.you { border-top: 1px dashed var(--line); padding-top: 6px; }
+.msg .at { display: block; color: var(--muted); font-size: 12px; }
+.actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+.edit textarea { margin-top: 8px; }
+.empty { color: var(--muted); text-align: center; margin-top: 30px; }
+@media (max-width: 520px) { .when { margin-left: 0; width: 100%; } }

@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Game Notes — Bunny Beat Down</title>
+<link rel="icon" href="/icon.png">
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<header class="top">
+  <h1>📝 Game Notes</h1>
+  <p class="sub">Write down anything you want changed in Bunny Beat Down, one change per note.
+    Claude starts on new notes once you haven't added or edited anything for an hour, then answers each one here.</p>
+</header>
+
+<div class="bar">
+  <div id="status" class="status" role="status" aria-live="polite">Loading…</div>
+  <div id="watch" class="watch"></div>
+</div>
+
+<main>
+  <form id="add" class="add" autocomplete="off">
+    <label for="text" class="sr-only">New note</label>
+    <textarea id="text" rows="3" maxlength="4000"
+      placeholder="What should change? e.g. “Frogs jump too high: make it about half.”  (Ctrl+Enter adds it)"></textarea>
+    <div class="add-row">
+      <label>Category <select id="category"></select></label>
+      <span id="save" class="save" aria-live="polite"></span>
+      <button type="submit" class="btn primary">Add note</button>
+    </div>
+  </form>
+
+  <div class="seg" role="group" aria-label="Show">
+    <button data-filter="open" class="on" aria-pressed="true">Open</button>
+    <button data-filter="done" aria-pressed="false">Done</button>
+    <button data-filter="all" aria-pressed="false">All</button>
+  </div>
+  <ol id="list" class="list"></ol>
+  <p id="empty" class="empty" hidden></p>
+</main>
+<script src="/app.js"></script>
+</body>
+</html>

@@ -42,3 +42,9 @@ tools/audio/review_notes.json.bak
 tools/audio/review_notes.json.tmp
 tools/audio/review_notes.json.repaired-*
 tools/audio/review_baseline.json
+# the owner's game-change notes (tools/notes/notes.py)
+tools/notes/game_notes.json
+tools/notes/game_notes.json.bak
+tools/notes/game_notes.json.tmp
+tools/notes/.game_notes.json.lock
+tools/notes/.game_notes.json.watcher

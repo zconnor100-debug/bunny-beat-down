@@ -176,6 +176,16 @@ exploring agentic software development. That covered the game code and tests,
 plus parallel asset agents that sourced, license-vetted, normalised and
 documented the art and audio pipelines.
 
+Two small local web tools (standard-library Python, loopback only) close the
+loop with a human reviewer:
+
+- **Audio Review** (`tools/audio/review.py`): play every sound, mark it Good,
+  Tweak or Replace, flag bad takes and leave notes. Sounds rebuilt since a
+  verdict are marked for a second listen.
+- **Game Notes** (`tools/notes/notes.py`): write down changes you want, one per
+  note. Once nothing has been added for an hour, Claude claims the new notes,
+  makes the changes, and answers each note on the page (done, or a question).
+
 ## License
 
 Code © 2026 Zachary Connor, [MIT](LICENSE). Third-party assets keep their own licenses. See
