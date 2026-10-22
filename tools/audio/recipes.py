@@ -1175,14 +1175,16 @@ def carrot_impact_flesh(c, v):
     SQUELCH (the first squelch of a real squish recording, slowed and darkened,
     its later bubbles and drips cut off, plus a mushy unpitched 'schlp') over a
     dull noise thud. No droplet grains, no pitched 'bloop' sweeps or sine
-    thumps (those read as water drops)."""
-    r = c.rng
-    name, t, sp = [(3, 0.12, 0.85), (4, 0.3, 0.9), (6, 0.06, 0.9)][v]
-    sq = varispeed(_seg(c, SQUISH, name, t, 0.22, hold=0.035, tau=0.045), sp)
+    thumps (those read as water drops). Takes 1-2 are siblings of take 3 (the
+    owner's favourite): its squelch clip, punch and random draws, a hair lower /
+    higher."""
+    r = c.rng if v == 2 else _rng_of("carrot_impact_flesh", 2)
+    sp = [0.87, 0.93, 0.9][v]
+    sq = varispeed(_seg(c, SQUISH, 6, 0.06, 0.22, hold=0.035, tau=0.045), sp)
     sq = lowpass(highpass(sq, 120, 2), 1800, 2)
-    punch = _tail(c.k("impact-sounds", f"impactPunch_medium_00{v}", speed=0.95), 0.05, 0.05)
+    punch = _tail(c.k("impact-sounds", "impactPunch_medium_002", speed=[0.92, 0.98, 0.95][v]), 0.05, 0.05)
     thud = B.lowbody(r, 0.15, 50, 450, 0.03, attack=0.0008)
-    mush = _mush(r, 0.16, [(0, 600), (0.025, [1800, 1500, 1700][v]), (0.16, 450)])
+    mush = _mush(r, 0.16, [(0, 600), (0.025, [1600, 1800, 1700][v]), (0.16, 450)])
     smack = B.burst(r, 0.05, 1500, 0.7, 0.004, attack=0.0004)
     x = mix(0.3, (thud, 0, -3), (punch, 0, -4), (sq, 0.004, 3), (mush, 0.003, -2), (smack, 0, -14))
     return _glue(x, -11.0, drive=1.7)

@@ -93,8 +93,6 @@
       "Audio/impactPunch_heavy_001.ogg",
       "Audio/impactPunch_heavy_003.ogg",
       "Audio/impactPunch_heavy_004.ogg",
-      "Audio/impactPunch_medium_000.ogg",
-      "Audio/impactPunch_medium_001.ogg",
       "Audio/impactPunch_medium_002.ogg",
       "Audio/impactSoft_heavy_000.ogg",
       "Audio/impactSoft_heavy_001.ogg",
@@ -379,8 +377,6 @@
     ],
     "source_files": [
       "impsplat/impactsplat01.mp3.flac",
-      "impsplat/impactsplat03.mp3.flac",
-      "impsplat/impactsplat04.mp3.flac",
       "impsplat/impactsplat06.mp3.flac",
       "impsplat/impactsplat08.mp3.flac"
     ]
