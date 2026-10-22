@@ -452,12 +452,12 @@ def _ir_shotgun_forend():
 
 
 def _ir_bolt_steel():
-    # bolt-action receiver: dense, mid-forward steel 'clack' that dies within a
-    # few ms (long narrow rings up high read as glassy clinks)
-    return _gun_ir("sniper_bolt_clack",
-                   [(250, -12, 0.004), (500, -5, 0.005), (1000, 0, 0.006), (2000, -1, 0.006),
-                    (4000, -5, 0.005), (8000, -12, 0.003), (16000, -22, 0.002)],
-                   [(1850, 8, -6, 0.008), (3100, 9, -8, 0.006)])
+    # bolt-action receiver: a dense, dead steel 'chk' -- broadband, every band
+    # gone within a few ms and no resonant peaks at all (any narrow ring, even a
+    # short one, read as a glassy clink)
+    return _gun_ir("sniper_bolt_chk",
+                   [(250, -10, 0.004), (500, -4, 0.004), (1000, 0, 0.004), (2000, -2, 0.0035),
+                    (4000, -7, 0.003), (8000, -14, 0.002), (16000, -24, 0.0015)])
 
 
 def _ir_rifle_steel():
@@ -487,33 +487,45 @@ def _ir_small_steel():
 # --------------------------------------------------------------------------
 # weapon recipes
 # --------------------------------------------------------------------------
+def _deep(shot, speed, lp, dur=0.5):
+    """The shot itself pitched well down (a much bigger gun's boom with the
+    real attack), its onset put back on the real one's, with no low-pass
+    pre-ringing ahead of it (the shotgun / sniper 'deep' layer)."""
+    d = lowpass(varispeed(shot[: n_of(dur)], speed), lp, 2)
+    d = d[n_of(PRE / speed - PRE):]
+    return pregate(d, PRE, 0.0003, 0.0)
+
+
 @recipe("pistol_fire", variants=3, loud=-8.5)
 def pistol_fire(c, v):
-    """9 mm pistol, all variants from the owner's favourite take (X_39P take 3):
-    hard snappy crack + tight low-mid thump, slide clack, short outdoor tail.
-    Take 2 sits between takes 1 and 3 (same room take, a hair lower)."""
+    """.45 pistol BLAST, built like the shotgun instead of a short 'pock': the
+    1911's near take for the bang, its own mid-distance take for the room, the
+    shot pitched down underneath for a boom, a low punch thump and a broadband
+    noise blast (no tuned snap or wood knock on top: those read as ping-pong),
+    slide clack, then forest slap-backs and a short outdoor tail."""
     r = c.rng
-    sp = [0.975, 0.99, 1.0][v]                           # small natural variation
-    shot = take(c.o(FF, FFP + "Walther PPQ/X_39P.wav"), 10.68, 0.8, hold=0.06, tau=0.16)   # take 3
-    shot = peak_eq(varispeed(shot, sp), 3500, 2.5, q=0.8)
-    crk = B.snap(r, [3300, 3400, 3500][v], 0.9, 0.003)
-    # the same gun's mid-distance take for body; flipped, its crack lines up with (not
-    # against) the near take's crack in the first 3 ms
-    room = take(c.o(FF, FFP + "Walther PPQ/X_31P.wav"), 1.085, 0.5, hold=0.05, tau=0.12)
-    room = -varispeed(highpass(room, 120), sp)
-    thump = B.kick([168, 170, 172][v], 90, 0.007, 0.014, 0.1, drive=1.6)
-    bod = B.lowbody(r, 0.12, 90, 500, 0.018)
+    t_near, t_mid, sp = [(0.941, 1.542, 0.97), (5.001, 6.655, 1.0), (0.941, 6.655, 1.0)][v]
+    near = varispeed(take(c.o(FF, FFP + "1911/A_42P.wav"), t_near, 0.6, hold=0.08, tau=0.18), sp)
+    near = shelf(near, 5000, 4.0)                        # keep the crack bright over the boom
+    mid = varispeed(take(c.o(FF, FFP + "1911/A_34P.wav"), t_mid, 1.0, hold=0.12, tau=0.3), sp)
+    mid = agree(near, mid, 0.0, lp=400)
+    deep = agree(near, _deep(near, 0.6, 900), 0.0)
+    thump = agree(near, B.kick([112, 118, 115][v], 52, 0.012, 0.035, 0.3, drive=1.7), PRE)
+    blast = B.lowbody(r, 0.6, 60, 1500, 0.06)
+    hiss = B.lowbody(r, 0.3, 2000, 14000, 0.018, attack=0.0005, slope=-1.5)   # the blast's bright air
+    crk = B.crack(r, 0.002, 2500)
     slide = highpass(c.k("rpg-audio", "metalLatch", speed=1.35), 1500)
-    crunch = highpass(c.k("impact-sounds", f"impactWood_light_00{v}", speed=1.4), 400)
-    thump = agree(shot, thump, PRE)
-    x = mix(0.7, (shot, 0, 0), (room, 0.0005, -6), (crk, PRE, -7), (thump, PRE, -3), (bod, PRE, -7))
-    x = saturate(x / np.max(np.abs(x)), 1.3)
-    # short, dense head: 300 Hz-6 kHz body raised for ~12 ms (no 6-16 kHz fizz)
-    x = head_bus(x, PRE, boost_db=8, hp=300, lp=6000, hold=0.012, fade=0.02, drive=1.6, smash_db=-5, thr=-30,
-                 ratio=4)
-    x = mix(0.7, (x, 0, 0), (slide, PRE + [0.033, 0.034, 0.035][v], -19), (crunch, PRE + 0.004, -22))
-    x = reverb(x, r, decay=0.55, mix_db=-17, tail=0.05)
-    return fit(x, -8.5, margin=CLIP_MARGIN, gate=(0.0008, 0.0002), clip=4.0)
+    x = mix(1.3, (near, 0, 0), (mid, 0.0005, -5), (deep, 0, -6), (thump, PRE, -4), (blast, PRE, -8),
+            (hiss, PRE, -10), (crk, PRE, -12))
+    x = saturate(x / np.max(np.abs(x)), 1.5)
+    x = head_bus(x, PRE, boost_db=5, hp=150, lp=3000, hold=0.05, fade=0.08, drive=1.6, smash_db=-6, thr=-30,
+                 ratio=3)
+    x = crack_lift(x, PRE, 5.0, fc=2500.0, until=0.005, fade=0.006)
+    x = mix(1.3, (x, 0, 0), (slide, PRE + 0.034, -21))
+    x = shelf(x, 7000, 7.0)                              # air: the crack over the boom
+    x = _rolling_echoes(x, r, [(0.16, -17, 2200), (0.38, -21, 1500), (0.7, -26, 1000)])
+    x = reverb(x, r, decay=1.1, mix_db=-15, tail=0.08)[: n_of(1.3)]
+    return fit(x, -8.5, margin=CLIP_MARGIN, clip=3.0)
 
 
 @recipe("shotgun_fire", variants=3, loud=-7.0)
@@ -617,102 +629,92 @@ def shotgun_pump(c, v):
 
 @recipe("lmg_fire", variants=4, loud=-11.0)
 def lmg_fire(c, v):
-    """LMG (7.62): the same chunky AK core, belt rattle and short tail as before,
-    a bit deeper overall: slower varispeed, lower/heavier (polarity-matched) body
-    thump, more low-end EQ and a touch less fizz; mechanics a few % lower."""
+    """LMG (7.62): the same chunky AK core, belt rattle and short tail, deeper
+    overall: the shot a few % slower again, a pitched-down copy of it under the
+    real one for a heavy low-mid body, a lower thump plus a dark noise blast,
+    and less fizz on top."""
     r = c.rng
     rec = c.o(FF, FFP + "AK-47/C_28P.wav")  # near perspective, 4 single takes
     shot = take(rec, [6.03, 3.26, 6.03, 9.175][v], 0.5, hold=0.05, tau=0.09)   # take 1: take 3's shot,
-    shot = varispeed(shot, [0.895, 0.90, 0.93, 0.91][v])                         # deeper
-    shot = peak_eq(shot, 115, 5.0, q=0.9)                        # was +4 dB @ 130 Hz
-    shot = shelf(shot, 5000, -1.5)                               # a touch less fizz
+    shot = varispeed(shot, [0.87, 0.875, 0.9, 0.885][v])                         # deeper (was 0.895-0.93)
+    shot = peak_eq(shot, 115, 5.0, q=0.9)
+    deep = agree(shot, _deep(shot, 0.6, 750, 0.4), 0.0)
+    shot = shelf(shot, 4000, -3.5)                               # less fizz (was -1.5 dB @ 5 kHz)
     crk = B.crack(r, 0.0025, 3200)
-    body = B.thump(78, 46, 0.02, 0.045, 0.22)                   # was 85 -> 50 Hz
+    body = agree(shot, B.thump(70, 42, 0.02, 0.05, 0.25), PRE)   # was 78 -> 46 Hz
+    blast = B.lowbody(r, 0.35, 60, 1000, 0.04)
     links = highpass(c.k("rpg-audio", "beltHandle1", speed=1.15), 1500)
     latch = highpass(c.k("rpg-audio", "metalLatch", dur=0.12, speed=1.05), 1100)
     crunch = highpass(c.k("impact-sounds", f"impactWood_light_00{v % 5}", speed=1.2), 350)
-    body = agree(shot, body, PRE)
-    x = mix(0.5, (shot, 0, 0), (crk, PRE, -11.5), (body, PRE, -9), (links, PRE + 0.05, -25),
-            (latch, PRE + 0.04, -23), (crunch, PRE + 0.004, -22))
+    # (the 6.03 s shot of takes 1 and 3 has hotter mids: more thump under it keeps the low end even)
+    x = mix(0.55, (shot, 0, 0), (deep, 0, -6), (crk, PRE, -13), (body, PRE, [-5, -8, -6, -8][v]),
+            (blast, PRE, -10), (links, PRE + 0.05, -25), (latch, PRE + 0.04, -23), (crunch, PRE + 0.004, -24))
     x = saturate(x, 1.5)
-    x = reverb(x, r, decay=0.38, mix_db=-21, tail=0.03)[: n_of(0.52)]
+    x = reverb(x, r, decay=0.42, mix_db=-20, tail=0.03)[: n_of(0.55)]
     return fit(x, -11.0)
 
 
 @recipe("smg_fire", variants=4, loud=-11.0)
 def smg_fire(c, v):
-    """9 mm SMG (Carl Gustav M45): very fast punchy attack, tight body, short tail
-    so 900 rpm bursts (one shot per ~67 ms) stay crisp but read as gunfire."""
-    r = c.rng if v != 2 else _fixed_rng("smg take 3")   # take 3: fresh body/crack draws
-    path, t, sp, dur = [("Carl Gustav M45/G_31P.wav", 0.31, 1.0, 0.25),
-                        ("Carl Gustav M45/G_33P.wav", 4.358, 1.02, 0.088),   # mid-burst shot
-                        ("Carl Gustav M45/G_31P.wav", 6.727, 0.985, 0.25),
-                        ("Carl Gustav M45/G_33P.wav", 0.394, 1.01, 0.088)][v]
-    shot = varispeed(take(c.o(FF, FFP + path), t, dur, hold=0.03, tau=0.05), sp)
-    crk = B.snap(r, 3800, 0.9, 0.0015)
-    thump = B.kick([215, 222, 210, 218][v], 110, 0.005, 0.01, 0.07, drive=1.4)
-    bod = B.lowbody(r, 0.09, 110, 600, 0.012)
-    crunch = highpass(c.k("impact-sounds", f"impactWood_light_00{(v + 1) % 5}", speed=1.7), 500)
-    thump = agree(shot, thump, PRE)
-    x = mix(0.25, (shot, 0, 0), (crk, PRE, -9), (thump, PRE, -13), (bod, PRE, -13))
-    x = saturate(x / np.max(np.abs(x)), 1.3)
-    x = head_bus(x, PRE, boost_db=5, hp=300, hold=0.015, fade=0.025, drive=1.5)
-    x = mix(0.25, (x, 0, 0), (crunch, PRE + 0.003, -24))
-    x = reverb(x, r, decay=0.3, mix_db=-19, tail=0.02)
-    return fit(x, -11.0)
-
-
-_RIFLE_BASE_LOUD = -10.0  # the level rifle_fire's slap-back + tail were approved at
-
-
-def _rifle_fire_base(c, v):
-    """The original 5.56 render (crack + body thump, slap-back, medium outdoor
-    tail); not a recipe of its own: rifle_fire keeps its tail from ~65 ms on."""
+    """SMG on the PPSh's near takes (a louder, denser 7.62 Tokarev bark than the
+    old 9 mm Swedish K): the shot pitched down underneath for a punchy body, a
+    short low thump and noise blast, one quick slap-back; short enough that
+    900 rpm bursts (one shot per ~67 ms) stay crisp."""
     r = c.rng
-    # two near-perspective AR-15 takes: take 1 re-uses take 2's shot a little
-    # lower, take 3 the other shot a few % brighter
-    t, sp = [(5.66, 0.975), (5.66, 1.0), (0.705, 1.035)][v]
-    shot = varispeed(take(c.o(FF, FFP + "AR-15/D_32P.wav"), t, 1.2, hold=0.14, tau=0.4), sp)
-    crk = B.crack(r, 0.0025, 3500)
-    body = B.thump(95, 55, 0.025, 0.05, 0.3)
-    bolt = highpass(c.k("rpg-audio", "metalClick", start=0.085, dur=0.07, speed=1.2), 1200)
-    crunch = highpass(c.k("impact-sounds", f"impactWood_light_00{(v + 2) % 5}", speed=1.3), 400)
-    x = mix(1.1, (shot, 0, 0), (crk, PRE, [-9, -9, -8][v]), (body, PRE, [-11, -11, -12][v]),
-            (bolt, PRE + 0.03, -21), (crunch, PRE + 0.004, -22))
-    x = saturate(x, 1.4)
-    x = _rolling_echoes(x, r, [(0.17, -20, 2200)])
-    return reverb(x, r, decay=1.0, mix_db=-15, tail=0.1)
+    t, sp = [(0.968, 1.0), (4.387, 0.98), (8.242, 1.02), (11.421, 0.99)][v]
+    shot = varispeed(take(c.o(FF, FFP + "PPSh/P_30P.wav"), t, 0.3, hold=0.035, tau=0.06), sp)
+    shot = shelf(shot, 5000, 4.0)                        # keep the crack bright over the boom
+    deep = agree(shot, _deep(shot, 0.64, 1000, 0.3), 0.0)
+    thump = agree(shot, B.kick([148, 152, 145, 150][v], 62, 0.008, 0.022, 0.15, drive=1.6), PRE)
+    blast = B.lowbody(r, 0.25, 70, 1500, 0.03)
+    hiss = B.lowbody(r, 0.15, 2000, 14000, 0.012, attack=0.0005, slope=-1.5)   # the blast's bright air
+    crk = B.crack(r, 0.0015, 3000)
+    crunch = highpass(c.k("impact-sounds", f"impactWood_light_00{(v + 1) % 5}", speed=1.2), 500)
+    x = mix(0.45, (shot, 0, 0), (deep, 0, -7), (thump, PRE, -5), (blast, PRE, -9), (hiss, PRE, -10),
+            (crk, PRE, -12))
+    x = saturate(x / np.max(np.abs(x)), 1.5)
+    x = head_bus(x, PRE, boost_db=5, hp=150, lp=3000, hold=0.02, fade=0.03, drive=1.5, smash_db=-6, thr=-30,
+                 ratio=3)
+    x = crack_lift(x, PRE, 5.0, fc=2500.0, until=0.004, fade=0.005)
+    x = mix(0.45, (x, 0, 0), (crunch, PRE + 0.003, -26))
+    x = shelf(x, 7000, 4.0)                              # air: the crack over the boom
+    x = _rolling_echoes(x, r, [(0.11, -20, 1800)])
+    x = reverb(x, r, decay=0.4, mix_db=-18, tail=0.03)[: n_of(0.45)]
+    return fit(x, -11.0, margin=CLIP_MARGIN, clip=2.0)
 
 
 @recipe("rifle_fire", variants=3, loud=-8.5)
 def rifle_fire(c, v):
-    """Assault rifle (5.56): the punch goes into the first ~10 ms (tight thump,
-    lifted crack, dense 150 Hz-2.5 kHz body that never out-peaks the crack's
-    moment), then the original render's slap-back and tail at exactly their
-    original level ('otherwise good')."""
-    x0 = _rifle_fire_base(c, v)          # the original render: its slap-back / tail are kept
+    """Assault rifle (5.56) built like the shotgun: the AR-15's near take for the
+    crack, its mid-distance take for body and room, the shot pitched down
+    underneath for a heavy boom, a punch thump + sub + noise blast, then
+    slap-backs and an outdoor tail (kept to ~1 s: it fires at 600 rpm)."""
     r = c.rng
-    t, sp = [(5.66, 0.975), (5.66, 1.0), (0.705, 1.035)][v]
-    shot = varispeed(take(c.o(FF, FFP + "AR-15/D_32P.wav"), t, 1.2, hold=0.14, tau=0.4), sp)
-    crk = B.snap(r, 3400, 0.9, 0.002)
-    thump = B.kick([135, 135, 140][v], 64, 0.009, 0.012, 0.2, drive=1.6)
-    sub = B.thump(70, 48, 0.03, 0.07, 0.45)              # a little of the old low weight
-    bod = B.lowbody(r, 0.18, 80, 500, 0.03)
+    t, tm, sp = [(5.66, 3.91, 0.975), (5.66, 0.549, 1.0), (0.705, 3.91, 1.035)][v]
+    near = varispeed(take(c.o(FF, FFP + "AR-15/D_32P.wav"), t, 0.8, hold=0.1, tau=0.25), sp)
+    near = shelf(near, 5000, 4.0)                        # keep the crack bright over the boom
+    mid = varispeed(take(c.o(FF, FFP + "AR-15/D_24P.wav"), tm, 1.0, hold=0.12, tau=0.3), sp)
+    mid = agree(near, mid, 0.0, lp=400)
+    deep = agree(near, _deep(near, 0.58, 850), 0.0)
+    thump = agree(near, B.kick([108, 108, 114][v], 50, 0.012, 0.05, 0.4, drive=1.7), PRE)
+    sub = agree(near, B.thump(66, 44, 0.03, 0.08, 0.5), PRE, lp=120)
+    blast = B.lowbody(r, 0.6, 80, 1800, 0.05)
+    hiss = B.lowbody(r, 0.3, 2000, 14000, 0.02, attack=0.0005, slope=-1.5)    # the blast's bright air
+    crk = B.crack(r, 0.0025, 3500)
     bolt = highpass(c.k("rpg-audio", "metalClick", start=0.085, dur=0.07, speed=1.2), 1200)
     crunch = highpass(c.k("impact-sounds", f"impactWood_light_00{(v + 2) % 5}", speed=1.3), 400)
-    thump = agree(shot, thump, PRE)
-    sub = agree(shot, sub, PRE, lp=120)
-    x = mix(1.1, (shot, 0, 0), (crk, PRE, [-9, -9, -8][v]), (thump, PRE, [-4, -2, -4][v]), (sub, PRE, -18),
-            (bod, PRE, [-12, -13, -10][v]))
-    x = saturate(x / np.max(np.abs(x)), 1.4)
-    x = head_bus(x, PRE, boost_db=[6, 6, 8][v], hp=150, lp=2500, hold=0.005, fade=0.01, drive=1.5, smash_db=-5,
-                 thr=-30, ratio=4)
-    x = crack_lift(x, PRE, [3, 3, 4][v], fc=2000.0, until=0.0025, fade=0.0015, lead=0.0002)
-    x = mix(1.1, (x, 0, 0), (bolt, PRE + 0.03, -21), (crunch, PRE + 0.004, -22))
-    x = reverb(x, r, decay=1.0, mix_db=-15, tail=0.1)
-    x = head_sub_fix(x, end=0.03, fc=12.0)
-    return splice(x, x0, -8.5, _RIFLE_BASE_LOUD, 0.035, 0.065, margin=CLIP_MARGIN, gate=(0.0008, 0.0002),
-                  clip=8.0, post=hit_clamp(x0, -0.8))
+    # less deep / sub than the shotgun and a louder crack: a sharper, cracking bang
+    x = mix(1.0, (near, 0, 0), (mid, 0.0005, -5), (deep, 0, -9), (thump, PRE, -4), (sub, PRE, -15),
+            (blast, PRE, -8), (hiss, PRE, -10), (crk, PRE, -7))
+    x = saturate(x / np.max(np.abs(x)), 1.5)
+    x = head_bus(x, PRE, boost_db=5, hp=150, lp=3000, hold=0.05, fade=0.08, drive=1.6, smash_db=-6, thr=-30,
+                 ratio=3)
+    x = crack_lift(x, PRE, 6.0, fc=2500.0, until=0.005, fade=0.006)
+    x = mix(1.0, (x, 0, 0), (bolt, PRE + 0.03, -21), (crunch, PRE + 0.004, -24))
+    x = shelf(x, 7000, 8.0)                              # air: the crack over the boom
+    x = _rolling_echoes(x, r, [(0.17, -17, 2200), (0.42, -22, 1400)])
+    x = reverb(x, r, decay=0.9, mix_db=-15, tail=0.08)[: n_of(1.0)]
+    return fit(x, -8.5, margin=CLIP_MARGIN, clip=3.0)
 
 
 _SNIPER_BASE_LOUD = -8.0  # the level sniper_fire's echo / trail-off were approved at
@@ -772,46 +774,46 @@ def sniper_fire(c, v):
 
 @recipe("sniper_bolt", loud=-13.5, src="mixed")
 def sniper_bolt(c, v):
-    """Bolt cycle that ends in a firm CLACK: the handle lifts (dull click), the
-    bolt is ripped back onto its stop and shoved forward (the real Model 12
-    action strokes, a touch quicker), then the handle snaps down into its notch
-    -- the loudest, densest hit, with the stock's low-mid knock behind it.
-    Damped steel throughout (no ringing clinks), and a faint tick of the spent
-    carrot stub."""
+    """Bolt cycle ending in a firm 'chk-CLACK' as it snaps into place: the
+    handle lifts (dull 'tk'), the bolt is pulled back onto its stop and shoved
+    forward (the real Model 12 action strokes the approved pump uses, slowed a
+    little: a heavier part), then the handle slams down into its notch -- the
+    loudest hit: a dead-steel clack with a broadband 'chk' and a solid noise
+    body behind it. No ringing modes and no little tinkling parts (every hit is
+    damped noise), and the top rolled off above 8 kHz."""
     r = c.rng
     ir = _ir_bolt_steel()
-    sp = 1.08  # bolt parts: a little smaller / quicker than the pump's
-    back = varispeed(_rec(c, "Model 12/K_17P.wav", 3.075, 3.215, hp=200, thr_db=-24, ratio=4), sp)
-    fwd = varispeed(_rec(c, "Model 12/K_17P.wav", 3.955, 4.04, hp=200, thr_db=-24, ratio=4), sp)
+    sp = 0.95
+    back = varispeed(_rec(c, "Model 12/K_17P.wav", 3.075, 3.215, hp=180, thr_db=-24, ratio=4), sp)
+    fwd = varispeed(_rec(c, "Model 12/K_17P.wav", 3.955, 4.04, hp=180, thr_db=-24, ratio=4), sp)
     b_clk, f_clk = (3.160 - 3.075) / sp, (4.002 - 3.955) / sp
-    T_LIFT, T_BACK, T_FWD, T_LOCK = 0.004, 0.17, 0.36, 0.45
+    T_LIFT, T_BACK, T_FWD, T_LOCK = 0.004, 0.16, 0.34, 0.43
 
-    # 1. lift: the cocking cam turns over (dull click)
-    lift = B.modal_hit(r, ir, hard=0.0002, rebounds=((0.004, -12),), tick_db=-10, tick_fc=3000)
-    lift_body = _nbody(r, 900, 1.0, 0.006)
-    # 2. back: rails, then the bolt stop
-    rail_b = B.scrape(r, 0.11, 1200, 6000, ir=ir, grains=420, rough=0.8,
-                      shape=((0, 0), (0.15, 0.7), (0.85, 1), (1, 0)))
-    stop = B.modal_hit(r, ir, hard=0.00018, rebounds=((0.005, -10),), tick_db=-8, tick_fc=3000)
-    stub = B.unit(highpass(c.k("impact-sounds", "impactWood_light_002", speed=1.9), 1200))
-    # 3. forward: rails, the bolt seats
-    rail_f = B.scrape(r, 0.09, 1100, 5500, ir=ir, grains=400, rough=0.8,
-                      shape=((0, 0), (0.2, 1), (0.9, 0.8), (1, 0)))
-    seat = B.modal_hit(r, ir, hard=0.00016, rebounds=((0.004, -10),), tick_db=-8, tick_fc=3000)
-    # 4. lock: the handle snaps down into its notch (CLACK)
-    lock = B.modal_hit(r, ir, hard=0.00014, rebounds=((0.003, -9),), tick_db=-6, tick_fc=3200)
-    lock_body = _thock(r, 420, 230, 0.012)
-    lock_knock = _nbody(r, 650, 1.0, 0.01)
+    def clack(hard, body_fc, body_tau, rebound=-10.0):
+        """One damped steel hit (noise strike through the dead body, one small
+        rebound) + an unpitched low-mid knock."""
+        hit = B.modal_hit(r, ir, hard=hard, rebounds=((0.003, rebound),), tick_db=-14, tick_fc=2500)
+        return hit, _nbody(r, body_fc, 0.8, body_tau)
 
-    x = _mixs(0.8,
-              (lift, T_LIFT, -8), (lift_body, T_LIFT, -14),
-              (back, T_BACK - b_clk, -2), (rail_b, T_BACK - 0.11, -22), (stop, T_BACK, -8),
-              (stub, T_BACK + 0.07, -22),
-              (fwd, T_FWD - f_clk, 0), (rail_f, T_FWD - 0.09, -22), (seat, T_FWD, -8),
-              (lock, T_LOCK, -1), (lock_body, T_LOCK, -6), (lock_knock, T_LOCK, -9))
-    x = peak_eq(x, 2200, 2.0, q=0.9)  # presence of the clack, not sparkle
-    x = saturate(x, 1.3)
-    return _trim_head(_room(x, r, mix_db=-22))
+    lift, lift_body = clack(0.0003, 800, 0.005)
+    stop, stop_body = clack(0.0002, 600, 0.007)
+    seat, seat_body = clack(0.0002, 550, 0.008)
+    lock, lock_body = clack(0.00015, 420, 0.012, rebound=-12.0)
+    rail_b = B.scrape(r, 0.1, 1500, 6000, grains=420, rough=0.8, shape=((0, 0), (0.15, 0.7), (0.85, 1), (1, 0)))
+    rail_f = B.scrape(r, 0.08, 1500, 6000, grains=400, rough=0.8, shape=((0, 0), (0.2, 1), (0.9, 0.8), (1, 0)))
+    shk_s = B.shk(r, 0.03, 2000, 9000, 0.007)
+    shk_l = B.shk(r, 0.035, 1800, 9000, 0.009)
+    heft = B.lowbody(r, 0.06, 120, 1200, 0.012, attack=0.0004)   # the weight of the slam
+
+    x = _mixs(0.7,
+              (lift, T_LIFT, -9), (lift_body, T_LIFT, -15),
+              (back, T_BACK - b_clk, -2), (rail_b, T_BACK - 0.1, -24), (stop, T_BACK, -9),
+              (stop_body, T_BACK, -14), (shk_s, T_BACK, -16),
+              (fwd, T_FWD - f_clk, -4), (rail_f, T_FWD - 0.08, -24), (seat, T_FWD, -12), (seat_body, T_FWD, -16),
+              (lock, T_LOCK, 0), (lock_body, T_LOCK, -4), (shk_l, T_LOCK, -6), (heft, T_LOCK, -3))
+    x = lowpass(peak_eq(x, 1600, 2.5, q=0.8), 8000, 2)  # presence of the clack, no sparkle
+    x = saturate(x, 1.4)
+    return _trim_head(_room(x, r, mix_db=-24))
 
 
 @recipe("scope_in", loud=-20.0, src="synth")
@@ -1151,26 +1153,39 @@ def carrot_impact_wood(c, v):
     return _glue(x, -12.5, drive=1.4)
 
 
+def _mush(r, dur, fc_pts, rough_hz=45.0):
+    """Unpitched wet squelch: dark noise whose low-pass opens and closes along
+    fc_pts [(t, Hz)] (something soft squashed flat) with a rough, sticky
+    amplitude flutter -- no resonant peak, so nothing reads as a drip or a 'bloop'."""
+    n = n_of(dur)
+    ts, fs = zip(*fc_pts)
+
+    def g(tt, f):
+        fc = np.exp(np.interp(tt, ts, np.log(fs)))
+        return 1.0 / np.sqrt(1.0 + (f / fc) ** 6) * f * f / (f * f + 120.0 ** 2)
+    y = stft_filter(colored(n, r, -3), g, win=512, hop=128)
+    am = np.abs(lowpass(white(n, r), rough_hz, 1))
+    am = 0.35 + 0.65 * am / (np.max(am) + 1e-12)
+    return B.unit(y * am) * env_exp(n, 0.002, dur / 3)
+
+
 @recipe("carrot_impact_flesh", variants=3, loud=-11.0)
 def carrot_impact_flesh(c, v):
-    """Hit-confirm: a solid punch with a short, wet, meaty low-mid squelch.
-    No slime bubbles, no droplet plinks, no resonant 'bloop' sweep."""
+    """Hit-confirm: a solid punch into something soft and meaty -- a thick, wet
+    SQUELCH (the first squelch of a real squish recording, slowed and darkened,
+    its later bubbles and drips cut off, plus a mushy unpitched 'schlp') over a
+    dull noise thud. No droplet grains, no pitched 'bloop' sweeps or sine
+    thumps (those read as water drops)."""
     r = c.rng
-    src, name, t = [(SQUISH, 3, 0.1), (SQUISH, 6, 0.05), (SQUISH, 3, 0.1)][v]
-    sq = varispeed(_seg(c, src, name, t, 0.32, hold=0.04, tau=0.06), [0.88, 0.85, 0.95][v])
-    sq = peak_eq(lowpass(highpass(sq, 140, 2), 1800, 2), 420, 6.0, q=0.8)
+    name, t, sp = [(3, 0.12, 0.85), (4, 0.3, 0.9), (6, 0.06, 0.9)][v]
+    sq = varispeed(_seg(c, SQUISH, name, t, 0.22, hold=0.035, tau=0.045), sp)
+    sq = lowpass(highpass(sq, 120, 2), 1800, 2)
     punch = _tail(c.k("impact-sounds", f"impactPunch_medium_00{v}", speed=0.95), 0.05, 0.05)
-    low = B.thump(155, 75, 0.02, 0.045, 0.25)
-    # broad (low-Q, so no resonant 'bloop') low-mid formant sweep: the "schlp"
-    shlp = B.squelch(r, 0.16, [(0, 280), (0.035, [700, 620, 760][v]), (0.16, 330)], q=1.1,
-                     amp_pts=[(0, 0), (0.006, 1), (0.06, 0.55), (0.16, 0)])
-    shlp = lowpass(shlp, 1400, 2)
-    squish = lowpass(B.wet_grains(r, 0.3, 46, 260, 900, glen=(0.008, 0.024), t_tau=0.035, start=0.004),
-                     1400, 2)
-    smack = B.burst(r, 0.05, 1700, 0.7, 0.004, attack=0.0004)
-    x = mix(0.3, (low, 0, [-3, 0, -3][v]), (punch, 0, -5), (sq, 0.006, 4), (shlp, 0.004, -2),
-            (squish, 0, -5), (smack, 0, -13))
-    return _glue(x, -11.0, drive=1.5)
+    thud = B.lowbody(r, 0.15, 50, 450, 0.03, attack=0.0008)
+    mush = _mush(r, 0.16, [(0, 600), (0.025, [1800, 1500, 1700][v]), (0.16, 450)])
+    smack = B.burst(r, 0.05, 1500, 0.7, 0.004, attack=0.0004)
+    x = mix(0.3, (thud, 0, -3), (punch, 0, -4), (sq, 0.004, 3), (mush, 0.003, -2), (smack, 0, -14))
+    return _glue(x, -11.0, drive=1.7)
 
 
 @recipe("headshot", variants=2, loud=-11.0)
@@ -1338,11 +1353,13 @@ def _cut_at(x, t, dur, hold, tau, search=0.006, pre=0.004):
     return fade(B.unit(y), max(0.002, pre - 0.002), 0.006), a
 
 
-def _step_leaf(c, v, hold=0.012, tau=0.018, dur=0.12, hp=450.0, lead=0.010):
+def _step_leaf(c, v, hold=0.012, tau=0.018, dur=0.12, hp=450.0, lead=0.010, slow=1.0):
     """Footstep crunch: the variant's own crackle event, short and crisp, with
     `lead` s of the quieter rustle before it swelling in (the leaves start to
-    give as the weight comes on)."""
+    give as the weight comes on). `slow` < 1 plays the crackle slower (and a
+    little lower); hold / tau / dur stay in output time."""
     f, t, sp = _STEP_LEAF[v % len(_STEP_LEAF)]
+    sp *= slow
     x = highpass(c.o(TW, f), hp, 2)
     y, _ = _cut_at(x, t, dur * sp, hold * sp, tau * sp, pre=(0.004 + lead) * sp)
     return varispeed(y, sp) if sp != 1.0 else y
@@ -1350,7 +1367,9 @@ def _step_leaf(c, v, hold=0.012, tau=0.018, dur=0.12, hp=450.0, lead=0.010):
 
 @recipe("footstep_grass", variants=5, loud=-14.5, src="mixed")
 def footstep_grass(c, v):
-    """Paw pad, then the dry grass/leaves crunch under the weight ~45 ms later.
+    """Paw pad, then the dry grass/leaves crunch under the weight ~50 ms later,
+    unfolding a little slowly: the crackle played ~12 % slower and held longer,
+    the blades and swish drawn out with it.
 
     Enemy steps behind the listener go through SFXBehind (1.7 kHz low-pass):
     the crunch is mostly lost there, so the pad must carry the rear step. With
@@ -1359,8 +1378,8 @@ def footstep_grass(c, v):
     """
     r = c.rng
     pre = 0.004  # pre-roll: finish()'s 1.5 ms fade-in must not eat the paw's attack
-    gap = 0.040  # paw lands ... blades + leaf crackle (the leaf's own onset is ~6 ms
-    lead = 0.010  # later), after a 10 ms swell of the rustle that leads into it
+    gap = 0.046  # paw lands ... blades + leaf crackle (the leaf's own onset is ~6 ms
+    lead = 0.013  # later), after a 13 ms swell of the rustle that leads into it
     # soft paw pad: Kenney grass thud (minus its sub-sonic DC) + a carpet pad,
     # kept tight (12 ms, then a 10 ms tail) so it doesn't smear into the crunch
     thud = c.k("impact-sounds", f"footstep_grass_00{v}", speed=1.12, dur=0.2)
@@ -1371,15 +1390,15 @@ def footstep_grass(c, v):
     tt = times(len(pad))
     pad = pad * np.where(tt < 0.012, 1.0, np.exp(-(tt - 0.012) / 0.010))
     # faint 500-1600 Hz crush of stalks folding, between pad and crunch
-    crush = B.grains(r, 0.08, 20, 500.0, 1600.0, glen=(0.002, 0.007), t_tau=0.02)
+    crush = B.grains(r, 0.1, 20, 500.0, 1600.0, glen=(0.002, 0.007), t_tau=0.026)
     # crunchy dry grass / leaves (crisp 2-8 kHz = easy to locate), dense on its
     # own bus so the compressor doesn't duck the pad
-    leaf = lowpass(_step_leaf(c, v, lead=lead), 10000, 1)
-    blades = _blades(r, 0.1, 36, t_tau=0.016)
-    sw = _swish(r, 0.06, 4200 + 400 * v, 0.9, 0.003, 0.014)
+    leaf = lowpass(_step_leaf(c, v, hold=0.017, tau=0.026, dur=0.16, lead=lead, slow=0.88), 10000, 1)
+    blades = _blades(r, 0.14, 36, t_tau=0.026)
+    sw = _swish(r, 0.085, 3900 + 350 * v, 0.9, 0.004, 0.022)
     crunch = squash(mix(0, (_L(leaf), 0.002, 0), (_L(blades), lead, -7), (_L(sw), lead, -12)),
                     -6.0, 3.0)
-    x = mix(0.16, (_L(pad), pre, -1.0), (_L(crush), pre + 0.018, -12.0),
+    x = mix(0.24, (_L(pad), pre, -1.0), (_L(crush), pre + 0.018, -12.0),
             (_L(crunch), pre + gap - lead, 0.0))
     return saturate(squash(x, -2.0, 1.5), 1.4)
 
@@ -1544,44 +1563,67 @@ def crate_open(c, v):
                (hint, T + t0, at(hint, -16.0)), (shimmer, T + t0, at(shimmer, -30.0)))
 
 
+def _ir_gear():
+    # the armour's little clockwork: small, dead steel parts (no resonant rings)
+    return _gun_ir("armor_gear",
+                   [(1000, -9, 0.002), (2000, -3, 0.0025), (4000, 0, 0.0025), (8000, -5, 0.002),
+                    (16000, -16, 0.0015)])
+
+
+def _ratchet(r, ir, dur, rate_pts, hard=0.00012):
+    """Gear teeth stripping / a ratchet spinning loose: a train of small hard
+    clicks through the mechanism's body; the click rate follows rate_pts
+    [(t, Hz)] and the level swells in and dies away."""
+    n = n_of(dur + 0.03)
+    out = np.zeros(n)
+    ts, rs = zip(*rate_pts)
+    t = 0.0
+    while t < dur:
+        hit = B.modal_hit(r, ir, hard=hard, rebounds=(), tick_db=-10, tick_fc=3000)
+        i = n_of(t)
+        seg = hit[: n - i]
+        g = r.uniform(0.55, 1.0) * np.sin(np.pi * min(1.0, (t + 0.01) / (dur + 0.01))) ** 0.6
+        out[i:i + len(seg)] += seg * g
+        t += r.uniform(0.85, 1.15) / np.exp(np.interp(t, ts, np.log(rs)))
+    return B.unit(out)
+
+
 @recipe("armor_break", variants=2, loud=-10.5)
 def armor_break(c, v):
-    """The acorn-and-bark armour breaking apart like a little contraption: the
-    shell cracks (fracture snap, nut-shell knock, a real crunch and wood
-    splinter over a dull body hit), its clasp snaps open and a plate pops off
-    (real latch + light plate hit), a small spring goes 'sproing' (the
-    whimsical touch), and the pieces clatter away, bouncing to a stop."""
+    """The acorn-and-bark armour's little mechanism breaking apart: a heavy
+    metal CLUNK over the shell's crunch, then its gears strip ('krrrk', a fast
+    ratchet that spins loose and slows), the clasp snaps open and a bracket
+    clanks off, a spring goes 'sproing' (the whimsical touch), and the metal
+    bits and screws clatter away, bouncing to a stop. Mechanical, not woody:
+    no wood knocks or splinters, no ringing shell."""
     r = c.rng
-    s = [1.0, 0.9][v]
-    # 1. the shell cracks
-    snap = B.crack(r, 0.0025, 2600)
-    shell = B.struck(r, [(650 * s, 0.024, 1.0), (1290 * s, 0.016, 0.7), (2100 * s, 0.01, 0.5),
-                         (3200 * s, 0.006, 0.3)], 0.15, exc_ms=0.8)
-    crunch = _seg(c, CRUNCH, [3, 1][v], [0.11, 0.08][v], 0.6, hold=0.07, tau=0.11)
+    s = [1.0, 0.92][v]
+    # 1. the hit: a heavy metal clunk + plate weight over the shell crunch
+    clunk = _onset(c.k("impact-sounds", f"impactMetal_heavy_00{[1, 3][v]}", speed=s))
+    plate = lowpass(_onset(c.k("impact-sounds", f"impactPlate_heavy_00{[1, 3][v]}", speed=s)), 2000, 2)
+    crunch = _seg(c, CRUNCH, [3, 1][v], [0.11, 0.08][v], 0.4, hold=0.05, tau=0.08)
     crunch = lowpass(highpass(crunch, 250, 2), 7000, 1)
-    name, t = [("crack03", 0.17), ("crack01", 0.22)][v]
-    splint = highpass(_seg(c, WOOD, name, t, 0.45, hold=0.06, tau=0.1), 900, 2)
-    hit = lowpass(c.k("impact-sounds", f"impactWood_heavy_00{[1, 3][v]}"), 1400, 2)
-    body = B.thump(160, 80, 0.02, 0.05, 0.3)
-    # 2. the mechanism gives: clasp snaps open, a plate pops off
+    snap = B.crack(r, 0.0025, 2600)
+    body = B.thump(150, 75, 0.02, 0.05, 0.3)
+    # 2. the mechanism gives: gears strip, the clasp snaps open, a bracket clanks off
+    gears = _ratchet(r, _ir_gear(), 0.17, [(0, 80), (0.06, 150), (0.17, 55)])
     latch = highpass(_onset(c.k("rpg-audio", "metalLatch", speed=[1.15, 1.05][v])), 700, 2)
-    plate = highpass(_onset(c.k("impact-sounds", f"impactPlate_light_00{[1, 3][v]}", speed=[1.1, 1.0][v])), 400, 2)
+    bracket = highpass(_onset(c.k("impact-sounds", f"impactMetal_medium_00{[1, 2][v]}", speed=[1.1, 1.0][v])),
+                       300, 2)
     # 3. whimsy: a little spring sproings loose
     spring = highpass(B.boing([520, 440][v], dur=0.32, wobble=0.18, rate=[28, 24][v], rise=0.6), 300, 2)
-    # 4. the pieces clatter away: bounces closing up and fading
-    clatter, tc, gap, g = [], 0.2, 0.09, -4.0
-    for k, stem in enumerate(("impactWood_light", "impactPlate_light", "impactWood_light",
-                              "impactPlate_light", "impactWood_light")):
-        clip = _onset(c.k("impact-sounds", f"{stem}_00{(k + 2 * v) % 5}", speed=r.uniform(1.5, 2.1)))
-        clatter.append((highpass(clip, 600, 2), tc, g + r.uniform(-1.5, 1.5)))
+    # 4. metal bits and screws clatter away: bounces closing up and fading
+    clatter, tc, gap, g = [], 0.24, 0.085, -6.0
+    for k, stem in enumerate(("impactTin_medium", "impactMetal_medium", "impactTin_medium",
+                              "impactMetal_heavy", "impactTin_medium")):
+        clip = _onset(c.k("impact-sounds", f"{stem}_00{(k + v) % 3}", speed=r.uniform(1.4, 1.9)))
+        clip = _tail(lowpass(highpass(clip, 500, 2), 5500, 2), 0.015, 0.03)   # a clack, not a ringing clink
+        clatter.append((clip, tc, g + r.uniform(-1.5, 1.5)))
         tc += gap * r.uniform(0.8, 1.1)
         gap *= 0.72
         g -= 2.5
-    crackle = B.crackle(r, 0.4, 60, 2500, 9000, glen=(0.001, 0.005))
-    crackle = crackle * env_pts(len(crackle), [(0, 1.0), (0.1, 0.6), (0.4, 0.0)])
-    x = mix(0.9, (crunch, 0.004, -3), (snap, 0, -6), (shell, 0.001, -3), (splint, 0.012, -10),
-            (hit, 0, -3), (body, 0, -3), (latch, 0.05, -1), (plate, 0.075, -3),
-            (spring, 0.1, -9), *clatter, (crackle, 0.02, -16))
+    x = mix(0.9, (clunk, 0, -1), (plate, 0, -7), (crunch, 0.003, -6), (snap, 0, -8), (body, 0, -4),
+            (gears, 0.025, -5), (latch, 0.06, -3), (bracket, 0.1, -5), (spring, 0.13, -10), *clatter)
     return _glue(x, -10.5, drive=1.6)
 
 
@@ -1591,40 +1633,46 @@ def armor_break(c, v):
 # ==========================================================================
 @recipe("hurt_squeak", variants=6, loud=-14.0, src="synth")
 def hurt_squeak(c, v):
+    """Short pained critter grunts and yelps, deep and rough instead of squealy:
+    pitch peaks around 250-380 Hz (was 560-720), a bigger throat (lower
+    formants), more growl (subharmonics), hoarse breath and vocal fry, and
+    nothing whistly above ~4.5 kHz."""
     r = c.rng
-    if v == 0:  # "yowp!" -- sharp yelp
-        y = B.critter_voice(r, 0.24, [(0, 380), (0.035, 620), (0.09, 560), (0.24, 330)],
+    deep = dict(scale=1.12, tilt=1.4, fmax=4500.0, hoarse=0.45, drive=1.8)
+    if v == 0:  # "rrowp!" -- sharp yelp
+        y = B.critter_voice(r, 0.24, [(0, 190), (0.035, 340), (0.09, 300), (0.24, 175)],
                             [(0, "uh"), (0.04, "a"), (0.15, "aw"), (0.24, "o")],
-                            sub_pts=[(0, 0.1), (0.05, 0.35), (0.24, 0.5)],
-                            amp_pts=[(0, 0), (0.012, 1), (0.1, 0.8), (0.24, 0)])
-        return mix(0.26, (y, 0, 0), (B.tongue_click(r, 1800, 1.0, 0.004), 0, -14))
-    if v == 1:  # "ak-ak-ak-ak" -- pained chatter
-        return B.chitter(r, [0, 0.062, 0.12, 0.175], [560, 600, 540, 470],
-                         gains=[0, -1, -2, -4], sub_pts=[(0, 0.3), (0.05, 0.3)], jitter=0.02)
-    if v == 2:  # "rrrah!" -- growly chirr
-        return B.critter_voice(r, 0.27, [(0, 300), (0.04, 440), (0.14, 400), (0.27, 250)],
+                            sub_pts=[(0, 0.3), (0.05, 0.5), (0.24, 0.7)],
+                            amp_pts=[(0, 0), (0.012, 1), (0.1, 0.8), (0.24, 0)], **deep)
+        return mix(0.26, (y, 0, 0), (B.tongue_click(r, 1400, 1.0, 0.004), 0, -16))
+    if v == 1:  # "uk-uk-uk" -- pained chatter
+        return B.chitter(r, [0, 0.07, 0.135, 0.195], [310, 330, 300, 260], vowels=("uh", "o"),
+                         gains=[0, -1, -2, -4], sub_pts=[(0, 0.5), (0.05, 0.5)], jitter=0.03, click_db=-12,
+                         **deep)
+    if v == 2:  # "grrah!" -- growly chirr
+        return B.critter_voice(r, 0.27, [(0, 165), (0.04, 250), (0.14, 230), (0.27, 145)],
                                [(0, "a"), (0.15, "a"), (0.27, "uh")],
-                               trill=(34.0, [(0, 0.2), (0.05, 0.65), (0.27, 0.7)]),
-                               sub_pts=[(0, 0.4), (0.27, 0.7)], breath=0.18, shimmer=0.2)
-    if v == 3:  # "hnn-YIP" -- grunt flowing into a yelp
-        g = B.critter_voice(r, 0.08, [(0, 160), (0.07, 185)], [(0, "uh"), (0.08, "uh")],
-                            fry_pts=[(0, 0.7), (0.08, 0.5)], breath=0.2,
-                            amp_pts=[(0, 0), (0.01, 1), (0.08, 0.4)])
-        y = B.critter_voice(r, 0.18, [(0, 450), (0.03, 720), (0.18, 400)],
-                            [(0, "ae"), (0.06, "a"), (0.18, "o")], sub_pts=[(0, 0.25), (0.18, 0.4)],
-                            amp_pts=[(0, 0), (0.01, 1), (0.08, 0.8), (0.18, 0)])
-        return mix(0.26, (g, 0, -5), (y, 0.065, 0))
-    if v == 4:  # "eeyowr" -- raspy whine, an octave+ below the old squeal
-        return B.critter_voice(r, 0.34, [(0, 480), (0.05, 640), (0.2, 560), (0.34, 360)],
-                               [(0, "e"), (0.08, "ae"), (0.2, "a"), (0.34, "o")],
-                               vib=(9.0, 0.01, 0.04), sub_pts=[(0, 0.15), (0.34, 0.45)],
-                               shimmer=0.25, breath=0.14)
-    # v == 5: "eeow!" -- pained yip that drops away, with a breathy edge
-    y = B.critter_voice(r, 0.23, [(0, 420), (0.03, 660), (0.1, 540), (0.23, 310)],
+                               trill=(30.0, [(0, 0.25), (0.05, 0.7), (0.27, 0.75)]),
+                               sub_pts=[(0, 0.6), (0.27, 0.85)], breath=0.2, shimmer=0.22, **deep)
+    if v == 3:  # "hnn-YAWP" -- grunt flowing into a yelp
+        g = B.critter_voice(r, 0.09, [(0, 115), (0.08, 135)], [(0, "uh"), (0.09, "uh")],
+                            fry_pts=[(0, 0.8), (0.09, 0.6)], breath=0.22,
+                            amp_pts=[(0, 0), (0.01, 1), (0.09, 0.4)], **deep)
+        y = B.critter_voice(r, 0.18, [(0, 240), (0.03, 380), (0.18, 215)],
+                            [(0, "ae"), (0.06, "a"), (0.18, "o")], sub_pts=[(0, 0.4), (0.18, 0.6)],
+                            amp_pts=[(0, 0), (0.01, 1), (0.08, 0.8), (0.18, 0)], **deep)
+        return mix(0.27, (g, 0, -3), (y, 0.07, 0))
+    if v == 4:  # "grr-owr" -- raspy whimper-growl
+        return B.critter_voice(r, 0.3, [(0, 250), (0.05, 330), (0.18, 290), (0.3, 180)],
+                               [(0, "uh"), (0.08, "a"), (0.2, "aw"), (0.3, "o")],
+                               vib=(9.0, 0.01, 0.035), sub_pts=[(0, 0.35), (0.3, 0.65)],
+                               fry_pts=[(0, 0.5), (0.06, 0.1), (0.3, 0.4)], shimmer=0.25, breath=0.16, **deep)
+    # v == 5: "eh-OWW" -- pained yip that drops away, with a breathy edge
+    y = B.critter_voice(r, 0.23, [(0, 220), (0.03, 360), (0.1, 300), (0.23, 165)],
                         [(0, "ae"), (0.05, "a"), (0.14, "aw"), (0.23, "o")],
-                        sub_pts=[(0, 0.15), (0.06, 0.35), (0.23, 0.5)], breath=0.12,
-                        amp_pts=[(0, 0), (0.01, 1), (0.1, 0.8), (0.23, 0)])
-    return mix(0.25, (y, 0, 0), (B.tongue_click(r, 1700, 1.0, 0.004), 0, -14))
+                        sub_pts=[(0, 0.3), (0.06, 0.5), (0.23, 0.7)], breath=0.14,
+                        amp_pts=[(0, 0), (0.01, 1), (0.1, 0.8), (0.23, 0)], **deep)
+    return mix(0.25, (y, 0, 0), (B.tongue_click(r, 1300, 1.0, 0.004), 0, -16))
 
 
 RAT = "qubodup-squeaky-rat"
