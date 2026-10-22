@@ -2,10 +2,10 @@
 
 Builds everything in `assets/audio/` plus `assets/credits/audio.json`.
 Every sound is CC0 (Kenney.nl; via OpenGameArt: The Free Firearm Sound Library,
-Independent.nu wet / crunch / wood-crack impacts, qubodup's dry-leaf rustles,
-TinyWorlds' leaf footsteps), CC BY 3.0 (Michel Baradari via OpenGameArt: rocket
-launch + explosion layers), CC BY 4.0 (Kevin MacLeod, music only) or original
-synthesis written here (MIT, project).
+Independent.nu wet / crunch / wood-crack impacts, qubodup's dry-leaf rustles and
+squeaky rat, TinyWorlds' leaf footsteps), CC BY 3.0 (Michel Baradari via
+OpenGameArt: rocket launch + explosion layers), CC BY 4.0 (Kevin MacLeod, music
+only) or original synthesis written here (MIT, project).
 
 Weapon fire sounds are built around real near-perspective firearm recordings
 (one gun model per weapon class, several takes = variants), given extra punch
@@ -178,8 +178,10 @@ attribution line in `attribution`). Recipes declare `src="synth" | "kenney" |
   sources into `sources.py`), delete the module and do a full build: the rendered
   files must not change.
 * **Build only what you are working on**: `... build_audio.py -- --only key1,key2`
-  (never touches the manifest or credits). Check determinism by building a key
-  twice and comparing the files' md5.
+  (never touches the manifest or credits). Add `--out DIR` to write the subset to
+  `DIR/sfx/` instead, leaving `assets/audio` (and an open review page) alone while
+  you try things. Check determinism by building a key twice and comparing the
+  files' md5.
 * **Measure, don't guess**: copy `assets/audio/sfx` somewhere first, then
 
   ```sh

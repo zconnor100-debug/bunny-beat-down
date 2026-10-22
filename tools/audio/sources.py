@@ -166,4 +166,14 @@ OGA = {
         "archive": "7z",
         "license": CC0,
     },
+    # real rat squeaks (edited from CC0 Freesound recordings): critter death cries
+    "qubodup-squeaky-rat": {
+        "title": "Squeaky Rat",
+        "author": "qubodup (Iwan Gabovitch)",
+        "author_url": "https://opengameart.org/users/qubodup",
+        "page": "https://opengameart.org/content/squeaky-rat",
+        "url": _OGA_FILES + "qubodupSqueakyRat.7z",
+        "archive": "7z",
+        "license": CC0,
+    },
 }

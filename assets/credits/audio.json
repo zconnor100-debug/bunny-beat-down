@@ -86,9 +86,10 @@
       "Audio/footstep_snow_002.ogg",
       "Audio/footstep_snow_004.ogg",
       "Audio/impactPlate_light_000.ogg",
+      "Audio/impactPlate_light_001.ogg",
+      "Audio/impactPlate_light_003.ogg",
       "Audio/impactPunch_heavy_000.ogg",
       "Audio/impactPunch_heavy_001.ogg",
-      "Audio/impactPunch_heavy_002.ogg",
       "Audio/impactPunch_heavy_003.ogg",
       "Audio/impactPunch_heavy_004.ogg",
       "Audio/impactPunch_medium_000.ogg",
@@ -98,12 +99,10 @@
       "Audio/impactSoft_heavy_001.ogg",
       "Audio/impactSoft_heavy_002.ogg",
       "Audio/impactSoft_heavy_003.ogg",
-      "Audio/impactSoft_heavy_004.ogg",
       "Audio/impactSoft_medium_000.ogg",
       "Audio/impactSoft_medium_001.ogg",
       "Audio/impactSoft_medium_002.ogg",
       "Audio/impactSoft_medium_003.ogg",
-      "Audio/impactSoft_medium_004.ogg",
       "Audio/impactWood_heavy_001.ogg",
       "Audio/impactWood_heavy_003.ogg",
       "Audio/impactWood_light_000.ogg",
@@ -122,8 +121,10 @@
     "license": "CC0 1.0",
     "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
     "changes": "Selected clips trimmed, resampled/pitch-shifted, filtered, level-normalised and in most cases layered with other Kenney clips and/or original synthesized layers (see tools/audio/recipes.py); downmixed to mono and re-encoded as 44.1 kHz Ogg Vorbis.",
-    "used_for": "Sound effects: carrot_impact_wood, crate_open, dry_fire, glider_open, lmg_fire, pickup_ammo, pickup_weapon, pistol_fire, reload_end, reload_start, rifle_fire, weapon_swap",
+    "used_for": "Sound effects: armor_break, carrot_impact_wood, crate_open, dry_fire, glider_open, lmg_fire, pickup_ammo, pickup_weapon, pistol_fire, reload_end, reload_start, rifle_fire, weapon_swap",
     "files": [
+      "assets/audio/sfx/armor_break_1.ogg",
+      "assets/audio/sfx/armor_break_2.ogg",
       "assets/audio/sfx/carrot_impact_wood_1.ogg",
       "assets/audio/sfx/carrot_impact_wood_2.ogg",
       "assets/audio/sfx/carrot_impact_wood_3.ogg",
@@ -154,10 +155,7 @@
       "Audio/bookClose.ogg",
       "Audio/chop.ogg",
       "Audio/cloth1.ogg",
-      "Audio/cloth2.ogg",
-      "Audio/cloth3.ogg",
       "Audio/cloth4.ogg",
-      "Audio/clothBelt.ogg",
       "Audio/clothBelt2.ogg",
       "Audio/creak3.ogg",
       "Audio/dropLeather.ogg",
@@ -286,7 +284,6 @@
       "Prepared SFX Library/AR-15/D_32P.wav",
       "Prepared SFX Library/Carl Gustav M45/G_31P.wav",
       "Prepared SFX Library/Carl Gustav M45/G_33P.wav",
-      "Prepared SFX Library/Marlin 336/I_22P.wav",
       "Prepared SFX Library/Model 12/K_17P.wav",
       "Prepared SFX Library/Model 12/K_22P.wav",
       "Prepared SFX Library/Mossberg/N_30P.wav",
@@ -373,32 +370,16 @@
     "files": [
       "assets/audio/sfx/carrot_impact_flesh_1.ogg",
       "assets/audio/sfx/carrot_impact_flesh_2.ogg",
+      "assets/audio/sfx/carrot_impact_flesh_3.ogg",
       "assets/audio/sfx/gore_splat_1.ogg",
-      "assets/audio/sfx/gore_splat_2.ogg"
+      "assets/audio/sfx/gore_splat_2.ogg",
+      "assets/audio/sfx/gore_splat_3.ogg"
     ],
     "source_files": [
       "impsplat/impactsplat01.mp3.flac",
       "impsplat/impactsplat03.mp3.flac",
       "impsplat/impactsplat06.mp3.flac",
       "impsplat/impactsplat08.mp3.flac"
-    ]
-  },
-  {
-    "asset": "2 wooden squish splatter sequences (OpenGameArt)",
-    "author": "Independent.nu (submitted to OpenGameArt by qubodup)",
-    "author_url": "https://web.archive.org/web/20100307021017/http://www.johannespinter.com/inu/ljudbank.htm",
-    "source_url": "https://opengameart.org/content/2-wooden-squish-splatter-sequences",
-    "license": "CC0 1.0",
-    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
-    "changes": "Single shots, hits and steps cut from the recordings, downmixed to mono, resampled to 44.1 kHz, tails shortened or extended, pitch-shifted, EQ'd, saturated, level-normalised and layered with original synthesized layers and Kenney CC0 layers (see tools/audio/recipes.py); re-encoded as Ogg Vorbis.",
-    "used_for": "Sound effects: carrot_impact_flesh, gore_splat",
-    "files": [
-      "assets/audio/sfx/carrot_impact_flesh_3.ogg",
-      "assets/audio/sfx/gore_splat_3.ogg"
-    ],
-    "source_files": [
-      "extreme_splatter/crack11.mp3.flac",
-      "extreme_splatter/crack12.mp3.flac"
     ]
   },
   {
@@ -437,7 +418,6 @@
     ],
     "source_files": [
       "wood_impact/crack01.mp3.flac",
-      "wood_impact/crack02.mp3.flac",
       "wood_impact/crack03.mp3.flac",
       "wood_impact/crack04.mp3.flac",
       "wood_impact/crack06.mp3.flac"
@@ -458,12 +438,29 @@
       "assets/audio/sfx/body_fall_3.ogg"
     ],
     "source_files": [
-      "rustle/rustle09.flac",
       "rustle/rustle13.flac",
       "rustle/rustle15.flac",
       "rustle/rustle16.flac",
-      "rustle/rustle17.flac",
-      "rustle/rustle18.flac"
+      "rustle/rustle17.flac"
+    ]
+  },
+  {
+    "asset": "Squeaky Rat (OpenGameArt)",
+    "author": "qubodup (Iwan Gabovitch)",
+    "author_url": "https://opengameart.org/users/qubodup",
+    "source_url": "https://opengameart.org/content/squeaky-rat",
+    "license": "CC0 1.0",
+    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "changes": "Single shots, hits and steps cut from the recordings, downmixed to mono, resampled to 44.1 kHz, tails shortened or extended, pitch-shifted, EQ'd, saturated, level-normalised and layered with original synthesized layers and Kenney CC0 layers (see tools/audio/recipes.py); re-encoded as Ogg Vorbis.",
+    "used_for": "Sound effects: death_squeak",
+    "files": [
+      "assets/audio/sfx/death_squeak_1.ogg",
+      "assets/audio/sfx/death_squeak_2.ogg",
+      "assets/audio/sfx/death_squeak_3.ogg"
+    ],
+    "source_files": [
+      "qubodupSqueakyRat/qubodupSqueakyRatDeath.flac",
+      "qubodupSqueakyRat/qubodupSqueakyRatPain.flac"
     ]
   },
   {

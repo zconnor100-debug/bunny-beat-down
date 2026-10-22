@@ -197,23 +197,25 @@ def crackle(rng, dur, rate, fmin=1500, fmax=6000, glen=(0.002, 0.012), period=No
 
 
 def twig_snap(rng):
-    """Bramble twig snapping: sharp crack + short woody resonances (+ splinter)."""
-    n = n_of(0.07)
-    t = times(n)
+    """Bramble twig snapping: sharp crack + a short dry crunch of wide-band
+    noise (no ringing modes, so a field of them crackles instead of clinking)
+    (+ splinter)."""
+    n = n_of(0.05)
     x = np.zeros(n)
     m = n_of(0.006)
     x[:m] += (unit(highpass(white(m, rng), rng.uniform(1800, 3500), 2))
               * env_exp(m, 0.0001, rng.uniform(0.0006, 0.0015)))
-    for lo, hi, tl, th, a in ((700, 1300, 0.010, 0.022, 0.55), (1600, 2800, 0.005, 0.012, 0.45),
-                              (3200, 5200, 0.002, 0.006, 0.3)):
-        x += a * np.sin(TAU * rng.uniform(lo, hi) * t + rng.uniform(0, TAU)) * np.exp(-t / rng.uniform(tl, th))
+    k = n_of(0.03)
+    for fc, q, tau, a in ((rng.uniform(900, 1500), 0.7, rng.uniform(0.003, 0.006), 0.5),
+                          (rng.uniform(2500, 4500), 0.9, rng.uniform(0.0015, 0.003), 0.35)):
+        x[:k] += a * unit(bandpass(white(k + 256, rng), fc, q)[:k]) * env_exp(k, 0.0002, tau)
     if rng.random() < 0.6:  # splinter
         d = n_of(rng.uniform(0.006, 0.02))
         s = unit(highpass(white(m, rng), 2500, 2)) * env_exp(m, 0.0001, 0.0008)
         x[d:d + m] += 0.6 * s[: n - d]
     a = n_of(0.0002)
     x[:a] *= np.linspace(0, 1, a)
-    return unit(x) * env_pts(n, [(0, 1), (0.05, 0.6), (0.07, 0)])
+    return unit(x) * env_pts(n, [(0, 1), (0.035, 0.6), (0.05, 0)])
 
 
 def thorn_scrape(rng, dur):
@@ -494,34 +496,33 @@ def flute_line(rng, notes, rel=0.09, breath_db=-13.0, hiss_db=-24.0, chiff_db=-1
     return unit(y)
 
 
-def _escapement_click(rng, f_scale, body_hz, case_amt, n):
-    """One escapement contact: metallic modes + hollow wooden case modes."""
-    t = times(n)
+def _tick_click(rng, f_scale, body_hz, case_amt, n):
+    """One contact of a clock tick: a crack of high-passed noise, a bright
+    noise 'tk' and a wide-band (low-Q) woody noise knock, all gone within a few
+    ms -- no resonant modes, so it never rings or sounds like a note."""
     x = np.zeros(n)
-    for f, tau, a in ((2650, 0.0062, 1.0), (4170, 0.0046, 0.75), (5980, 0.0034, 0.55),
-                      (8340, 0.0024, 0.38), (11150, 0.0016, 0.22)):
-        ff = f * f_scale * rng.uniform(0.985, 1.015)
-        x += a * np.sin(TAU * ff * t + rng.uniform(0, TAU)) * np.exp(-t / tau)
-    for r, tau, a in ((1.0, 0.017, 0.55), (1.73, 0.010, 0.32), (0.47, 0.024, 0.38), (2.61, 0.006, 0.2)):
-        ff = body_hz * r * rng.uniform(0.99, 1.01)
-        x += case_amt * a * np.sin(TAU * ff * t + rng.uniform(0, TAU)) * np.exp(-t / tau)
     m = n_of(0.004)
-    x[:m] += 1.1 * unit(highpass(white(m, rng), 2500, 2)) * env_exp(m, 0.0001, 0.0006)
+    x[:m] += 0.6 * unit(highpass(white(m, rng), 2500 * f_scale, 2)) * env_exp(m, 0.0001, 0.0006)
+    k = n_of(0.03)
+    x[:k] += 0.3 * unit(bandpass(white(k + 256, rng), 3600 * f_scale, 1.0)[:k]) * env_exp(k, 0.0001, 0.0015)
+    for fc, g, tau in ((body_hz, 1.3, 0.005), (body_hz * 0.42, 0.8, 0.006)):   # the woody 'tock'
+        knock = bandpass(white(k + 256, rng), fc * rng.uniform(0.95, 1.05), 0.8)[:k]
+        x[:k] += g * case_amt * unit(knock) * env_exp(k, 0.0002, tau)
     a = n_of(0.00025)
     x[:a] *= np.linspace(0, 1, a)
     return x
 
 
 def clock_tick(rng, f_scale=1.0, body_hz=1100.0, case_amt=1.0):
-    """Mechanical clock escapement 'tick': unlock click, louder drop click ~10 ms
-    later, and a faint settle; each excites the escapement + wooden case modes."""
-    n = n_of(0.09)
+    """Dry clock 'tick' made only of noise: a small unlock click, the drop
+    click ~10 ms later and a faint settle (see _tick_click)."""
+    n = n_of(0.06)
     gap = rng.uniform(0.0085, 0.0115)
-    return unit(mix(0.09,
-                    (_escapement_click(rng, f_scale * 1.04, body_hz, case_amt * 0.5, n), 0, -7),
-                    (_escapement_click(rng, f_scale, body_hz, case_amt, n), gap, 0),
-                    (_escapement_click(rng, f_scale * 0.97, body_hz, case_amt * 0.7, n),
-                     gap + rng.uniform(0.012, 0.016), -14)))
+    return unit(mix(0.06,
+                    (_tick_click(rng, f_scale * 1.06, body_hz, case_amt * 0.4, n), 0, -9),
+                    (_tick_click(rng, f_scale, body_hz, case_amt, n), gap, 0),
+                    (_tick_click(rng, f_scale * 0.95, body_hz, case_amt * 0.5, n),
+                     gap + rng.uniform(0.012, 0.016), -18)))
 
 
 VOWELS = {  # (F1, F2, F3) Hz, adult-human reference; scaled up for small critters

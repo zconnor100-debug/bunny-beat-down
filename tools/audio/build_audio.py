@@ -8,6 +8,7 @@ encodes our output to Ogg Vorbis (there is no system ffmpeg/sox/oggenc):
     /snap/bin/blender -b --factory-startup --python-exit-code 1 \
         --python tools/audio/build_audio.py           # full rebuild
     ... --python tools/audio/build_audio.py -- --only hop,headshot   # subset (manifest untouched)
+    ... -- --only hop --out /tmp/try    # subset into /tmp/try/sfx/ (assets untouched)
 
 Outputs (all paths relative to the repo root):
     assets/audio/sfx/<key>[_<n>].ogg     mono 44.1 kHz Ogg Vorbis
@@ -49,7 +50,6 @@ for _p in sorted(glob.glob(os.path.join(HERE, "recipes_wip_*.py"))):
 ROOT = os.path.abspath(os.path.join(HERE, "..", ".."))
 CACHE = os.path.join(ROOT, "tools", "_cache", "audio")
 OUT = os.path.join(ROOT, "assets", "audio")
-SFX = os.path.join(OUT, "sfx")
 MUSIC = os.path.join(OUT, "music")
 CREDITS = os.path.join(ROOT, "assets", "credits", "audio.json")
 
@@ -194,8 +194,8 @@ def finish(x, spec):
 # --------------------------------------------------------------------------
 # main
 # --------------------------------------------------------------------------
-def build(only=None):
-    os.makedirs(SFX, exist_ok=True)
+def build(only=None, out=OUT):
+    os.makedirs(os.path.join(out, "sfx"), exist_ok=True)
     os.makedirs(MUSIC, exist_ok=True)
     c = Ctx()
     manifest = {}
@@ -212,12 +212,12 @@ def build(only=None):
                 continue
             c.begin(key, v)
             x = finish(spec["fn"](c, v), spec)
-            write_ogg(os.path.join(OUT, rel), x)
+            write_ogg(os.path.join(out, rel), x)
             provenance[rel] = {"src": spec["src"], "kenney": sorted(c.used), "key": key,
                                "oga": sorted(c.used_oga)}
             pk = 20 * np.log10(np.max(np.abs(x)) + 1e-12)
             report.append((rel, len(x) / SR, pk, dsp.loudness_db(x),
-                           os.path.getsize(os.path.join(OUT, rel))))
+                           os.path.getsize(os.path.join(out, rel))))
         manifest[key] = files
 
     for rel, dur, pk, st, size in report:
@@ -344,4 +344,9 @@ if __name__ == "__main__":
     only = None
     if "--only" in argv:
         only = set(argv[argv.index("--only") + 1].split(","))
-    build(only)
+    out = OUT
+    if "--out" in argv:   # try a subset somewhere else: the game's assets stay as they are
+        if not only:
+            raise SystemExit("--out needs --only (a full build writes the manifest and credits)")
+        out = os.path.abspath(argv[argv.index("--out") + 1])
+    build(only, out)

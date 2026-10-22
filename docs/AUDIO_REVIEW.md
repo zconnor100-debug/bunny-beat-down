@@ -43,7 +43,7 @@ from `tools/audio/review_checklist.json` — edit that, not this.
 | `rocket_whoosh_loop` | Steady sputtery rocket roar with a slight spiralling wobble; the loop seam must be inaudible. | Loops on every rocket carrot in flight. | [1](../assets/audio/sfx/rocket_whoosh_loop.ogg) |
 | `explosion` | Heavy, real-sounding blast: low boom, crunchy body, debris pattering down (~2 s). | Rocket carrot detonations. | [1](../assets/audio/sfx/explosion_1.ogg) [2](../assets/audio/sfx/explosion_2.ogg) [3](../assets/audio/sfx/explosion_3.ogg) |
 | `shotgun_pump` | Real pump rack, "chk ... CHK": the forend slides back to the rear stop, then slams forward and locks (the louder stroke); crisp, no thuddy undertone. | Shotgun: racked 0.45 s after every shot (the burst preview plays it). | [1](../assets/audio/sfx/shotgun_pump_1.ogg) [2](../assets/audio/sfx/shotgun_pump_2.ogg) |
-| `sniper_bolt` | Four hard, bright steel clinks: lift, pull back, push forward, lock down; faint tick of the spent carrot stub. | ~0.45 s after every sniper shot. | [1](../assets/audio/sfx/sniper_bolt.ogg) |
+| `sniper_bolt` | Bolt cycle ending in a firm clack: dull lift click, bolt racked back onto its stop and shoved forward, then the handle snaps down into place (the loudest hit); damped steel, no ringing clinks; faint tick of the spent carrot stub. | ~0.45 s after every sniper shot. | [1](../assets/audio/sfx/sniper_bolt.ogg) |
 | `scope_in` | Soft, quick rising "zip" with a gentle tone and a tiny click at the end. | Aiming down the sniper scope. | [1](../assets/audio/sfx/scope_in.ogg) |
 | `reload_start` | Grip rustle, a two-part magazine-release click, the magazine sliding out with a solid clack, caught in the off hand. | Start of every reload; also crate locks. | [1](../assets/audio/sfx/reload_start.ogg) |
 | `reload_end` | Magazine seated firmly (clack), then the bolt release slams the bolt home (CHAK, the loudest part) at ~0.12 s; over in ~0.25 s. | End of every reload. | [1](../assets/audio/sfx/reload_end.ogg) |
@@ -81,14 +81,14 @@ from `tools/audio/review_checklist.json` — edit that, not this.
 | `pickup_armor` | Woody acorn knock and clink, then three rising bell tones. | Picking up acorn-shell armor. | [1](../assets/audio/sfx/pickup_armor.ogg) |
 | `pickup_weapon` | Metal latch, then a deep, warm rolled harp chord. | Picking up a carrot gun. | [1](../assets/audio/sfx/pickup_weapon.ogg) |
 | `crate_open` | Creaking lid and wooden knock, then a breathy wooden-flute flourish (run, trill, held note) with a faint harp chord underneath. | Opening crates, treasure chests and supply drops. | [1](../assets/audio/sfx/crate_open.ogg) |
-| `armor_break` | Acorn shell cracking apart: sharp fracture snap, hard nut-shell knock, dense crunch and splintering, brittle debris; nothing tonal. | Your armor running out. | [1](../assets/audio/sfx/armor_break_1.ogg) [2](../assets/audio/sfx/armor_break_2.ogg) |
+| `armor_break` | Acorn armor breaking apart like a little contraption: a crunchy shell crack, then a metal clasp snaps open, a plate pops off, a small spring sproings loose and the pieces clatter away. | Your armor running out. | [1](../assets/audio/sfx/armor_break_1.ogg) [2](../assets/audio/sfx/armor_break_2.ogg) |
 
 ## Critter voices
 
 | sound | should sound like | when it plays | listen |
 |---|---|---|---|
 | `hurt_squeak` | Short, deep, gritty critter pain cries: a yelp, "ak-ak" chatter, a growly chirr, a grunt into a yip, a raspy whine, a low strained "ngh". | Critters taking damage. | [1](../assets/audio/sfx/hurt_squeak_1.ogg) [2](../assets/audio/sfx/hurt_squeak_2.ogg) [3](../assets/audio/sfx/hurt_squeak_3.ogg) [4](../assets/audio/sfx/hurt_squeak_4.ogg) [5](../assets/audio/sfx/hurt_squeak_5.ogg) [6](../assets/audio/sfx/hurt_squeak_6.ogg) |
-| `death_squeak` | Longer, lower falling cries that creak out: a fading cry, "ack ... ooowww" with a last croak, a shocked stutter into a wobbly drop. | Critters being knocked out. | [1](../assets/audio/sfx/death_squeak_1.ogg) [2](../assets/audio/sfx/death_squeak_2.ogg) [3](../assets/audio/sfx/death_squeak_3.ogg) |
+| `death_squeak` | Real small-animal death squeals (rat recordings slowed to critter size, not synth): a long sinking squeal, an "eek!" then a lower dying squeal, a squeal with one last weak gasp; each ends in a breath. | Critters being knocked out. | [1](../assets/audio/sfx/death_squeak_1.ogg) [2](../assets/audio/sfx/death_squeak_2.ogg) [3](../assets/audio/sfx/death_squeak_3.ogg) |
 
 ## Ambience & the Briar
 
@@ -96,8 +96,8 @@ from `tools/audio/review_checklist.json` — edit that, not this.
 |---|---|---|---|
 | `ambient_forest_loop` | Gentle breeze and leaves, crickets, occasional birds; seamless 10 s loop. | Background bed for the whole match. | [1](../assets/audio/sfx/ambient_forest_loop.ogg) |
 | `wind_loop` | Gusty high-altitude wind with a faint whistle; seamless loop. | Riding the picnic balloon. | [1](../assets/audio/sfx/wind_loop.ogg) |
-| `storm_loop` | Low rumble and swirling wind with a dense thorny crackle and an ominous hum; seamless loop. | Comes from the nearest edge of the Briar storm wall. | [1](../assets/audio/sfx/storm_loop.ogg) |
-| `storm_damage_tick` | Crisp clock tick over a faint ominous low undertone (both takes are the same clock). | Each second you take Briar damage. | [1](../assets/audio/sfx/storm_damage_tick_1.ogg) [2](../assets/audio/sfx/storm_damage_tick_2.ogg) |
+| `storm_loop` | Low rumble and swirling wind with a dense, dry thorny crackle and an ominous hum; no clinks or plops; seamless loop. | Comes from the nearest edge of the Briar storm wall. | [1](../assets/audio/sfx/storm_loop.ogg) |
+| `storm_damage_tick` | Dry, woody clock tick (tick-TOCK within ~25 ms) with a prickle of thorns; no tone, drone or ring (both takes are the same clock). | Each second you take Briar damage. | [1](../assets/audio/sfx/storm_damage_tick_1.ogg) [2](../assets/audio/sfx/storm_damage_tick_2.ogg) |
 
 ## UI & match flow
 
