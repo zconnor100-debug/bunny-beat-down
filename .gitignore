@@ -35,3 +35,10 @@ assets/props/*_*_*.jpg.import
 !assets/props/acorn_helmet_closeup.png.import
 !assets/props/preview_sheet*.png
 !assets/props/preview_sheet*.png.import
+
+# personal audio review state (tools/audio/review.py)
+tools/audio/review_notes.json
+tools/audio/review_notes.json.bak
+tools/audio/review_notes.json.tmp
+tools/audio/review_notes.json.repaired-*
+tools/audio/review_baseline.json

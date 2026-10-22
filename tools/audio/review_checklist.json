@@ -1,0 +1,101 @@
+{
+  "_doc": "Single source of truth for the audio review: what every manifest key should sound like and when the game plays it. Read by tools/audio/review.py (review player + docs/AUDIO_REVIEW.md). `python3 tools/audio/review.py --check` fails if this and assets/audio/manifest.json disagree.",
+  "groups": [
+    {
+      "id": "weapons",
+      "title": "Weapons",
+      "keys": {
+        "pistol_fire": {"expect": "Real 9 mm handgun: hard snappy crack with a fat low-mid bark right behind it, a hint of slide clack, short outdoor tail; all takes are the same gun.", "when": "Every Carrot Pistol shot (400 rpm)."},
+        "smg_fire": {"expect": "Real 9 mm SMG: very fast, punchy pops with a tight low-mid body and almost no tail, so 900 rpm bursts stay separated.", "when": "Every Carrot SMG shot (900 rpm, full auto)."},
+        "rifle_fire": {"expect": "AR-15-style rifle: hard crack and tight thump in the first few ms, then one slap-back echo and a ~0.7 s outdoor tail.", "when": "Every Carrot Assault Rifle shot (600 rpm, full auto)."},
+        "lmg_fire": {"expect": "Heavy, deep 7.62 shots: chunkier and lower than the rifle, faint belt rattle, ~0.3 s each.", "when": "Every Carrot LMG shot (720 rpm, full auto)."},
+        "shotgun_fire": {"expect": "Regular 12-gauge pump: big boom with an audible low-mid body and low-end punch, real outdoor slap-backs, then a long rolling tail (~1.5 s).", "when": "Every Carrot Shotgun blast."},
+        "sniper_fire": {"expect": ".30-06 bolt rifle: huge crack over a deep, heavy thud, then a long rolling echo fading over ~2.6 s, with no dip in between.", "when": "Every shot from The Long Carrot (sniper)."},
+        "rocket_fire": {"expect": "Deep whoosh-thump back-blast, the rocket motor roaring away, crackly sizzle (~2 s).", "when": "Launching a rocket carrot."},
+        "rocket_whoosh_loop": {"expect": "Steady sputtery rocket roar with a slight spiralling wobble; the loop seam must be inaudible.", "when": "Loops on every rocket carrot in flight."},
+        "explosion": {"expect": "Heavy, real-sounding blast: low boom, crunchy body, debris pattering down (~2 s).", "when": "Rocket carrot detonations."},
+        "shotgun_pump": {"expect": "Real pump rack, \"chk ... CHK\": the forend slides back to the rear stop, then slams forward and locks (the louder stroke); crisp, no thuddy undertone.", "when": "Shotgun: racked 0.45 s after every shot (the burst preview plays it)."},
+        "sniper_bolt": {"expect": "Four hard, bright steel clinks: lift, pull back, push forward, lock down; faint tick of the spent carrot stub.", "when": "~0.45 s after every sniper shot."},
+        "scope_in": {"expect": "Soft, quick rising \"zip\" with a gentle tone and a tiny click at the end.", "when": "Aiming down the sniper scope."},
+        "reload_start": {"expect": "Grip rustle, a two-part magazine-release click, the magazine sliding out with a solid clack, caught in the off hand.", "when": "Start of every reload; also crate locks."},
+        "reload_end": {"expect": "Magazine seated firmly (clack), then the bolt release slams the bolt home (CHAK, the loudest part) at ~0.12 s; over in ~0.25 s.", "when": "End of every reload."},
+        "dry_fire": {"expect": "Small, dry metallic click with a puff of air.", "when": "Pulling the trigger on an empty gun."},
+        "weapon_swap": {"expect": "Quick draw: cloth/strap rustle, small sling-swivel rattle, a grip pat, ending in a sharp safety click-clack.", "when": "Switching weapon slots."}
+      }
+    },
+    {
+      "id": "impacts",
+      "title": "Impacts & gore",
+      "keys": {
+        "carrot_impact_dirt": {"expect": "Hard, heavy thump into the ground with a dirt-and-grass crunch, a dirt spray and a few clods falling back.", "when": "Carrots hitting the ground, rocks, props."},
+        "carrot_impact_wood": {"expect": "One woody THOCK with a small splinter crack fused into the hit (no second 'tik').", "when": "Carrots hitting trees, logs, crates."},
+        "carrot_impact_flesh": {"expect": "Solid punch with a short, wet, meaty low-mid squelch; no droplets or bubbles.", "when": "Your carrots hitting a critter (hit confirm)."},
+        "headshot": {"expect": "Comedic hollow BONK with falling pitch and a little cork pop (both takes).", "when": "Your headshots."},
+        "gore_splat": {"expect": "Hard body hit (fast low thump + heavy punch) under a meaty wet splat and squish, a few dark plips.", "when": "Gory kills with Gore: Full (a blast that tears a critter apart, or a headshot that pops the head off)."},
+        "gore_limb_pop": {"expect": "Cork-like POP, then a squelch, droplets and a fluff flick.", "when": "A limb or head coming off."},
+        "body_fall": {"expect": "Heavy soft thud crushing dry leaves and grass right at the start, a softer limb slap just after, a small settle; no bounce.", "when": "A body hitting the ground 0.45 s after a critter dies (not after blasts), and the beaver's tail-slap jump landing."}
+      }
+    },
+    {
+      "id": "movement",
+      "title": "Movement & drop-in",
+      "keys": {
+        "footstep_grass": {"expect": "Soft paw pad, then a crisp dry-grass/leaf crunch ~40 ms later; loud and easy to locate, still audible (muffled) from behind.", "when": "Every footstep of running critters."},
+        "hop": {"expect": "Soft rabbit landing, \"pa-DUMP-shh\": front paws, hind feet a beat later, a light brush of leaves; no boing, unobtrusive when repeated.", "when": "Every bunny hop and bunny jump."},
+        "jump": {"expect": "Quick upward whoosh with a scuff.", "when": "Non-bunny critters jumping."},
+        "land": {"expect": "Soft thud with leaf crunch.", "when": "Landing from a jump or the glider."},
+        "glider_open": {"expect": "Big two-stage canopy \"fwa-POP\": rustling unfurl, loud fabric snap and whump, a second smaller snap, then flutter that slows down.", "when": "Popping the leaf/flower umbrella during the drop."}
+      }
+    },
+    {
+      "id": "pickups",
+      "title": "Pickups & loot",
+      "keys": {
+        "pickup_ammo": {"expect": "Small clatter, a click, two rising plucked notes.", "when": "Picking up carrots (ammo)."},
+        "pickup_health": {"expect": "Bright rising chime sparkle over a warm chord.", "when": "Picking up or eating a lucky clover."},
+        "pickup_armor": {"expect": "Woody acorn knock and clink, then three rising bell tones.", "when": "Picking up acorn-shell armor."},
+        "pickup_weapon": {"expect": "Metal latch, then a deep, warm rolled harp chord.", "when": "Picking up a carrot gun."},
+        "crate_open": {"expect": "Creaking lid and wooden knock, then a breathy wooden-flute flourish (run, trill, held note) with a faint harp chord underneath.", "when": "Opening crates, treasure chests and supply drops."},
+        "armor_break": {"expect": "Acorn shell cracking apart: sharp fracture snap, hard nut-shell knock, dense crunch and splintering, brittle debris; nothing tonal.", "when": "Your armor running out."}
+      }
+    },
+    {
+      "id": "critters",
+      "title": "Critter voices",
+      "keys": {
+        "hurt_squeak": {"expect": "Short, deep, gritty critter pain cries: a yelp, \"ak-ak\" chatter, a growly chirr, a grunt into a yip, a raspy whine, a low strained \"ngh\".", "when": "Critters taking damage."},
+        "death_squeak": {"expect": "Longer, lower falling cries that creak out: a fading cry, \"ack ... ooowww\" with a last croak, a shocked stutter into a wobbly drop.", "when": "Critters being knocked out."}
+      }
+    },
+    {
+      "id": "ambience",
+      "title": "Ambience & the Briar",
+      "keys": {
+        "ambient_forest_loop": {"expect": "Gentle breeze and leaves, crickets, occasional birds; seamless 10 s loop.", "when": "Background bed for the whole match."},
+        "wind_loop": {"expect": "Gusty high-altitude wind with a faint whistle; seamless loop.", "when": "Riding the picnic balloon."},
+        "storm_loop": {"expect": "Low rumble and swirling wind with a dense thorny crackle and an ominous hum; seamless loop.", "when": "Comes from the nearest edge of the Briar storm wall."},
+        "storm_damage_tick": {"expect": "Crisp clock tick over a faint ominous low undertone (both takes are the same clock).", "when": "Each second you take Briar damage."}
+      }
+    },
+    {
+      "id": "ui",
+      "title": "UI & match flow",
+      "keys": {
+        "ui_click": {"expect": "Short, clean click.", "when": "Pressing menu buttons."},
+        "ui_hover": {"expect": "Soft, whimsical harp glissando swipe (5 quick rising notes into a ringing high note), under 0.35 s.", "when": "Hovering menu buttons."},
+        "kill_confirm": {"expect": "Crisp, bright, satisfying \"ding\".", "when": "Your beat downs (kills)."},
+        "match_countdown_beep": {"expect": "Short 880 Hz beep.", "when": "Countdowns and the supply-drop alert."},
+        "match_countdown_go": {"expect": "Brighter two-tone \"GO!\" beep with a bell ring.", "when": "Countdown end."},
+        "victory_fanfare": {"expect": "Rock sting in D: snare pickup, one bar of distorted power-chord riff over a kick/snare rock beat, a dead stop with a tom fill + reverse cymbal, then the loudest moment: a huge low D chord + kick/snare/crash, held with a tin-whistle run to a high D, fading out by 3 s.", "when": "Winner Winner Carrot Dinner! (starts with the victory music, same key and tempo)."},
+        "defeat_sting": {"expect": "Comedic sax \"wah-wah-wah-waaah\".", "when": "Getting beaten down."}
+      }
+    }
+  ],
+  "music": {
+    "music/menu_monkeys_spinning_monkeys.mp3": {"title": "Monkeys Spinning Monkeys", "expect": "Light, happy flutes and pizzicato — cartoon woodland.", "when": "Main menu."},
+    "music/match_run_amok.mp3": {"title": "Run Amok", "expect": "Orchestral comedy chase with lots of energy.", "when": "In-match (random pick)."},
+    "music/match_scheming_weasel.mp3": {"title": "Scheming Weasel (faster version)", "expect": "Sneaky, bouncy woodwinds and glockenspiel.", "when": "In-match (random pick)."},
+    "music/match_bushwick_tarantella.mp3": {"title": "Bushwick Tarantella", "expect": "Frantic accordion and clarinet — final-circle panic.", "when": "In-match (random pick)."},
+    "music/victory_fiddles_mcginty.mp3": {"title": "Fiddles McGinty", "expect": "Driving Celtic folk-rock reel: pipes, recorder, guitar, rock backbeat.", "when": "Victory screen (fades in under the victory_fanfare sting)."}
+  }
+}

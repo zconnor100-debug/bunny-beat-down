@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Audio Review — Bunny Beat Down</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<header class="top">
+  <div class="brand">
+    <h1>🥕 Audio Review</h1>
+    <p class="sub">Listen to each sound, then mark it <b>Good</b>, <b>Tweak</b> or <b>Replace</b>.
+      ⚑ flags a single bad take. Everything saves automatically.</p>
+  </div>
+  <div class="controls">
+    <label class="vol">Volume <input id="volume" type="range" min="0" max="1" step="0.01" value="0.8" aria-label="Volume"></label>
+    <label class="chk" title="The game plays guns with ±6% random pitch"><input id="jitter" type="checkbox" checked> Game pitch variation</label>
+    <label class="chk" title="After 👍 Good, jump to the next sound you haven't reviewed"><input id="advance" type="checkbox" checked> Next after 👍</label>
+    <button id="help-btn" class="btn" title="Keyboard shortcuts (?)">Shortcuts</button>
+  </div>
+</header>
+
+<div id="banner" class="banner" role="alert" hidden></div>
+
+<div class="bar" id="bar">
+  <div class="progress-row">
+    <div class="progress" aria-hidden="true"><div id="progress-fill"></div></div>
+    <span id="progress-text">Loading…</span>
+    <span id="save-status" class="save" role="status" aria-live="polite"></span>
+  </div>
+  <div class="filter-row">
+    <input id="search" type="search" placeholder="Filter sounds…  (/)" aria-label="Filter sounds">
+    <div class="seg" role="group" aria-label="Show">
+      <button data-filter="all" class="on" aria-pressed="true">All</button>
+      <button data-filter="todo" aria-pressed="false"><span class="wide">To </span>review</button>
+      <button data-filter="work" aria-pressed="false"><span class="wide">Needs </span>work</button>
+      <button data-filter="good" aria-pressed="false">Good</button>
+    </div>
+    <button id="stop-all" class="btn" title="Stop all sound (Esc)" aria-label="Stop all sound">■<span class="wide"> Stop</span></button>
+    <button id="copy-summary" class="btn" data-act="copy-summary">Copy summary</button>
+    <button id="download-json" class="btn" data-act="download-json">Download notes</button>
+  </div>
+  <div id="message" class="message" aria-live="polite"></div>
+</div>
+
+<nav id="toc" aria-label="Sections"></nav>
+<p id="empty" class="empty" hidden><span id="empty-text"></span> <button id="show-all" class="btn">Show all sounds</button></p>
+<main id="list" tabindex="-1"></main>
+<div class="footer-actions">
+  <button class="btn" data-act="copy-summary">Copy summary</button>
+  <button class="btn" data-act="download-json">Download notes</button>
+</div>
+
+<dialog id="help">
+  <h2>Keyboard shortcuts</h2>
+  <dl>
+    <dt>J / ↓</dt><dd>next sound</dd>
+    <dt>K / ↑</dt><dd>previous sound</dd>
+    <dt>U</dt><dd>next sound you haven't reviewed</dd>
+    <dt>Space</dt><dd>play the next variant of the highlighted sound (play/pause for music)</dd>
+    <dt>1 – 9</dt><dd>play that variant</dd>
+    <dt>A</dt><dd>play all variants in turn</dd>
+    <dt>B</dt><dd>burst at the weapon's real fire rate</dd>
+    <dt>L</dt><dd>toggle seamless loop (loop sounds)</dd>
+    <dt>G / T / R</dt><dd>verdict: Good / Tweak / Replace (press again to clear)</dd>
+    <dt>N</dt><dd>write a note</dd>
+    <dt>Esc</dt><dd>stop all sound · leave the note box · clear the filter</dd>
+    <dt>/</dt><dd>filter</dd>
+  </dl>
+  <form method="dialog"><button class="btn">Close</button></form>
+</dialog>
+
+<script src="/app.js"></script>
+</body>
+</html>
