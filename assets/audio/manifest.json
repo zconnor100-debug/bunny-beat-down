@@ -109,7 +109,9 @@
   "hop": [
     "sfx/hop_1.ogg",
     "sfx/hop_2.ogg",
-    "sfx/hop_3.ogg"
+    "sfx/hop_3.ogg",
+    "sfx/hop_4.ogg",
+    "sfx/hop_5.ogg"
   ],
   "jump": [
     "sfx/jump_1.ogg",
@@ -200,6 +202,6 @@
       "music/match_scheming_weasel.mp3",
       "music/match_bushwick_tarantella.mp3"
     ],
-    "victory": "music/victory_fluffing_a_duck.mp3"
+    "victory": "music/victory_fiddles_mcginty.mp3"
   }
 }

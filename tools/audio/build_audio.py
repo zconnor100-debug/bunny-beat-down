@@ -33,6 +33,19 @@ import dsp  # noqa: E402
 import recipes  # noqa: E402
 import sources  # noqa: E402
 
+# Work-in-progress recipe modules (recipes_wip_<group>.py) re-register keys to
+# override recipes.py while a group of sounds is being reworked (see README
+# "Iterating on sounds"); merge them into recipes.py when done. A broken one is
+# skipped with a warning so other groups can keep building.
+import glob  # noqa: E402
+import importlib  # noqa: E402
+import traceback  # noqa: E402
+for _p in sorted(glob.glob(os.path.join(HERE, "recipes_wip_*.py"))):
+    try:
+        importlib.import_module(os.path.splitext(os.path.basename(_p))[0])
+    except Exception:
+        print(f"WARNING: skipping {os.path.basename(_p)}:\n{traceback.format_exc()}")
+
 ROOT = os.path.abspath(os.path.join(HERE, "..", ".."))
 CACHE = os.path.join(ROOT, "tools", "_cache", "audio")
 OUT = os.path.join(ROOT, "assets", "audio")
@@ -275,11 +288,10 @@ def write_credits(provenance):
             "source_url": meta["page"],
             "license": lic,
             "license_url": lic_url,
-            "changes": ("Single shots/takes cut from the recordings, downmixed to mono, resampled to "
-                        "44.1 kHz, tails shortened or extended, pitch-shifted, EQ'd, saturated, "
-                        "level-normalised and layered with original synthesized transient/boom/echo "
-                        "layers and small Kenney CC0 layers (see tools/audio/recipes.py); re-encoded "
-                        "as Ogg Vorbis."),
+            "changes": ("Single shots, hits and steps cut from the recordings, downmixed to mono, "
+                        "resampled to 44.1 kHz, tails shortened or extended, pitch-shifted, EQ'd, "
+                        "saturated, level-normalised and layered with original synthesized layers "
+                        "and Kenney CC0 layers (see tools/audio/recipes.py); re-encoded as Ogg Vorbis."),
             "used_for": "Sound effects: " + ", ".join(keys),
             "files": [f"assets/audio/{r}" for r in files],
             "source_files": src_files,
@@ -295,8 +307,9 @@ def write_credits(provenance):
         "license": "MIT (project)",
         "license_url": "https://opensource.org/licenses/MIT",
         "changes": ("Original sounds generated from code (oscillators, filtered noise, Karplus-Strong "
-                    "plucks, formant voices, bells, gunshot transient/boom/echo layers); files marked "
-                    "'mixed' in recipes.py also contain the Kenney / OpenGameArt layers credited above."),
+                    "plucks, formant voices, bells, modal harp / flute / clock / gun-part models, a "
+                    "synthesized rock band, gunshot transient/boom/echo layers); files marked 'mixed' in "
+                    "recipes.py also contain the Kenney / OpenGameArt layers credited above."),
         "used_for": "Sound effects (fully or partly synthesized): " + ", ".join(synth_keys),
         "files": [f"assets/audio/{r}" for r in synth_files],
     })

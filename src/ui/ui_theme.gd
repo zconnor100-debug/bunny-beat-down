@@ -158,6 +158,6 @@ static func button(text: String, on_press: Callable) -> Button:
 	b.pressed.connect(func():
 		Audio.play(&"ui_click", -6.0)
 		on_press.call())
-	b.mouse_entered.connect(func(): Audio.play(&"ui_hover", -14.0))
+	b.mouse_entered.connect(func(): Audio.play(&"ui_hover", -14.0, 0.0))
 	b.focus_mode = Control.FOCUS_ALL
 	return b

@@ -118,7 +118,7 @@ func _physics_process(delta: float) -> void:
 			info.position = critter.get_chest_position()
 			critter.take_damage(info)
 			if critter.is_player:
-				Audio.play(&"storm_damage_tick", -4.0)
+				Audio.play(&"storm_damage_tick", -4.0, 0.02)
 
 
 func is_safe(pos: Vector3) -> bool:

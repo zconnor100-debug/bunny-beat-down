@@ -288,7 +288,7 @@ func _on_match_finished(winner: Critter, _placement: int) -> void:
 	if winner == match_manager.player:
 		GameSession.wins += 1
 		Audio.play_music("victory")
-		Audio.play(&"victory_fanfare")
+		Audio.play(&"victory_fanfare", 0.0, 0.0)   # tuned and timed to the victory track: no jitter
 		_show_end("WINNER WINNER\nCARROT DINNER!", "%d beat downs • %d damage dealt" % [winner.kills, roundi(winner.damage_dealt)], true, null)
 	elif _end and winner:
 		var sub := _end.get_meta(&"sub") as Label

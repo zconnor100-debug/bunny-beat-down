@@ -3,12 +3,14 @@
 Everything works on mono float64 numpy arrays at SR = 44100 Hz. No scipy:
 static filters are done in the frequency domain (zero-phase FFT filtering),
 time-varying filters with an STFT overlap-add, and the few genuinely
-recursive things (Karplus-Strong plucks) are vectorised per period.
+recursive things (Karplus-Strong plucks, the causal high-pass, compressor
+envelope followers) are plain loops or vectorised per period.
 
 All randomness goes through an explicit numpy Generator so every build is
 bit-for-bit reproducible.
 """
 import numpy as np
+from numpy.lib.stride_tricks import sliding_window_view
 
 SR = 44100
 
@@ -248,6 +250,33 @@ def bp_gain(f, fc, q):
     return 1 / np.sqrt(1 + q * q * (f / fc - fc / f) ** 2)
 
 
+def shelf(x, fc, gain_db, high=True):
+    """1st-order-ish shelving EQ (zero phase): high shelf above fc or low shelf below."""
+    def g(f):
+        f2 = f * f
+        w = f2 / (f2 + fc * fc) if high else fc * fc / (f2 + fc * fc)
+        return 1 + (db(gain_db) - 1) * w
+    return _fft_apply(x, g)
+
+
+def causal_hp(x, fc, q=0.7071):
+    """Causal (minimum-phase) 2nd-order high-pass biquad: removes sub-`fc` content
+    without the pre-ringing a zero-phase FFT filter smears ahead of a transient."""
+    w = 2 * np.pi * fc / SR
+    al = np.sin(w) / (2 * q)
+    a0 = 1 + al
+    b0, b1, b2 = (1 + np.cos(w)) / 2 / a0, -(1 + np.cos(w)) / a0, (1 + np.cos(w)) / 2 / a0
+    a1, a2 = -2 * np.cos(w) / a0, (1 - al) / a0
+    y = np.empty(len(x))
+    z1 = z2 = 0.0
+    for i, v in enumerate(x.tolist()):
+        o = b0 * v + z1
+        z1 = b1 * v - a1 * o + z2
+        z2 = b2 * v - a2 * o
+        y[i] = o
+    return y
+
+
 # --------------------------------------------------------------------------
 # time / pitch
 # --------------------------------------------------------------------------
@@ -286,6 +315,129 @@ def reverb(x, rng, decay=0.6, mix_db=-12.0, predelay=0.012, bright=5000.0, tail=
 def saturate(x, drive=2.0):
     """Soft tanh saturation, gain-compensated."""
     return np.tanh(x * drive) / np.tanh(drive)
+
+
+def resample_int(x, factor):
+    """Band-limited up/down-sampling by an integer factor (FFT zero-pad /
+    truncate); a negative factor -k decimates by k."""
+    n = len(x)
+    X = np.fft.rfft(x)
+    if factor > 1:
+        m = n * factor
+        Y = np.zeros(m // 2 + 1, complex)
+        Y[: len(X)] = X
+        return np.fft.irfft(Y, m) * factor
+    k = -factor
+    m = n // k
+    Y = X[: m // 2 + 1].copy()
+    return np.fft.irfft(Y, m) / k
+
+
+def shape_oversampled(x, fn, os_=4):
+    """Apply a waveshaper fn at os_ x oversampling (keeps distortion from aliasing)."""
+    pad = (-len(x)) % 2
+    xp = np.concatenate([x, np.zeros(pad)])
+    up = resample_int(xp, os_)
+    y = fn(up)
+    sr_up = 44100 * os_
+    # brick-ish low-pass at 16 kHz before decimation
+    Y = np.fft.rfft(y)
+    f = np.fft.rfftfreq(len(y), 1 / sr_up)
+    Y *= 1 / np.sqrt(1 + (f / 16000.0) ** 16)
+    y = np.fft.irfft(Y, len(y))
+    return resample_int(y, -os_)[: len(x)]
+
+
+# --------------------------------------------------------------------------
+# dynamics
+# --------------------------------------------------------------------------
+def rms_env(x, win=0.002):
+    """Centred moving-RMS envelope over `win` s."""
+    w = max(1, n_of(win))
+    return np.sqrt(np.convolve(x * x, np.ones(w) / w, mode="same") + 1e-18)
+
+
+def _follow(lev, att, rel):
+    """Causal one-pole attack/release follower on a dB level track."""
+    aa, ar = np.exp(-1.0 / (att * SR)), np.exp(-1.0 / (rel * SR))
+    out = np.empty(len(lev))
+    e = float(lev[0])
+    for i, l in enumerate(lev.tolist()):
+        e = l + (e - l) * (aa if l > e else ar)
+        out[i] = e
+    return out
+
+
+def compress(x, thresh_db, ratio, att=0.0005, rel=0.04, knee=6.0, win=0.001):
+    """Feed-forward soft-knee compressor; thresh_db is relative to x's peak."""
+    pk2 = np.max(np.abs(x)) ** 2 + 1e-24
+    w = max(1, n_of(win))
+    lev = 10 * np.log10(np.convolve(x * x, np.ones(w) / w, mode="same") / pk2 + 1e-12)
+    over = _follow(lev, att, rel) - thresh_db
+    s = 1 - 1 / ratio
+    gr = np.where(over <= -knee / 2, 0.0,
+                  np.where(over >= knee / 2, over * s, s * (over + knee / 2) ** 2 / (2 * knee)))
+    return x * db(-gr)
+
+
+def squash(x, thresh_db=-10.0, ratio=4.0, look=0.0015, smooth=0.012):
+    """Look-ahead peak compressor (threshold relative to the input peak).
+
+    The gain follows a moving-max envelope smoothed by a symmetric window, so
+    transients are pulled down before they happen and nothing clicks. Returns
+    unit peak: with the same loudness target the sound gets denser / louder.
+    """
+    x = x / (np.max(np.abs(x)) + 1e-12)
+    a = np.abs(x)
+    w = max(1, n_of(look))
+    env = sliding_window_view(np.pad(a, (w, w)), 2 * w + 1).max(axis=1)
+    k = np.hanning(max(3, n_of(smooth)))
+    env = np.maximum(np.convolve(env, k / k.sum(), mode="same"), 1e-9)
+    T = 10 ** (thresh_db / 20)
+    g = np.where(env > T, (env / T) ** (1.0 / ratio - 1.0), 1.0)
+    y = x * g
+    return y / (np.max(np.abs(y)) + 1e-12)
+
+
+def limit(x, ceiling_db, look=0.0015):
+    """Look-ahead brick-wall limiter (zero-phase gain smoothing; never overshoots)."""
+    c = db(ceiling_db)
+    g = np.minimum(1.0, c / (np.abs(x) + 1e-12))
+    L = n_of(look)
+    gmin = sliding_window_view(np.pad(g, L, constant_values=1.0), 2 * L + 1).min(axis=1)
+    w = np.hanning(2 * L + 3)[1:-1]
+    w /= w.sum()
+    gs = np.convolve(np.pad(gmin, L, mode="edge"), w, mode="valid")
+    return x * gs
+
+
+def softclip(x, amount_db, knee=0.7, os=4):
+    """4x-oversampled tanh-knee soft clipper (the same knee shape as normalize()'s
+    limiter): pulls the peak down by about `amount_db` while flattening the top
+    instead of turning the whole transient down, so a crack keeps its RMS
+    (density) at a lower peak."""
+    pk = np.max(np.abs(x))
+    tgt = pk * db(-amount_db)
+    lo, hi = tgt, pk * 4.0                     # ceiling c so that the old peak lands on tgt
+
+    def f(a, c):
+        k = knee * c
+        return np.where(a > k, k + (c - k) * np.tanh((a - k) / (c - k)), a)
+    for _ in range(50):
+        c = 0.5 * (lo + hi)
+        lo, hi = (c, hi) if f(pk, c) < tgt else (lo, c)
+    c = 0.5 * (lo + hi)
+    k = knee * c
+    n = len(x)
+    m = 1 << int(np.ceil(np.log2(n + n_of(0.01))))
+    sp = np.fft.rfft(x, m)
+    up = np.zeros(m * os // 2 + 1, complex)
+    up[: len(sp)] = sp
+    xu = np.fft.irfft(up, m * os) * os
+    a = np.abs(xu)
+    yu = np.where(a > k, np.sign(xu) * (k + (c - k) * np.tanh((a - k) / (c - k))), xu)
+    y = np.fft.irfft(np.fft.rfft(yu)[: m // 2 + 1], m) / os
+    return y[:n]
 
 
 # --------------------------------------------------------------------------
@@ -356,6 +508,60 @@ def fold_circular(x, length):
         seg = x[i : i + L]
         out[: len(seg)] += seg
     return out
+
+
+# Exactly periodic processing: a signal that is one loop long goes in, and a
+# seamless one comes out (no crossfade dip at the seam).
+def circ_filter(x, gain_fn):
+    """Zero-phase circular FFT filter: periodic in -> periodic out."""
+    X = np.fft.rfft(x)
+    f = np.maximum(np.fft.rfftfreq(len(x), 1 / SR), 1e-3)
+    return np.fft.irfft(X * gain_fn(f), len(x))
+
+
+def lp_mag(fc, order=2):
+    """Low-pass magnitude response f -> gain (for circ_filter)."""
+    return lambda f: 1 / np.sqrt(1 + (f / fc) ** (2 * order))
+
+
+def hp_mag(fc, order=2):
+    """High-pass magnitude response f -> gain (for circ_filter)."""
+    return lambda f: 1 / np.sqrt(1 + (fc / f) ** (2 * order))
+
+
+def circ_stft(x, gain_fn, **kw):
+    """stft_filter on a periodic signal: gain_fn(t_mod_L, f), seamless result."""
+    N = len(x)
+    L = N / SR
+    y = stft_filter(np.tile(x, 3), lambda t, f: gain_fn(np.mod(t, L), f), **kw)
+    return y[N:2 * N]
+
+
+def circ_reverb(x, rng, **kw):
+    """reverb() whose tail wraps around the loop."""
+    N = len(x)
+    y = reverb(np.tile(x, 3), rng, tail=0.0, **kw)
+    return y[N:2 * N]
+
+
+def circ_smooth(e, win):
+    """Circular moving average over `win` s."""
+    N = len(e)
+    k = np.zeros(N)
+    w = max(1, n_of(win))
+    k[:w] = 1.0 / w
+    k = np.roll(k, -w // 2)
+    return np.fft.irfft(np.fft.rfft(e) * np.fft.rfft(k), N)
+
+
+def circ_compress(x, thresh_db, ratio, win=0.03, smooth=0.04):
+    """Feed-forward RMS compressor with circular (seam-free) detectors."""
+    env = np.sqrt(np.maximum(circ_smooth(x * x, win), 1e-12))
+    lvl = 20 * np.log10(env + 1e-12)
+    over = np.maximum(lvl - thresh_db, 0)
+    gdb = -over * (1 - 1 / ratio)
+    gdb = circ_smooth(gdb, smooth)
+    return x * 10 ** (gdb / 20)
 
 
 def short_term_rms_db(x, win=0.05):

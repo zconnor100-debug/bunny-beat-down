@@ -114,3 +114,32 @@ func test_critters_swim_in_deep_water() -> void:
 	check(c.swimming, "critter is swimming")
 	check(c.global_position.y > -1.0 and c.global_position.y < 0.0, "floats with its head above water (y=%.2f)" % c.global_position.y)
 	Island.current = null
+
+
+## Missing sound keys are silently skipped at runtime, so a typo or a sound
+## dropped from the manifest would just go quiet: check every one the game names.
+func test_every_sound_the_game_plays_exists() -> void:
+	var keys := {}
+	var re := RegEx.create_from_string("Audio\\.(?:play|play_at|make_loop)\\(\\s*&\"([a-z0-9_]+)\"")
+	for path in _gd_files("res://src"):
+		for m in re.search_all(FileAccess.get_file_as_string(path)):
+			keys[m.get_string(1)] = path.get_file()
+	for w in WeaponDB.all():
+		keys[String(w.sfx_fire)] = "%s sfx_fire" % w.id
+		if w.cycle_sfx != &"":
+			keys[String(w.cycle_sfx)] = "%s cycle_sfx" % w.id
+	check(keys.size() > 30, "found the game's sound keys (%d)" % keys.size())
+	for k in keys:
+		check(Audio.has_sound(StringName(k)), "sound '%s' (%s) is in the audio manifest" % [k, keys[k]])
+	for slot in ["menu", "match", "victory"]:
+		check(Audio._music_slots.has(slot), "music slot '%s' has a track" % slot)
+
+
+func _gd_files(dir: String) -> Array[String]:
+	var out: Array[String] = []
+	for f in DirAccess.get_files_at(dir):
+		if f.ends_with(".gd"):
+			out.append(dir.path_join(f))
+	for d in DirAccess.get_directories_at(dir):
+		out.append_array(_gd_files(dir.path_join(d)))
+	return out

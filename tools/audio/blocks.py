@@ -5,9 +5,12 @@ roughly unit-peak so recipes can layer them with dB offsets.
 """
 import numpy as np
 
-from dsp import (SR, additive, bandpass, bp_gain, colored, env_exp, env_pts,
-                 glide, highpass, lowpass, n_of, phase_of, sine, smooth_rand,
-                 stft_filter, times, white, zeros)
+from dsp import (SR, additive, bandpass, bp_gain, colored, db, env_exp, env_pts, fade,
+                 fftconvolve, glide, highpass, lowpass, midi_hz, mix, n_of, peak_eq,
+                 phase_of, saturate, sine, smooth_rand, stft_filter, times, varispeed,
+                 white, zeros)
+
+TAU = 2 * np.pi
 
 
 def unit(x):
@@ -44,6 +47,42 @@ def crack(rng, tau=0.006, fc=3500.0):
     n = n_of(max(0.03, tau * 8))
     x = highpass(white(n, rng), fc, 2)
     return unit(x) * env_exp(n, 0.0002, tau)
+
+
+def snap(rng, fc=3500.0, q=0.9, tau=0.002, dur=0.03):
+    """Very short band-passed (~2-5 kHz) noise crack (a gunshot's snap)."""
+    n = n_of(dur)
+    return unit(bandpass(white(n, rng), fc, q)) * env_exp(n, 0.0002, tau)
+
+
+def kick(f0, f1, tau_f, tau_a, dur, attack=0.0006, drive=1.0):
+    """Tight pitch-gliding sine thump (a gunshot's low-mid 'punch'); drive > 1
+    adds odd harmonics so it still reads on small speakers."""
+    n = n_of(dur)
+    x = sine(glide(n, f0, f1, tau_f), n) * env_exp(n, attack, tau_a)
+    return unit(saturate(x, drive)) if drive > 1.0 else x
+
+
+def lowbody(rng, dur, lo, hi, tau, attack=0.0015, slope=-3.0):
+    """Band-limited noise body (lo..hi Hz) with a fast attack and exp decay."""
+    n = n_of(dur)
+    x = lowpass(highpass(colored(n, rng, slope), lo, 2), hi, 2)
+    return unit(x) * env_exp(n, attack, tau)
+
+
+def struck(rng, modes, dur, exc_ms=1.2, exc_lp=9000.0):
+    """Struck-object resonator bank: a short filtered noise strike convolved
+    with damped modes [(Hz, decay_s, amp)]. Short decays = wood/shell knock,
+    never a ringing bell."""
+    n = n_of(dur)
+    t = times(n)
+    ir = np.zeros(n)
+    for f, d, a in modes:
+        if f < SR * 0.45:
+            ir += a * np.sin(2 * np.pi * f * t) * np.exp(-t / d)
+    m = n_of(exc_ms / 1000 * 6)
+    exc = lowpass(white(m, rng), exc_lp, 2) * env_exp(m, 0.0002, exc_ms / 1000)
+    return unit(fftconvolve(exc, ir)[:n])
 
 
 def grains(rng, dur, count, fmin, fmax, glen=(0.002, 0.008), t_tau=0.08, start=0.0):
@@ -90,6 +129,24 @@ def squelch(rng, dur, f_pts, q=3.0, amp_pts=None):
     y = unit(stft_filter(white(n, rng), g, win=512, hop=128))
     amp = env_pts(n, amp_pts or [(0, 0), (0.008, 1), (dur * 0.5, 0.6), (dur, 0)])
     return y * amp
+
+
+def wet_grains(rng, dur, count, fmin, fmax, glen=(0.006, 0.02), t_tau=0.05, start=0.0, q=1.4):
+    """Dense low-mid noise grains whose band sags downward inside each grain:
+    the sticky 'squelch' texture of wet meat (no tonal droplets)."""
+    out = np.zeros(n_of(dur))
+    for _ in range(count):
+        t0 = start + rng.exponential(t_tau)
+        L = n_of(rng.uniform(*glen))
+        i0 = n_of(t0)
+        if i0 + L >= len(out):
+            continue
+        fc = rng.uniform(fmin, fmax)
+        g = bandpass(white(2 * L + 256, rng), fc, q)[128:]
+        g = varispeed(g, np.linspace(1.0, 0.7, L))[:L]
+        g = unit(g) * np.sin(np.pi * np.arange(len(g)) / len(g)) ** 1.5
+        out[i0 : i0 + len(g)] += g * rng.uniform(0.4, 1.0) * np.exp(-(t0 - start) / (t_tau * 2.5))
+    return out
 
 
 def whoosh(rng, dur, f0, f1, q=1.5, peak=0.4, slope=-3.0):
@@ -139,6 +196,129 @@ def crackle(rng, dur, rate, fmin=1500, fmax=6000, glen=(0.002, 0.012), period=No
     return out[: n_of(dur)]
 
 
+def twig_snap(rng):
+    """Bramble twig snapping: sharp crack + short woody resonances (+ splinter)."""
+    n = n_of(0.07)
+    t = times(n)
+    x = np.zeros(n)
+    m = n_of(0.006)
+    x[:m] += (unit(highpass(white(m, rng), rng.uniform(1800, 3500), 2))
+              * env_exp(m, 0.0001, rng.uniform(0.0006, 0.0015)))
+    for lo, hi, tl, th, a in ((700, 1300, 0.010, 0.022, 0.55), (1600, 2800, 0.005, 0.012, 0.45),
+                              (3200, 5200, 0.002, 0.006, 0.3)):
+        x += a * np.sin(TAU * rng.uniform(lo, hi) * t + rng.uniform(0, TAU)) * np.exp(-t / rng.uniform(tl, th))
+    if rng.random() < 0.6:  # splinter
+        d = n_of(rng.uniform(0.006, 0.02))
+        s = unit(highpass(white(m, rng), 2500, 2)) * env_exp(m, 0.0001, 0.0008)
+        x[d:d + m] += 0.6 * s[: n - d]
+    a = n_of(0.0002)
+    x[:a] *= np.linspace(0, 1, a)
+    return unit(x) * env_pts(n, [(0, 1), (0.05, 0.6), (0.07, 0)])
+
+
+def thorn_scrape(rng, dur):
+    """Thorn dragged over bark: stick-slip train of tiny scratchy grains."""
+    n = n_of(dur)
+    out = np.zeros(n + n_of(0.01))
+    rate0 = rng.uniform(35, 80)
+    fc = rng.uniform(2600, 5200)
+    tt = 0.0
+    while tt < dur:
+        L = n_of(rng.uniform(0.0012, 0.004))
+        i0 = n_of(tt)
+        g = unit(bandpass(white(L + 128, rng), fc * rng.uniform(0.8, 1.25), 2.5)[:L]) * env_exp(L, 0.0002, L / SR / 3)
+        out[i0:i0 + L] += g * rng.uniform(0.4, 1.0)
+        tt += 1.0 / (rate0 * rng.uniform(0.6, 1.5))
+    out = out[:n]
+    return out * env_pts(n, [(0, 0), (dur * 0.3, 1), (dur * 0.7, 0.7), (dur, 0)])
+
+
+# --------------------------------------------------------------------------
+# mechanical foley: dense 'noise-modal' bodies, hits through them, friction
+# --------------------------------------------------------------------------
+def noise_ir(rng, octs, peaks=(), dur=0.25):
+    """Dense 'noise-modal' body: a complex metal/polymer assembly has so many
+    modes that its impulse response is coloured noise whose decay depends on
+    frequency. octs = [(octave centre Hz, gain dB, tau s)] (interpolated in
+    log-frequency with raised-cosine crossovers), peaks = [(Hz, Q, gain dB,
+    tau s)]: narrow resonant noise bands -- the part's characteristic
+    'clink'/'clack' colour, rough like a real ring instead of a pure sine.
+    Pass a fixed-seed rng so every variant uses the same body."""
+    r = rng
+    n = n_of(dur)
+    t = times(n)
+    W = np.fft.rfft(r.standard_normal(n))
+    f = np.maximum(np.fft.rfftfreq(n, 1 / SR), 1.0)
+    lf = np.log2(f)
+    cs = np.log2([o[0] for o in octs])
+    ir = np.zeros(n)
+    for k, (fc, g, tau) in enumerate(octs):
+        # triangular-in-log2 weights through neighbouring centres (sum to 1)
+        lo = cs[k - 1] if k > 0 else cs[k] - 1.0
+        hi = cs[k + 1] if k + 1 < len(cs) else cs[k] + 1.0
+        w = np.where(lf <= cs[k], (lf - lo) / (cs[k] - lo), (hi - lf) / (hi - cs[k]))
+        w = np.clip(w, 0, 1)
+        if k == 0:
+            w = np.where(lf < cs[k], np.clip(lf - (cs[k] - 1.0), 0, 1), w)
+        if k == len(octs) - 1:
+            w = np.where(lf > cs[k], 1.0, w)
+        w = 0.5 - 0.5 * np.cos(np.pi * w)
+        ir += np.fft.irfft(W * w, n) * db(g) * np.exp(-t / tau)
+    for fc, q, g, tau in peaks:
+        p = bandpass(r.standard_normal(n), fc, q)
+        ir += p / (np.std(p) + 1e-12) * np.std(ir) * db(g) * np.exp(-t / tau)
+    return ir / (np.max(np.abs(ir)) + 1e-12)
+
+
+def modal_hit(rng, ir, hard=0.0002, rebounds=((0.005, -9), (0.013, -15)), tick_db=-6.0,
+              tick_fc=3500.0, jitter=0.25):
+    """Hard contact through a modal body (noise_ir): a main noise-burst strike
+    plus a few smaller rebounds (real mechanisms chatter), and the dry contact tick."""
+    m = n_of(hard * 12)
+    span = max([0.0] + [d for d, _ in rebounds]) * (1 + jitter) + 0.004
+    exc = np.zeros(n_of(span) + m)
+    hits = [(0.0, 0.0)] + [(d * rng.uniform(1 - jitter, 1 + jitter), g + rng.uniform(-2, 2))
+                           for d, g in rebounds]
+    for d, g in hits:
+        i0 = n_of(d) if d > 0 else 0
+        exc[i0: i0 + m] += white(m, rng) * np.exp(-times(m) / hard) * db(g)
+    y = unit(fftconvolve(exc, ir))
+    tick = crack(rng, hard * 1.5, tick_fc)
+    return unit(mix(0, (y, 0, 0), (tick, 0, tick_db)))
+
+
+def scrape(rng, dur, f_lo, f_hi, ir=None, grains=350.0, rough=0.75,
+           shape=((0, 0), (0.25, 1), (0.8, 0.8), (1, 0)), ir_db=-6.0, grain_count=None):
+    """Friction slide (metal or polymer on metal): band-limited noise with
+    stick-slip amplitude roughness (`grains` Hz), plus sparse micro-impacts
+    through the part's modal body `ir`."""
+    n = n_of(dur)
+    nz = highpass(lowpass(white(n, rng), f_hi, 2), f_lo, 2)
+    m = np.abs(lowpass(white(n, rng), grains, 1))
+    m /= np.max(m) + 1e-12
+    y = unit(nz) * ((1 - rough) + rough * m)
+    if ir is not None:
+        k = grain_count if grain_count is not None else int(grains * 0.08 * dur) + 2
+        imp = np.zeros(n)
+        idx = rng.integers(0, n, k)
+        imp[idx] = rng.uniform(0.2, 1.0, k) * rng.choice([-1.0, 1.0], k)
+        tex = fftconvolve(imp, ir)[:n]
+        y = y + db(ir_db) * unit(tex)
+    ts, vs = zip(*shape)
+    env = np.interp(times(n), np.array(ts) * dur, vs)
+    return unit(y) * env
+
+
+def shk(rng, dur=0.03, f_lo=2500.0, f_hi=12000.0, tau=0.008):
+    """Broadband friction/air 'shk' riding on a hard stop (metal parts grinding
+    to a halt): makes a clack read as 'chk' instead of a pitched 'tok'."""
+    n = n_of(dur)
+    x = highpass(lowpass(white(n, rng), f_hi, 2), f_lo, 2)
+    m = np.abs(lowpass(white(n, rng), 600.0, 1))
+    x = unit(x) * (0.45 + 0.55 * m / (np.max(m) + 1e-12))
+    return unit(x) * np.exp(-times(n) / tau) * np.clip(times(n) / 0.0005, 0, 1)
+
+
 # --------------------------------------------------------------------------
 # tonal / cartoon
 # --------------------------------------------------------------------------
@@ -179,6 +359,171 @@ def slide_whistle(f_pts, dur, vib=(5.0, 0.012), breath_db=-24.0, rng=None):
     return unit(x) * env_pts(n, [(0, 0), (0.02, 1), (dur - 0.08, 0.8), (dur, 0)])
 
 
+def harp_note(freq, dur, rng, tau=None, pos=0.42, roll=1.75, damp=3.5, attack=0.0025,
+              finger_db=-30.0, inharm=4e-5, bloom=0.22):
+    """One plucked concert-harp string (modal synthesis, exactly in tune).
+
+    tau     decay time constant of the fundamental (s); default follows the real
+            instrument (bass strings ring for seconds, top strings ~0.3 s)
+    pos     pluck position along the string (0.5 = middle: mellow, odd harmonics)
+    roll    harmonic amplitude roll-off exponent (2 = ideal soft pluck)
+    damp    extra damping of high partials (1/s at 1 kHz, grows with f^1.5)
+    bloom   share of the slower, slightly detuned second string polarisation
+    """
+    n = n_of(dur)
+    t = times(n)
+    if tau is None:
+        tau = float(np.clip(1.5 * (220.0 / freq) ** 0.7, 0.18, 3.0))
+    out = np.zeros(n)
+    for k in range(1, 40):
+        fk = k * freq * np.sqrt(1.0 + inharm * k * k)
+        if fk > SR * 0.42:
+            break
+        a = abs(np.sin(np.pi * k * pos)) / k ** roll
+        if a < 2e-4:
+            continue
+        rate = 1.0 / tau + damp * (fk / 1000.0) ** 1.5
+        det = 1.0 + rng.uniform(1.5e-4, 5e-4)
+        out += a * ((1 - bloom) * np.sin(TAU * fk * t) * np.exp(-t * rate)
+                    + bloom * np.sin(TAU * fk * det * t + rng.uniform(0, 0.4)) * np.exp(-t * rate * 0.62))
+    atk = n_of(attack)
+    out[:atk] *= 0.5 - 0.5 * np.cos(np.linspace(0, np.pi, atk))
+    out = unit(out)
+    if finger_db > -90:  # the fingertip leaving the gut string
+        m = n_of(0.006)
+        nz = bandpass(white(m + 256, rng), float(np.clip(freq * 2.5, 900, 4000)), 1.4)[:m]
+        out[:m] += unit(nz) * env_exp(m, 0.0004, 0.0015) * 10 ** (finger_db / 20)
+    return fade(out, 0.0, min(dur * 0.25, 0.12))
+
+
+def harp_roll(notes, rng, dur, gap, body=True, **kw):
+    """Rolled harp chord / arpeggio: notes = [(midi, gain_db), ...] spaced `gap` s."""
+    layers = []
+    for i, (m, g) in enumerate(notes):
+        layers.append((harp_note(midi_hz(m), dur - i * gap, rng, **kw), i * gap, g))
+    x = mix(dur, *layers)
+    if body:  # soundboard: warm low-mid bloom, slightly hollow box
+        x = peak_eq(x, 210.0, 3.0, 0.9)
+        x = peak_eq(x, 520.0, 1.5, 1.2)
+    return x
+
+
+def flute_line(rng, notes, rel=0.09, breath_db=-13.0, hiss_db=-24.0, chiff_db=-11.0,
+               vib_rate=5.4, vib_depth=0.008, trem=0.18, glide=0.012,
+               tone=(1.0, 0.34, 0.15, 0.06, 0.028, 0.012)):
+    """Legato wooden-flute phrase.
+
+    notes = [(t0, dur, midi, tongued, amp), ...] back to back (t0 ascending).
+    Tongued notes get a breath chiff, a pitch scoop and an amplitude re-attack;
+    slurred notes just change finger (tiny dip, quick glide). Notes longer than
+    0.22 s grow a delayed vibrato (pitch + breath-pressure tremolo).
+    """
+    end = max(t0 + d for t0, d, *_ in notes)
+    n = n_of(end + rel + 0.02)
+    t = times(n)
+    logf = np.zeros(n)
+    amp = np.zeros(n)
+    vib_env = np.zeros(n)
+    scoop = np.zeros(n)
+    onset = np.zeros(n)
+    on_times = []
+    for j, (t0, d, m, tongued, a) in enumerate(notes):
+        i0, i1 = n_of(t0), n_of(t0 + d)
+        last = j == len(notes) - 1
+        if last:
+            i1 = n
+        logf[i0:i1] = np.log2(midi_hz(m))
+        seg = t[i0:i1] - t0
+        if tongued:
+            e = np.clip(seg / 0.028, 0, 1) ** 0.8
+            on_times.append(t0)
+            sc = np.exp(-seg / 0.018)
+            scoop[i0:i1] = np.maximum(scoop[i0:i1], sc)
+            onset[i0:i1] = np.maximum(onset[i0:i1], np.exp(-seg / 0.025))
+        else:
+            e = 1 - 0.14 * np.exp(-((seg - 0.004) / 0.006) ** 2)  # finger change
+        if last:
+            e = e * np.interp(seg, [0, d, d + rel], [1.0, 1.0, 0.0])
+        amp[i0:i1] = a * e
+        if d > 0.22:
+            vib_env[i0:i1] = np.clip((seg - 0.11) / 0.16, 0, 1)
+    # first note starts at its own pitch (the zero area before it is silent anyway)
+    first = n_of(notes[0][0])
+    logf[:first] = logf[first]
+    # portamento between notes, then breath scoop on tongued attacks (-30 cents)
+    w = max(1, n_of(glide))
+    logf = np.convolve(np.pad(logf, (w, w), mode="edge"), np.ones(w) / w, mode="same")[w:-w]
+    logf = logf - 0.025 * scoop
+    vib = np.sin(TAU * vib_rate * t + 0.3 * smooth_rand(n, rng, 1.5))
+    wander = 0.0012 * smooth_rand(n, rng, 3.0)
+    f = 2.0 ** logf * (1 + vib_depth * vib_env * vib + wander)
+    env = amp * (1 + trem * vib_env * np.sin(TAU * vib_rate * t + 0.9))
+    env = np.convolve(env, np.ones(n_of(0.004)) / n_of(0.004), mode="same")
+
+    ph = phase_of(f)
+    x = np.zeros(n)
+    for k, wk in enumerate(tone, start=1):
+        if k * f.max() > SR * 0.42:
+            break
+        bright = np.clip(env, 1e-4, None) ** (0.45 * (k - 1))
+        boost = 1 + (1.6 * onset if k == 2 else 0.6 * onset if k == 3 else 0)  # overblown edge of a tongued attack
+        x += wk * bright * boost * np.sin(k * ph + 0.4 * k)
+    x *= env
+
+    # pitch-tracked breath turbulence around the fundamental and 2nd harmonic
+    fi = f
+
+    def g(tt, fr):
+        i = np.clip((tt[:, 0] * SR).astype(int), 0, n - 1)
+        fc = fi[i][:, None]
+        return bp_gain(fr, fc, 7.0) + 0.55 * bp_gain(fr, 2 * fc, 7.0) + 0.25 * bp_gain(fr, 3 * fc, 6.0)
+
+    turb = unit(stft_filter(white(n, rng), g, win=1024, hop=256)) * env
+    hiss = unit(highpass(bandpass(white(n, rng), 2800, 0.6), 1200, 2)) * env ** 1.5
+    chiffs = np.zeros(n)
+    for t0 in on_times:
+        m_ = n_of(0.03)
+        i0 = n_of(t0)
+        c_ = unit(bandpass(white(m_ + 256, rng), 3200, 1.1)[:m_]) * env_exp(m_, 0.0008, 0.006)
+        chiffs[i0:i0 + m_] += c_[: n - i0]
+    tone_rms = np.sqrt(np.mean(x[x != 0] ** 2)) + 1e-12
+    y = (x / tone_rms
+         + turb * 10 ** (breath_db / 20) / (np.sqrt(np.mean(turb ** 2)) + 1e-12)
+         + hiss * 10 ** (hiss_db / 20) / (np.sqrt(np.mean(hiss ** 2)) + 1e-12)
+         + chiffs * 10 ** (chiff_db / 20) * 3.0)
+    return unit(y)
+
+
+def _escapement_click(rng, f_scale, body_hz, case_amt, n):
+    """One escapement contact: metallic modes + hollow wooden case modes."""
+    t = times(n)
+    x = np.zeros(n)
+    for f, tau, a in ((2650, 0.0062, 1.0), (4170, 0.0046, 0.75), (5980, 0.0034, 0.55),
+                      (8340, 0.0024, 0.38), (11150, 0.0016, 0.22)):
+        ff = f * f_scale * rng.uniform(0.985, 1.015)
+        x += a * np.sin(TAU * ff * t + rng.uniform(0, TAU)) * np.exp(-t / tau)
+    for r, tau, a in ((1.0, 0.017, 0.55), (1.73, 0.010, 0.32), (0.47, 0.024, 0.38), (2.61, 0.006, 0.2)):
+        ff = body_hz * r * rng.uniform(0.99, 1.01)
+        x += case_amt * a * np.sin(TAU * ff * t + rng.uniform(0, TAU)) * np.exp(-t / tau)
+    m = n_of(0.004)
+    x[:m] += 1.1 * unit(highpass(white(m, rng), 2500, 2)) * env_exp(m, 0.0001, 0.0006)
+    a = n_of(0.00025)
+    x[:a] *= np.linspace(0, 1, a)
+    return x
+
+
+def clock_tick(rng, f_scale=1.0, body_hz=1100.0, case_amt=1.0):
+    """Mechanical clock escapement 'tick': unlock click, louder drop click ~10 ms
+    later, and a faint settle; each excites the escapement + wooden case modes."""
+    n = n_of(0.09)
+    gap = rng.uniform(0.0085, 0.0115)
+    return unit(mix(0.09,
+                    (_escapement_click(rng, f_scale * 1.04, body_hz, case_amt * 0.5, n), 0, -7),
+                    (_escapement_click(rng, f_scale, body_hz, case_amt, n), gap, 0),
+                    (_escapement_click(rng, f_scale * 0.97, body_hz, case_amt * 0.7, n),
+                     gap + rng.uniform(0.012, 0.016), -14)))
+
+
 VOWELS = {  # (F1, F2, F3) Hz, adult-human reference; scaled up for small critters
     "i": (270, 2290, 3010),
     "e": (530, 1840, 2480),
@@ -186,6 +531,9 @@ VOWELS = {  # (F1, F2, F3) Hz, adult-human reference; scaled up for small critte
     "o": (570, 840, 2410),
     "u": (300, 870, 2240),
     "uh": (520, 1190, 2390),
+    "ae": (660, 1720, 2410),
+    "aw": (640, 1000, 2400),
+    "oo": (380, 950, 2300),
 }
 
 
@@ -246,6 +594,141 @@ def voice(rng, dur, f0_pts, vowel_pts, scale=1.6, vib=(7.0, 0.015, 0.015),
         out = out * (1 + rasp * r)
     amp = env_pts(n, amp_pts or [(0, 0), (0.015, 1), (max(0.03, dur - 0.05), 0.75), (dur, 0)])
     return unit(out * amp)
+
+
+def _lpn(r, n, fc):
+    """Low-passed white noise in [-1, 1] (random control signal)."""
+    return unit(lowpass(white(n, r), fc, 2))
+
+
+def _curve(t, pts, log=False):
+    ts, vs = zip(*pts)
+    if log:
+        return np.exp(np.interp(t, ts, np.log(vs)))
+    return np.interp(t, ts, vs)
+
+
+def glottal_pulses(r, n, rate_pts, tau=0.004, jit=0.3):
+    """Irregular glottal-pulse amplitude train in [0, 1] (vocal fry / creak)."""
+    t = times(n)
+    rate = _curve(t, rate_pts, log=True) * (1 + jit * _lpn(r, n, 30))
+    ph = np.cumsum(rate) / SR
+    idx = np.nonzero(np.diff(np.floor(ph)) > 0)[0] + 1
+    imp = np.zeros(n)
+    imp[idx] = r.uniform(0.55, 1.0, len(idx))
+    L = n_of(tau * 6)
+    y = fftconvolve(imp, np.exp(-times(L) / tau))[:n]
+    return y / (y.max() + 1e-12)
+
+
+def critter_voice(r, dur, f0_pts, vowel_pts, scale=1.3, tilt=1.25, sub_pts=None, jitter=0.025,
+                  shimmer=0.15, trill=None, fry_pts=None, fry_rate=((0, 60),), breath=0.12,
+                  hoarse=0.3, vib=None, amp_pts=None, flutter=0.03, fmax=6500.0, drive=1.6):
+    """Formant-additive small-animal vocalisation with grit (deeper and rougher
+    than voice(): fox / raccoon / squirrel rather than a whistly squeak).
+
+    f0_pts / vowel_pts: pitch contour [(t, Hz)] and formant morph [(t, vowel)]
+    scale:     formant scale vs an adult human (1.3 = fox/raccoon-sized throat)
+    sub_pts:   [(t, 0..1)] subharmonic (period-doubling) amount: growl / roughness
+    jitter:    fast random pitch wander;  shimmer: fast random amplitude wander
+    trill:     (rate Hz, [(t, depth)]) amplitude chirr ("rrrr")
+    fry_pts:   [(t, 0..1)] blend toward irregular glottal pulses (creak / grunt)
+    vib:       (rate Hz, depth at start, depth at end)
+    breath:    steady aspiration noise through the formants
+    hoarse:    pitch-synchronous (pulsed) formant noise: a hoarse, raspy throat
+    fmax:      soft upper limit of the voiced spectrum (no whistly highs)
+    drive:     tanh saturation of the voiced part (strain)
+    """
+    n = n_of(dur)
+    t = times(n)
+    f0 = _curve(t, f0_pts, log=True)
+    if vib:
+        f0 = f0 * (1 + np.linspace(vib[1], vib[2], n) * np.sin(2 * np.pi * vib[0] * t))
+    if jitter:
+        f0 = f0 * (1 + jitter * _lpn(r, n, 90))
+    vt = [p[0] for p in vowel_pts]
+    F = np.array([VOWELS[s] for _, s in vowel_pts], float) * scale
+    Ft = [np.interp(t, vt, F[:, i]) for i in range(3)]
+    if flutter:
+        Ft = [Fi * (1 + flutter * _lpn(r, n, 10)) for Fi in Ft]
+    Bw = [Ft[0] * 0.2 + 90, Ft[1] * 0.12 + 110, Ft[2] * 0.1 + 160]
+    A = (1.0, 0.7, 0.35)
+
+    def fgain(fk):
+        g = 0.05 + sum(a / (1 + ((fk - Fi) / (Bi * 0.5)) ** 2) for a, Fi, Bi in zip(A, Ft, Bw))
+        return g / (1 + (fk / fmax) ** 8) * (fk < 19000)
+
+    ph = phase_of(f0)
+    out = np.zeros(n)
+    kmax = min(160, int(2.2 * fmax / f0.min()) + 1)
+    for k in range(1, kmax + 1):
+        out += fgain(k * f0) * k ** -tilt * np.sin(k * ph)
+    if sub_pts:
+        sub = _curve(t, sub_pts)
+        for k in range(1, kmax + 1):
+            h = k - 0.5
+            out += sub * fgain(h * f0) * h ** -tilt * np.sin(h * ph)
+    out = unit(out)
+    if drive:
+        out = saturate(out, drive)
+
+    amp = np.ones(n)
+    if shimmer:
+        amp *= 1 + shimmer * _lpn(r, n, 70)
+    if trill:
+        rate, dpts = trill
+        d = _curve(t, dpts)
+        tph = 2 * np.pi * np.cumsum(rate * (1 + 0.08 * _lpn(r, n, 6))) / SR
+        amp *= 1 - d * (0.5 - 0.5 * np.cos(tph))
+    if fry_pts:
+        fa = _curve(t, fry_pts)
+        amp *= (1 - fa) + fa * glottal_pulses(r, n, fry_rate)
+    out = out * amp
+
+    if breath > 0 or hoarse > 0:
+        tf = np.array(vt, float)
+
+        def gfn(tt, f):
+            tt = tt[:, 0]
+            res = np.zeros((len(tt), f.shape[1]))
+            for i in range(3):
+                Fi = np.interp(tt, tf, F[:, i])[:, None]
+                Bi = Fi * 0.25 + 180
+                res += A[i] / (1 + ((f - Fi) / (Bi / 2)) ** 2)
+            return res
+
+        nz = stft_filter(white(n, r), gfn, win=1024, hop=256)
+        nz = unit(lowpass(highpass(nz, 300, 2), 7000, 2))
+        glot = (0.5 + 0.5 * np.cos(ph)) ** 4  # one noise puff per glottal cycle
+        nz = nz * (breath * (1 + shimmer * _lpn(r, n, 70)) + hoarse * glot * amp)
+        out = unit(out) + nz
+    env = env_pts(n, amp_pts or [(0, 0), (0.012, 1), (max(0.03, dur - 0.06), 0.7), (dur, 0)])
+    # saturation intermodulation leaves junk under f0/2: nothing useful below 80 Hz
+    return unit(highpass(lowpass(out * env, fmax * 1.15, 2), 80, 2))
+
+
+def tongue_click(r, fc=2200.0, q=1.2, tau=0.003):
+    """Tongue/teeth 'k' click that starts a chitter syllable."""
+    return burst(r, 0.03, fc, q, tau, attack=0.0004)
+
+
+def chitter(r, starts, f0s, dur=0.05, vowels=("ae", "uh"), click_db=-9.0, gains=None, **kw):
+    """Quick 'ak-ak-ak' syllable run (squirrel / raccoon chatter)."""
+    layers = []
+    for i, (t0, f) in enumerate(zip(starts, f0s)):
+        s = critter_voice(r, dur, [(0, f * 0.85), (0.012, f), (dur, f * 0.72)],
+                          [(0, vowels[0]), (dur, vowels[1])],
+                          amp_pts=[(0, 0), (0.004, 1), (dur * 0.45, 0.65), (dur, 0)], **kw)
+        g = gains[i] if gains else 0.0
+        layers += [(s, t0, g), (tongue_click(r, 2000 + 400 * r.random()), t0, g + click_db)]
+    return mix(starts[-1] + dur, *layers)
+
+
+def exhale(r, dur=0.35, lp=1600.0, tau=0.12):
+    """Last breath out: soft low 'hhhh'."""
+    n = n_of(dur)
+    x = lowpass(highpass(colored(n, r, -2), 250, 2), lp, 2)
+    return unit(x) * env_pts(n, [(0, 0), (0.04, 1), (dur, 0)]) * env_exp(n, 0.0, tau * 3)
 
 
 # --------------------------------------------------------------------------

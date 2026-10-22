@@ -79,16 +79,29 @@ MUSIC = [
            "music/match_bushwick_tarantella.mp3", "match",
            "Breakneck 215 bpm accordion/clarinet tarantella -- frantic, bright, "
            "acoustic; ideal for the final briar-storm circle."),
-    _track("Fluffing a Duck", "USUAN1100768", "Fluffing a Duck.mp3",
-           "music/victory_fluffing_a_duck.mp3", "victory",
-           "Short (1:07) goofy trombone/tuba strut -- a triumphant-but-silly "
-           "'you are the last bunny standing' victory lap."),
+    _track("Fiddles McGinty", "USUAN1400051", "Fiddles McGinty.mp3",
+           "music/victory_fiddles_mcginty.mp3", "victory",
+           "Driving Celtic folk-rock reel (174 bpm, D major; uilleann pipes, recorder, guitar, "
+           "bass, rock backbeat) that hits full tilt from the first bar: a cool, triumphant "
+           "woodland-festival victory lap. victory_fanfare is written in its key and locked to "
+           "its beat grid, so the rock sting plays straight into it."),
 ]
 
 
-# OpenGameArt.org audio used for the weapon sounds. Each entry's licence was
-# checked on its OGA page (and in the pack text) -- only CC0 / CC BY allowed.
+# OpenGameArt.org audio (real recordings under the weapons, impacts, gore and
+# footsteps). Each entry's licence was checked on its OGA page (and in the pack
+# where it has any text) -- only CC0 / CC BY allowed.
 # "archive" is zip | 7z | None (single file).
+_OGA_FILES = "https://opengameart.org/sites/default/files/"
+# Independent.nu sound bank (Johannes Pinter), submitted to OpenGameArt by
+# qubodup: CC0 on each OGA page; the author's original release granted
+# "completely free rights". The archives hold only audio files, no licence text.
+_INU = {
+    "author": "Independent.nu (submitted to OpenGameArt by qubodup)",
+    "author_url": "https://web.archive.org/web/20100307021017/http://www.johannespinter.com/inu/ljudbank.htm",
+    "archive": "7z",
+    "license": CC0,
+}
 OGA = {
     "free-firearm-sound-library": {
         "title": "The Free Firearm Sound Library, Prepared set",
@@ -116,5 +129,41 @@ OGA = {
         "url": "https://opengameart.org/sites/default/files/launches.7z",
         "archive": "7z",
         "license": CC_BY_3,
+    },
+    "tinyworlds-different-steps": {
+        "title": "Different steps on wood, stone, leaves, gravel and mud",
+        "author": "TinyWorlds (recorded by kddekadenz)",
+        "author_url": "https://opengameart.org/users/tinyworlds",
+        "page": "https://opengameart.org/content/different-steps-on-wood-stone-leaves-gravel-and-mud",
+        "url": _OGA_FILES + "%5Bkdd%5DDifferentSteps_0.zip",
+        "archive": "zip",
+        # page: CC0 (recordings from pdsounds.org, public domain); inside the pack
+        # every file is tagged ALBUM="Public Domain", COMMENTS="Feel free to use this"
+        "license": CC0,
+    },
+    "independent-nu-squish": dict(_INU, **{
+        "title": "8 wet squish, slurp impacts",
+        "page": "https://opengameart.org/content/8-wet-squish-slurp-impacts",
+        "url": _OGA_FILES + "independent_nu_ljudbank-wet_squish_slurp_impacts.7z"}),
+    "independent-nu-splatter": dict(_INU, **{
+        "title": "2 wooden squish splatter sequences",
+        "page": "https://opengameart.org/content/2-wooden-squish-splatter-sequences",
+        "url": _OGA_FILES + "independent_nu_ljudbank-extreme_splatter.7z"}),
+    "independent-nu-break-crunch": dict(_INU, **{
+        "title": "5 break, crunch impacts",
+        "page": "https://opengameart.org/content/5-break-crunch-impacts",
+        "url": _OGA_FILES + "independent_nu_ljudbank-break_crunch_impact.7z"}),
+    "independent-nu-wood-crack": dict(_INU, **{
+        "title": "35 wooden cracks/hits/destructions",
+        "page": "https://opengameart.org/content/35-wooden-crackshitsdestructions",
+        "url": _OGA_FILES + "independent_nu_ljudbank-wood_crack_hit_destruction.7z"}),
+    "qubodup-rustle": {
+        "title": "20 rustles dry leaves",
+        "author": "qubodup (Iwan Gabovitch)",
+        "author_url": "https://opengameart.org/users/qubodup",
+        "page": "https://opengameart.org/content/20-rustles-dry-leaves",
+        "url": _OGA_FILES + "qubodup-rustle.7z",
+        "archive": "7z",
+        "license": CC0,
     },
 }

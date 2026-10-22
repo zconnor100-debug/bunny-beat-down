@@ -667,6 +667,9 @@ func _die(info: DamageInfo) -> void:
 	else:
 		visual.push_bone(info.bone_role, push, info.position)
 	_apply_death_gore(info)
+	if info.kind != DamageInfo.Kind.EXPLOSION:
+		# the ragdoll hits the ground (blasts throw it too far to time this)
+		Despawner.after(self, 0.45, func(n: Node): Audio.play_at(&"body_fall", (n as Critter).visual.bone_world_position(&"hips"), -3.0, 0.1))
 	died.emit(info)
 	Events.critter_died.emit(self, info)
 	if not is_player:
@@ -681,6 +684,7 @@ func _apply_death_gore(info: DamageInfo) -> void:
 		visual.pop_helmet(push * 1.5)
 		if gore_ok and p > 0.35:
 			FX.gore_burst(get_chest_position(), 1.4, def.fur_color)
+			_gore_splat()
 			var limbs := [&"head", &"l_upper_arm", &"r_upper_arm", &"l_upper_leg", &"r_upper_leg", &"l_lower_arm", &"r_lower_leg"]
 			limbs.shuffle()
 			var n := clampi(int(round(p * 4.0)), 1, 4)
@@ -692,10 +696,17 @@ func _apply_death_gore(info: DamageInfo) -> void:
 		visual.pop_helmet(push + Vector3.UP * 1.5)
 		if gore_ok and (p >= 0.5 or info.amount >= 45.0):
 			visual.dismember(&"head", push * 1.2 + Vector3.UP * 3.0)
+			_gore_splat()
 		return
 	if gore_ok and info.bone_role != &"" and info.bone_role not in [&"chest", &"spine", &"hips"]:
 		if randf() < p:
 			visual.dismember(info.bone_role, push + Vector3.UP * 1.5)
+
+
+## Wet splat on a gory kill (Gore: Full only; plushie stuffing doesn't squelch).
+func _gore_splat() -> void:
+	if Settings.gore == Settings.Gore.BLOOD:
+		Audio.play_at(&"gore_splat", get_chest_position(), -2.0, 0.1)
 
 
 ## A carrot hit this critter's ragdoll.

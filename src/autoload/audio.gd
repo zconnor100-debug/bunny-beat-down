@@ -6,6 +6,7 @@ extends Node
 const MANIFEST := "res://assets/audio/manifest.json"
 const POOL_3D := 48
 const POOL_2D := 12
+const MUSIC_TRIM_DB := {"victory": -4.0}   # the victory reel is mastered hotter than the rest
 
 var _variants: Dictionary = {}       # key -> Array[AudioStream]
 var _music_slots: Dictionary = {}    # "menu"/"victory" -> path, "match" -> Array
@@ -206,7 +207,7 @@ func play_music(slot: String, fade := 1.5) -> void:
 	_music.volume_db = -30.0
 	_music.play()
 	_music_fade = create_tween()
-	_music_fade.tween_property(_music, "volume_db", 0.0, fade)
+	_music_fade.tween_property(_music, "volume_db", MUSIC_TRIM_DB.get(slot, 0.0), fade)
 
 
 func stop_music(fade := 1.0) -> void:
