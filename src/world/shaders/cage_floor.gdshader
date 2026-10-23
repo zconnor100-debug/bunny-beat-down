@@ -27,8 +27,9 @@ uniform float pebble_tile = 5.0;
 uniform float sand_tile = 6.0;
 uniform vec3 bedding_color : source_color = vec3(0.93, 0.8, 0.58);
 uniform vec3 paper_color : source_color = vec3(0.97, 0.95, 0.9);
-uniform float detail = 0.7;
-uniform float bumpiness = 0.5;
+uniform float detail = 0.85;
+uniform float bumpiness = 0.85;
+uniform float fine_tile = 2.3;      // a second, finer layer of shavings up close
 
 varying vec3 world_pos;
 
@@ -52,11 +53,20 @@ void fragment() {
 	float macro = texture(macro_noise, p / 160.0).r;
 	float macro2 = texture(macro_noise, p / 33.0).r;
 
-	// bedding: the shavings texture's light and shade, recoloured pale and warm
+	// bedding: the shavings texture's light and shade, recoloured pale and warm,
+	// with a finer, turned copy layered on top near the camera (single flakes
+	// of shaving at a critter's feet, not a smooth beige carpet)
+	float avg = max(luma(textureLod(bedding_albedo, p / bedding_tile, 9.0).rgb), 0.05);
 	vec3 shav = soft(bedding_albedo, p / bedding_tile);
-	float l = luma(shav) / max(luma(textureLod(bedding_albedo, p / bedding_tile, 9.0).rgb), 0.05);
-	vec3 alb = bedding_color * mix(0.78, 1.18, clamp(l * 0.5, 0.0, 1.0));
-	vec3 nrm = texture(bedding_normal, p / bedding_tile).rgb;
+	float l = luma(shav) / avg;
+	vec2 q = mat2(vec2(0.8, 0.6), vec2(-0.6, 0.8)) * p;
+	float near = 1.0 - smoothstep(20.0, 90.0, length(world_pos - CAMERA_POSITION_WORLD));
+	float lf = luma(texture(bedding_albedo, q / fine_tile).rgb) / avg;
+	float shade = mix(l, l * mix(1.0, lf, 0.75), near);
+	vec3 alb = bedding_color * mix(0.64, 1.26, clamp(shade * 0.5, 0.0, 1.0));
+	// honey-coloured and paler shavings in patches
+	alb *= mix(vec3(1.05, 0.97, 0.86), vec3(0.95, 0.97, 1.02), smoothstep(0.3, 0.7, texture(macro_noise, p / 13.0).r));
+	vec3 nrm = mix(texture(bedding_normal, p / bedding_tile).rgb, texture(bedding_normal, q / fine_tile).rgb, 0.55 * near);
 	float rgh = 0.9;
 	// tufts of white paper bedding
 	alb = mix(alb, paper_color * mix(0.9, 1.05, macro2), ctl.r);

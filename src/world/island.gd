@@ -797,6 +797,58 @@ static func find_path(map: RID, from: Vector3, to: Vector3) -> PackedVector3Arra
 
 
 ## A random reachable spot on land (for AI wandering and landing targets).
+## Loot must never sit inside something solid (a toy's leg, a platform, a
+## wall): checked against the real colliders just before it spawns. Returns
+## `pos`, or the nearest clear spot up to 4.5 m away, or Vector3.INF.
+## `half` is half the item's size (a crate's box); ground spots follow the
+## ground when nudged, indoor ones stay on their floor.
+func clear_loot_spot(pos: Vector3, half: Vector3, on_ground := true) -> Vector3:
+	var space := get_world_3d().direct_space_state
+	var box := BoxShape3D.new()
+	box.size = half * 2.0
+	var q := PhysicsShapeQueryParameters3D.new()
+	q.shape = box
+	q.collision_mask = Layers.WORLD
+	var ground := terrain.get_node_or_null("TerrainBody") as CollisionObject3D
+	if ground:
+		q.exclude = [ground.get_rid()]
+	for ring: float in [0.0, 1.5, 3.0, 4.5]:
+		var tries := 1 if ring == 0.0 else 8
+		for k in tries:
+			var a := TAU * k / tries
+			var p := pos + Vector3(cos(a), 0.0, sin(a)) * ring
+			if on_ground and ring > 0.0:
+				p.y = terrain.height_at(p.x, p.z)
+				if water_level_at(p) > p.y + 0.2:
+					continue
+			q.transform = Transform3D(Basis(), p + Vector3.UP * (half.y + 0.12))
+			if space.intersect_shape(q, 1).is_empty():
+				return p
+	return Vector3.INF
+
+
+## Long things (crayons, paper rolls, the race track) keep their spacing with
+## a row of circles along their length, not one circle in the middle.
+## `axis` is the ground direction they lie along.
+func long_clear(c: Vector2, axis: Vector2, half_len: float, radius: float) -> bool:
+	var n := maxi(1, ceili(half_len / radius))
+	for i in range(-n, n + 1):
+		if scatter.blocked(c + axis * (half_len * i / n), radius):
+			return false
+	return true
+
+
+func add_long_obstacle(c: Vector2, axis: Vector2, half_len: float, radius: float) -> void:
+	var n := maxi(1, ceili(half_len / radius))
+	for i in range(-n, n + 1):
+		scatter.add_obstacle(c + axis * (half_len * i / n), radius)
+
+
+## The ground direction of a node's local X (or Z) axis after turning it `yaw`.
+static func yaw_axis(yaw: float, local_z := false) -> Vector2:
+	return Vector2(sin(yaw), cos(yaw)) if local_z else Vector2(cos(yaw), -sin(yaw))
+
+
 func random_land_point(min_h := 2.0, inside_center := Vector2.ZERO, inside_radius := 1e9) -> Vector3:
 	for i in 60:
 		var p := _random_land(min_h)

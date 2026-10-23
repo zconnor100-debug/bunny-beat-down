@@ -11,8 +11,12 @@ const MODEL := "res://assets/props/loot_crate.glb"
 const CHANNEL_RANGE := 2.6
 const CHANNEL_MAX_SPEED := 2.0
 
+## Garden crates are drawn big: you should spot one across a clearing.
+const CRATE_SCALE := 1.6
+
 var opened := false
 var model_path := MODEL
+var model_scale := 1.0      ## the plain garden crate uses CRATE_SCALE
 var weights: Array = Rarity.CRATE_WEIGHTS
 var supply := false         ## landed supply drop: hide the chute, extra loot
 var open_time := 0.0        ## seconds to unlock (0 = instant)
@@ -34,8 +38,9 @@ func _ready() -> void:
 	collision_layer = Layers.WORLD
 	set_meta(&"surface", &"wood")
 	var model := ModelUtil.instantiate(model_path)
-	var size := Vector3(0.8, 0.55, 0.55)
+	var size := Vector3(0.8, 0.55, 0.55) * model_scale
 	if model:
+		model.scale = Vector3.ONE * model_scale
 		add_child(model)
 		_lid = ModelUtil.find_named(model, "Lid")
 		var chute := ModelUtil.find_named(model, "Chute")
@@ -44,7 +49,7 @@ func _ready() -> void:
 			chute.free()
 		var box := ModelUtil.aabb_of(model)
 		if box.size.length() > 0.1:
-			size = box.size
+			size = box.size * model_scale
 	else:
 		# Fallback only — a plain crate until assets/props/loot_crate.glb exists.
 		var mi := MeshInstance3D.new()

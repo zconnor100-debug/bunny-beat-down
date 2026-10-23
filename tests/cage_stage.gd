@@ -61,6 +61,30 @@ func _run() -> void:
 		await _wait(0.8)
 		await _snap("55_poi_%02d_%s" % [i, String(p.name).to_snake_case()])
 		i += 1
+	if only == "plane":
+		# the toy plane close up, from three sides
+		var plane := CageProps.toy_plane(island.rng)
+		add_child(plane)
+		plane.global_position = Vector3(0, 112, 0)
+		var eyes := [Vector3(30, 120, -32), Vector3(-36, 104, 18), Vector3(4, 130, 40)]
+		for e in eyes.size():
+			_look(eyes[e], Vector3(0, 112, 0), 55.0)
+			await _wait(0.5)
+			await _snap("54_toy_plane_%d" % e)
+		plane.queue_free()
+	if only == "gym":
+		# the Hamster Gym from above, and from inside its first tube
+		var g: Building = island.buildings.filter(func(b): return String(b.name).begins_with("HamsterGym"))[0]
+		var x := g.global_transform
+		_look(x * Vector3(-70, 45, 60), x * Vector3(5, 8, -10), 60.0)
+		await _wait(0.8)
+		await _snap("57_gym_above")
+		_look(x * Vector3(-19.5, 9.2, 0), x * Vector3(-1, 15.5, 0), 75.0)
+		await _wait(0.6)
+		await _snap("58_gym_in_tube")
+		_look(x * Vector3(8, 23.0, -40), x * Vector3(-60, 0, 40), 70.0)
+		await _wait(0.6)
+		await _snap("59_gym_top_view")
 	if only == "" or only == "inside":
 		var j := 0
 		for b in island.buildings:

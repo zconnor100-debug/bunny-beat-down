@@ -140,10 +140,12 @@ func _build_toy_pois() -> void:
 			"bricks":
 				_build_brick_city(p)
 			"racetrack":
-				_prop(ToyProps.race_track(rng), at, rng.randf() * TAU, NAN, true, false)
-				scatter.reserve(at, 16.0)
+				# 54 m long (ramp to loop): keep all of it clear, not just the middle
+				var yaw := rng.randf() * TAU
+				_prop(ToyProps.race_track(rng), at, yaw, NAN, true, false)
+				add_long_obstacle(at + yaw_axis(yaw, true) * -5.0, yaw_axis(yaw, true), 26.0, 7.5)
 				for i in 5:
-					_scatter_one(ToyProps.race_car(rng), at, 14.0, p.radius, 4.5)
+					_scatter_one(ToyProps.race_car(rng), at, 14.0, p.radius + 6.0, 5.5)
 			"station":
 				_place_kit(p, _station(), at, 0.0)
 			"castle":
@@ -152,7 +154,8 @@ func _build_toy_pois() -> void:
 				_place_kit(p, ToyProps.crayon_box(rng), at, _face_centre(at))
 				_prop(ToyProps.coloring_book(rng), at + Vector2(24, -14).rotated(rng.randf() * TAU), rng.randf() * TAU)
 				for i in 9:
-					_scatter_one(ToyProps.crayon(rng, rng.randf_range(12.0, 20.0)), at, 14.0, p.radius + 8.0, 4.0)
+					var length := rng.randf_range(12.0, 20.0)
+					_scatter_long(ToyProps.crayon(rng, length), at, 16.0, p.radius + 10.0, length * 0.5, 2.2)
 			"dominoes":
 				var start := rng.randf() * TAU
 				for i in 13:
@@ -274,6 +277,26 @@ func _place_kit(p: Dictionary, kit: Building, at: Vector2, yaw: float) -> Buildi
 	return kit
 
 
+## A long toy (a crayon) at a random free spot in a ring round `c`: clear
+## along its whole length (it lies along its local X).
+func _scatter_long(kit: Node3D, c: Vector2, r0: float, r1: float, half_len: float, radius: float) -> Node3D:
+	for attempt in 20:
+		var a := rng.randf() * TAU
+		var at := c + Vector2(cos(a), sin(a)) * rng.randf_range(r0, r1)
+		var yaw := rng.randf() * TAU
+		var axis := yaw_axis(yaw)
+		if not _toy_spot_ok(at, radius, false) or not _toy_spot_ok(at + axis * half_len, radius, false) \
+				or not _toy_spot_ok(at - axis * half_len, radius, false) or not long_clear(at, axis, half_len, radius + 2.0):
+			continue
+		add_child(kit)
+		kit.global_position = Vector3(at.x, terrain.height_at(at.x, at.y), at.y)
+		kit.rotation.y = yaw
+		add_long_obstacle(at, axis, half_len, radius)
+		return kit
+	kit.free()
+	return null
+
+
 func _scatter_one(kit: Node3D, c: Vector2, r0: float, r1: float, radius: float) -> Node3D:
 	for attempt in 14:
 		var a := rng.randf() * TAU
@@ -355,7 +378,6 @@ func _scatter_toys(quality: int) -> void:
 		[func(): return ToyProps.letter_block(rng, rng.randf_range(3.2, 4.5)), 38, 3.4, Vector3(1.0, 0.4, 0.4)],
 		[func(): return ToyProps.ball(rng, rng.randf_range(2.2, 4.5)), 20, 4.0, Vector3(1.0, 0.3, 0.6)],
 		[func(): return ToyProps.race_car(rng), 10, 5.0, Vector3(1.0, 0.0, 0.0)],
-		[func(): return ToyProps.crayon(rng, rng.randf_range(12.0, 20.0)), 16, 4.0, Vector3(1.0, 0.2, 0.3)],
 		[func(): return ToyProps.domino(rng, rng.randf() < 0.5), 8, 3.0, Vector3(1.0, 0.0, 0.0)],
 		[func(): return ToyProps.brick_tower(rng), 6, 6.0, Vector3(1.0, 0.0, 0.0)],
 		[func(): return ToyProps.pillow(rng), 16, 6.0, Vector3(0.0, 0.0, 1.0)],
@@ -374,6 +396,19 @@ func _scatter_toys(quality: int) -> void:
 			kit.rotation.y = rng.randf() * TAU
 			scatter.add_obstacle(p, float(s[2]))
 			made += 1
+	# crayons are long: they keep their whole length clear
+	var crayons := 0
+	for i in 16 * 8:
+		if crayons >= 16:
+			break
+		var p := _random_land(ToyFloor.FLOOR - 2.0)
+		if rng.randf() > terrain.biome_at(p.x, p.y).dot(Vector3(1.0, 0.2, 0.3)):
+			continue
+		var length := rng.randf_range(12.0, 20.0)
+		if not _toy_spot_ok(p, 2.2):
+			continue
+		if _scatter_long(ToyProps.crayon(rng, length), p, 0.0, 0.01, length * 0.5, 2.2):
+			crayons += 1
 	var area := ToyFloor.HX * ToyFloor.HZ * 4.0
 	var batched := [[ToyProps.entry("bricks"), area / 900.0, Vector3(1.0, 0.3, 0.3)], [ToyProps.entry("marbles"), area / 1600.0, Vector3(1.0, 0.5, 0.2)],
 		[ToyProps.entry("stuffing"), area / 260.0, Vector3(0.0, 0.0, 1.0)]]
@@ -383,13 +418,14 @@ func _scatter_toys(quality: int) -> void:
 			var p := Vector2(rng.randf_range(-ToyFloor.HX + 6.0, ToyFloor.HX - 6.0), rng.randf_range(-ToyFloor.HZ + 6.0, ToyFloor.HZ - 6.0))
 			if rng.randf() > terrain.biome_at(p.x, p.y).dot(b[2]):
 				continue
-			if not in_poi(p, 0.7).is_empty() or scatter.blocked(p, 1.0) or _near_track(p, 4.0):
+			var sr: Array = e.scale_range
+			var sc := rng.randf_range(sr[0], sr[1])
+			if not in_poi(p, 0.7).is_empty() or scatter.blocked(p, float(e.get("footprint_radius_m", 1.0)) * sc) or _near_track(p, 4.0):
 				continue
 			var h := terrain.height_at(p.x, p.y)
 			if water_level_at(Vector3(p.x, h, p.y)) > h - 0.1:
 				continue
-			var sr: Array = e.scale_range
-			scatter.place(e, Vector3(p.x, h, p.y), rng.randf() * TAU, rng.randf_range(sr[0], sr[1]))
+			scatter.place(e, Vector3(p.x, h, p.y), rng.randf() * TAU, sc)
 
 
 # ---- materials and water ----------------------------------------------------------------------

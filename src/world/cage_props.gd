@@ -326,7 +326,8 @@ static func popsicle(rng: RandomNumberGenerator) -> CageKit:
 	else:
 		b = b * Basis(Vector3.FORWARD, rng.randf_range(-0.35, 0.35))   # stuck in the snow at a slant
 	var h := rng.randf_range(7.0, 10.0)
-	var origin := Vector3(0, 1.1, 0) if lying else Vector3(0, 2.4, 0)
+	# lying flat it's centred on the origin (stick end to tip), like anything long
+	var origin := Vector3(0, h * 0.1 + 0.02, 0) - b * Vector3(0, (h - 3.2) * 0.5, 0) if lying else Vector3(0, 2.4, 0)
 	k._box(m, origin + b * Vector3(0, h * 0.5, 0), Vector3(h * 0.45, h, h * 0.2), b)
 	k._box(&"popsicle_stick", origin + b * Vector3(0, -1.2, 0), Vector3(1.0, 4.0, 0.3), b)
 	k._box(&"frost", origin + b * Vector3(0, h * 0.75, h * 0.1 + 0.02), Vector3(h * 0.38, h * 0.3, 0.05), b, false)
@@ -350,35 +351,155 @@ static func shell(rng: RandomNumberGenerator, size := 4.0) -> CageKit:
 ## fuselage, yellow wings with blue star roundels, a wind-up key and a
 ## spinning propeller (child "Propeller").
 static func toy_plane(rng: RandomNumberGenerator) -> Node3D:
+	# A tin-toy biplane, about 35 m wing to wing at critter scale: a pressed-
+	# tin fuselage with a white band and rivets, a radial engine behind a
+	# yellow cowling, two stacked wings on struts with bracing wire and roundel
+	# stickers, a goggled pilot in the open cockpit, spoked wheels, and the
+	# wind-up key that makes it go. Forward is -Z.
 	var root := Node3D.new()
 	root.name = "ToyPlane"
 	var k := CageKit.blank("Body", rng, &"wood")
 	k.collision_layer = 0
-	# fuselage along -Z (forward)
-	k._ellipsoid(&"plastic_red", Vector3(0, 0, 0), Vector3(4.2, 4.0, 15.0), Basis(), false, 10, 20)
-	k._ellipsoid(&"bottle_glass", Vector3(0, 2.6, -4.0), Vector3(2.6, 2.0, 4.0), Basis(), false, 8, 14)
-	k._box(&"plastic_yellow", Vector3(0, -0.8, -1.5), Vector3(36.0, 0.9, 7.0))
-	k._box(&"plastic_yellow", Vector3(0, 3.6, 12.0), Vector3(14.0, 0.6, 4.0))
-	k._box(&"plastic_blue", Vector3(0, 6.0, 12.2), Vector3(0.6, 7.0, 4.6))
+	# fuselage: a tapered tin body, a white band, a darker belly seam
+	var prof := [Vector2(0.0, -14.0), Vector2(2.6, -13.6), Vector2(3.9, -11.0), Vector2(4.2, -6.0), Vector2(3.9, 2.0),
+		Vector2(2.9, 9.0), Vector2(1.6, 14.0), Vector2(0.6, 16.0), Vector2(0.0, 16.3)]
+	_lathe_z(k, &"plastic_red", prof, 20, Vector3.ZERO)
+	_lathe_z(k, &"plastic_white", [Vector2(4.25, -3.0), Vector2(4.3, -1.6), Vector2(4.25, -0.2)], 20, Vector3.ZERO)
+	for i in 9:
+		var z := -10.0 + i * 2.6
+		for a in [0.6, PI - 0.6]:
+			var r := _radius_at(prof, z) + 0.05
+			k._ellipsoid(&"metal", Vector3(cos(a) * r, sin(a) * r, z), Vector3(0.18, 0.18, 0.18), Basis(), false, 3, 6)
+	# cowling and the radial engine peeking out of it
+	k._ring(&"plastic_yellow", Vector3(0, 0, -13.6), Basis(Vector3.RIGHT, Vector3.FORWARD, Vector3.DOWN), 3.4, 2.2, 0.5, 20, [], false)
+	for i in 7:
+		var a := TAU * i / 7.0
+		k._rod(&"metal", Vector3(cos(a) * 1.2, sin(a) * 1.2, -13.9), Vector3(cos(a) * 3.0, sin(a) * 3.0, -13.9), 0.45, false)
+		k._ellipsoid(&"metal", Vector3(cos(a) * 3.0, sin(a) * 3.0, -13.9), Vector3(0.55, 0.55, 0.55), Basis(), false, 4, 8)
 	for xs in [-1.0, 1.0]:
-		k._lathe(&"plastic_blue", [Vector2(2.2, 0.0), Vector2(2.2, 0.1), Vector2(0.0, 0.1)], 16, Vector3(xs * 12.0, -0.3, -1.5), false)
-		k._lathe(&"plastic_white", [Vector2(1.0, 0.11), Vector2(1.0, 0.16), Vector2(0.0, 0.16)], 5, Vector3(xs * 12.0, -0.3, -1.5), false)
-		k._rod(&"plastic_white", Vector3(xs * 2.5, -3.0, -5.0), Vector3(xs * 3.2, -6.0, -5.0), 0.35, false)
-		k._rod(&"plastic_black", Vector3(xs * 3.6, -6.4, -5.0), Vector3(xs * 2.6, -6.4, -5.0), 1.4, false)
-	k._rod(&"plastic_yellow", Vector3(0, 0, -15.2), Vector3(0, 0, -16.6), 1.6, false)
-	# the wind-up key on top
-	k._rod(&"metal", Vector3(0, 3.8, 6.0), Vector3(0, 6.5, 6.0), 0.4, false)
+		k._rod(&"metal", Vector3(xs * 2.6, -2.2, -11.5), Vector3(xs * 3.0, -2.9, -6.0), 0.3, false)   # exhausts
+	# open cockpit: a windscreen, a padded rim and the pilot
+	k._ring(&"plastic_brown", Vector3(0, 3.95, 1.5), Basis(Vector3.RIGHT, Vector3.UP, Vector3.BACK), 1.9, 0.5, 0.35, 14, [], false)
+	k._box(&"bottle_glass", Vector3(0, 4.9, -1.0), Vector3(3.2, 1.6, 0.08), Basis(Vector3.RIGHT, deg_to_rad(-25.0)), false)
+	_pilot(k, Vector3(0, 4.0, 1.6))
+	# wings: a lower and an upper, with rounded tips, stripes and roundels
+	var lower_y := -1.6
+	var upper_y := 6.4
+	_wing(k, Vector3(0, lower_y, -3.0), 36.0, 7.0, &"plastic_yellow")
+	_wing(k, Vector3(0, upper_y, -4.2), 32.0, 6.6, &"plastic_yellow")
 	for xs in [-1.0, 1.0]:
-		k._ellipsoid(&"metal", Vector3(xs * 1.6, 7.2, 6.0), Vector3(1.6, 1.3, 0.3), Basis(), false, 6, 10)
+		_roundel(k, Vector3(xs * 11.5, upper_y + 0.31, -4.2), 2.6)
+		_roundel(k, Vector3(xs * 12.5, lower_y + 0.31, -3.0), 2.4)
+		# interplane struts (an N each side) and the bracing wires
+		var outer: float = xs * 11.0
+		k._rod(&"plastic_white", Vector3(outer, lower_y, -5.6), Vector3(outer, upper_y, -6.7), 0.32, false)
+		k._rod(&"plastic_white", Vector3(outer, lower_y, -0.6), Vector3(outer, upper_y, -1.9), 0.32, false)
+		k._rod(&"plastic_white", Vector3(outer, lower_y, -5.6), Vector3(outer, upper_y, -1.9), 0.22, false)
+		k._rod(&"metal", Vector3(xs * 2.5, lower_y, -3.0), Vector3(outer, upper_y, -4.2), 0.07, false)
+		k._rod(&"metal", Vector3(xs * 2.5, upper_y, -4.2), Vector3(outer, lower_y, -3.0), 0.07, false)
+		# cabane struts from the fuselage up to the top wing
+		k._rod(&"plastic_white", Vector3(xs * 1.8, 3.4, -6.0), Vector3(xs * 2.6, upper_y, -6.4), 0.28, false)
+		k._rod(&"plastic_white", Vector3(xs * 1.8, 3.4, -2.0), Vector3(xs * 2.6, upper_y, -2.2), 0.28, false)
+		# undercarriage: a V of struts down to spoked wheels with white hubs
+		k._rod(&"plastic_white", Vector3(xs * 2.4, -3.0, -8.0), Vector3(xs * 3.4, -6.4, -6.0), 0.35, false)
+		k._rod(&"plastic_white", Vector3(xs * 2.4, -3.0, -4.0), Vector3(xs * 3.4, -6.4, -6.0), 0.35, false)
+		_wheel(k, Vector3(xs * 4.1, -6.4, -6.0), 1.7)
+	k._rod(&"metal", Vector3(-3.4, -6.4, -6.0), Vector3(3.4, -6.4, -6.0), 0.18, false)
+	# tail: stabiliser, a blue fin with a white star roundel, and a tail skid
+	_wing(k, Vector3(0, 0.6, 13.6), 13.0, 3.6, &"plastic_yellow")
+	k._box(&"plastic_blue", Vector3(0, 3.6, 14.2), Vector3(0.45, 6.0, 3.8), Basis(Vector3.RIGHT, deg_to_rad(-12.0)))
+	for xs in [-1.0, 1.0]:
+		_roundel(k, Vector3(xs * 0.26, 3.6, 14.3), 1.2, Basis(Vector3.FORWARD, xs * PI * 0.5))
+	k._rod(&"metal", Vector3(0, -1.4, 14.5), Vector3(0, -2.6, 16.0), 0.15, false)
+	# the wind-up key in its side: it's a toy after all
+	k._rod(&"metal", Vector3(4.0, 0.8, 5.0), Vector3(6.4, 0.8, 5.0), 0.3, false)
+	for ys in [-1.0, 1.0]:
+		k._ellipsoid(&"metal", Vector3(6.6, 0.8 + ys * 1.5, 5.0), Vector3(0.3, 1.4, 1.1), Basis(), false, 6, 10)
 	root.add_child(k.finish())
 	var prop := CageKit.blank("Propeller", rng, &"wood")
 	prop.collision_layer = 0
-	for s in [-1.0, 1.0]:
-		prop._box(&"plastic_blue", Vector3(0, s * 4.0, 0), Vector3(1.4, 8.0, 0.3), Basis(Vector3.UP, s * 0.25), false)
-	prop._ellipsoid(&"plastic_yellow", Vector3.ZERO, Vector3(1.0, 1.0, 1.2), Basis(), false, 6, 10)
-	prop.position = Vector3(0, 0, -16.8)
+	for sgn in [-1.0, 1.0]:
+		prop._box(&"wood_honey", Vector3(0, sgn * 3.6, 0), Vector3(1.2, 7.2, 0.28), Basis(Vector3.UP, sgn * 0.3), false)
+		prop._box(&"plastic_red", Vector3(0, sgn * 6.9, 0), Vector3(1.22, 0.7, 0.3), Basis(Vector3.UP, sgn * 0.3), false)
+	prop._ellipsoid(&"plastic_red", Vector3(0, 0, -0.4), Vector3(1.1, 1.1, 1.6), Basis(), false, 6, 10)
+	prop.position = Vector3(0, 0, -14.6)
 	root.add_child(prop.finish())
 	return root
+
+
+## A lathe around the Z axis (the profile is [radius, z] pairs).
+static func _lathe_z(k: CageKit, mat: StringName, prof: Array, seg: int, at: Vector3) -> void:
+	var st := k._st(mat)
+	for i in prof.size() - 1:
+		var p0: Vector2 = prof[i]
+		var p1: Vector2 = prof[i + 1]
+		for s in seg:
+			var a0 := TAU * s / seg
+			var a1 := TAU * (s + 1) / seg
+			var v := [at + Vector3(cos(a0) * p0.x, sin(a0) * p0.x, p0.y), at + Vector3(cos(a1) * p0.x, sin(a1) * p0.x, p0.y),
+				at + Vector3(cos(a1) * p1.x, sin(a1) * p1.x, p1.y), at + Vector3(cos(a0) * p1.x, sin(a0) * p1.x, p1.y)]
+			var am := (a0 + a1) * 0.5
+			var slope := (p1.x - p0.x) / maxf(absf(p1.y - p0.y), 0.001)
+			var n := Vector3(cos(am), sin(am), -slope * signf(p1.y - p0.y)).normalized()
+			var uv := [Vector2(a0, p0.y * 0.2), Vector2(a1, p0.y * 0.2), Vector2(a1, p1.y * 0.2), Vector2(a0, p1.y * 0.2)]
+			if (v[1] - v[0]).length_squared() > 1e-6:
+				k._face(st, [v[0], v[1], v[2]], [uv[0], uv[1], uv[2]], n, false)
+			k._face(st, [v[0], v[2], v[3]], [uv[0], uv[2], uv[3]], n, false)
+
+
+static func _radius_at(prof: Array, z: float) -> float:
+	for i in prof.size() - 1:
+		var p0: Vector2 = prof[i]
+		var p1: Vector2 = prof[i + 1]
+		if z >= p0.y and z <= p1.y:
+			return lerpf(p0.x, p1.x, (z - p0.y) / maxf(p1.y - p0.y, 0.001))
+	return 0.0
+
+
+## A wing `span` wide and `chord` deep at `c`: a slab with rounded tips, a
+## white stripe and the hinge line of the ailerons.
+static func _wing(k: CageKit, c: Vector3, span: float, chord: float, mat: StringName) -> void:
+	k._box(mat, c, Vector3(span - chord, 0.6, chord), Basis(), false)
+	for xs in [-1.0, 1.0]:
+		k._ellipsoid(mat, c + Vector3(xs * (span - chord) * 0.5, 0, 0), Vector3(chord * 0.5, 0.3, chord * 0.5), Basis(), false, 4, 14)
+		k._box(&"plastic_white", c + Vector3(xs * span * 0.3, 0.31, 0), Vector3(1.2, 0.02, chord - 0.4), Basis(), false)
+		k._box(&"plastic_black", c + Vector3(xs * span * 0.33, 0.31, chord * 0.22), Vector3(span * 0.28, 0.02, 0.1), Basis(), false)
+
+
+## A roundel sticker: blue, white and red rings, flat on a surface whose
+## normal is `basis.y`.
+static func _roundel(k: CageKit, c: Vector3, r: float, basis := Basis()) -> void:
+	var rings := [[&"plastic_blue", 1.0], [&"plastic_white", 0.66], [&"plastic_red", 0.33]]
+	for i in rings.size():
+		var rr: float = r * float(rings[i][1])
+		var st := k._st(rings[i][0])
+		var o := c + basis.y * (0.01 * i)
+		for s in 18:
+			var a0 := TAU * s / 18.0
+			var a1 := TAU * (s + 1) / 18.0
+			var p0 := o + (basis.x * cos(a0) + basis.z * sin(a0)) * rr
+			var p1 := o + (basis.x * cos(a1) + basis.z * sin(a1)) * rr
+			k._face(st, [o, p0, p1], [Vector2(0.5, 0.5), Vector2(0, 0), Vector2(1, 0)], basis.y, false)
+
+
+## A chunky toy wheel: a black tyre, a white hub, five spokes.
+static func _wheel(k: CageKit, c: Vector3, r: float) -> void:
+	var axis := Basis(Vector3.UP, Vector3.RIGHT, Vector3.BACK)
+	k._ring(&"plastic_black", c, axis, r * 0.62, 1.0, r * 0.38, 18, [], false)
+	k._rod(&"plastic_white", c - Vector3.RIGHT * 0.45, c + Vector3.RIGHT * 0.45, r * 0.62, false)
+	k._rod(&"plastic_red", c - Vector3.RIGHT * 0.55, c + Vector3.RIGHT * 0.55, r * 0.2, false)
+
+
+## The pilot: a little mouse in a leather cap, goggles up, red scarf flying.
+static func _pilot(k: CageKit, at: Vector3) -> void:
+	k._ellipsoid(&"fur_light", at + Vector3(0, 1.5, 0), Vector3(1.1, 1.0, 1.0), Basis(), false, 6, 10)
+	k._ellipsoid(&"plastic_brown", at + Vector3(0, 1.85, 0.1), Vector3(1.15, 0.75, 1.05), Basis(), false, 6, 10)
+	for xs in [-1.0, 1.0]:
+		k._ellipsoid(&"fur_light", at + Vector3(xs * 1.0, 2.3, 0.2), Vector3(0.55, 0.55, 0.2), Basis(), false, 5, 8)
+		k._ring(&"metal", at + Vector3(xs * 0.45, 2.15, -0.75), Basis(Vector3.RIGHT, Vector3.BACK, Vector3.DOWN), 0.3, 0.2, 0.1, 10, [], false)
+	k._ellipsoid(&"button_eye", at + Vector3(0, 1.35, -1.0), Vector3(0.22, 0.18, 0.15), Basis(), false, 4, 6)
+	k._ellipsoid(&"plastic_red", at + Vector3(0, 0.75, 0), Vector3(1.2, 0.35, 1.1), Basis(), false, 5, 10)
+	k._box(&"plastic_red", at + Vector3(0.6, 0.85, 1.8), Vector3(0.5, 0.15, 2.4), Basis(Vector3.UP, 0.25) * Basis(Vector3.RIGHT, 0.15), false)
 
 
 # ---- batched ground cover (MultiMesh via Scatter) ---------------------------------------------------

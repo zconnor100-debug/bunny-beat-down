@@ -37,6 +37,7 @@ var _sway := Vector2.ZERO
 var _last_yaw := 0.0
 var _last_pitch := 0.0
 var _bob_t := 0.0
+var _drop_dist := DROP_DISTANCE   ## eases between the ride's framing and the skydive's
 
 
 func _ready() -> void:
@@ -135,7 +136,15 @@ func _process(delta: float) -> void:
 	else:
 		var dist := lerpf(TP_DISTANCE, TP_AIM_DISTANCE, _aim_blend) * rig_scale
 		if dropping:
-			dist = DROP_DISTANCE
+			# aboard, frame the whole ride (a toy plane is 35 m wing to wing);
+			# once out, ease in to the skydiving critter
+			var ride := spectate_target as Dropship if target.state == Critter.State.IN_DROPSHIP else null
+			var want := ride.view_distance() if ride else DROP_DISTANCE
+			_drop_dist = want if absf(_drop_dist - want) < 0.05 else lerpf(_drop_dist, want, IKMath.damp(2.5, delta))
+			dist = _drop_dist
+		# riding, the camera may sit outside the glass (it's see-through):
+		# the arm would otherwise shove it into the plane's tail at the start
+		_arm.collision_mask = 0 if target.state == Critter.State.IN_DROPSHIP else Layers.WORLD
 		if not alive:
 			dist = 4.0
 		_pivot.global_position = base + Vector3.UP * (eye_h + 0.12 * rig_scale)

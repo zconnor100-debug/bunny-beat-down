@@ -383,6 +383,14 @@ static func mat(key: StringName) -> Material:
 		m = _gloss(c, 0.32, 0.35)
 	elif s.begins_with("ceramic_"):
 		m = _gloss(CERAMIC.get(StringName(s.substr(8)), Color.WHITE), 0.12, 1.0)
+	elif s.begins_with("tube_"):
+		# see-through Habitrail plastic, tinted
+		var tc: Color = PLASTIC.get(StringName(s.substr(5)), Color.WHITE)
+		var tm := _clear(Color(tc.r, tc.g, tc.b, 0.4), 0.05)
+		tm.rim_tint = 0.6
+		tm.emission_enabled = true
+		tm.emission = tc * 0.25
+		m = tm
 	elif s.begins_with("crayon_"):
 		m = _flat(PLASTIC.get(StringName(s.substr(7)), Color.WHITE) * 0.92, 0.75)
 	elif s.begins_with("pillow_"):
@@ -404,6 +412,10 @@ static func mat(key: StringName) -> Material:
 				m = _soft("snow", 6.0, Color(1.12, 1.16, 1.22), 0.6, 1.0)
 			&"cardboard":
 				m = _flat(Color(0.76, 0.58, 0.38), 0.9)
+			&"coconut":
+				m = _soft("bark", 3.0, Color(0.62, 0.42, 0.27), 0.75, 1.0)
+			&"coconut_in":
+				m = _flat(Color(0.95, 0.92, 0.84), 0.8)
 			&"cardboard_in":
 				m = _flat(Color(0.6, 0.44, 0.28), 0.95)
 			&"ice":

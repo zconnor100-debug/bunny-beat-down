@@ -15,6 +15,7 @@ const MODELS := {
 	"armor": "res://assets/props/pickup_armor.glb",
 }
 const AUTO_RADIUS := 1.1
+const GROUND_GUN_SCALE := 2.1          ## guns lying about are drawn big (1.2 = as held), to spot them
 const CLOVER_HEIGHT := 1.25           ## half the height of a Bun
 const CLOVER_GLOW := Color(0.3, 1.0, 0.35)
 const CLOVER_SHADER := preload("res://src/fx/clover_glow.gdshader")
@@ -72,7 +73,7 @@ func _ready() -> void:
 	cs.position.y = 0.18
 	add_child(cs)
 	_spin = Node3D.new()
-	_spin.position.y = 0.35
+	_spin.position.y = 0.5 if is_weapon() else 0.35
 	add_child(_spin)
 	var model := _make_model()
 	_spin.add_child(model)
@@ -211,7 +212,7 @@ func _make_model() -> Node3D:
 	if m:
 		if spec.get("type") == "weapon":
 			m.rotation = Vector3(0, 0, PI / 2.2)
-			m.scale = Vector3.ONE * CritterVisual.WEAPON_SCALE * 1.2   # same size as in the paws
+			m.scale = Vector3.ONE * CritterVisual.WEAPON_SCALE * GROUND_GUN_SCALE
 		elif spec.get("type") == "clover":
 			m.scale = Vector3.ONE * CLOVER_HEIGHT / maxf(ModelUtil.aabb_of(m).size.y, 0.01)
 		return m

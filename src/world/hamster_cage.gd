@@ -30,6 +30,7 @@ const CAGE_POIS := [
 	{"name": "Seed Bowl", "kit": "seed_bowl", "radius": 24.0, "at": Vector2(120, -150), "biome": BED},
 	{"name": "Sand Bath", "kit": "sand", "radius": 24.0, "at": Vector2(370, 290), "biome": BED},
 	{"name": "Shelf Overlook", "kit": "platform", "radius": 32.0, "at": Vector2(-100, 320), "biome": BED},
+	{"name": "Hamster Gym", "kit": "gym", "radius": 56.0, "at": Vector2(-60, 150), "biome": BED},
 	{"name": "Water Bottle Falls", "kit": "bottle", "radius": 22.0, "at": Vector2(250, 372), "biome": BED},
 	{"name": "Paper Roll Pile", "kit": "rolls", "radius": 30.0, "at": Vector2(260, 60), "biome": BED},
 	{"name": "Chew Block Yard", "kit": "blocks", "radius": 26.0, "at": Vector2(-160, -110), "biome": BED},
@@ -96,6 +97,7 @@ func generate(seed_: int, quality := 2, bake_nav := true) -> void:
 	progress.emit(0.45, "Setting out the toys")
 	await get_tree().process_frame
 	_build_cage_pois()
+	_build_lookouts()
 	progress.emit(0.55, "Scattering seeds and snacks")
 	await get_tree().process_frame
 	_scatter_cage(quality)
@@ -137,7 +139,7 @@ func _shape_cage_pois() -> void:
 				_plan_bowls(p)
 			"shells":
 				pass
-			"tubes", "hut", "castle", "igloo", "wheel", "platform", "seed_bowl", "sand":
+			"tubes", "hut", "castle", "igloo", "wheel", "platform", "seed_bowl", "sand", "gym":
 				terrain.flatten(p.center, p.radius * 0.85, p.height, 1.0, false)
 			_:
 				terrain.flatten(p.center, p.radius, p.height)
@@ -191,6 +193,8 @@ func _build_cage_pois() -> void:
 	for p in pois:
 		var at: Vector2 = p.center
 		match p.kit:
+			"gym":
+				_place_kit(p, CageGym.gym(rng), at, _face_centre(at) + PI * 0.5)
 			"wheel":
 				_prop(CageProps.wheel(rng), at, _face_centre(at))
 				for i in 6:
@@ -252,17 +256,45 @@ func _build_cage_pois() -> void:
 					if cube and rng.randf() < 0.25:
 						var top := CageProps.ice_cube(rng, s * 0.7)
 						add_child(top)
-						top.global_position = cube.global_position + Vector3.UP * s * 0.95
+						top.global_position = cube.global_position + Vector3.UP * s * 1.04   # (on the frost, not in it)
 			"igloo":
 				_place_kit(p, CageKit.make_kit(CageKit.Kind.TUB, rng), at, _face_centre(at))
 				for i in 4:
-					_scatter_one(CageProps.popsicle(rng), at, 17.0, 24.0, 2.5)
+					_scatter_one(CageProps.popsicle(rng), at, 17.0, 26.0, 5.0)
 			"peas":
 				for i in 18:
 					_scatter_one(CageProps.pea(rng, rng.randf_range(1.3, 2.2)), at, 2.0, p.radius, 2.0)
 			"popsicles":
 				for i in 7:
-					_scatter_one(CageProps.popsicle(rng), at, 2.0, p.radius, 2.8)
+					_scatter_one(CageProps.popsicle(rng), at, 2.0, p.radius, 5.0)
+
+
+## Lookout perches on stilts around the cage (high ground with a ramp up),
+## each counted with its nearest landmark for loot.
+const LOOKOUTS := 5
+
+func _build_lookouts() -> void:
+	var colours := [&"pink", &"teal", &"orange", &"purple", &"blue", &"yellow"]
+	var made := 0
+	for attempt in 200:
+		if made >= LOOKOUTS:
+			break
+		var at := _random_land(CageFloor.BEDDING - 1.0)
+		var height := rng.randf_range(9.0, 15.0)
+		var kit := CageGym.lookout(rng, height, colours[made % colours.size()])
+		var yaw := rng.randf() * TAU
+		# the deck and the far end of the ramp both need room
+		var reach := kit.footprint
+		if not _cage_spot_ok(at, reach) or not in_poi(at, 1.6).is_empty() or terrain.normal_at(at.x, at.y).y < 0.95:
+			kit.free()
+			continue
+		var near := pois[0] as Dictionary
+		for p in pois:
+			if (p.center as Vector2).distance_to(at) < (near.center as Vector2).distance_to(at):
+				near = p
+		_place_kit(near, kit, at, yaw)
+		scatter.add_obstacle(at, reach)
+		made += 1
 
 
 ## Tube Town: four round pods in a diamond, joined in a loop by Habitrail
@@ -308,15 +340,17 @@ func _build_roll_pile(p: Dictionary) -> void:
 	add_child(top)
 	top.global_position = Vector3(p.center.x, p.height + sqrt(3.0) * (r + 0.35), p.center.y)
 	top.rotation.y = yaw
-	scatter.add_obstacle(p.center, 7.0)
+	add_long_obstacle(p.center, yaw_axis(yaw, true), 4.5, r * 2.0 + 0.5)
 	for i in 5:
 		var length := 24.0 if i < 2 else 9.0
 		var a := rng.randf() * TAU
-		var at: Vector2 = p.center + Vector2(cos(a), sin(a)) * rng.randf_range(14.0, 24.0)
-		if scatter.blocked(at, 5.0):
+		var at: Vector2 = p.center + Vector2(cos(a), sin(a)) * rng.randf_range(16.0, 28.0)
+		var ryaw := rng.randf() * TAU
+		# a roll lies along its local Z: keep its whole length clear
+		if not long_clear(at, yaw_axis(ryaw, true), length * 0.5, r + 2.0):
 			continue
-		_prop(CageProps.roll(rng, length, r), at, rng.randf() * TAU, NAN, true, false)
-		scatter.add_obstacle(at, 4.0)
+		_prop(CageProps.roll(rng, length, r), at, ryaw, NAN, true, false)
+		add_long_obstacle(at, yaw_axis(ryaw, true), length * 0.5, r + 0.5)
 
 
 func _build_bowls() -> void:
@@ -448,9 +482,13 @@ func _scatter_cage(quality: int) -> void:
 		[func(): return CageProps.block(rng, rng.randf_range(2.5, 4.5)), 26, 3.2, Vector3(1.0, 0.0, 0.0)],
 		[func(): return CageProps.roll(rng, 9.0, 2.7), 10, 5.0, Vector3(1.0, 0.0, 0.0)],
 		[func(): return CageProps.hamster_ball(rng, rng.randf_range(4.5, 6.0)), 4, 6.0, Vector3(1.0, 0.0, 0.0)],
+		[func(): return CageGym.bendy_bridge(rng, rng.randf_range(15.0, 20.0)), 6, 11.0, Vector3(1.0, 0.1, 0.3)],
+		[func(): return CageGym.coconut(rng, rng.randf_range(4.5, 6.0)), 6, 7.5, Vector3(1.0, 0.4, 0.0)],
+		[func(): return CageGym.chew_sticks(rng), 10, 7.0, Vector3(1.0, 0.0, 0.2)],
+		[func(): return CageGym.egg_carton(rng), 5, 14.0, Vector3(1.0, 0.0, 0.0)],
 		[func(): return CageProps.pea(rng, rng.randf_range(1.2, 2.0)), 60, 2.0, Vector3(0.0, 0.0, 1.0)],
 		[func(): return CageProps.ice_cube(rng, rng.randf_range(3.0, 6.5)), 34, 4.0, Vector3(0.0, 0.0, 1.0)],
-		[func(): return CageProps.popsicle(rng), 10, 3.0, Vector3(0.0, 0.0, 1.0)],
+		[func(): return CageProps.popsicle(rng), 10, 5.0, Vector3(0.0, 0.0, 1.0)],
 		[func(): return CageProps.shell(rng, rng.randf_range(2.5, 4.0)), 18, 3.0, Vector3(0.0, 1.0, 0.0)],
 	]
 	for s in solids:
@@ -484,12 +522,13 @@ func _scatter_cage(quality: int) -> void:
 			var wet := water_level_at(Vector3(p.x, h, p.y)) > h - 0.1
 			if (e.category == "reed") != wet and not (e.category == "reed" and w.y > 0.5 and rng.randf() < 0.3):
 				continue
-			if not in_poi(p, 0.7).is_empty() or scatter.blocked(p, 1.0):
+			var sr: Array = e.scale_range
+			var sc := rng.randf_range(sr[0], sr[1])
+			if not in_poi(p, 0.7).is_empty() or scatter.blocked(p, float(e.get("footprint_radius_m", 1.0)) * sc):
 				continue
 			if terrain.control_at(p.x, p.y).g > 0.4 or terrain.control_at(p.x, p.y).a > 0.4:
 				continue   # nothing grows on the trails or in the sand bath
-			var sr: Array = e.scale_range
-			scatter.place(e, Vector3(p.x, h, p.y), rng.randf() * TAU, rng.randf_range(sr[0], sr[1]))
+			scatter.place(e, Vector3(p.x, h, p.y), rng.randf() * TAU, sc)
 
 
 func _cage_spot_ok(p: Vector2, radius: float) -> bool:

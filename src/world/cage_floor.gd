@@ -61,7 +61,7 @@ func generate_heights() -> void:
 			var edge := maxf(edge_distance(x, z), 0.0)
 			var detail := _n_detail.get_noise_2d(x, z) * 0.35
 			# bedding: soft dunes, heaped up against the glass
-			var dunes := pow(_n_base.get_noise_2d(x, z) * 0.5 + 0.5, 1.5) * 6.0
+			var dunes := pow(_n_base.get_noise_2d(x, z) * 0.5 + 0.5, 1.5) * 8.5
 			var heap := smoothstep(80.0, 0.0, edge) * (6.0 + _n_patch.get_noise_2d(x, z) * 3.0)
 			var bed := BEDDING + dunes + detail + heap
 			# winter: rolling snow drifts, deepest where the cold spills over the glass

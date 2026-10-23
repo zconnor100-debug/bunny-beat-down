@@ -204,6 +204,11 @@ func _spawn_critter(def: CritterDef, display: String) -> Critter:
 func _spawn_loot() -> void:
 	for lp in island.loot_points:
 		var pos: Vector3 = lp.pos
+		# (chests and crates are bigger than a carrot gun lying about)
+		var half := Vector3(0.9, 0.5, 0.9) if lp.has("chest") or lp.get("crate", false) else Vector3(0.35, 0.3, 0.35)
+		pos = island.clear_loot_spot(pos, half, not lp.get("inside", false))
+		if pos == Vector3.INF:
+			continue
 		if lp.has("chest"):
 			var chest := TreasureChest.new(lp.chest == "golden")
 			chest.rng.seed = rng.randi()
@@ -213,6 +218,7 @@ func _spawn_loot() -> void:
 			continue
 		if lp.crate:
 			var crate := LootCrate.new()
+			crate.model_scale = LootCrate.CRATE_SCALE
 			crate.rng.seed = rng.randi()
 			world_root.add_child(crate)
 			crate.global_position = pos
@@ -382,6 +388,29 @@ func _spawn_supply_drop() -> void:
 func player_jump() -> void:
 	if phase == Phase.DROPPING and player.state == Critter.State.IN_DROPSHIP and dropship:
 		dropship.eject(player)
+		_jump_buddies()
+
+
+## A few critters still aboard jump right after you (a second or two apart)
+## and head for ground near yours: you never drop alone.
+const JUMP_BUDDIES := Vector2i(2, 4)
+
+func _jump_buddies() -> void:
+	var aboard := critters.filter(func(c): return c != player and c.state == Critter.State.IN_DROPSHIP and c.has_node("AIBrain"))
+	if aboard.is_empty():
+		return
+	# the ones who meant to jump around here anyway go first
+	aboard.sort_custom(func(a, b): return absf(a.get_node("AIBrain").drop_progress - dropship.progress) < absf(b.get_node("AIBrain").drop_progress - dropship.progress))
+	var under := dropship.global_position
+	var fwd := (dropship.finish - dropship.start).normalized()
+	for i in mini(rng.randi_range(JUMP_BUDDIES.x, JUMP_BUDDIES.y), aboard.size()):
+		var brain := (aboard[i] as Critter).get_node("AIBrain") as AIBrain
+		brain.drop_progress = dropship.progress + (0.4 + i * 0.7) / dropship.duration
+		var near := Vector2(under.x, under.z) + Vector2(fwd.x, fwd.z) * rng.randf_range(10.0, 40.0)
+		var land := island.random_land_point(2.5, near, 60.0)
+		if island.water_level_at(land) > land.y:
+			land = island.random_land_point(2.5)   # (over the sea: anywhere will do)
+		brain.drop_spot = land
 
 
 func _on_critter_died(victim: Node, info: DamageInfo) -> void:

@@ -15,7 +15,7 @@ const PELLET_MODEL := "res://assets/weapons/carrot_shell_pellet.glb"
 const TRACER_SHADER := preload("res://src/fx/tracer.gdshader")
 const TRACER_SECONDS := 0.06         ## a tracer is as long as this much flight
 const TRACER_ENEMY := Color(1.0, 0.3, 0.04, 1.0)     ## shots at you: hot orange
-const TRACER_OWN := Color(1.0, 0.85, 0.5, 0.35)      ## your own: faint, out of your way
+const TRACER_OWN := Color(1.0, 0.85, 0.5, 0.5)       ## your own: fainter, out of your way
 
 static var instance: Projectiles
 
@@ -88,7 +88,7 @@ static func fire(shooter: Node, weapon: WeaponInstance, origin: Vector3, dir: Ve
 		return
 	var data := weapon.data
 	for i in data.pellets:
-		var d := _spread_dir(dir, spread_deg)
+		var d := _spread_dir(dir, spread_deg) if data.pellets == 1 else _pattern_dir(dir, spread_deg, i, data.pellets)
 		if data.projectile == WeaponData.ProjectileKind.ROCKET:
 			var r := Rocket.new()
 			r.setup(shooter, weapon, d, exclude)
@@ -112,6 +112,36 @@ func clear_in_flight() -> void:
 	for c in get_children():
 		if c is Rocket:
 			c.queue_free()
+
+
+## Where to point a shot so it lands on the crosshair: carrots drop, so
+## inside a gun's effective range (falloff_end) the launch is lofted to make
+## up for it exactly (a gun hits what you aim at); further out the drop
+## starts to show, so long shots still take some skill.
+static func zeroed(origin: Vector3, dir: Vector3, distance: float, data: WeaponData) -> Vector3:
+	var g := data.projectile_gravity * float(ProjectSettings.get_setting("physics/3d/default_gravity", 16.0))
+	if g <= 0.0 or data.projectile_speed <= 0.0:
+		return dir
+	var t := minf(distance, data.falloff_end) / data.projectile_speed
+	var drop := 0.5 * g * t * t
+	return (dir * minf(distance, data.falloff_end) + Vector3.UP * drop).normalized()
+
+
+## A shotgun's pellets: one down the middle and the rest in an even ring
+## (a little jitter, so no two blasts are identical) - a pattern you can
+## learn, rather than a random cone.
+static func _pattern_dir(dir: Vector3, spread_deg: float, i: int, n: int) -> Vector3:
+	var d := dir.normalized()
+	if i == 0 or spread_deg <= 0.0:
+		return d
+	var side := d.cross(Vector3.UP)
+	if side.length_squared() < 1e-6:
+		side = d.cross(Vector3.RIGHT)
+	side = side.normalized()
+	var up := side.cross(d)
+	var a := TAU * float(i - 1) / float(n - 1) + randf_range(-0.2, 0.2)
+	var r := tan(deg_to_rad(spread_deg * randf_range(0.6, 0.95)))
+	return (d + (side * cos(a) + up * sin(a)) * r).normalized()
 
 
 ## Random direction inside a cone, uniformly distributed over the cap.

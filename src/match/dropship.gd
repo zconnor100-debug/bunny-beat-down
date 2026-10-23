@@ -77,6 +77,24 @@ static func _to_edge(p: Vector2, dir: Vector2, r: Rect2) -> float:
 	return t if t < INF else 0.0
 
 
+## How far back the camera sits while you ride (it frames the whole thing).
+func view_distance() -> float:
+	return {&"plane": 52.0, &"paper_plane": 46.0}.get(vehicle, 7.0)
+
+
+## Where the ride camera starts looking: planes side-on, looking in toward
+## the middle of the map (so the map is behind them), the balloon from
+## behind and a little to the side.
+func view_yaw() -> float:
+	var d := finish - start
+	if vehicle == &"balloon":
+		return atan2(-d.x, -d.z) + 0.6
+	var side := d.cross(Vector3.UP).normalized()
+	var mid := (start + finish) * 0.5
+	var look := side if (Vector3.ZERO - mid).dot(side) >= 0.0 else -side
+	return atan2(-look.x, -look.z)
+
+
 ## What to call the ride in messages ("the balloon won't wait").
 func display_name() -> String:
 	return {&"plane": "toy plane", &"paper_plane": "paper airplane"}.get(vehicle, "balloon")

@@ -46,8 +46,16 @@ sneaks up on you, you rewind, and this time you turn around.
   | Carrot Rocket Launcher | one very large, very angry carrot: 120 on a direct hit, less the further from the blast (out to 10 m) |
 
   Five loot rarities run from Baby to **Golden**, and Golden guns shimmer.
-  Projectiles are real carrots that fly with drop and **stay stuck** in
-  whatever they hit.
+  Projectiles are real carrots that take time to arrive (lead a moving
+  target) and **stay stuck** in whatever they hit. Shooting is meant to be
+  readable rather than realistic:
+  - Within a gun's range, a carrot lands where the crosshair is; past it,
+    the drop starts to show.
+  - Automatics put the first three shots of a burst where you aim, and
+    spread out the longer you hold the trigger. A short break settles them.
+  - The shotgun throws a learnable pattern (one pellet down the middle, the
+    rest in a ring) instead of a random cone.
+  - Walking and strafing barely cost accuracy; sprinting and jumping do.
 - **Species jump tricks**: every critter jumps in character.
   - **Bunnies flip**: a front flip when running forward, a back flip when
     backing up, a side flip when strafing.
@@ -194,12 +202,18 @@ sneaks up on you, you rewind, and this time you turn around.
   ![The barn, the lodge, the swamp and the stilt shacks](docs/screenshots/biomes.jpg)
 - **The Hamster Cage**, a second map: a 1.1 km glass tank full of
   wood-shaving bedding, standing in a human's living room, with its own
-  toy-box chiptune soundtrack. Everyone flies in on a wind-up toy plane.
+  toy-box chiptune soundtrack. Everyone flies in on a wind-up tin biplane,
+  with a goggled mouse in the cockpit.
   - **Bedding**: a giant exercise wheel, *Tube Town* (Habitrail pods joined
     by tunnels you can run through), hamster huts, a food bowl heaped with
     seeds, a sand bath, a shelf with a ramp, the water bottle on the glass,
     cardboard rolls, chew blocks, and giant seeds, pellets, broccoli and
     carrots lying everywhere as cover (paper-bedding tufts hide you like bushes).
+  - **The Hamster Gym**: perches on stilts at 7, 14 and 21 m, joined by
+    see-through Habitrail tubes in every colour that you walk up inside,
+    with a skybridge tube, two slide tubes back down and a hammock. Lookout
+    perches with ramps stand around the cage too, along with bendy wooden
+    bridges, coconut hideouts, chew-stick bundles and egg cartons.
   - A **lagoon** of spilled water over aquarium gravel round five brimming
     water bowls (swim in, climb out over the rim), an aquarium castle, shells
     and plastic plants.
@@ -263,14 +277,18 @@ The full write-up is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
   `ToyProps`, `ToyRoom`), plus `ToyTrain`: `AnimatableBody3D` cars
   following a resampled loop, so riders are carried by the physics engine,
   and a bumper `Area3D` that bonks critters on the line.
-- **Tests that play the game.** A headless suite of 86 tests covers:
+- **Tests that play the game.** A headless suite of 89 tests covers:
   - the IK maths, hitboxes, ragdolls and dismemberment;
   - island navigation, the three biomes and the big buildings (a Bun walks
     in through the barn doors; every indoor loot spot is reachable on the
     navmesh), the Hamster Cage (bots can walk into every pod, hut, castle and
-    tub; the glass holds; the bowls are swimmable), Toy Box Bash (every floor
+    tub, up the Hamster Gym's tubes and onto every lookout; the glass holds;
+    the bowls are swimmable), Toy Box Bash (every floor
     of the dollhouse is reachable; the train runs, carries a rider and bonks
-    whoever is on the track; the fishbowl is swimmable) and the game rules;
+    whoever is on the track; the fishbowl is swimmable), that no prop is
+    generated inside another and no loot inside a solid, and the game rules;
+  - how carrots fly (on the crosshair within range, bursts that bloom and
+    settle, the shotgun's pattern);
   - rivals (made, remembered across runs, back in the next match, hunting
     and taunting, revenge), the bots learning you (landings, fighting style,
     camping, hot streaks), every Briar mood, the Burrow (earning,

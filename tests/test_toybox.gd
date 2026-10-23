@@ -8,6 +8,7 @@ extends TestCase
 const BUN := "res://data/critters/bun.tres"
 
 var toy: ToyBox
+const MapCheck := preload("res://tests/map_check.gd")
 
 
 func _make_toybox(nav := true) -> void:
@@ -54,7 +55,24 @@ func test_toybox_layout_and_paths() -> void:
 	check(ship.get_node_or_null("PaperPlane") != null, "everyone rides in on the paper airplane")
 	for end in [ship.start, ship.finish]:
 		check(tf.inside(end.x, end.z, 10.0) and end.y < ToyRoom.CEILING, "the route stays inside the room (%s)" % end)
+	check(ship.view_distance() > 40.0, "the ride camera frames the whole plane (%.0f m back)" % ship.view_distance())
 	ship.queue_free()
+	await _check_tidy(toy)
+
+
+## Nothing generated inside anything else (more than a tube's joint into its
+## pod), and every loot spot clear of solids once it spawns (nudged if need be).
+func _check_tidy(map: Island) -> void:
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	var deep := MapCheck.overlaps(map, 0.5)
+	check(deep.is_empty(), "no props inside other props (%d: %s)" % [deep.size(), ", ".join(deep.slice(0, 3).map(func(o): return "%s in %s by %.1f m" % [o.a, o.b, o.depth]))])
+	var dropped := 0
+	for l in map.loot_points:
+		var half := Vector3(0.9, 0.5, 0.9) if l.get("crate", false) or l.has("chest") else Vector3(0.35, 0.3, 0.35)
+		if map.clear_loot_spot(l.pos, half, not l.get("inside", false)) == Vector3.INF:
+			dropped += 1
+	check(dropped < map.loot_points.size() * 0.03, "loot spots inside solids are moved clear, hardly any dropped (%d of %d)" % [dropped, map.loot_points.size()])
 
 
 func test_toy_train_rides_and_bonks() -> void:

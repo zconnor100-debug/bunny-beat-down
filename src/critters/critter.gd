@@ -66,6 +66,8 @@ var _equip_timer := 0.0
 var _reload_timer := -1.0
 var _trigger_held := false
 var _bloom := 0.0
+var _burst := 0.0                  ## shots in the current burst (see _weapon_tick)
+var _since_shot := 99.0
 var _recoil := 0.0
 var _was_on_floor := true
 var _fall_speed := 0.0
@@ -195,9 +197,12 @@ func current_spread_deg() -> float:
 		return 0.0
 	var d := w.data
 	var base := d.spread_aim_deg if want_aim else d.spread_hip_deg
+	# walking (and strafing) barely matters, running flat out does; aiming
+	# steadies it further. In the air everything is looser.
 	var moving := clampf(Vector2(velocity.x, velocity.z).length() / def.move_speed, 0.0, 1.0)
-	var air := 0.0 if is_on_floor() else 1.5
-	return base + d.spread_move_deg * moving + air + _bloom - (0.3 * base if _crouch > 0.5 else 0.0)
+	var move := d.spread_move_deg * moving * moving * (0.4 if want_aim else 1.0)
+	var air := 0.0 if is_on_floor() else 1.0
+	return base + move + air + _bloom - (0.3 * base if _crouch > 0.5 else 0.0)
 
 
 # ---- physics ------------------------------------------------------------------------------
@@ -556,6 +561,10 @@ func place_at(pos: Vector3, yaw := 0.0) -> void:
 
 # ---- weapons ------------------------------------------------------------------------------------
 
+const FREE_SHOTS := 3.0          ## automatics: shots per burst before the spread opens up
+const BURST_RECOVERY := 30.0     ## burst shots forgotten per second off the trigger
+
+
 func _weapon_tick(delta: float) -> void:
 	_fire_cooldown = maxf(0.0, _fire_cooldown - delta)
 	_equip_timer = maxf(0.0, _equip_timer - delta)
@@ -565,7 +574,14 @@ func _weapon_tick(delta: float) -> void:
 			want_melee = true   # bare paws: the trigger swings the club
 		_trigger_held = want_fire
 		return
-	_bloom = move_toward(_bloom, 0.0, delta * (w.data.bloom_max_deg * 1.5 + 1.0))
+	# bloom: the first shots of a burst go where you aim (FREE_SHOTS for
+	# automatics, the first for everything else); holding the trigger spreads
+	# them out, and a short break settles the gun again
+	_since_shot += delta
+	if _since_shot > w.data.seconds_per_shot() * 1.6:
+		_burst = maxf(0.0, _burst - delta * BURST_RECOVERY)
+	var free := FREE_SHOTS if w.data.fire_mode == WeaponData.FireMode.AUTO else 1.0
+	_bloom = minf(maxf(0.0, _burst - free) * w.data.bloom_per_shot_deg, w.data.bloom_max_deg)
 	if _reload_timer >= 0.0:
 		_reload_timer -= delta
 		if _reload_timer < 0.0:
@@ -592,7 +608,7 @@ func _fire(w: WeaponInstance) -> void:
 	# if the aim point is behind the muzzle (hugging a wall), shoot along the look
 	if dir.length_squared() < 0.25 or dir.normalized().dot(look_direction()) < 0.2:
 		dir = look_direction()
-	dir = dir.normalized()
+	dir = Projectiles.zeroed(origin, dir.normalized(), dir.length(), w.data)
 	# point-blank: if something is between our body and the muzzle (a critter
 	# hugging us, a tree we're pressed against), the carrots start from the
 	# chest so they hit it instead of spawning on the far side
@@ -603,7 +619,8 @@ func _fire(w: WeaponInstance) -> void:
 	if get_world_3d().direct_space_state.intersect_ray(q):
 		origin = chest
 	Projectiles.fire(self, w, origin, dir, current_spread_deg(), visual.hitbox_rids)
-	_bloom = minf(_bloom + w.data.bloom_per_shot_deg, w.data.bloom_max_deg)
+	_burst += 1.0
+	_since_shot = 0.0
 	_recoil = 1.0
 	FX.muzzle(origin, dir, w.data.projectile == WeaponData.ProjectileKind.ROCKET or w.data.pellets > 1)
 	if is_player:
@@ -704,6 +721,7 @@ func reset_actions() -> void:
 	_reload_timer = -1.0
 	_trigger_held = false
 	_bloom = 0.0
+	_burst = 0.0
 	_recoil = 0.0
 	_fall_speed = 0.0
 	_melee_t = -1.0

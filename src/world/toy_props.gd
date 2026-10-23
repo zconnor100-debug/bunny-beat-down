@@ -99,14 +99,15 @@ static func block_castle(rng: RandomNumberGenerator) -> CageKit:
 	var cells := func() -> Array: return [rng.randi() % 16, rng.randi() % 16, rng.randi() % 16, rng.randi() % 16, rng.randi() % 16, rng.randi() % 16]
 	for side in 4:
 		var b := Basis(Vector3.UP, side * PI * 0.5)
-		for i in n:
+		# each wall stops one block short: the next wall's first block is the corner
+		for i in n - 1:
 			var along := -half + i * s
 			var gate := side == 0 and absf(along) < s
 			for layer in 2:
 				if gate:
 					continue
 				k._letter_box(b * Vector3(along, s * 0.5 + layer * s, half), s, b, cells.call())
-			if i % 2 == 0 and not gate:
+			if i % 2 == 0 and i > 0 and not gate:
 				k._letter_box(b * Vector3(along, s * 2.5, half), s, b, cells.call())
 	for xs in [-1.0, 1.0]:
 		for zs in [-1.0, 1.0]:
@@ -115,8 +116,8 @@ static func block_castle(rng: RandomNumberGenerator) -> CageKit:
 	# a lintel over the gate, and a pile of blocks inside as cover
 	k._box(&"paint_blue", Vector3(0, s * 2.0 + 0.4, half), Vector3(s * 3.0, 0.8, s))
 	for i in 3:
-		k._letter_box(Vector3(-6.0 + i * 4.2, s * 0.5, -6.0), s, Basis(Vector3.UP, rng.randf() * 0.4), cells.call())
-	k._letter_box(Vector3(-1.9, s * 1.5, -6.0), s, Basis(Vector3.UP, 0.3), cells.call())
+		k._letter_box(Vector3(-6.5 + i * 5.2, s * 0.5, -6.0), s, Basis(Vector3.UP, rng.randf() * 0.4), cells.call())
+	k._letter_box(Vector3(-3.9, s * 1.5, -6.0), s, Basis(Vector3.UP, 0.3), cells.call())
 	k.loot_spots = [Vector3(6.0, 0.0, 4.0), Vector3(-7.0, 0.0, 6.0), Vector3(7.0, 0.0, -8.0), Vector3(0.0, 0.0, 1.0)]
 	k.chest_spot = Vector3(-8.0, 0.0, 0.0)
 	return k.finish()
@@ -234,7 +235,7 @@ static func teddy(rng: RandomNumberGenerator) -> CageKit:
 		k._ellipsoid(&"fur", Vector3(xs * 4.0, 2.4, 6.0), Vector3(2.8, 2.4, 5.0))
 		k._ellipsoid(&"fur_light", Vector3(xs * 4.0, 2.4, 10.6), Vector3(2.0, 2.0, 0.6), Basis(), false)
 	k._prism(&"paint_red", [Vector2(-3.0, 15.6), Vector2(0.0, 14.6), Vector2(3.0, 15.6), Vector2(3.0, 13.2), Vector2(0.0, 14.2), Vector2(-3.0, 13.2)], 5.4, 0.8)
-	k.footprint = 9.0
+	k.footprint = 12.5   # (arms and feet reach out past the tummy)
 	return k.finish()
 
 
@@ -243,8 +244,9 @@ static func crayon(rng: RandomNumberGenerator, length := 16.0, standing := false
 	var k := CageKit.blank("Crayon", rng, &"wood")
 	var col := _c(rng)
 	var r := 1.3
-	var dir := Vector3.UP if standing else Vector3(cos(rng.randf() * TAU), 0, sin(rng.randf() * TAU)).normalized()
-	var base := Vector3.ZERO if standing else Vector3.UP * r
+	# lying: along local X, centred on the origin (so its spacing is known)
+	var dir := Vector3.UP if standing else Vector3.RIGHT
+	var base := Vector3.ZERO if standing else Vector3.UP * r - dir * length * 0.5
 	k._rod(StringName("crayon_" + String(col)), base, base + dir * length * 0.8, r)
 	k._rod(&"paper", base + dir * length * 0.15, base + dir * length * 0.65, r + 0.08, false)
 	k._rod(StringName("crayon_" + String(col)), base + dir * length * 0.3, base + dir * length * 0.5, r + 0.12, false)

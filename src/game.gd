@@ -107,6 +107,9 @@ func _build_world() -> void:
 	await island.generate(_seed, quality, true)
 	island.tune_lighting(lighting)
 
+	# let physics register every prop before loot checks its spot against them
+	await get_tree().physics_frame
+	await get_tree().physics_frame
 	match_manager = MatchManager.new()
 	match_manager.name = "Match"
 	world.add_child(match_manager)
@@ -140,8 +143,8 @@ func _start() -> void:
 	match_manager.begin_drop()
 	hud.attach_dropship(match_manager.dropship)
 	rig.spectate_target = match_manager.dropship
-	rig.yaw = atan2(-(match_manager.dropship.finish - match_manager.dropship.start).x, -(match_manager.dropship.finish - match_manager.dropship.start).z) + 0.6
-	rig.pitch = -0.35
+	rig.yaw = match_manager.dropship.view_yaw()
+	rig.pitch = -0.3
 	var tw := create_tween()
 	tw.tween_property(_loading, "offset:y", -1200.0, 0.6).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_IN)
 	tw.tween_callback(_loading.queue_free)

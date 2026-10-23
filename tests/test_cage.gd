@@ -5,6 +5,7 @@ extends TestCase
 ## the castle, the ice cream tub and up onto the shelf.
 
 const BUN := "res://data/critters/bun.tres"
+const MapCheck := preload("res://tests/map_check.gd")
 
 var cage: HamsterCage
 
@@ -56,7 +57,24 @@ func test_cage_layout_and_paths() -> void:
 	for end in [ship.start, ship.finish]:
 		check(cf.inside(end.x, end.z, 10.0) and end.y < CageRoom.GLASS_TOP, "the route stays inside the tank (%s)" % end)
 	check(ship.start.distance_to(ship.finish) > 600.0, "and crosses most of it")
+	check(ship.view_distance() > 40.0, "the ride camera frames the whole plane (%.0f m back)" % ship.view_distance())
 	ship.queue_free()
+	await _check_tidy(cage)
+
+
+## Nothing generated inside anything else (more than a tube's joint into its
+## pod), and every loot spot clear of solids once it spawns (nudged if need be).
+func _check_tidy(map: Island) -> void:
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	var deep := MapCheck.overlaps(map, 0.5)
+	check(deep.is_empty(), "no props inside other props (%d: %s)" % [deep.size(), ", ".join(deep.slice(0, 3).map(func(o): return "%s in %s by %.1f m" % [o.a, o.b, o.depth]))])
+	var dropped := 0
+	for l in map.loot_points:
+		var half := Vector3(0.9, 0.5, 0.9) if l.get("crate", false) or l.has("chest") else Vector3(0.35, 0.3, 0.35)
+		if map.clear_loot_spot(l.pos, half, not l.get("inside", false)) == Vector3.INF:
+			dropped += 1
+	check(dropped < map.loot_points.size() * 0.03, "loot spots inside solids are moved clear, hardly any dropped (%d of %d)" % [dropped, map.loot_points.size()])
 
 
 func test_glass_walls_and_water_bowls() -> void:
