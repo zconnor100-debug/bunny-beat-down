@@ -649,6 +649,51 @@
     "isrc": "USUAN1300002"
   },
   {
+    "asset": "\"Pixel Peeker Polka - faster\"",
+    "author": "Kevin MacLeod",
+    "author_url": "https://incompetech.com",
+    "source_url": "https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1100833",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "None -- official MP3 from incompetech.com; audio unmodified (file renamed).",
+    "used_for": "Music: match_cage (Bouncy 144 bpm chiptune polka -- an 8-bit toy box that never sits still: the Hamster Cage's busy, silly scramble between the wheel and the tubes.)",
+    "files": [
+      "assets/audio/music/cage_pixel_peeker_polka.mp3"
+    ],
+    "attribution": "\"Pixel Peeker Polka - faster\" Kevin MacLeod (incompetech.com), Licensed under Creative Commons: By Attribution 4.0 License http://creativecommons.org/licenses/by/4.0/",
+    "isrc": "USUAN1100833"
+  },
+  {
+    "asset": "\"Itty Bitty 8 Bit\"",
+    "author": "Kevin MacLeod",
+    "author_url": "https://incompetech.com",
+    "source_url": "https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1100764",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "None -- official MP3 from incompetech.com; audio unmodified (file renamed).",
+    "used_for": "Music: match_cage (Bright little 108 bpm square-wave tune: wind-up-toy cheer for looting the seed bowl and the hamster huts.)",
+    "files": [
+      "assets/audio/music/cage_itty_bitty_8_bit.mp3"
+    ],
+    "attribution": "\"Itty Bitty 8 Bit\" Kevin MacLeod (incompetech.com), Licensed under Creative Commons: By Attribution 4.0 License http://creativecommons.org/licenses/by/4.0/",
+    "isrc": "USUAN1100764"
+  },
+  {
+    "asset": "\"Voxel Revolution\"",
+    "author": "Kevin MacLeod",
+    "author_url": "https://incompetech.com",
+    "source_url": "https://incompetech.com/music/royalty-free/index.html?isrc=USUAN2000025",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "None -- official MP3 from incompetech.com; audio unmodified (file renamed).",
+    "used_for": "Music: match_cage (Grooving 122 bpm synth-pop chiptune with a driving beat: keeps the cage's toy-box sound but pushes harder for the final circles.)",
+    "files": [
+      "assets/audio/music/cage_voxel_revolution.mp3"
+    ],
+    "attribution": "\"Voxel Revolution\" Kevin MacLeod (incompetech.com), Licensed under Creative Commons: By Attribution 4.0 License http://creativecommons.org/licenses/by/4.0/",
+    "isrc": "USUAN2000025"
+  },
+  {
     "asset": "\"Fiddles McGinty\"",
     "author": "Kevin MacLeod",
     "author_url": "https://incompetech.com",

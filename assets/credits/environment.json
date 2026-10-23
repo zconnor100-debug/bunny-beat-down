@@ -1046,6 +1046,74 @@
     ]
   },
   {
+    "asset": "Aerial Wood Snips (Poly Haven texture)",
+    "author": "Rob Tuytel",
+    "author_url": "https://polyhaven.com/all?a=Rob%20Tuytel",
+    "source_url": "https://polyhaven.com/a/aerial_wood_snips",
+    "license": "CC0 1.0",
+    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "changes": "Downscaled to 2048px (AO/height 1024px), normal map converted to 8-bit PNG (OpenGL convention), greyscale maps re-encoded as JPEG",
+    "used_for": "Texture 'bedding' (hamster cage bedding: wood shavings (tinted pale in the shader))",
+    "files": [
+      "assets/textures/bedding/albedo.jpg",
+      "assets/textures/bedding/ao.jpg",
+      "assets/textures/bedding/height.jpg",
+      "assets/textures/bedding/normal.png",
+      "assets/textures/bedding/roughness.jpg"
+    ]
+  },
+  {
+    "asset": "Snow 02 (Poly Haven texture)",
+    "author": "Rob Tuytel",
+    "author_url": "https://polyhaven.com/all?a=Rob%20Tuytel",
+    "source_url": "https://polyhaven.com/a/snow_02",
+    "license": "CC0 1.0",
+    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "changes": "Downscaled to 2048px (AO/height 1024px), normal map converted to 8-bit PNG (OpenGL convention), greyscale maps re-encoded as JPEG",
+    "used_for": "Texture 'snow' (snow drifts of the hamster cage's winter corner)",
+    "files": [
+      "assets/textures/snow/albedo.jpg",
+      "assets/textures/snow/ao.jpg",
+      "assets/textures/snow/height.jpg",
+      "assets/textures/snow/normal.png",
+      "assets/textures/snow/roughness.jpg"
+    ]
+  },
+  {
+    "asset": "Clean Pebbles (Poly Haven texture)",
+    "author": "Dario Barresi, Charlotte Baglioni",
+    "author_url": "https://polyhaven.com/all?a=Dario%20Barresi",
+    "source_url": "https://polyhaven.com/a/clean_pebbles",
+    "license": "CC0 1.0",
+    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "changes": "Downscaled to 1024px (AO/height 1024px), normal map converted to 8-bit PNG (OpenGL convention), greyscale maps re-encoded as JPEG",
+    "used_for": "Texture 'pebbles' (aquarium gravel under the hamster cage's lagoon)",
+    "files": [
+      "assets/textures/pebbles/albedo.jpg",
+      "assets/textures/pebbles/ao.jpg",
+      "assets/textures/pebbles/height.jpg",
+      "assets/textures/pebbles/normal.png",
+      "assets/textures/pebbles/roughness.jpg"
+    ]
+  },
+  {
+    "asset": "Laminate Floor 02 (Poly Haven texture)",
+    "author": "Dario Barresi, Charlotte Baglioni",
+    "author_url": "https://polyhaven.com/all?a=Dario%20Barresi",
+    "source_url": "https://polyhaven.com/a/laminate_floor_02",
+    "license": "CC0 1.0",
+    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "changes": "Downscaled to 1024px (AO/height 1024px), normal map converted to 8-bit PNG (OpenGL convention), greyscale maps re-encoded as JPEG",
+    "used_for": "Texture 'laminate' (the room's wooden floor outside the hamster tank)",
+    "files": [
+      "assets/textures/laminate/albedo.jpg",
+      "assets/textures/laminate/ao.jpg",
+      "assets/textures/laminate/height.jpg",
+      "assets/textures/laminate/normal.png",
+      "assets/textures/laminate/roughness.jpg"
+    ]
+  },
+  {
     "asset": "Kloofendal 48d Partly Cloudy (Pure Sky) (Poly Haven HDRI)",
     "author": "Greg Zaal, Jarod Guest",
     "author_url": "https://polyhaven.com/all?a=Greg%20Zaal",

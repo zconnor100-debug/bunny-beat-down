@@ -250,7 +250,8 @@ func _process(delta: float) -> void:
 		var outside := not storm.is_safe(player.global_position) and player.alive
 		_storm_tint.color.a = lerpf(_storm_tint.color.a, 0.28 if outside else 0.0, IKMath.damp(4.0, delta))
 	elif match_manager and match_manager.phase == MatchManager.Phase.DROPPING:
-		_storm_label.text = "Riding the picnic balloon" if player.state == Critter.State.IN_DROPSHIP else "Critters are still dropping in…"
+		var ride := "toy plane" if _minimap.dropship and is_instance_valid(_minimap.dropship) and _minimap.dropship.vehicle == &"plane" else "picnic balloon"
+		_storm_label.text = "Riding the %s" % ride if player.state == Critter.State.IN_DROPSHIP else "Critters are still dropping in…"
 	else:
 		_storm_label.text = ""
 	var hurt := clampf(1.0 - player.health / 35.0, 0.0, 1.0) if player.alive else 0.0

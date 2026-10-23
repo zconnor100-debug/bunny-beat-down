@@ -52,10 +52,14 @@ LAYERS = {
     "thatch":       ("ph_reed_roof_04", 1024, "thatched roof of the woodcutter's lodge"),
     "slate_roof":   ("ph_roof_slates_02", 1024, "slate roof of the big red barn"),
     "tin_roof":     ("ph_rusty_corrugated_iron", 1024, "rusty tin roof of the swamp shacks"),
+    "bedding":      ("ph_aerial_wood_snips", 2048, "hamster cage bedding: wood shavings (tinted pale in the shader)"),
+    "snow":         ("ph_snow_02", 2048, "snow drifts of the hamster cage's winter corner"),
+    "pebbles":      ("ph_clean_pebbles", 1024, "aquarium gravel under the hamster cage's lagoon"),
+    "laminate":     ("ph_laminate_floor_02", 1024, "the room's wooden floor outside the hamster tank"),
 }
 
 # Noise-like normal maps gain little from 2K but cost ~10 MB as PNG: cap them lower.
-NORMAL_CAP = {"grass": 1024}
+NORMAL_CAP = {"grass": 1024, "bedding": 1024, "snow": 1024}
 
 HDRIS = ["kloofendal_48d_partly_cloudy_puresky", "qwantani_late_afternoon_puresky"]
 HDRI_4K: set[str] = set()  # 4K copies dropped to stay inside the repo size budget (2K is used in game)

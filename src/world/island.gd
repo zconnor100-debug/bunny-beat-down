@@ -42,6 +42,11 @@ const POI_KINDS := [
 
 var seed_value := 1
 var rng := RandomNumberGenerator.new()
+## What everyone rides in on (see Dropship), what the map is called, and the
+## music slot that plays during a match on it.
+var drop_vehicle := &"balloon"
+var map_title := "Wildwood Island"
+var music_slot := "match"
 var terrain: Terrain
 var scatter: Scatter
 var pois: Array = []          # {name, center: Vector2, radius, height}
@@ -359,6 +364,39 @@ func _in_swamp_water(x: float, z: float) -> bool:
 	if xi < 0 or zi < 0 or xi >= Terrain.BIOME_RES or zi >= Terrain.BIOME_RES:
 		return false
 	return _swamp_cells[zi * Terrain.BIOME_RES + xi] == 1
+
+
+## The playable area: the drop route and the Briar's centres stay inside it.
+func play_bounds() -> Rect2:
+	var r := terrain.island_radius
+	return Rect2(-r, -r, r * 2.0, r * 2.0)
+
+
+## The ground's colour at (x, z) on the minimap: sea, sand, water, meadow,
+## moss, paths and rock, hill-shaded.
+func map_color(x: float, z: float) -> Color:
+	var h := terrain.height_at(x, z)
+	if h < -0.2:
+		return Color("2d6f8e").lerp(Color("153a52"), clampf(-h / 7.0, 0.0, 1.0))
+	var wl := water_level_at(Vector3(x, h, z))
+	if wl > h + 0.05:
+		return Color("4f5f3a").lerp(Color("2f3d27"), clampf((wl - h) / 1.5, 0.0, 1.0))   # swamp / pond water
+	if h < 1.6:
+		return Color("d9c79a")
+	var ctl := terrain.control_at(x, z)
+	var c := Color("4d6b2c")
+	c = c.lerp(Color("79a83f"), ctl.r)
+	c = c.lerp(Color("3b5a22"), ctl.a)
+	c = c.lerp(Color("b59562"), ctl.g)
+	c = c.lerp(Color("8d8a82"), ctl.b)
+	var nrm := terrain.normal_at(x, z)
+	var shade := clampf(nrm.dot(Vector3(-0.5, 0.75, -0.4).normalized()), 0.35, 1.0)
+	return c * (0.55 + 0.6 * shade)
+
+
+## A map may adjust the sun and the air once it's built (the island doesn't).
+func tune_lighting(_lighting: WorldLighting) -> void:
+	pass
 
 
 func in_poi(p: Vector2, margin := 1.0) -> Dictionary:

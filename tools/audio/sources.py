@@ -79,6 +79,19 @@ MUSIC = [
            "music/match_bushwick_tarantella.mp3", "match",
            "Breakneck 215 bpm accordion/clarinet tarantella -- frantic, bright, "
            "acoustic; ideal for the final briar-storm circle."),
+    # the Hamster Cage's own genre: toy-box chiptune (plastic toys, a wind-up plane)
+    _track("Pixel Peeker Polka - faster", "USUAN1100833", "Pixel Peeker Polka - faster.mp3",
+           "music/cage_pixel_peeker_polka.mp3", "match_cage",
+           "Bouncy 144 bpm chiptune polka -- an 8-bit toy box that never sits still: "
+           "the Hamster Cage's busy, silly scramble between the wheel and the tubes."),
+    _track("Itty Bitty 8 Bit", "USUAN1100764", "Itty Bitty 8 Bit.mp3",
+           "music/cage_itty_bitty_8_bit.mp3", "match_cage",
+           "Bright little 108 bpm square-wave tune: wind-up-toy cheer for looting the "
+           "seed bowl and the hamster huts."),
+    _track("Voxel Revolution", "USUAN2000025", "Voxel Revolution.mp3",
+           "music/cage_voxel_revolution.mp3", "match_cage",
+           "Grooving 122 bpm synth-pop chiptune with a driving beat: keeps the cage's "
+           "toy-box sound but pushes harder for the final circles."),
     _track("Fiddles McGinty", "USUAN1400051", "Fiddles McGinty.mp3",
            "music/victory_fiddles_mcginty.mp3", "victory",
            "Driving Celtic folk-rock reel (174 bpm, D major; uilleann pipes, recorder, guitar, "

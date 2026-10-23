@@ -11,8 +11,9 @@ src/
   player/     PlayerController · CameraRig
   ai/         AIBrain
   weapons/    WeaponData (.tres) · WeaponInstance · Rarity · Projectiles · Rocket · Explosion
-  world/      Island · Terrain · Scatter · WorldLighting · Pickup · LootCrate · shaders/
-  match/      MatchManager · Storm (the Briar) · Dropship (the picnic balloon)
+  world/      Island · Terrain · Scatter · Building · WorldLighting · Pickup · LootCrate · shaders/
+              HamsterCage · CageFloor · CageKit · CageProps · CageRoom (the second map)
+  match/      MatchManager · Storm (the Briar) · Dropship (the picnic balloon / the toy plane)
   fx/         FX · FXTextures
   ui/         HUD · Minimap · MainMenu · SettingsPanel · CreditsPanel · UITheme
 tests/        headless test runner + suites, screenshot capture scripts
@@ -131,6 +132,33 @@ loading screen (~5 s):
 5. **Navigation**: the navmesh is baked as 4×4 tiles in parallel
    (`bake_from_source_geometry_data_async`). Each tile's bake area is grown by
    its border so neighbouring tiles stitch exactly.
+
+## The Hamster Cage
+
+The second map is the same machinery wearing a different costume, which is
+why the rest of the game (AI, loot, the Briar, the HUD) needed only a few
+hooks: `Island` gained `play_bounds()`, `map_color()`, `tune_lighting()`, a
+`drop_vehicle` and a `music_slot`, and `HamsterCage` overrides them.
+
+- **`CageFloor extends Terrain`**: a rectangle of bedding dunes heaped up
+  against the glass, with a lagoon and a winter corner in the biome map's
+  slots, gravel ramps up to the bowls' rims (`ramp()`), sand-bath and trail
+  splats, and `cage_floor.gdshader`, which recolours a wood-shaving scan pale
+  and blends in pebbles, snow and sand.
+- **`CageKit extends Building`**: the toys reuse the buildings' merged-mesh
+  boxes, logs, cones and prisms (each one its own collider) and add lathes
+  with concave collision (bowls, tubs, domes), rings of panels (Habitrail
+  tubes and pods, the wheel's tread: the bottom panel is the walkway) and
+  ellipsoids with convex-hull collision (seeds, peas, broccoli). Huts, the
+  aquarium castle, the ice cream tub, the pods and the shelf are walk-in
+  "buildings", so the loot planner puts their loot indoors.
+- **Water** is per-cell for the lagoon (like the island's swamp) plus a disc
+  per bowl; `water_level_at()` answers both, so swimming just works.
+- **`CageRoom`** is scenery: the glass (four solid panes with a frost shader
+  near the fridge), the room around the tank, and the open fridge with its
+  cold light, mist particles that roll over the wall and snowfall.
+- The **toy plane** is a `Dropship` variant whose route is clipped to the
+  tank's rectangle, under the rim of the glass.
 
 ## Battle-royale loop
 

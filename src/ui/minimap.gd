@@ -1,7 +1,7 @@
 class_name Minimap
 extends Control
-## Top-down island map rendered once from the terrain (hill-shaded), with the
-## Briar circles, POI names, the player arrow and the balloon route drawn live.
+## Top-down map rendered once from the map's ground colours (Island.map_color),
+## with the Briar circles, POI names, the player arrow and the drop route drawn live.
 ## The same control doubles as the full-screen map (M).
 
 var island: Island
@@ -40,25 +40,8 @@ func build(island_: Island) -> void:
 		for xi in n:
 			var x := (float(xi) / (n - 1) - 0.5) * span
 			var z := (float(zi) / (n - 1) - 0.5) * span
-			var h := island.terrain.height_at(x, z)
-			var c: Color
-			if h < -0.2:
-				c = Color("2d6f8e").lerp(Color("153a52"), clampf(-h / 7.0, 0.0, 1.0))
-			elif island.water_level_at(Vector3(x, h, z)) > h + 0.05:
-				c = Color("4f5f3a").lerp(Color("2f3d27"), clampf((island.water_level_at(Vector3(x, h, z)) - h) / 1.5, 0.0, 1.0))   # swamp / pond water
-			elif h < 1.6:
-				c = Color("d9c79a")
-			else:
-				var ctl := island.terrain.control_at(x, z)
-				c = Color("4d6b2c")
-				c = c.lerp(Color("79a83f"), ctl.r)
-				c = c.lerp(Color("3b5a22"), ctl.a)
-				c = c.lerp(Color("b59562"), ctl.g)
-				c = c.lerp(Color("8d8a82"), ctl.b)
-				var nrm := island.terrain.normal_at(x, z)
-				var shade := clampf(nrm.dot(Vector3(-0.5, 0.75, -0.4).normalized()), 0.35, 1.0)
-				c = c * (0.55 + 0.6 * shade)
-				c.a = 1.0
+			var c := island.map_color(x, z)
+			c.a = 1.0
 			img.set_pixel(xi, zi, c)
 	map_tex = ImageTexture.create_from_image(img)
 

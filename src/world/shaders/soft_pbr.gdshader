@@ -15,6 +15,7 @@ uniform vec4 tint : source_color = vec4(1.0);
 uniform float metres_per_repeat = 2.0;
 uniform float detail = 0.7;      // share of the texture's fine contrast kept
 uniform float bumpiness = 0.5;
+uniform float recolor = 0.0;     // 1: keep only the texture's light and shade, in the tint's colour (paint)
 
 void fragment() {
 	vec2 uv = UV / metres_per_repeat;
@@ -22,6 +23,8 @@ void fragment() {
 	if (use_albedo) {
 		vec3 avg = textureLod(albedo_tex, uv, 8.0).rgb;
 		alb = mix(avg, texture(albedo_tex, uv).rgb, detail);
+		float shade = dot(alb, vec3(0.3, 0.59, 0.11)) / max(dot(avg, vec3(0.3, 0.59, 0.11)), 0.05);
+		alb = mix(alb, vec3(clamp(shade, 0.4, 1.6) * 0.8), recolor);
 	}
 	ALBEDO = alb * tint.rgb;
 	ROUGHNESS = use_rough ? max(texture(rough_tex, uv).g, 0.55) : 0.8;

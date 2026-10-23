@@ -4,6 +4,13 @@ extends Node3D
 ## end-of-match screens.
 
 const MENU_SCENE := "res://scenes/main.tscn"
+const CAGE_TIPS := [
+	"Hamster tubes are tunnels: run through Tube Town to cross unseen.",
+	"Water bowls are brimming: swim in, and climb out over the rim.",
+	"The fridge left the north-east corner frozen. Ice cubes make great cover.",
+	"Paper bedding tufts hide you from bots, just like bushes.",
+	"The toy plane only flies once. Jump before it reaches the glass!",
+]
 const TIPS := [
 	"Rocket carrots hurt you too. Stand well back from the salad.",
 	"Headshots bonk extra hard — and acorn helmets fly off.",
@@ -29,12 +36,17 @@ var _end: CanvasLayer
 var _spectating := false
 var _seed := 0
 var _picker: CharacterSelect
+var _cage := false
 
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	quality = int(Settings.get_value(&"quality"))
 	_seed = int(Settings.get_value(&"seed"))
+	_cage = String(Settings.get_value(&"map")) == "cage"
+	var args := OS.get_cmdline_user_args()
+	if args.has("--map") and args.find("--map") + 1 < args.size():
+		_cage = args[args.find("--map") + 1] == "cage"   # `-- --smoke-test --map cage`
 	if _seed == 0:
 		_seed = randi_range(1, 999999)
 	GameSession.last_seed = _seed
@@ -45,7 +57,6 @@ func _ready() -> void:
 	# the island is ready: wait for the player to confirm their critter
 	# (automated runs and --quick-match go straight in)
 	_picker.ready_to_drop = true
-	var args := OS.get_cmdline_user_args()
 	if not (Settings.is_test_run() or args.has("--smoke-test") or args.has("--quick-match")):
 		await _picker.confirmed
 	_spawn_player()
@@ -67,11 +78,12 @@ func _build_world() -> void:
 	var proj := Projectiles.new()
 	proj.name = "Projectiles"
 	world.add_child(proj)
-	island = Island.new()
+	island = HamsterCage.new() if _cage else Island.new()
 	island.name = "Island"
 	world.add_child(island)
 	island.progress.connect(_on_load_progress)
 	await island.generate(_seed, quality, true)
+	island.tune_lighting(lighting)
 
 	match_manager = MatchManager.new()
 	match_manager.name = "Match"
@@ -110,12 +122,12 @@ func _start() -> void:
 	tw.tween_property(_loading, "offset:y", -1200.0, 0.6).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_IN)
 	tw.tween_callback(_loading.queue_free)
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
-	Audio.play_music("match")
+	Audio.play_music(island.music_slot)
 	var ambience: Node = Audio.make_loop(&"ambient_forest_loop", self, false)
 	if ambience:
-		ambience.volume_db = -10.0
+		ambience.volume_db = -18.0 if _cage else -10.0   # (birdsong through the open window)
 		ambience.play()
-	hud.show_message("Press %s to jump!" % GameInput.prompt(&"jump"), "Pick your spot — the balloon won't wait.", 6.0)
+	hud.show_message("Press %s to jump!" % GameInput.prompt(&"jump"), "Pick your spot — the %s won't wait." % match_manager.dropship.display_name(), 6.0)
 	match_manager.player.state_changed.connect(_on_player_state)
 	GameSession.matches_played += 1
 	if OS.get_cmdline_user_args().has("--smoke-test"):
@@ -200,7 +212,7 @@ func _build_loading() -> void:
 	var t := UITheme.label("BUNNY BEAT DOWN", 64, UITheme.CARROT, true)
 	t.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(t)
-	_load_label = UITheme.label("Growing the island", 28)
+	_load_label = UITheme.label("Laying fresh bedding" if _cage else "Growing the island", 28)
 	_load_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(_load_label)
 	_load_bar = ProgressBar.new()
@@ -215,10 +227,10 @@ func _build_loading() -> void:
 	_load_bar.add_theme_stylebox_override("fill", fill)
 	_load_bar.add_theme_stylebox_override("background", back)
 	v.add_child(_load_bar)
-	var tip := UITheme.label("Tip: " + TIPS.pick_random(), 22, Color(UITheme.CREAM, 0.8))
+	var tip := UITheme.label("Tip: " + (CAGE_TIPS + TIPS.slice(0, 3) if _cage else TIPS).pick_random(), 22, Color(UITheme.CREAM, 0.8))
 	tip.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(tip)
-	var s := UITheme.label("Island #%d" % _seed, 18, Color(UITheme.CREAM, 0.5))
+	var s := UITheme.label("%s #%d" % ["Hamster Cage" if _cage else "Island", _seed], 18, Color(UITheme.CREAM, 0.5))
 	s.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(s)
 	# pick a critter while the island grows
@@ -342,7 +354,7 @@ func _show_end(title: String, sub: String, won: bool, killer: Critter) -> void:
 	v.add_child(s)
 	_end.set_meta(&"sub", s)
 	var p := match_manager.player
-	var stats := UITheme.label("Beat downs: %d   •   Damage: %d   •   Island #%d" % [p.kills, roundi(p.damage_dealt), _seed], 20, Color(UITheme.CREAM, 0.8))
+	var stats := UITheme.label("Beat downs: %d   •   Damage: %d   •   %s #%d" % [p.kills, roundi(p.damage_dealt), island.map_title, _seed], 20, Color(UITheme.CREAM, 0.8))
 	stats.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(stats)
 	var row := HBoxContainer.new()

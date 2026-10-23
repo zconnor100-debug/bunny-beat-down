@@ -228,14 +228,15 @@ def build(only=None, out=OUT):
         return
 
     # ---- music: copy the official MP3s unchanged ----
+    # match slots are playlists: "match" (the island), "match_cage" (the hamster cage)
     music = {"menu": None, "match": [], "victory": None}
     for t in sources.MUSIC:
         src = os.path.join(CACHE, "incompetech", t["cache_name"])
         if not os.path.exists(src):
             raise SystemExit(f"missing {src} -- run tools/audio/fetch_sources.py music")
         shutil.copyfile(src, os.path.join(OUT, t["file"]))
-        if t["slot"] == "match":
-            music["match"].append(t["file"])
+        if t["slot"].startswith("match"):
+            music.setdefault(t["slot"], []).append(t["file"])
         else:
             music[t["slot"]] = t["file"]
     manifest["music"] = music

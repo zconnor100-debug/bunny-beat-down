@@ -212,6 +212,11 @@
       "music/match_scheming_weasel.mp3",
       "music/match_bushwick_tarantella.mp3"
     ],
-    "victory": "music/victory_fiddles_mcginty.mp3"
+    "victory": "music/victory_fiddles_mcginty.mp3",
+    "match_cage": [
+      "music/cage_pixel_peeker_polka.mp3",
+      "music/cage_itty_bitty_8_bit.mp3",
+      "music/cage_voxel_revolution.mp3"
+    ]
   }
 }

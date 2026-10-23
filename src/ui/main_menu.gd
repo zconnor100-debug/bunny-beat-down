@@ -3,6 +3,8 @@ extends Node3D
 ## (the same procedural animator as in-game) and the menu on the left.
 
 const GAME_SCENE := "res://scenes/game.tscn"
+## [settings value, name in the menu]
+const MAPS := [["island", "Wildwood Island"], ["cage", "Hamster Cage"]]
 
 var _ui: Control
 var _menu: VBoxContainer
@@ -218,6 +220,13 @@ func _open_play() -> void:
 	grid.add_theme_constant_override("h_separation", 30)
 	grid.add_theme_constant_override("v_separation", 12)
 	v.add_child(grid)
+	grid.add_child(UITheme.label("Map", 22))
+	var map := OptionButton.new()
+	for m in MAPS:
+		map.add_item(m[1])
+	map.selected = maxi(0, MAPS.map(func(m): return m[0]).find(String(Settings.get_value(&"map"))))
+	map.item_selected.connect(func(i): Settings.set_value(&"map", MAPS[i][0]))
+	grid.add_child(map)
 	grid.add_child(UITheme.label("Opponents", 22))
 	var opp := UITheme.pad_spin_box(SpinBox.new())
 	opp.min_value = 1
@@ -232,7 +241,7 @@ func _open_play() -> void:
 	diff.selected = int(Settings.get_value(&"difficulty"))
 	diff.item_selected.connect(func(i): Settings.set_value(&"difficulty", i))
 	grid.add_child(diff)
-	grid.add_child(UITheme.label("Island seed (0 = random)", 22))
+	grid.add_child(UITheme.label("Map seed (0 = random)", 22))
 	var seed_box := UITheme.pad_spin_box(SpinBox.new())
 	seed_box.min_value = 0
 	seed_box.max_value = 999999

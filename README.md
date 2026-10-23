@@ -6,9 +6,10 @@
 
 **A whimsical third-person battle royale.** One bunny, one acorn helmet, 23
 woodland critters, and a lot of carrots. Drop from a picnic-basket hot-air
-balloon onto a procedurally generated forest island and loot carrot guns. Then
-outlast the closing Briar and be the last critter standing. Ragdolls, real
-limb-popping gore, and floppy physics ears are included.
+balloon onto a procedurally generated forest island (or from a wind-up toy
+plane into a giant hamster cage) and loot carrot guns. Then outlast the
+closing Briar and be the last critter standing. Ragdolls, real limb-popping
+gore, and floppy physics ears are included.
 
 Built in **Godot 4.6** (GDScript, Jolt physics, Forward+).
 
@@ -55,9 +56,10 @@ Built in **Godot 4.6** (GDScript, Jolt physics, Forward+).
 
   ![Choosing a critter on the loading screen](docs/screenshots/picker.jpg)
   ![All 40 critter skins](docs/screenshots/skins.jpg)
-- **Battle royale for 1 player and up to 49 bots** on a 660 m island:
-  - a balloon drop, freefall, and a giant leaf, flower or dandelion umbrella
-    to glide down on;
+- **Battle royale for 1 player and up to 49 bots** on two maps (pick one
+  under *New match*): Wildwood Island and the Hamster Cage:
+  - a balloon (or toy-plane) drop, freefall, and a giant leaf, flower or
+    dandelion umbrella to glide down on;
   - floor loot, garden crates and **treasure chests**: hold E for up to 5 s,
     out in the open, for the best gear;
   - big glowing pickups: green **lucky clover** bottles to heal and orange
@@ -144,6 +146,23 @@ Built in **Godot 4.6** (GDScript, Jolt physics, Forward+).
     cartoony look instead of photo grain.
 
   ![The barn, the lodge, the swamp and the stilt shacks](docs/screenshots/biomes.jpg)
+- **The Hamster Cage**, a second map: a 1.1 km glass tank full of
+  wood-shaving bedding, standing in a human's living room, with its own
+  toy-box chiptune soundtrack. Everyone flies in on a wind-up toy plane.
+  - **Bedding**: a giant exercise wheel, *Tube Town* (Habitrail pods joined
+    by tunnels you can run through), hamster huts, a food bowl heaped with
+    seeds, a sand bath, a shelf with a ramp, the water bottle on the glass,
+    cardboard rolls, chew blocks, and giant seeds, pellets, broccoli and
+    carrots lying everywhere as cover (paper-bedding tufts hide you like bushes).
+  - A **lagoon** of spilled water over aquarium gravel round five brimming
+    water bowls (swim in, climb out over the rim), an aquarium castle, shells
+    and plastic plants.
+  - A **winter corner** next to a giant fridge the owner left open behind
+    the glass: cold light and mist pour over the wall, and there are snow
+    drifts, icicles, frost on the panes, ice cubes, frozen peas, popsicles
+    and an upturned ice cream tub to hide in.
+
+  ![The Hamster Cage: the tank, Tube Town, the aquarium castle and the fridge](docs/screenshots/hamster_cage.jpg)
 - **Full UI**: menus, settings, pause, loading screen, gamepad support, and a
   [credits page](CREDITS.md) generated from the asset metadata.
 
@@ -172,16 +191,21 @@ The full write-up is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
   collision, a spatial hash for spacing and MultiMesh ground cover, buildings
   assembled in code from textured boxes and logs (every wall run is a
   collider, so doorways are real gaps for the navmesh), and a tiled async
-  navmesh bake.
-- **Tests that play the game.** A headless suite of 65 tests covers:
+  navmesh bake. The Hamster Cage reuses all of it: `HamsterCage` extends
+  `Island` (bowl water, a rectangular play area, its own ground colours and
+  light), `CageFloor` extends `Terrain`, and its toys are built by a
+  `CageKit` that adds lathes, panel rings and ellipsoids to the buildings'
+  boxes and logs.
+- **Tests that play the game.** A headless suite of 69 tests covers:
   - the IK maths, hitboxes, ragdolls and dismemberment;
   - island navigation, the three biomes and the big buildings (a Bun walks
     in through the barn doors; every indoor loot spot is reachable on the
-    navmesh) and the game rules;
+    navmesh), the Hamster Cage (bots can walk into every pod, hut, castle and
+    tub; the glass holds; the bowls are swimmable) and the game rules;
   - the player's input loop through real keyboard and gamepad events (menus,
     crouch → crawl, the L3 + R3 chord, aim assist, one gun in first person)
     and licensing;
-  - **a complete 8-bot match** that must loot, fight and finish.
+  - **a complete 8-bot match on each map** that must loot, fight and finish.
 
   CI runs it on every push.
 

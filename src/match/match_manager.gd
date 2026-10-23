@@ -161,12 +161,12 @@ func _spawn_loot() -> void:
 		Pickup.spawn(world_root, spec, pos + Vector3.UP * 0.3)
 
 
-## Board everyone and launch the balloon.
+## Board everyone and launch the balloon (or the toy plane).
 func begin_drop() -> void:
 	dropship = Dropship.new()
 	dropship.name = "Dropship"
 	world_root.add_child(dropship)
-	dropship.setup(island.terrain.island_radius, rng)
+	dropship.setup(island.terrain.island_radius, rng, island.drop_vehicle, island.play_bounds())
 	for c in critters:
 		dropship.board(c)
 		var brain := c.get_node_or_null("AIBrain") as AIBrain

@@ -1,12 +1,17 @@
 class_name Dropship
 extends Node3D
 ## The battle bus: a hot-air balloon with a picnic-basket gondola that drifts
-## across the island while everyone picks their moment to jump.
+## across the island while everyone picks their moment to jump — or, in the
+## hamster cage, a wind-up toy airplane flying wall to wall under the rim of
+## the glass.
 
 const MODEL := "res://assets/props/dropship_balloon.glb"
 const ALTITUDE := 115.0
+const PLANE_ALTITUDE := 112.0
 const DURATION := 38.0
+const PLANE_SPEED := 21.0
 
+var vehicle := &"balloon"
 var duration := DURATION
 var start := Vector3.ZERO
 var finish := Vector3.ZERO
@@ -16,23 +21,63 @@ var passengers: Array[Critter] = []
 var _wind: Node
 
 
-func setup(island_radius: float, rng: RandomNumberGenerator) -> void:
-	duration = DURATION * sqrt(island_radius / 215.0)
+func setup(island_radius: float, rng: RandomNumberGenerator, vehicle_ := &"balloon", bounds := Rect2()) -> void:
+	vehicle = vehicle_
 	var a := rng.randf() * TAU
-	# the route stays inside the boundary wall (island_radius + 45) so anyone
-	# who jumps at the very start or end still lands in reach of the shore
 	var dir := Vector2(cos(a), sin(a))
-	var offset := dir.orthogonal() * rng.randf_range(-0.25, 0.25) * island_radius
-	var s := -dir * (island_radius + 10.0) + offset
-	var f := dir * (island_radius + 10.0) + offset
-	start = Vector3(s.x, ALTITUDE, s.y)
-	finish = Vector3(f.x, ALTITUDE, f.y)
+	var s: Vector2
+	var f: Vector2
+	var altitude := ALTITUDE
+	if vehicle == &"plane":
+		# straight across the tank, wall to wall, inside the glass
+		var inner := bounds.grow(-30.0)
+		var mid := inner.get_center() + dir.orthogonal() * rng.randf_range(-0.25, 0.25) * minf(inner.size.x, inner.size.y)
+		s = mid - dir * _to_edge(mid, -dir, inner)
+		f = mid + dir * _to_edge(mid, dir, inner)
+		duration = s.distance_to(f) / PLANE_SPEED
+		altitude = PLANE_ALTITUDE
+	else:
+		duration = DURATION * sqrt(island_radius / 215.0)
+		# the route stays inside the boundary wall (island_radius + 45) so anyone
+		# who jumps at the very start or end still lands in reach of the shore
+		var offset := dir.orthogonal() * rng.randf_range(-0.25, 0.25) * island_radius
+		s = -dir * (island_radius + 10.0) + offset
+		f = dir * (island_radius + 10.0) + offset
+	start = Vector3(s.x, altitude, s.y)
+	finish = Vector3(f.x, altitude, f.y)
 	global_position = start
 	look_at(finish, Vector3.UP)
-	var model := ModelUtil.instantiate(MODEL)
-	if model == null:
-		model = _fallback_balloon()
+	var model: Node3D
+	if vehicle == &"plane":
+		model = CageProps.toy_plane(rng)
+		_propeller = model.get_node_or_null("Propeller")
+	else:
+		model = ModelUtil.instantiate(MODEL)
+		if model == null:
+			model = _fallback_balloon()
 	add_child(model)
+
+
+var _propeller: Node3D
+
+
+## Distance from p along dir to the edge of rect r (p inside r).
+static func _to_edge(p: Vector2, dir: Vector2, r: Rect2) -> float:
+	var t := INF
+	if dir.x > 1e-4:
+		t = minf(t, (r.end.x - p.x) / dir.x)
+	elif dir.x < -1e-4:
+		t = minf(t, (r.position.x - p.x) / dir.x)
+	if dir.y > 1e-4:
+		t = minf(t, (r.end.y - p.y) / dir.y)
+	elif dir.y < -1e-4:
+		t = minf(t, (r.position.y - p.y) / dir.y)
+	return t if t < INF else 0.0
+
+
+## What to call the ride in messages ("the balloon won't wait").
+func display_name() -> String:
+	return "toy plane" if vehicle == &"plane" else "balloon"
 
 
 func _fallback_balloon() -> Node3D:
@@ -91,6 +136,8 @@ func _process(delta: float) -> void:
 		return
 	progress = minf(1.0, progress + delta / duration)
 	global_position = start.lerp(finish, progress)
+	if _propeller:
+		_propeller.rotate_z(delta * 22.0)
 	if progress >= 1.0:
 		for c in passengers.duplicate():
 			eject(c)
@@ -98,7 +145,11 @@ func _process(delta: float) -> void:
 		if _wind:
 			_wind.queue_free()
 		var tw := create_tween()
-		tw.tween_property(self, "global_position", global_position + (finish - start).normalized() * 200.0 + Vector3.UP * 60.0, 20.0)
+		if vehicle == &"plane":
+			# loop up and away over the rim of the glass
+			tw.tween_property(self, "global_position", global_position + Vector3.UP * 260.0 - (finish - start).normalized() * 120.0, 9.0)
+		else:
+			tw.tween_property(self, "global_position", global_position + (finish - start).normalized() * 200.0 + Vector3.UP * 60.0, 20.0)
 		tw.tween_callback(queue_free)
 
 
