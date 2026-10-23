@@ -101,6 +101,9 @@
     "music/victory_fiddles_mcginty.mp3": {"title": "Fiddles McGinty", "expect": "Driving Celtic folk-rock reel: pipes, recorder, guitar, rock backbeat.", "when": "Victory screen (fades in under the victory_fanfare sting)."},
     "music/cage_pixel_peeker_polka.mp3": {"title": "Pixel Peeker Polka (faster)", "expect": "Bouncy chiptune polka: an 8-bit toy box that never sits still.", "when": "Hamster Cage match (random pick)."},
     "music/cage_itty_bitty_8_bit.mp3": {"title": "Itty Bitty 8 Bit", "expect": "Bright little square-wave tune, wind-up-toy cheerful.", "when": "Hamster Cage match (random pick)."},
-    "music/cage_voxel_revolution.mp3": {"title": "Voxel Revolution", "expect": "Grooving synth-pop chiptune with a driving beat.", "when": "Hamster Cage match (random pick)."}
+    "music/cage_voxel_revolution.mp3": {"title": "Voxel Revolution", "expect": "Grooving synth-pop chiptune with a driving beat.", "when": "Hamster Cage match (random pick)."},
+    "music/toybox_meatball_parade.mp3": {"title": "Meatball Parade", "expect": "Bouncy parade: drums, ukulele, trumpet and trombone.", "when": "Toy Box Bash match (random pick)."},
+    "music/toybox_march_of_the_spoons.mp3": {"title": "March of the Spoons", "expect": "Silly tin-soldier woodwind-and-strings march.", "when": "Toy Box Bash match (random pick)."},
+    "music/toybox_waunobe_march.mp3": {"title": "Waunobe March", "expect": "Full, bright brass-band march with snares.", "when": "Toy Box Bash match (random pick)."}
   }
 }

@@ -7,7 +7,8 @@
 **A whimsical third-person battle royale.** One bunny, one acorn helmet, 23
 woodland critters, and a lot of carrots. Drop from a picnic-basket hot-air
 balloon onto a procedurally generated forest island (or from a wind-up toy
-plane into a giant hamster cage) and loot carrot guns. Then outlast the
+plane into a giant hamster cage, or a paper airplane over a kid's bedroom
+floor) and loot carrot guns. Then outlast the
 closing Briar and be the last critter standing. Ragdolls, real limb-popping
 gore, and floppy physics ears are included.
 
@@ -56,10 +57,10 @@ Built in **Godot 4.6** (GDScript, Jolt physics, Forward+).
 
   ![Choosing a critter on the loading screen](docs/screenshots/picker.jpg)
   ![All 40 critter skins](docs/screenshots/skins.jpg)
-- **Battle royale for 1 player and up to 49 bots** on two maps (pick one
-  under *New match*): Wildwood Island and the Hamster Cage:
-  - a balloon (or toy-plane) drop, freefall, and a giant leaf, flower or
-    dandelion umbrella to glide down on;
+- **Battle royale for 1 player and up to 49 bots** on three maps (pick one
+  under *New match*): Wildwood Island, the Hamster Cage and Toy Box Bash:
+  - a balloon (or toy-plane, or paper-airplane) drop, freefall, and a giant
+    leaf, flower or dandelion umbrella to glide down on;
   - floor loot, garden crates and **treasure chests**: hold E for up to 5 s,
     out in the open, for the best gear;
   - big glowing pickups: green **lucky clover** bottles to heal and orange
@@ -163,6 +164,24 @@ Built in **Godot 4.6** (GDScript, Jolt physics, Forward+).
     and an upturned ice cream tub to hide in.
 
   ![The Hamster Cage: the tank, Tube Town, the aquarium castle and the fridge](docs/screenshots/hamster_cage.jpg)
+- **Toy Box Bash**, the third map: a kid's bedroom floor, hemmed in by the
+  bed, a cubby shelf, a bookshelf, a dresser and a desk, under a ceiling of
+  glow-in-the-dark stars and a planet mobile, to a toy marching-band soundtrack.
+  - **The toy train** loops the whole room on a wooden track. Hop on an open
+    car and ride it (moving cover with a view), but don't stand on the track:
+    the engine bonks you for real damage and knocks you flying.
+  - **Dollhouse Manor**: three storeys, open at the back, with stairs up
+    through every floor and loot on each one.
+  - Oak floorboards with a printed town **play rug** (roads, lawns and a
+    river) under **Brick City** (plastic-brick houses and towers) and the
+    **Loop-de-Loop** race track; an alphabet-**Block Castle**, **Crayon
+    Canyon** with a coloring-book tent, a **Domino Run**, a tea party, the
+    toy chest, a piggy bank and a toy rocket.
+  - A corner of **pillow hills** under a patchwork quilt with a blanket fort
+    and a giant teddy, and a **fishbowl** with goldfish: climb the slide,
+    jump in and swim.
+
+  ![Toy Box Bash: the bedroom, the toy train, Dollhouse Manor and the pillow fort](docs/screenshots/toy_box_bash.jpg)
 - **Full UI**: menus, settings, pause, loading screen, gamepad support, and a
   [credits page](CREDITS.md) generated from the asset metadata.
 
@@ -195,13 +214,18 @@ The full write-up is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
   `Island` (bowl water, a rectangular play area, its own ground colours and
   light), `CageFloor` extends `Terrain`, and its toys are built by a
   `CageKit` that adds lathes, panel rings and ellipsoids to the buildings'
-  boxes and logs.
-- **Tests that play the game.** A headless suite of 69 tests covers:
+  boxes and logs. Toy Box Bash does the same (`ToyBox`, `ToyFloor`,
+  `ToyProps`, `ToyRoom`), plus `ToyTrain`: `AnimatableBody3D` cars
+  following a resampled loop, so riders are carried by the physics engine,
+  and a bumper `Area3D` that bonks critters on the line.
+- **Tests that play the game.** A headless suite of 73 tests covers:
   - the IK maths, hitboxes, ragdolls and dismemberment;
   - island navigation, the three biomes and the big buildings (a Bun walks
     in through the barn doors; every indoor loot spot is reachable on the
     navmesh), the Hamster Cage (bots can walk into every pod, hut, castle and
-    tub; the glass holds; the bowls are swimmable) and the game rules;
+    tub; the glass holds; the bowls are swimmable), Toy Box Bash (every floor
+    of the dollhouse is reachable; the train runs, carries a rider and bonks
+    whoever is on the track; the fishbowl is swimmable) and the game rules;
   - the player's input loop through real keyboard and gamepad events (menus,
     crouch → crawl, the L3 + R3 chord, aim assist, one gun in first person)
     and licensing;

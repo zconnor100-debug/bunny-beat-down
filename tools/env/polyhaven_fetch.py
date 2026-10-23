@@ -99,6 +99,11 @@ TEX_MAPS = {  # Poly Haven map name -> (preferred format, our filename)
 def fetch_texture(asset_id: str, res: str = RES) -> None:
     d = asset_dir(asset_id)
     files = get_json(f"{API}/files/{asset_id}")
+    if "Diffuse" not in files:
+        # some textures (the fabrics) come in colourways col_1, col_2, ...: take the first
+        cols = sorted((k for k in files if k.lower().startswith("col")), key=lambda k: int("".join(c for c in k if c.isdigit()) or 0))
+        if cols:
+            files["Diffuse"] = files[cols[0]]
     for key, (fmt, ours) in TEX_MAPS.items():
         if key not in files:
             continue

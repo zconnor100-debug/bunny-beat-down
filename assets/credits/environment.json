@@ -1114,6 +1114,55 @@
     ]
   },
   {
+    "asset": "Fabric Pattern 07 (Poly Haven texture)",
+    "author": "Rob Tuytel",
+    "author_url": "https://polyhaven.com/all?a=Rob%20Tuytel",
+    "source_url": "https://polyhaven.com/a/fabric_pattern_07",
+    "license": "CC0 1.0",
+    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "changes": "Downscaled to 1024px (AO/height 1024px), normal map converted to 8-bit PNG (OpenGL convention), greyscale maps re-encoded as JPEG",
+    "used_for": "Texture 'gingham' (Toy Box Bash: the red gingham blanket over the pillow fort)",
+    "files": [
+      "assets/textures/gingham/albedo.jpg",
+      "assets/textures/gingham/ao.jpg",
+      "assets/textures/gingham/normal.png",
+      "assets/textures/gingham/roughness.jpg"
+    ]
+  },
+  {
+    "asset": "Fabric Pattern 05 (Poly Haven texture)",
+    "author": "Rob Tuytel",
+    "author_url": "https://polyhaven.com/all?a=Rob%20Tuytel",
+    "source_url": "https://polyhaven.com/a/fabric_pattern_05",
+    "license": "CC0 1.0",
+    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "changes": "Downscaled to 1024px (AO/height 1024px), normal map converted to 8-bit PNG (OpenGL convention), greyscale maps re-encoded as JPEG",
+    "used_for": "Texture 'plaid' (Toy Box Bash: pillows, and the play rug's weave)",
+    "files": [
+      "assets/textures/plaid/albedo.jpg",
+      "assets/textures/plaid/ao.jpg",
+      "assets/textures/plaid/normal.png",
+      "assets/textures/plaid/roughness.jpg"
+    ]
+  },
+  {
+    "asset": "Oak Wood Planks (Poly Haven texture)",
+    "author": "Dimitrios Savva",
+    "author_url": "https://polyhaven.com/all?a=Dimitrios%20Savva",
+    "source_url": "https://polyhaven.com/a/oak_wood_planks",
+    "license": "CC0 1.0",
+    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "changes": "Downscaled to 1024px (AO/height 1024px), normal map converted to 8-bit PNG (OpenGL convention), greyscale maps re-encoded as JPEG",
+    "used_for": "Texture 'oak_floor' (Toy Box Bash: the bedroom's oak floorboards)",
+    "files": [
+      "assets/textures/oak_floor/albedo.jpg",
+      "assets/textures/oak_floor/ao.jpg",
+      "assets/textures/oak_floor/height.jpg",
+      "assets/textures/oak_floor/normal.png",
+      "assets/textures/oak_floor/roughness.jpg"
+    ]
+  },
+  {
     "asset": "Kloofendal 48d Partly Cloudy (Pure Sky) (Poly Haven HDRI)",
     "author": "Greg Zaal, Jarod Guest",
     "author_url": "https://polyhaven.com/all?a=Greg%20Zaal",

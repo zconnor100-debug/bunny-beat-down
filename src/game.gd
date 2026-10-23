@@ -4,6 +4,14 @@ extends Node3D
 ## end-of-match screens.
 
 const MENU_SCENE := "res://scenes/main.tscn"
+const TOYBOX_TIPS := [
+	"Hop on the toy train for a ride round the room — but don't stand on the track!",
+	"Dollhouse Manor has three floors: take the stairs for the best view.",
+	"Swim in the fishbowl: climb the slide and jump in.",
+	"Pillow stuffing hides you from bots, just like bushes.",
+	"Mind the tiny bricks. Ow.",
+]
+const MAP_NAMES := {"island": "Island", "cage": "Hamster Cage", "toybox": "Toy Box Bash"}
 const CAGE_TIPS := [
 	"Hamster tubes are tunnels: run through Tube Town to cross unseen.",
 	"Water bowls are brimming: swim in, and climb out over the rim.",
@@ -36,17 +44,19 @@ var _end: CanvasLayer
 var _spectating := false
 var _seed := 0
 var _picker: CharacterSelect
-var _cage := false
+var _map := "island"
 
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	quality = int(Settings.get_value(&"quality"))
 	_seed = int(Settings.get_value(&"seed"))
-	_cage = String(Settings.get_value(&"map")) == "cage"
+	_map = String(Settings.get_value(&"map"))
 	var args := OS.get_cmdline_user_args()
 	if args.has("--map") and args.find("--map") + 1 < args.size():
-		_cage = args[args.find("--map") + 1] == "cage"   # `-- --smoke-test --map cage`
+		_map = args[args.find("--map") + 1]   # `-- --smoke-test --map cage`
+	if not MAP_NAMES.has(_map):
+		_map = "island"
 	if _seed == 0:
 		_seed = randi_range(1, 999999)
 	GameSession.last_seed = _seed
@@ -78,7 +88,13 @@ func _build_world() -> void:
 	var proj := Projectiles.new()
 	proj.name = "Projectiles"
 	world.add_child(proj)
-	island = HamsterCage.new() if _cage else Island.new()
+	match _map:
+		"cage":
+			island = HamsterCage.new()
+		"toybox":
+			island = ToyBox.new()
+		_:
+			island = Island.new()
 	island.name = "Island"
 	world.add_child(island)
 	island.progress.connect(_on_load_progress)
@@ -125,7 +141,7 @@ func _start() -> void:
 	Audio.play_music(island.music_slot)
 	var ambience: Node = Audio.make_loop(&"ambient_forest_loop", self, false)
 	if ambience:
-		ambience.volume_db = -18.0 if _cage else -10.0   # (birdsong through the open window)
+		ambience.volume_db = -10.0 if _map == "island" else -18.0   # (birdsong through an open window)
 		ambience.play()
 	hud.show_message("Press %s to jump!" % GameInput.prompt(&"jump"), "Pick your spot — the %s won't wait." % match_manager.dropship.display_name(), 6.0)
 	match_manager.player.state_changed.connect(_on_player_state)
@@ -212,7 +228,7 @@ func _build_loading() -> void:
 	var t := UITheme.label("BUNNY BEAT DOWN", 64, UITheme.CARROT, true)
 	t.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(t)
-	_load_label = UITheme.label("Laying fresh bedding" if _cage else "Growing the island", 28)
+	_load_label = UITheme.label({"cage": "Laying fresh bedding", "toybox": "Tidying the bedroom floor"}.get(_map, "Growing the island"), 28)
 	_load_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(_load_label)
 	_load_bar = ProgressBar.new()
@@ -227,10 +243,11 @@ func _build_loading() -> void:
 	_load_bar.add_theme_stylebox_override("fill", fill)
 	_load_bar.add_theme_stylebox_override("background", back)
 	v.add_child(_load_bar)
-	var tip := UITheme.label("Tip: " + (CAGE_TIPS + TIPS.slice(0, 3) if _cage else TIPS).pick_random(), 22, Color(UITheme.CREAM, 0.8))
+	var tips: Array = {"cage": CAGE_TIPS + TIPS.slice(0, 3), "toybox": TOYBOX_TIPS + TIPS.slice(0, 3)}.get(_map, TIPS)
+	var tip := UITheme.label("Tip: " + tips.pick_random(), 22, Color(UITheme.CREAM, 0.8))
 	tip.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(tip)
-	var s := UITheme.label("%s #%d" % ["Hamster Cage" if _cage else "Island", _seed], 18, Color(UITheme.CREAM, 0.5))
+	var s := UITheme.label("%s #%d" % [MAP_NAMES[_map], _seed], 18, Color(UITheme.CREAM, 0.5))
 	s.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(s)
 	# pick a critter while the island grows

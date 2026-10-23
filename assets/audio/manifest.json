@@ -217,6 +217,11 @@
       "music/cage_pixel_peeker_polka.mp3",
       "music/cage_itty_bitty_8_bit.mp3",
       "music/cage_voxel_revolution.mp3"
+    ],
+    "match_toybox": [
+      "music/toybox_meatball_parade.mp3",
+      "music/toybox_march_of_the_spoons.mp3",
+      "music/toybox_waunobe_march.mp3"
     ]
   }
 }

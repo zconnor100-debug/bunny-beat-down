@@ -28,7 +28,7 @@ const DEFAULTS := {
 	"opponents": 23,
 	"difficulty": Difficulty.NORMAL,
 	"seed": 0,                      # 0 = random island every match
-	"map": "island",                # "island" (Wildwood Island) or "cage" (Hamster Cage)
+	"map": "island",                # "island" (Wildwood Island), "cage" (Hamster Cage) or "toybox" (Toy Box Bash)
 	"player_character": "bun",
 	"player_skin": "default",
 }

@@ -28,8 +28,8 @@ func setup(island_radius: float, rng: RandomNumberGenerator, vehicle_ := &"ballo
 	var s: Vector2
 	var f: Vector2
 	var altitude := ALTITUDE
-	if vehicle == &"plane":
-		# straight across the tank, wall to wall, inside the glass
+	if vehicle in [&"plane", &"paper_plane"]:
+		# straight across the tank (or the bedroom), wall to wall
 		var inner := bounds.grow(-30.0)
 		var mid := inner.get_center() + dir.orthogonal() * rng.randf_range(-0.25, 0.25) * minf(inner.size.x, inner.size.y)
 		s = mid - dir * _to_edge(mid, -dir, inner)
@@ -51,6 +51,8 @@ func setup(island_radius: float, rng: RandomNumberGenerator, vehicle_ := &"ballo
 	if vehicle == &"plane":
 		model = CageProps.toy_plane(rng)
 		_propeller = model.get_node_or_null("Propeller")
+	elif vehicle == &"paper_plane":
+		model = ToyProps.paper_plane(rng)
 	else:
 		model = ModelUtil.instantiate(MODEL)
 		if model == null:
@@ -77,7 +79,7 @@ static func _to_edge(p: Vector2, dir: Vector2, r: Rect2) -> float:
 
 ## What to call the ride in messages ("the balloon won't wait").
 func display_name() -> String:
-	return "toy plane" if vehicle == &"plane" else "balloon"
+	return {&"plane": "toy plane", &"paper_plane": "paper airplane"}.get(vehicle, "balloon")
 
 
 func _fallback_balloon() -> Node3D:
@@ -145,8 +147,8 @@ func _process(delta: float) -> void:
 		if _wind:
 			_wind.queue_free()
 		var tw := create_tween()
-		if vehicle == &"plane":
-			# loop up and away over the rim of the glass
+		if vehicle != &"balloon":
+			# loop up and away (over the rim of the glass)
 			tw.tween_property(self, "global_position", global_position + Vector3.UP * 260.0 - (finish - start).normalized() * 120.0, 9.0)
 		else:
 			tw.tween_property(self, "global_position", global_position + (finish - start).normalized() * 200.0 + Vector3.UP * 60.0, 20.0)

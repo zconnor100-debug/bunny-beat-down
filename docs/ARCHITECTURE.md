@@ -13,6 +13,7 @@ src/
   weapons/    WeaponData (.tres) · WeaponInstance · Rarity · Projectiles · Rocket · Explosion
   world/      Island · Terrain · Scatter · Building · WorldLighting · Pickup · LootCrate · shaders/
               HamsterCage · CageFloor · CageKit · CageProps · CageRoom (the second map)
+              ToyBox · ToyFloor · ToyProps · ToyRoom · ToyTrain · Spinner (the third map)
   match/      MatchManager · Storm (the Briar) · Dropship (the picnic balloon / the toy plane)
   fx/         FX · FXTextures
   ui/         HUD · Minimap · MainMenu · SettingsPanel · CreditsPanel · UITheme
@@ -159,6 +160,24 @@ hooks: `Island` gained `play_bounds()`, `map_color()`, `tune_lighting()`, a
   cold light, mist particles that roll over the wall and snowfall.
 - The **toy plane** is a `Dropship` variant whose route is clipped to the
   tank's rectangle, under the rim of the glass.
+
+## Toy Box Bash
+
+The third map follows the cage's pattern (`ToyBox extends Island`,
+`ToyFloor extends Terrain`, toys built on `CageKit`), with two new ideas:
+
+- **A procedural texture as a landmark.** The play rug's town (roads with
+  dashed lines, lawns, a river, printed houses) is drawn into an `Image` with
+  `fill_rect` at load time and sampled by `toy_floor.gdshader` inside the rug
+  rectangle; the minimap reads the same image.
+- **A vehicle you can ride.** `ToyTrain` resamples a rounded-rectangle loop
+  evenly, then each physics step places six `AnimatableBody3D` cars
+  (`sync_to_physics`) along it, each car facing along the chord between its
+  front and back bogies. A critter standing on a car is carried by the
+  physics engine's moving-platform handling, with no special code. A bumper
+  `Area3D` on the engine damages and shoves anyone standing on the line
+  (the kill feed: "bonked by the toy train"). The train is added after the
+  navmesh bake, so it never becomes part of the walkable floor.
 
 ## Battle-royale loop
 

@@ -287,6 +287,29 @@ func _ellipsoid(mat: StringName, centre: Vector3, radii: Vector3, basis := Basis
 		add_child(cs)
 
 
+## A toy alphabet block: a box whose six faces each show one cell of the
+## letter atlas (see `_letters`), cells[i] for face i (+X, -X, +Y, -Y, +Z, -Z).
+func _letter_box(c: Vector3, size: float, basis: Basis, cells: Array, solid := true) -> void:
+	var st := _st(&"abc")
+	var h := size * 0.5
+	var axes := [basis.x, -basis.x, basis.y, -basis.y, basis.z, -basis.z]
+	for f in 6:
+		var n: Vector3 = axes[f]
+		# side faces read left to right, upright, seen from outside
+		var side := absf(n.dot(basis.y)) < 0.5
+		var u: Vector3 = basis.y.cross(n).normalized() if side else basis.x
+		var v: Vector3 = -basis.y if side else basis.z
+		var cell: int = cells[f % cells.size()]
+		var c0 := Vector2(cell % 4, cell / 4) * 0.25
+		var centre := c + n * h
+		var p := [centre - u * h - v * h, centre + u * h - v * h, centre + u * h + v * h, centre - u * h + v * h]
+		var uv := [c0 + Vector2(0.0, 0.0), c0 + Vector2(0.25, 0.0), c0 + Vector2(0.25, 0.25), c0 + Vector2(0.0, 0.25)]
+		_face(st, [p[0], p[1], p[2]], [uv[0], uv[1], uv[2]], n, false)
+		_face(st, [p[0], p[2], p[3]], [uv[0], uv[2], uv[3]], n, false)
+	if solid:
+		_collide(c, Vector3.ONE * size, basis)
+
+
 ## A cylinder from a to b (a log with this kit's materials); thin wrapper.
 func _rod(mat: StringName, a: Vector3, b: Vector3, r: float, solid := true) -> void:
 	_log(mat, a, b, r, solid)
@@ -360,6 +383,10 @@ static func mat(key: StringName) -> Material:
 		m = _gloss(c, 0.32, 0.35)
 	elif s.begins_with("ceramic_"):
 		m = _gloss(CERAMIC.get(StringName(s.substr(8)), Color.WHITE), 0.12, 1.0)
+	elif s.begins_with("crayon_"):
+		m = _flat(PLASTIC.get(StringName(s.substr(7)), Color.WHITE) * 0.92, 0.75)
+	elif s.begins_with("pillow_"):
+		m = _soft("plaid", 7.0, PLASTIC.get(StringName(s.substr(7)), Color.WHITE).lerp(Color.WHITE, 0.45), 0.6, 1.0)
 	elif s.begins_with("paint_"):
 		var tint: Color = PLASTIC.get(StringName(s.substr(6)), Color.WHITE)
 		m = _soft("planks", 2.4, tint, 0.45, 1.0)
@@ -479,6 +506,54 @@ static func mat(key: StringName) -> Material:
 				m = _gloss(Color(1.0, 0.82, 0.1), 0.3, 0.4)
 			&"lettuce":
 				m = _flat(Color(0.55, 0.85, 0.35), 0.7)
+			# Toy Box Bash
+			&"abc":
+				var abc := _flat(Color.WHITE, 0.55)
+				abc.albedo_texture = _letters()
+				m = abc
+			&"gingham":
+				m = _soft("gingham", 9.0, Color(1.0, 1.0, 1.0), 0.75)
+			&"plaid":
+				m = _soft("plaid", 9.0, Color(1.05, 1.03, 1.0), 0.75)
+			&"fur":
+				m = _flat(Color(0.62, 0.42, 0.24), 1.0)
+			&"fur_light":
+				m = _flat(Color(0.86, 0.72, 0.52), 1.0)
+			&"button_eye":
+				m = _gloss(Color(0.04, 0.03, 0.03), 0.15, 1.0)
+			&"bowl_glass":
+				m = _clear(Color(0.86, 0.95, 1.0, 0.16), 0.03)
+			&"paper":
+				m = _flat(Color(0.97, 0.97, 0.94), 0.85)
+			&"domino":
+				m = _gloss(Color(0.08, 0.08, 0.09), 0.25, 0.8)
+			&"coin":
+				var coin := StandardMaterial3D.new()
+				coin.albedo_color = Color(1.0, 0.78, 0.25)
+				coin.metallic = 0.95
+				coin.roughness = 0.25
+				m = coin
+			&"track":
+				m = _gloss(Color(1.0, 0.45, 0.08), 0.35, 0.3)
+			&"rail_wood":
+				m = _soft("floorboards", 3.0, Color(1.45, 1.25, 0.95), 0.5)
+			&"wallpaper":
+				var wp := _flat(Color.WHITE, 0.9)
+				wp.albedo_texture = _wallpaper()
+				wp.uv1_scale = Vector3(1.0 / 160.0, 1.0 / 160.0, 1.0)
+				m = wp
+			&"rail_groove":
+				m = _flat(Color(0.42, 0.27, 0.15), 0.85)
+			&"pebble_mix":
+				m = _soft("pebbles", 5.0, Color(1.2, 1.1, 1.25), 0.8)
+			&"oak":
+				m = _soft("oak_floor", 60.0, Color(1.0, 1.0, 1.0), 0.75)
+			&"glow_star":
+				var gs := _flat(Color(1.0, 0.92, 0.5), 0.6)
+				gs.emission_enabled = true
+				gs.emission = Color(1.0, 0.9, 0.45)
+				gs.emission_energy_multiplier = 0.6
+				m = gs
 			&"bottle_glass":
 				m = _clear(Color(0.85, 0.95, 1.0, 0.22), 0.04)
 			&"bottle_water":
@@ -538,6 +613,78 @@ static func _soft(folder: String, metres: float, tint: Color, detail: float, rec
 	sm.set_shader_parameter(&"detail", detail)
 	sm.set_shader_parameter(&"recolor", recolor)
 	return sm
+
+
+## The alphabet-block atlas: 4×4 cells, each a pastel square with a darker
+## frame and a big letter (A to P) in a contrasting colour.
+static var _letter_tex: ImageTexture
+const GLYPHS := {
+	"A": ["01110", "10001", "10001", "11111", "10001", "10001", "10001"],
+	"B": ["11110", "10001", "10001", "11110", "10001", "10001", "11110"],
+	"C": ["01111", "10000", "10000", "10000", "10000", "10000", "01111"],
+	"D": ["11110", "10001", "10001", "10001", "10001", "10001", "11110"],
+	"E": ["11111", "10000", "10000", "11110", "10000", "10000", "11111"],
+	"F": ["11111", "10000", "10000", "11110", "10000", "10000", "10000"],
+	"G": ["01111", "10000", "10000", "10011", "10001", "10001", "01111"],
+	"H": ["10001", "10001", "10001", "11111", "10001", "10001", "10001"],
+	"I": ["11111", "00100", "00100", "00100", "00100", "00100", "11111"],
+	"J": ["00111", "00010", "00010", "00010", "00010", "10010", "01100"],
+	"K": ["10001", "10010", "10100", "11000", "10100", "10010", "10001"],
+	"L": ["10000", "10000", "10000", "10000", "10000", "10000", "11111"],
+	"M": ["10001", "11011", "10101", "10101", "10001", "10001", "10001"],
+	"N": ["10001", "11001", "10101", "10011", "10001", "10001", "10001"],
+	"O": ["01110", "10001", "10001", "10001", "10001", "10001", "01110"],
+	"P": ["11110", "10001", "10001", "11110", "10000", "10000", "10000"],
+}
+
+
+static func _letters() -> ImageTexture:
+	if _letter_tex:
+		return _letter_tex
+	var cell := 128
+	var img := Image.create_empty(cell * 4, cell * 4, false, Image.FORMAT_RGB8)
+	var backs := [Color(1.0, 0.62, 0.62), Color(0.62, 0.8, 1.0), Color(1.0, 0.9, 0.5), Color(0.66, 0.92, 0.62),
+		Color(0.85, 0.7, 1.0), Color(1.0, 0.75, 0.5), Color(0.6, 0.92, 0.9), Color(1.0, 0.7, 0.85)]
+	var inks := [Color(0.75, 0.1, 0.12), Color(0.12, 0.3, 0.75), Color(0.85, 0.4, 0.05), Color(0.1, 0.5, 0.15),
+		Color(0.45, 0.15, 0.7), Color(0.8, 0.25, 0.05), Color(0.05, 0.45, 0.5), Color(0.7, 0.1, 0.4)]
+	var letters := "ABCDEFGHIJKLMNOP"
+	for i in 16:
+		var ox := (i % 4) * cell
+		var oy := (i / 4) * cell
+		var back: Color = backs[i % 8]
+		img.fill_rect(Rect2i(ox, oy, cell, cell), back.darkened(0.25))
+		img.fill_rect(Rect2i(ox + 10, oy + 10, cell - 20, cell - 20), back)
+		var g: Array = GLYPHS[letters[i]]
+		var px := 13
+		var lx := ox + (cell - 5 * px) / 2
+		var ly := oy + (cell - 7 * px) / 2
+		for row in 7:
+			for col in 5:
+				if String(g[row])[col] == "1":
+					img.fill_rect(Rect2i(lx + col * px, ly + row * px, px, px), inks[(i + 3) % 8])
+	img.generate_mipmaps()
+	_letter_tex = ImageTexture.create_from_image(img)
+	return _letter_tex
+
+
+## Kid's-room wallpaper: soft stripes with little stars and dots.
+static func _wallpaper() -> ImageTexture:
+	var n := 256
+	var img := Image.create_empty(n, n, false, Image.FORMAT_RGB8)
+	img.fill(Color(0.98, 0.93, 0.82))
+	for x in range(0, n, 64):
+		img.fill_rect(Rect2i(x, 0, 30, n), Color(0.86, 0.93, 0.98))
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 11
+	for i in 18:
+		var cx := rng.randi_range(8, n - 8)
+		var cy := rng.randi_range(8, n - 8)
+		var col: Color = [Color(1.0, 0.85, 0.35), Color(1.0, 0.6, 0.65), Color(0.6, 0.8, 1.0)][i % 3]
+		img.fill_rect(Rect2i(cx - 1, cy - 6, 3, 13), col)
+		img.fill_rect(Rect2i(cx - 6, cy - 1, 13, 3), col)
+		img.fill_rect(Rect2i(cx - 3, cy - 3, 7, 7), col)
+	img.generate_mipmaps()
+	return ImageTexture.create_from_image(img)
 
 
 ## Sunflower-seed stripes: dark shell with cream streaks running lengthwise.

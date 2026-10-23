@@ -250,7 +250,7 @@ func _process(delta: float) -> void:
 		var outside := not storm.is_safe(player.global_position) and player.alive
 		_storm_tint.color.a = lerpf(_storm_tint.color.a, 0.28 if outside else 0.0, IKMath.damp(4.0, delta))
 	elif match_manager and match_manager.phase == MatchManager.Phase.DROPPING:
-		var ride := "toy plane" if _minimap.dropship and is_instance_valid(_minimap.dropship) and _minimap.dropship.vehicle == &"plane" else "picnic balloon"
+		var ride := _minimap.dropship.display_name() if _minimap.dropship and is_instance_valid(_minimap.dropship) and _minimap.dropship.vehicle != &"balloon" else "picnic balloon"
 		_storm_label.text = "Riding the %s" % ride if player.state == Critter.State.IN_DROPSHIP else "Critters are still dropping in…"
 	else:
 		_storm_label.text = ""
@@ -305,6 +305,8 @@ func _on_critter_died(victim: Node, info: DamageInfo) -> void:
 		line = "%s  ▸ %s ▸  %s%s" % [killer.display_name, how, v.display_name, "  ✦" if info.headshot else ""]
 	elif info.kind == DamageInfo.Kind.STORM:
 		line = "%s got lost in the Briar" % v.display_name
+	elif info.weapon_id == &"toy_train":
+		line = "%s got bonked by the toy train" % v.display_name
 	else:
 		line = "%s had a little accident" % v.display_name
 	var l := UITheme.label(line, 19, UITheme.CARROT_LIGHT if (killer == player or v == player) else UITheme.CREAM)

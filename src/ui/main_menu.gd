@@ -4,7 +4,7 @@ extends Node3D
 
 const GAME_SCENE := "res://scenes/game.tscn"
 ## [settings value, name in the menu]
-const MAPS := [["island", "Wildwood Island"], ["cage", "Hamster Cage"]]
+const MAPS := [["island", "Wildwood Island"], ["cage", "Hamster Cage"], ["toybox", "Toy Box Bash"]]
 
 var _ui: Control
 var _menu: VBoxContainer

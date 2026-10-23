@@ -92,6 +92,19 @@ MUSIC = [
            "music/cage_voxel_revolution.mp3", "match_cage",
            "Grooving 122 bpm synth-pop chiptune with a driving beat: keeps the cage's "
            "toy-box sound but pushes harder for the final circles."),
+    # Toy Box Bash: a toy marching band in a kid's bedroom
+    _track("Meatball Parade", "USUAN1500014", "Meatball Parade.mp3",
+           "music/toybox_meatball_parade.mp3", "match_toybox",
+           "Bouncy 150 bpm parade of drums, ukulele, trumpet and trombone: a toy "
+           "marching band stomping round the bedroom floor."),
+    _track("March of the Spoons", "USUAN1700008", "March of the Spoons.mp3",
+           "music/toybox_march_of_the_spoons.mp3", "match_toybox",
+           "Humorous 85 bpm woodwind-and-strings march, tin-soldier stiff and silly: "
+           "sneaking through the dollhouse and the brick city."),
+    _track("Waunobe March", "USUAN1100016", "Waunobe March.mp3",
+           "music/toybox_waunobe_march.mp3", "match_toybox",
+           "A full, bright 102 bpm brass-band march (trumpets, tuba, piccolo, snares): "
+           "the toy train's big parade for the final circles."),
     _track("Fiddles McGinty", "USUAN1400051", "Fiddles McGinty.mp3",
            "music/victory_fiddles_mcginty.mp3", "victory",
            "Driving Celtic folk-rock reel (174 bpm, D major; uilleann pipes, recorder, guitar, "

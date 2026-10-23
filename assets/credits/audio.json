@@ -694,6 +694,51 @@
     "isrc": "USUAN2000025"
   },
   {
+    "asset": "\"Meatball Parade\"",
+    "author": "Kevin MacLeod",
+    "author_url": "https://incompetech.com",
+    "source_url": "https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1500014",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "None -- official MP3 from incompetech.com; audio unmodified (file renamed).",
+    "used_for": "Music: match_toybox (Bouncy 150 bpm parade of drums, ukulele, trumpet and trombone: a toy marching band stomping round the bedroom floor.)",
+    "files": [
+      "assets/audio/music/toybox_meatball_parade.mp3"
+    ],
+    "attribution": "\"Meatball Parade\" Kevin MacLeod (incompetech.com), Licensed under Creative Commons: By Attribution 4.0 License http://creativecommons.org/licenses/by/4.0/",
+    "isrc": "USUAN1500014"
+  },
+  {
+    "asset": "\"March of the Spoons\"",
+    "author": "Kevin MacLeod",
+    "author_url": "https://incompetech.com",
+    "source_url": "https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1700008",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "None -- official MP3 from incompetech.com; audio unmodified (file renamed).",
+    "used_for": "Music: match_toybox (Humorous 85 bpm woodwind-and-strings march, tin-soldier stiff and silly: sneaking through the dollhouse and the brick city.)",
+    "files": [
+      "assets/audio/music/toybox_march_of_the_spoons.mp3"
+    ],
+    "attribution": "\"March of the Spoons\" Kevin MacLeod (incompetech.com), Licensed under Creative Commons: By Attribution 4.0 License http://creativecommons.org/licenses/by/4.0/",
+    "isrc": "USUAN1700008"
+  },
+  {
+    "asset": "\"Waunobe March\"",
+    "author": "Kevin MacLeod",
+    "author_url": "https://incompetech.com",
+    "source_url": "https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1100016",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "None -- official MP3 from incompetech.com; audio unmodified (file renamed).",
+    "used_for": "Music: match_toybox (A full, bright 102 bpm brass-band march (trumpets, tuba, piccolo, snares): the toy train's big parade for the final circles.)",
+    "files": [
+      "assets/audio/music/toybox_waunobe_march.mp3"
+    ],
+    "attribution": "\"Waunobe March\" Kevin MacLeod (incompetech.com), Licensed under Creative Commons: By Attribution 4.0 License http://creativecommons.org/licenses/by/4.0/",
+    "isrc": "USUAN1100016"
+  },
+  {
     "asset": "\"Fiddles McGinty\"",
     "author": "Kevin MacLeod",
     "author_url": "https://incompetech.com",

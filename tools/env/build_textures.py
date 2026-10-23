@@ -56,6 +56,9 @@ LAYERS = {
     "snow":         ("ph_snow_02", 2048, "snow drifts of the hamster cage's winter corner"),
     "pebbles":      ("ph_clean_pebbles", 1024, "aquarium gravel under the hamster cage's lagoon"),
     "laminate":     ("ph_laminate_floor_02", 1024, "the room's wooden floor outside the hamster tank"),
+    "gingham":      ("ph_fabric_pattern_07", 1024, "Toy Box Bash: the red gingham blanket over the pillow fort"),
+    "plaid":        ("ph_fabric_pattern_05", 1024, "Toy Box Bash: pillows, and the play rug's weave"),
+    "oak_floor":    ("ph_oak_wood_planks", 1024, "Toy Box Bash: the bedroom's oak floorboards"),
 }
 
 # Noise-like normal maps gain little from 2K but cost ~10 MB as PNG: cap them lower.
