@@ -31,7 +31,7 @@ var _aim_blend := 0.0
 var _fp_blend := 0.0
 var _viewmodel_root: Node3D
 var _viewmodel: Node3D
-var _viewmodel_weapon: WeaponInstance
+var _viewmodel_weapon: Variant = null   ## the WeaponInstance shown, or &"club"
 var _sway := Vector2.ZERO
 var _last_yaw := 0.0
 var _last_pitch := 0.0
@@ -112,7 +112,7 @@ func _process(delta: float) -> void:
 		_viewmodel_root.visible = first_person and not scoped
 	_fp_blend = 1.0 if (first_person or scoped) and alive and not dropping else 0.0
 	var rig_scale := target.visual.rig.world_scale if target.visual.rig else 1.0
-	var eye_h := (target.visual.rig.world_eye_height if target.visual.rig else 0.85)
+	var eye_h := target.eye_height()   # drops when crouched, to the grass when prone
 
 	var base := follow.global_position
 	if dropping and target.state == Critter.State.IN_DROPSHIP and spectate_target:
@@ -174,12 +174,21 @@ func aim_point(exclude: Array[RID]) -> Vector3:
 func _update_viewmodel(delta: float, w: WeaponInstance) -> void:
 	if not first_person:
 		return
-	if w != _viewmodel_weapon:
-		_viewmodel_weapon = w
+	var club := target.visual != null and target.visual.club_model != null
+	var shown: Variant = &"club" if club else w
+	if typeof(shown) != typeof(_viewmodel_weapon) or shown != _viewmodel_weapon:
+		_viewmodel_weapon = shown
 		if _viewmodel:
 			_viewmodel.queue_free()
 			_viewmodel = null
-		if w:
+		if club:
+			_viewmodel = target.visual.make_club()
+			for gi in ModelUtil.find_all(_viewmodel, "GeometryInstance3D"):
+				(gi as GeometryInstance3D).cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+			# the same club, most of a metre long at arm's length from the eye
+			_viewmodel.scale *= 0.75 / maxf(CritterVisual.CLUB_LENGTH * target.visual.rig.head_top, 0.01)
+			_viewmodel_root.add_child(_viewmodel)
+		elif w:
 			_viewmodel = ModelUtil.instantiate(w.data.model_path)
 			if _viewmodel == null:
 				_viewmodel = target.visual._fallback_gun(w.data)
@@ -190,6 +199,9 @@ func _update_viewmodel(delta: float, w: WeaponInstance) -> void:
 			_viewmodel.scale = Vector3.ONE * 1.15
 			_viewmodel_root.add_child(_viewmodel)
 	if _viewmodel == null:
+		return
+	if club:
+		_club_viewmodel(delta)
 		return
 	# sway lags behind look motion, bob follows footsteps
 	var dyaw := wrapf(yaw - _last_yaw, -PI, PI)
@@ -221,6 +233,18 @@ func _update_viewmodel(delta: float, w: WeaponInstance) -> void:
 	rot.x += recoil * 0.12
 	_viewmodel_root.position = pos
 	_viewmodel_root.rotation = rot
+
+
+## First-person club: up over the right shoulder, then swept down and across
+## to the lower left on the strike, and back.
+func _club_viewmodel(delta: float) -> void:
+	var swing: float = target.visual.poser.melee if target.visual else -1.0
+	var strike := 0.0
+	if swing >= 0.0:
+		strike = smoothstep(0.3, 0.5, swing) * (1.0 - smoothstep(0.6, 1.0, swing))
+	var pos := Vector3(0.55 - 0.6 * strike, -0.6 + 0.08 * strike, -0.95)
+	_viewmodel_root.position = _viewmodel_root.position.lerp(pos, IKMath.damp(30.0, delta))
+	_viewmodel_root.rotation = Vector3(CritterPoser._club_angle(swing) * 0.8, -0.3 + 0.95 * strike, 0.0)
 
 
 # ---- feedback ------------------------------------------------------------------------------------

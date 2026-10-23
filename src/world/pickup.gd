@@ -2,7 +2,8 @@ class_name Pickup
 extends RigidBody3D
 ## Loot lying in the world. Ammo, clovers and armor are scooped up by walking
 ## over them; weapons need the interact key (or an AI deciding it wants them).
-## Rare loot gets a coloured light beam so it reads from across a clearing.
+## Rare loot gets a coloured light beam so it reads from across a clearing;
+## lucky clovers are huge (half a critter tall) and glow green.
 
 const MODELS := {
 	"ammo_0": "res://assets/props/ammo_light.glb",
@@ -13,6 +14,10 @@ const MODELS := {
 	"armor": "res://assets/props/pickup_armor.glb",
 }
 const AUTO_RADIUS := 1.1
+const CLOVER_HEIGHT := 1.25           ## half the height of a Bun
+const CLOVER_GLOW := Color(0.3, 1.0, 0.35)
+const CLOVER_SHADER := preload("res://src/fx/clover_glow.gdshader")
+static var _clover_glow: ShaderMaterial
 
 var spec: Dictionary = {}
 var _spin: Node3D
@@ -72,6 +77,8 @@ func _ready() -> void:
 	var rarity := rarity_tier()
 	if spec.get("type") == "weapon" and rarity >= Rarity.Tier.GARDEN:
 		_add_beam(Rarity.COLORS[rarity])
+	if spec.get("type") == "clover":
+		_glow(model)
 	if not is_weapon():
 		_sensor = Area3D.new()
 		_sensor.collision_layer = 0
@@ -79,7 +86,7 @@ func _ready() -> void:
 		_sensor.monitorable = false
 		var scs := CollisionShape3D.new()
 		var ss := SphereShape3D.new()
-		ss.radius = AUTO_RADIUS
+		ss.radius = AUTO_RADIUS * (1.4 if spec.get("type") == "clover" else 1.0)
 		scs.shape = ss
 		_sensor.add_child(scs)
 		add_child(_sensor)
@@ -188,6 +195,8 @@ func _make_model() -> Node3D:
 		if spec.get("type") == "weapon":
 			m.rotation = Vector3(0, 0, PI / 2.2)
 			m.scale = Vector3.ONE * CritterVisual.WEAPON_SCALE * 1.2   # same size as in the paws
+		elif spec.get("type") == "clover":
+			m.scale = Vector3.ONE * CLOVER_HEIGHT / maxf(ModelUtil.aabb_of(m).size.y, 0.01)
 		return m
 	# Fallback only — coloured box until the prop model exists.
 	var mi := MeshInstance3D.new()
@@ -198,6 +207,22 @@ func _make_model() -> Node3D:
 	box.material = mat
 	mi.mesh = box
 	return mi
+
+
+func _glow(model: Node3D) -> void:
+	if _clover_glow == null:
+		_clover_glow = ShaderMaterial.new()
+		_clover_glow.shader = CLOVER_SHADER
+		_clover_glow.set_shader_parameter(&"glow", CLOVER_GLOW)
+	for gi in ModelUtil.find_all(model, "GeometryInstance3D"):
+		(gi as GeometryInstance3D).material_overlay = _clover_glow
+	var light := OmniLight3D.new()
+	light.light_color = CLOVER_GLOW
+	light.light_energy = 1.2
+	light.omni_range = 3.5
+	light.shadow_enabled = false
+	light.position.y = CLOVER_HEIGHT * 0.6
+	add_child(light)
 
 
 func _add_beam(col: Color) -> void:

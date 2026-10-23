@@ -20,12 +20,14 @@ const GLIDE_SPEED := 11.0
 const FREEFALL_STEER := 14.0
 const AUTO_GLIDE_HEIGHT := 28.0
 const CORPSE_LIFETIME := 75.0
-# melee: with no gun in hand, each species swings its own club
+# melee: each species swings its own club (a gun in the paws is stowed for it)
 const MELEE_TIME := 0.55          ## one swing: wind-up, strike, recover
 const MELEE_HIT_AT := 0.45        ## fraction of the swing when the club connects
 const MELEE_DAMAGE := 34.0
-const MELEE_REACH := 1.1          ## metres per unit of rig scale, from the chest
-const MELEE_KEEP := 3.0           ## the club stays out this long after a swing
+const MELEE_REACH := 0.85         ## from the chest, per metre of the critter's height
+const MELEE_KEEP := 3.0           ## bare paws: the club stays out this long after a swing
+const QUICK_KEEP := 0.2           ## gun out: the club goes back this soon after the swing
+const PRONE_SPEED := 0.28         ## crawling, as a share of walking speed
 
 @export var def: CritterDef
 
@@ -51,8 +53,9 @@ var want_fire := false
 var want_aim := false
 var want_sprint := false
 var want_crouch := false
+var want_prone := false            ## lie down and crawl (players only)
 var want_jump := false             ## edge-triggered; consumed on use
-var want_melee := false            ## edge-triggered: swing the club (bare paws only)
+var want_melee := false            ## edge-triggered: swing the club
 
 var inventory := Inventory.new()
 var current_slot := 0
@@ -68,6 +71,9 @@ var _was_on_floor := true
 var _fall_speed := 0.0
 var _hurt_sound_cd := 0.0
 var _crouch := 0.0
+var _prone := 0.0
+var _body: CollisionShape3D
+var _stand_height := 1.0
 var _gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity", 16.0)
 var swimming := false
 var _water_level := -INF
@@ -99,12 +105,14 @@ func _ready() -> void:
 	if not visual.build(self, def):
 		push_error("critter %s failed to build its visual" % display_name)
 	var h := visual.rig.world_head_top if visual.rig else 1.0
-	cap.radius = clampf(h * 0.3, 0.22, 0.46)   # stays under the navmesh agent radius (0.5)
+	cap.radius = clampf(h * 0.3, 0.22, 0.5)   # stays within the navmesh agent radius (0.5)
 	cap.height = maxf(h * 0.98, cap.radius * 2.0 + 0.05)
 	shape.shape = cap
 	shape.position.y = cap.height * 0.5
 	shape.name = "Body"
 	add_child(shape)
+	_body = shape
+	_stand_height = cap.height
 	visual.physics_tick(global_transform, true)
 	visual.poser.footstep.connect(_on_footstep)
 	inventory.changed.connect(_on_inventory_changed)
@@ -115,11 +123,27 @@ func _ready() -> void:
 # ---- queries used by AI / HUD / weapons ---------------------------------------------
 
 func get_eye_position() -> Vector3:
-	return global_position + Vector3.UP * (visual.rig.world_eye_height if visual and visual.rig else 0.85)
+	return global_position + Vector3.UP * eye_height()
 
 
 func get_chest_position() -> Vector3:
-	return global_position + Vector3.UP * (visual.rig.world_head_top * 0.6 if visual and visual.rig else 0.6)
+	return global_position + Vector3.UP * chest_height()
+
+
+## Eye height above the feet: lower when crouched, near the grass when prone.
+func eye_height() -> float:
+	var e := visual.rig.world_eye_height if visual and visual.rig else 0.85
+	return e * (1.0 - 0.15 * _crouch) * lerpf(1.0, 0.3, _prone)
+
+
+func chest_height() -> float:
+	var h := visual.rig.world_head_top if visual and visual.rig else 1.0
+	return h * (1.0 - 0.15 * _crouch) * lerpf(0.6, 0.15, _prone)
+
+
+## How far the club reaches from the chest.
+func melee_reach() -> float:
+	return MELEE_REACH * (visual.rig.world_head_top if visual and visual.rig else 1.0)
 
 
 func current_weapon() -> WeaponInstance:
@@ -129,6 +153,11 @@ func current_weapon() -> WeaponInstance:
 ## 0 standing … 1 fully crouched.
 func crouch_amount() -> float:
 	return _crouch
+
+
+## 0 up … 1 lying flat on the belly.
+func prone_amount() -> float:
+	return _prone
 
 
 ## Whether a round sits in the gun (drives the visible rocket in the launcher).
@@ -189,14 +218,20 @@ func _ground_move(delta: float) -> void:
 	if swimming:
 		_swim_move(delta)
 		return
-	_crouch = move_toward(_crouch, 1.0 if want_crouch and on_floor else 0.0, delta * 6.0)
+	# lying down: stay down while there's no room to stand (under a log)
+	var stay_down := not want_prone and _prone > 0.05 and not _room_to_stand()
+	_prone = move_toward(_prone, 1.0 if (want_prone or stay_down) and on_floor else 0.0, delta * 2.5)
+	_crouch = move_toward(_crouch, 1.0 if want_crouch and on_floor and _prone < 0.5 else 0.0, delta * 6.0)
+	_fit_body()
 	var w := current_weapon()
 	var speed := def.move_speed
-	if want_sprint and move_input.y > 0.3 and not want_aim and not want_fire:
+	# sprint forward or sideways — aiming too (a little slower than flat out)
+	var sprinting := want_sprint and move_input.length() > 0.3 and move_input.y > -0.3 and _prone < 0.5
+	if sprinting:
 		speed = def.sprint_speed
 	if want_aim:
-		speed *= 0.6
-	speed *= lerpf(1.0, 0.45, _crouch)
+		speed *= 0.85 if sprinting else 0.6
+	speed *= lerpf(1.0, 0.45, _crouch) * lerpf(1.0, PRONE_SPEED, _prone)
 	if w:
 		speed *= w.data.move_speed_scale
 	var basis := Basis(Vector3.UP, look_yaw)
@@ -232,6 +267,26 @@ func _ground_move(delta: float) -> void:
 	_was_on_floor = is_on_floor()
 	if global_position.y < -30.0:
 		take_damage(DamageInfo.make(9999.0, DamageInfo.Kind.FALL, null))
+
+
+## The collision capsule shrinks to a low lump while lying down.
+func _fit_body() -> void:
+	var cap := _body.shape as CapsuleShape3D
+	var want := lerpf(_stand_height, maxf(cap.radius * 2.0 + 0.05, _stand_height * 0.36), _prone)
+	if absf(cap.height - want) > 0.01:
+		cap.height = want
+		_body.position.y = want * 0.5
+
+
+func _room_to_stand() -> bool:
+	var q := PhysicsShapeQueryParameters3D.new()
+	var cap := CapsuleShape3D.new()
+	cap.radius = (_body.shape as CapsuleShape3D).radius
+	cap.height = _stand_height
+	q.shape = cap
+	q.transform = Transform3D(Basis(), global_position + Vector3.UP * (_stand_height * 0.5 + 0.05))
+	q.collision_mask = Layers.WORLD
+	return get_world_3d().direct_space_state.intersect_shape(q, 1).is_empty()
 
 
 ## Chest-deep water → swim: buoyancy holds the chest at the surface, movement
@@ -414,7 +469,8 @@ func _update_facing(delta: float) -> void:
 	var hv := Vector2(velocity.x, velocity.z)
 	if current_weapon() == null and visual.club_model == null and hv.length() > 0.5 and not want_aim:
 		target_yaw = atan2(-velocity.x, -velocity.z)
-	rotation.y = lerp_angle(rotation.y, target_yaw, IKMath.damp(14.0, delta))
+	# lying down, the body swings round slowly
+	rotation.y = lerp_angle(rotation.y, target_yaw, IKMath.damp(lerpf(14.0, 4.0, _prone), delta))
 
 
 func _update_visual(delta: float) -> void:
@@ -423,6 +479,7 @@ func _update_visual(delta: float) -> void:
 	p.grounded = is_on_floor() or state == State.GLIDING
 	p.aim_dir = (aim_point - get_eye_position()).normalized() if aim_point.distance_squared_to(get_eye_position()) > 1.0 else look_direction()
 	p.crouch = _crouch
+	p.prone = _prone
 	p.gliding = state == State.GLIDING or state == State.FREEFALL
 	p.armed = (current_weapon() != null or visual.club_model != null) and not swimming
 	p.reload_progress = reload_progress()
@@ -438,7 +495,7 @@ const FOOTSTEP_RANGE := 34.0
 func _on_footstep(hop: bool) -> void:
 	var key := &"hop" if hop else &"footstep_grass"
 	if is_player:
-		Audio.play_at(key, global_position, -20.0 if not want_crouch else -26.0, 0.12)
+		Audio.play_at(key, global_position, -20.0 if _crouch < 0.5 else -26.0, 0.12)
 		return
 	var ear := Audio.listener_transform().origin
 	if ear.distance_squared_to(global_position) > FOOTSTEP_RANGE * FOOTSTEP_RANGE:
@@ -498,7 +555,7 @@ func _weapon_tick(delta: float) -> void:
 		if _reload_timer < 0.0:
 			_finish_reload()
 	var can_shoot := state == State.GROUND and not swimming and _equip_timer <= 0.0 and _reload_timer < 0.0 \
-		and not (visual.trick and visual.trick.blocks_fire())
+		and not (visual.trick and visual.trick.blocks_fire()) and visual.club_model == null
 	if want_fire and can_shoot and _fire_cooldown <= 0.0:
 		var semi_ok := w.data.fire_mode == WeaponData.FireMode.AUTO or not _trigger_held
 		if semi_ok:
@@ -626,10 +683,12 @@ func is_swinging() -> bool:
 func _melee_tick(delta: float) -> void:
 	if want_melee:
 		want_melee = false
-		if _melee_t < 0.0 and current_weapon() == null and state == State.GROUND and not swimming:
+		if _melee_t < 0.0 and state == State.GROUND and not swimming and _prone < 0.2:
 			_melee_t = 0.0
 			_melee_struck = false
-			_club_out = MELEE_KEEP
+			# with a gun out, the gun is stowed for the swing and comes straight back
+			_club_out = MELEE_KEEP if current_weapon() == null else QUICK_KEEP
+			_reload_timer = -1.0
 			visual.set_club(true)
 			Audio.play_at(&"melee_swing", global_position, -3.0, 0.12)
 	if _melee_t >= 0.0:
@@ -649,7 +708,7 @@ func _melee_tick(delta: float) -> void:
 ## The club connects: everyone within reach in front of us takes a hit on the
 ## body part nearest the club, and gets knocked back.
 func _melee_strike() -> void:
-	var reach := MELEE_REACH * visual.rig.scale
+	var reach := melee_reach()
 	var fwd := look_direction()
 	var centre := get_chest_position() + fwd * reach * 0.6
 	var q := PhysicsShapeQueryParameters3D.new()

@@ -55,14 +55,14 @@ func _run() -> void:
 		c.def = load("res://data/critters/%s.tres" % IDS[i])
 		c.display_name = c.def.melee_name
 		add_child(c)
-		c.place_at(Vector3((i - (IDS.size() - 1) * 0.5) * 2.7, 0.05, 0), 0.0)
+		c.place_at(Vector3((i - (IDS.size() - 1) * 0.5) * 3.4, 0.05, 0), 0.0)
 		critters.append(c)
 	var cam := Camera3D.new()
 	cam.fov = 40
 	add_child(cam)
 	cam.current = true
-	cam.global_position = Vector3(0, 1.8, -13.0)
-	cam.look_at(Vector3(0, 1.3, 0), Vector3.UP)
+	cam.global_position = Vector3(0, 2.4, -17.0)
+	cam.look_at(Vector3(0, 1.7, 0), Vector3.UP)
 	await _wait(0.8)
 	for c in critters:
 		c.visual.set_club(true)

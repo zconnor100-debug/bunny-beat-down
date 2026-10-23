@@ -64,14 +64,21 @@ Built in **Godot 4.6** (GDScript, Jolt physics, Forward+).
   - the shrinking **Briar** and supply drops;
   - a kill feed, a minimap and full map, spectating, and *Winner Winner Carrot
     Dinner*.
+- **Moving like a critter**: long, bounding strides at an unhurried step
+  rate (a short flight in every stride, so short legs don't patter); sprint
+  while aiming; crouch → lie down and army-crawl (opposite elbow and knee) →
+  stand, all on one button; legs dangle under the glider and critter and
+  canopy lean together into the steer.
 - **Small-critter physics**:
   - Jolt ragdolls with per-limb joint limits.
   - Spring-bone ears and tails.
   - Hit flinches and landing squash.
   - Explosion knockback, with corpses and gibs that react to blasts.
-- **A club for every species**, pulled out when your paws are empty. Each
-  swing winds up over the shoulder and brings it down across the body, and
-  hits whoever is in front of you. Bots without a gun brawl up close too.
+- **A club for every species**, three quarters of the critter's height. It
+  comes out with empty paws, or any time on F / R3 (a gun in the paws is
+  stowed for the swing and comes straight back). Each swing winds up over the
+  shoulder and brings it down across the body, and hits whoever is in front of
+  you. Bots brawl with bare paws and bash point-blank with a gun out.
 
   | Critter | Club |
   |---|---|
@@ -176,19 +183,24 @@ godot --headless --path . -s tests/check_scripts.gd     # compile every script
 | Move / look | WASD / mouse | Left / right stick |
 | Fire / aim (scope) | LMB / RMB | RT / LT |
 | Jump (with species trick) · glide · leave the balloon | Space | A |
-| Sprint / crouch | Shift / Ctrl | L3 / B |
+| Sprint (works while aiming) | Shift (hold) | L3 (click: on until you stop) |
+| Crouch → crawl → stand (each press) | Ctrl or C | B (with a gun out) |
 | Reload / pick up | R / E | X / A (with a gun or crate in front of you) or Y |
-| Club swing (empty paws) | F or LMB | B or RT |
-| Switch weapon | 1-3, mouse wheel | LB / RB |
+| Club swing (any time) | F, or LMB with empty paws | R3, or B / RT with empty paws |
+| Switch weapon / drop it | 1-3, mouse wheel / G | LB / RB / D-pad ← |
 | Heal (lucky clover) | H | D-pad ↓ |
-| First / third person | V | Back |
-| Swap shoulder | Q | R3 |
+| First / third person | V | Back, or L3 + R3 together |
+| Swap shoulder | Q | D-pad → |
 | Map | M (hold) | D-pad ↑ |
 | Pause | Esc | Start |
 | Menus: move / select / back | Arrows / Enter / Esc | D-pad / A / B |
 | Character picker: critter / skin / spin | ← → / ↑ ↓ / drag | D-pad ← → / D-pad ↑ ↓ / right stick |
 
 On-screen prompts follow whichever you used last (“[Y] Pick up” vs “[E] Pick up”).
+On a gamepad a light aim assist helps: when the crosshair passes within 2 m of
+an opponent you can see, the stick slows a little and the aim drifts onto them.
+Pads with back buttons (an 8BitDo Ultimate's L4 / R4): map them to L3 / R3 and
+squeeze both for first person.
 
 ## Assets and credits
 
@@ -217,7 +229,7 @@ loop with a human reviewer:
   Tweak or Replace, flag bad takes and leave notes. Sounds rebuilt since a
   verdict are marked for a second listen.
 - **Game Notes** (`tools/notes/notes.py`): write down changes you want, one per
-  note. Once nothing has been added for an hour, Claude claims the new notes,
+  note. Once nothing has been added for 10 minutes, Claude claims the new notes,
   makes the changes, and answers each note on the page (done, or a question).
 
 ## License

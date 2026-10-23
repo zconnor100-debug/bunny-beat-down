@@ -176,7 +176,9 @@ func _perceive() -> void:
 ## How much of `other` shows from `eye`: head, chest and hips each count if no
 ## solid thing is in the way, and less through the leaves. 0 = hidden.
 func _visibility_of(other: Critter, eye: Vector3, space: PhysicsDirectSpaceState3D, cover: Scatter) -> float:
-	var h := (other.visual.rig.world_head_top if other.visual and other.visual.rig else 1.0) * (1.0 - 0.3 * other.crouch_amount())
+	# crouching lowers the outline; lying flat puts it down in the grass
+	var h := (other.visual.rig.world_head_top if other.visual and other.visual.rig else 1.0) \
+		* (1.0 - 0.3 * other.crouch_amount()) * lerpf(1.0, 0.25, other.prone_amount())
 	var pts := PackedVector3Array()
 	var shown := 0.0
 	for bp in BODY_POINTS:
@@ -515,6 +517,13 @@ func _fight(delta: float) -> void:
 	# when strafing while not chasing, move relative to the look direction
 	# (move_input is already look-relative)
 
+	# --- point-blank: sometimes a bash with the club beats a shot
+	var flat := Vector2(target.global_position.x - me.global_position.x, target.global_position.z - me.global_position.z).length()
+	if visible and flat < me.melee_reach() * 1.1 and not me.is_swinging() and randf() < 0.05 * skill \
+			and (not target.is_player or _may_shoot_player()):
+		me.want_melee = true
+		return
+
 	# --- shooting
 	var reaction := lerpf(0.75, 0.22, skill)
 	var on_target := me.look_direction().angle_to(want) < deg_to_rad(4.0 if w.data.pellets == 1 else 9.0)
@@ -543,7 +552,7 @@ func _brawl() -> void:
 	me.look_yaw = lerp_angle(me.look_yaw, atan2(-to.x, -to.z), 0.3)
 	me.look_pitch = lerpf(me.look_pitch, 0.0, 0.2)
 	me.aim_point = target.get_chest_position()
-	var reach := Critter.MELEE_REACH * me.visual.rig.scale
+	var reach := me.melee_reach()
 	me.move_input = Vector2(0, 1) if dist > reach * 0.8 else Vector2.ZERO
 	me.want_sprint = dist > reach * 2.0
 	var ready := _clock - _spotted_t > lerpf(0.75, 0.22, skill)

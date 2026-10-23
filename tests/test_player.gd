@@ -90,9 +90,14 @@ func test_treasure_chest_needs_a_held_unlock() -> void:
 	check(chest.progress < 0.05, "letting go resets the lock (%.2f)" % chest.progress)
 	# holding for the full time opens it and spills high-tier loot
 	var before := get_tree().get_nodes_in_group(&"pickups").size()
+	# (ammo and clovers that land on the Bun are scooped up straight away: count those too)
+	var scooped := [0]
+	var count_scoop := func(_c, _label): scooped[0] += 1
+	Events.item_picked_up.connect(count_scoop)
 	Input.action_press(&"interact")
 	await wait_physics(int(chest.open_time * 60) + 10)
 	Input.action_release(&"interact")
+	Events.item_picked_up.disconnect(count_scoop)
 	check(chest.opened, "held for %.1f s → opened" % chest.open_time)
 	var weapons := 0
 	var best := 0
@@ -100,5 +105,5 @@ func test_treasure_chest_needs_a_held_unlock() -> void:
 		if (p as Pickup).is_weapon():
 			weapons += 1
 			best = maxi(best, (p as Pickup).rarity_tier())
-	check(get_tree().get_nodes_in_group(&"pickups").size() >= before + 4, "chest spills plenty of loot")
+	check(get_tree().get_nodes_in_group(&"pickups").size() + scooped[0] >= before + 4, "chest spills plenty of loot")
 	check(weapons >= 2 and best >= Rarity.Tier.PRIZE, "two guns, Prize tier or better (%d guns, best tier %d)" % [weapons, best])

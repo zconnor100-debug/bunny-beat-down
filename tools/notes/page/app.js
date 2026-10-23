@@ -96,7 +96,7 @@ function renderStatus() {
   const w = el("#watch");
   w.classList.toggle("on", state.watching);
   w.replaceChildren(h("span", { class: "dot", "aria-hidden": "true" }), state.watching
-    ? "Claude is watching for a quiet hour."
+    ? `Claude is watching for ${state.idleMinutes} quiet minutes.`
     : "Claude isn't watching right now: your notes wait until a Claude session picks them up.");
 }
 

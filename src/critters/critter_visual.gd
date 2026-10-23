@@ -27,6 +27,10 @@ const BASE_MASS := 12.0
 ## Carrot guns are drawn bigger than "real" proportions so they read clearly
 ## in third person (the holder already carries the critter's body scale).
 const WEAPON_SCALE := 1.3
+## Clubs are huge so you can see them coming: three quarters of the critter's
+## height, and twice as thick as a gun-sized prop would be.
+const CLUB_LENGTH := 0.75
+const CLUB_THICKNESS := 2.0
 const RENDER_LAYER := 2   # decals skip this layer so blood only lands on the world
 
 var critter: Node3D
@@ -54,6 +58,9 @@ var dismembered: Dictionary = {}     # role -> true
 var trick: JumpTrick
 var _model_base := Transform3D.IDENTITY
 var _glider: Node3D
+var _gun_two_handed := true
+var _tilt := Vector3.ZERO          # glider lean: rotation axis * angle (this node's frame)
+var _glide_t := 0.0
 var _loaded_round: Node3D          ## the rocket sitting in the launcher's tube
 var _prev_xf := Transform3D.IDENTITY
 var _curr_xf := Transform3D.IDENTITY
@@ -128,6 +135,7 @@ func _process(delta: float) -> void:
 	if _loaded_round and critter:
 		_loaded_round.visible = Critter.round_chambered(critter)
 	_update_trick(delta)
+	_update_body_xf()
 
 
 func set_first_person(on: bool) -> void:
@@ -141,6 +149,10 @@ func set_first_person(on: bool) -> void:
 		if held:
 			for m in ModelUtil.find_all(held, "GeometryInstance3D"):
 				(m as GeometryInstance3D).cast_shadow = mode
+	_first_person = on
+
+
+var _first_person := false
 
 
 func eye_position() -> Vector3:
@@ -182,6 +194,7 @@ func set_weapon(w: WeaponInstance) -> void:
 	poser.armed = w != null or club_model != null
 	if w == null:
 		return
+	_gun_two_handed = w.data.two_handed
 	poser.two_handed = w.data.two_handed
 	poser.hold_distance = w.data.hold_distance
 	weapon_model = ModelUtil.instantiate(w.data.model_path)
@@ -203,27 +216,50 @@ func set_weapon(w: WeaponInstance) -> void:
 var club_model: Node3D
 
 
-## Pull out (or put away) the species' own club. Only with empty paws.
+## Pull out (or put away) the species' own club. A gun in the paws is
+## stowed (hidden) while the club is out and comes back when it's put away.
 func set_club(on: bool) -> void:
-	if on and club_model == null and weapon_model == null:
-		if def.melee_model != "" and ResourceLoader.exists(def.melee_model):
-			club_model = ModelUtil.instantiate(def.melee_model)
-		if club_model == null:
-			club_model = _fallback_club()
-		club_model.name = "Club"
+	if on and club_model == null:
+		club_model = make_club()
 		holder.add_child(club_model)
-		club_model.scale = Vector3.ONE * rig.scale * WEAPON_SCALE
 		for gi in ModelUtil.find_all(club_model, "GeometryInstance3D"):
 			(gi as GeometryInstance3D).layers = RENDER_LAYER
+			if _first_person:
+				(gi as GeometryInstance3D).cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_SHADOWS_ONLY
 	elif not on and club_model:
 		club_model.queue_free()
 		club_model = null
 	poser.club = club_model != null
+	if weapon_model:
+		weapon_model.visible = club_model == null
 	if club_model:
 		poser.armed = true
 		poser.two_handed = false
 	else:
 		poser.armed = weapon_model != null
+		poser.two_handed = _gun_two_handed
+
+
+## A new instance of this species' club, sized for the paws: CLUB_LENGTH of
+## the critter's height from grip to tip, CLUB_THICKNESS times as thick as a
+## gun-scale prop. (Its scale is in model units: the holder carries body_scale.)
+func make_club() -> Node3D:
+	var club: Node3D = null
+	if def.melee_model != "" and ResourceLoader.exists(def.melee_model):
+		club = ModelUtil.instantiate(def.melee_model)
+	if club == null:
+		club = _fallback_club()
+	club.name = "Club"
+	var box := ModelUtil.aabb_of(club)
+	var length := maxf(-box.position.z, 0.05)   # grip at the origin, tip toward -Z
+	var thick := rig.scale * WEAPON_SCALE * CLUB_THICKNESS
+	club.scale = Vector3(thick, thick, CLUB_LENGTH * rig.head_top / length)
+	return club
+
+
+## World-space length of the club from grip to tip (for reach and tests).
+func club_length() -> float:
+	return CLUB_LENGTH * rig.world_head_top
 
 
 func _fallback_club() -> Node3D:
@@ -350,15 +386,11 @@ func _update_trick(delta: float) -> void:
 			poser.trick_active = false
 		return
 	trick.step(delta)
-	# rotate the whole body about its centre of mass
-	var pivot := Vector3(0, (rig.world_head_top if rig else 1.0) * 0.5, 0)
-	var r := trick.rotation()
-	model.transform = Transform3D(r, pivot - r * pivot) * _model_base
+	# (the body spins about its centre of mass: see _update_body_xf)
 	poser.trick_tuck = trick.tuck()
 	poser.trick_active = trick.active
 	if trick.finished():
 		trick = null
-		model.transform = _model_base
 
 
 ## The dandelion-seed parachute held overhead while gliding in from the balloon.
@@ -384,13 +416,61 @@ func set_glider(on: bool) -> void:
 		tw.tween_callback(g.queue_free)
 
 
-func _sway_glider(delta: float, velocity: Vector3) -> void:
+## Hanging under the glider: critter and canopy lean together around the
+## grip toward whichever way you steer (as you see it: stick right, lean
+## right), with a slow pendulum sway on top. The legs just dangle (CritterPoser).
+const GLIDE_LEAN := 0.38          ## radians at full stick
+
+
+func _sway_glider(delta: float, _velocity: Vector3) -> void:
 	if _glider == null:
 		return
-	# the seed head leans into the wind and bobs gently
-	var local_v := global_basis.inverse() * velocity
-	var target := Vector3(clampf(local_v.z * 0.03, -0.35, 0.35), 0.0, clampf(-local_v.x * 0.03, -0.35, 0.35))
-	_glider.rotation = _glider.rotation.lerp(target, IKMath.damp(4.0, delta))
+	_glide_t += delta
+	var c := critter as Critter
+	var steer := Vector3.ZERO
+	if c:
+		var stick := c.move_input.limit_length(1.0)
+		steer = global_basis.inverse() * (Basis(Vector3.UP, c.look_yaw) * Vector3(stick.x, 0.0, -stick.y))
+		steer.y = 0.0
+	# tipping the top toward `steer` = rotating about up × steer
+	var want := Vector3.UP.cross(steer) * GLIDE_LEAN
+	want += Vector3(sin(_glide_t * 1.1 + 0.8) * 0.03, 0.0, -sin(_glide_t * 1.7) * 0.05)
+	_tilt = _tilt.lerp(want, IKMath.damp(3.0, delta))
+	_glider.basis = _tilt_basis().scaled_local(_glider.basis.get_scale())
+
+
+func _tilt_basis() -> Basis:
+	var angle := _tilt.length()
+	return Basis(_tilt / angle, angle) if angle > 1e-5 else Basis.IDENTITY
+
+
+## The model's pose on top of its rest placement: a jump trick's spin, lying
+## prone (tipped forward onto the belly, centred over the feet), or banking
+## under the glider (rotated about the grip, together with the canopy).
+func _update_body_xf() -> void:
+	if ragdolled or model == null or rig == null:
+		return
+	var xf := Transform3D.IDENTITY
+	if trick:
+		var pivot := Vector3(0, rig.world_head_top * 0.5, 0)
+		var r := trick.rotation()
+		xf = Transform3D(r, pivot - r * pivot)
+	var prone := smoothstep(0.0, 1.0, poser.prone) if poser else 0.0
+	if prone > 0.0:
+		var h := rig.world_head_top
+		# pivot at the body's half-depth (its thickest trunk segment), so the
+		# belly rests on the ground: round hamsters lie higher than lean foxes
+		var depth := maxf(maxf(rig.radii.get(&"hips", 0.05), rig.radii.get(&"spine", 0.05)), rig.radii.get(&"chest", 0.05)) * rig.size
+		var c := Vector3(0, depth, 0)
+		var r := Basis(Vector3.RIGHT, -1.45 * prone)
+		xf = Transform3D(r, c - r * c + Vector3(0, 0, (h * 0.5 - c.y) * prone)) * xf
+	if _glider:
+		var g := _glider.position
+		var b := _tilt_basis()
+		xf = Transform3D(b, g - b * g) * xf
+	else:
+		_tilt = Vector3.ZERO
+	model.transform = xf * _model_base
 
 
 func muzzle_position() -> Vector3:

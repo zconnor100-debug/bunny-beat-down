@@ -9,6 +9,9 @@ extends SkeletonModifier3D
 ##   5. solves two-bone IK so both paws grip the gun's real grip markers
 ##   6. solves two-bone IK for the legs to the gait's foot targets
 ## Ears and tails are left to the SpringBoneSimulator3D that runs after this.
+## Lying prone, CritterVisual tips the whole model onto its belly and this
+## swaps the gait for an army crawl (elbows and knees, opposite arm and leg);
+## under a glider the legs just hang.
 ##
 ## All maths happens in skeleton space. Models face +Z there, so the critter's
 ## right-hand side is −X.
@@ -18,9 +21,19 @@ const FWD := Vector3(0, 0, 1)
 const RIGHT := Vector3(-1, 0, 0)
 ## Hop length = leg * (HOP_BASE + speed * HOP_PER_SPEED); the airborne share
 ## of each hop cycle is HOP_AIR (the rest is the crouch-and-push contact).
-const HOP_BASE := 3.2
-const HOP_PER_SPEED := 0.35
+const HOP_BASE := 3.6
+const HOP_PER_SPEED := 0.45
 const HOP_AIR := 0.72
+## Running is a bound: an unhurried step rate (STEP_RATE + STEP_RATE_PER_HEIGHT
+## per body-height-per-second of speed, so ~2.4 steps/s walking and ~3 at a
+## sprint, whatever the species' leg length) and long strides. Each foot is
+## planted for at most PLANT leg lengths of travel; the rest of every step is a
+## little flight, so short-legged critters bound instead of pattering.
+const STEP_RATE := 1.4
+const STEP_RATE_PER_HEIGHT := 0.33
+const PLANT := 1.1
+## One crawl cycle (both elbows) covers this many leg lengths.
+const CRAWL_STRIDE := 1.3
 
 signal footstep(hop: bool)
 
@@ -40,6 +53,7 @@ var hold_distance := 0.26
 var gliding := false
 var reload_progress := -1.0   ## 0..1 while reloading, -1 otherwise
 var club := false             ## holding the species' melee club instead of a gun
+var prone := 0.0              ## 0 up … 1 lying on the belly (CritterVisual tips the model)
 var melee := -1.0             ## 0..1 through a club swing, -1 otherwise
 var recoil := 0.0             ## 0..1, decays in CritterVisual
 var trick_tuck := 0.0         ## +1 tuck limbs in (flips, rolls), -1 stretch out (leaps)
@@ -97,24 +111,34 @@ func _process_modification_with_delta(delta: float) -> void:
 	var S := rig.scale
 	var leg: float = (rig.leg_length[&"l"] + rig.leg_length[&"r"]) * 0.5
 
-	_move = lerpf(_move, clampf(speed / (2.2 * S), 0.0, 1.0), IKMath.damp(10.0, delta))
+	# under a glider the legs hang still instead of running on air
+	_move = lerpf(_move, 0.0 if gliding else clampf(speed / (2.2 * S), 0.0, 1.0), IKMath.damp(10.0, delta))
+	var up_k := 1.0 - prone       # gait effects that only make sense upright
 	_air = lerpf(_air, 0.0 if grounded else 1.0, IKMath.damp(10.0, delta))
 	_land = move_toward(_land, 0.0, delta * 3.0)
 	# damped spring for the hit flinch
 	_flinch_vel += (-_flinch * 120.0 - _flinch_vel * 14.0) * delta
 	_flinch += _flinch_vel * delta
-	_lean = lerpf(_lean, clampf(speed / (9.0 * S), 0.0, 1.0) * 0.22, IKMath.damp(6.0, delta))
+	_lean = lerpf(_lean, clampf(speed / (9.0 * S), 0.0, 1.0) * 0.22 * up_k, IKMath.damp(6.0, delta))
 
 	# ---- gait clock -------------------------------------------------------------
-	var stride := leg * (0.85 + speed * 0.06 / S)
-	# bunnies take long bounding hops (~2.5–3.5 per second), not a rapid patter
+	var step_rate := STEP_RATE + STEP_RATE_PER_HEIGHT * speed / rig.head_top
+	# share of each step a foot spends planted (the rest is in the air)
+	var on_ground := clampf(leg * PLANT * step_rate / maxf(speed, 0.01), 0.3, 0.95)
+	var plant := speed * on_ground / step_rate   # how far a planted foot slides back
+	# bunnies take long bounding hops (~2–3 per second), not a rapid patter
 	var hop_len := leg * (HOP_BASE + speed * HOP_PER_SPEED / S)
-	if gait == CritterDef.Gait.HOP:
+	var crawling := prone > 0.5
+	if gliding:
+		pass   # the legs dangle; the clock waits for the landing
+	elif crawling:
+		_phase = fposmod(_phase + speed / (leg * CRAWL_STRIDE) * TAU * delta, TAU)
+	elif gait == CritterDef.Gait.HOP:
 		_phase = fposmod(_phase + speed / hop_len * TAU * delta, TAU)
 	else:
-		_phase = fposmod(_phase + speed / (2.0 * stride) * TAU * delta, TAU)
+		_phase = fposmod(_phase + step_rate * 0.5 * TAU * delta, TAU)   # a cycle is two steps
 	# a foot (or both, for a hop) touches down: tell the critter for footstep audio
-	if grounded and speed > 0.8:
+	if grounded and speed > 0.8 and not gliding and not crawling:
 		if gait == CritterDef.Gait.HOP:
 			if _prev_phase < TAU * 0.72 and _phase >= TAU * 0.72:
 				footstep.emit(true)
@@ -128,28 +152,41 @@ func _process_modification_with_delta(delta: float) -> void:
 	# ---- hips -------------------------------------------------------------------
 	var hips: int = rig.bone[&"hips"]
 	var hip_pos: Vector3 = rig.rest[&"hips"].origin
-	hip_pos.y -= leg * (0.05 + crouch * 0.28 + _land * 0.22)
+	hip_pos.y -= leg * (0.05 + crouch * 0.28 + _land * 0.22) * up_k
 	var hop_air := 0.0
-	if gait == CritterDef.Gait.HOP:
+	if crawling:
+		# the body rolls a little toward each elbow as it pulls
+		hip_pos += RIGHT * sin(_phase) * 0.02 * S * _move
+	elif gait == CritterDef.Gait.HOP:
 		var u := _phase / TAU
 		hop_air = sin(u / HOP_AIR * PI) if u < HOP_AIR else 0.0
 		var squash := sin((u - HOP_AIR) / (1.0 - HOP_AIR) * PI) if u >= HOP_AIR else 0.0
 		# longer hops arc higher; a little forward pitch on take-off, nose-up on landing
-		hip_pos.y += _move * (leg * 0.68 * hop_air - leg * 0.1 * squash) * (1.0 - _air)
+		hip_pos.y += _move * (leg * 0.68 * hop_air - leg * 0.1 * squash) * (1.0 - _air) * up_k
 	else:
-		hip_pos.y -= _move * leg * (0.03 + 0.05 * (0.5 - 0.5 * cos(2.0 * _phase)))
+		# dip a little on the planted foot, then float through the bound
+		var step_u := fposmod(_phase / PI, 1.0)
+		var air_t := (1.0 - on_ground) / step_rate
+		var flight := minf(16.0 * air_t * air_t / 8.0 / rig.size, leg * 0.45)
+		var up := sin((step_u - on_ground) / (1.0 - on_ground) * PI) if step_u >= on_ground else 0.0
+		hip_pos.y += _move * (flight * up - leg * 0.04 * sin(step_u / on_ground * PI) * float(step_u < on_ground)) * up_k
 		hip_pos += RIGHT * sin(_phase) * 0.012 * S * _move
 	# idle breathing
 	hip_pos.y += sin(Time.get_ticks_msec() * 0.0025) * 0.004 * S * (1.0 - _move)
 	_set_global_origin(hips, hip_pos)
 	_rotate_global(hips, Quaternion(RIGHT, -_lean))
-	if gait == CritterDef.Gait.RUN:
+	if crawling:
+		_rotate_global(hips, Quaternion(UP, sin(_phase) * 0.14 * _move))
+	elif gait == CritterDef.Gait.RUN:
 		_rotate_global(hips, Quaternion(UP, sin(_phase) * 0.12 * _move))
 
 	# ---- spine aims ---------------------------------------------------------------
 	var a := FWD if trick_active else (to_skel * aim_dir).normalized()
-	var pitch := clampf(asin(clampf(a.y, -1.0, 1.0)), -1.3, 1.3)
-	var yaw := clampf(atan2(-a.x, a.z) * -1.0, -1.0, 1.0)
+	# lying down the body runs along the aim (skeleton +Y is "ahead"), so the
+	# spine stays flat and the neck lifts the head to look where we're going
+	var a_body := a.lerp(Vector3(a.x, -a.z, a.y), prone).normalized()
+	var pitch := clampf(asin(clampf(a_body.y, -1.0, 1.0)), -1.3, 1.3)
+	var yaw := clampf(atan2(-a_body.x, a_body.z) * -1.0, -1.0, 1.0)
 	var chain := [[&"spine", 0.25, 0.3], [&"chest", 0.35, 0.4], [&"neck", 0.15, 0.1], [&"head", 0.25, 0.2]]
 	var done := {}
 	var fl_len := _flinch.length()
@@ -158,7 +195,13 @@ func _process_modification_with_delta(delta: float) -> void:
 		if idx < 0 or done.has(idx) or idx == hips:
 			continue
 		done[idx] = true
-		var q := Quaternion(UP, yaw * item[2]) * Quaternion(RIGHT, (pitch + _lean) * item[1])
+		var lift := 0.0
+		var pitch_w: float = item[1]
+		if item[0] in [&"spine", &"chest"]:
+			pitch_w *= up_k
+		else:
+			lift = prone * 0.65
+		var q := Quaternion(UP, yaw * item[2]) * Quaternion(RIGHT, (pitch + _lean) * pitch_w + lift)
 		if fl_len > 0.001 and item[0] in [&"spine", &"chest"]:
 			q = Quaternion(_flinch / fl_len, fl_len * 0.5) * q
 		_rotate_global(idx, q)
@@ -168,7 +211,9 @@ func _process_modification_with_delta(delta: float) -> void:
 	var sh_l := _g(rig.bone[&"l_upper_arm"]).origin
 	var sh_mid := (sh_r + sh_l) * 0.5
 	var grip := Vector3.ZERO
-	var wbasis := Basis.looking_at(a, UP if absf(a.y) < 0.98 else FWD)
+	# keep the gun upright in the world (also when the body is lying down)
+	var up_s := (to_skel * Vector3.UP).normalized()
+	var wbasis := Basis.looking_at(a, up_s if absf(a.dot(up_s)) < 0.98 else FWD)
 	var reload_k := 0.0
 	if reload_progress >= 0.0:
 		reload_k = sin(clampf(reload_progress, 0.0, 1.0) * PI)
@@ -213,6 +258,11 @@ func _process_modification_with_delta(delta: float) -> void:
 		if gliding:
 			target = sh_mid + UP * 0.5 * S + RIGHT * sgn * 0.1 * S
 			pole = shoulder + RIGHT * sgn * 0.5 * S - FWD * 0.2 * S
+		elif crawling and not armed:
+			# army crawl: reach ahead (skeleton +Y), plant the elbow, drag forward
+			var reach := 0.5 + 0.5 * sin(_phase + (0.0 if side == &"r" else PI)) * _move
+			target = shoulder + UP * arm_len * (0.25 + 0.45 * reach) + FWD * arm_len * 0.5 + RIGHT * sgn * 0.12 * S
+			pole = shoulder + RIGHT * sgn * 0.5 * S - UP * 0.3 * S + FWD * 0.2 * S
 		elif armed:
 			if side == &"r":
 				target = grip
@@ -253,17 +303,36 @@ func _process_modification_with_delta(delta: float) -> void:
 				target += UP * sin(hop_t * PI) * leg * 0.35 * _move
 			target += move_dir * along * _move
 		else:
-			var ph := _phase + (0.0 if side == &"l" else PI)
-			target += move_dir * (-cos(ph) * stride * 0.5 * _move)
-			target += UP * maxf(0.0, sin(ph)) * leg * 0.22 * _move
+			# planted for the first `on_ground` of its step (sliding back exactly as
+			# fast as the body goes forward), then swung through to land ahead
+			var u := fposmod((_phase + (0.0 if side == &"l" else PI)) / TAU, 1.0)
+			var stance := on_ground * 0.5
+			var along: float
+			if u < stance:
+				along = lerpf(0.5, -0.5, u / stance)
+			else:
+				var t := (u - stance) / (1.0 - stance)
+				along = lerpf(-0.5, 0.5, smoothstep(0.0, 1.0, t))
+				target += UP * sin(t * PI) * leg * 0.3 * _move
+			target += move_dir * along * plant * _move
+		var hip := _g(ul).origin
+		var pole := hip + FWD * leg + RIGHT * sgn * 0.08 * S
+		if crawling:
+			# frog-kick: each knee draws up and out to the side in turn (with the
+			# opposite elbow), then the leg pushes back out straight
+			var draw := maxf(0.0, sin(_phase + (PI if side == &"r" else 0.0))) * _move
+			target = rest_foot + UP * leg * 0.4 * draw + RIGHT * sgn * leg * 0.3 * draw + FWD * 0.04 * S
+			pole = hip + RIGHT * sgn * leg + FWD * leg * 0.4
+		elif gliding:
+			# dangling: a slow, lazy swing from the hips
+			var t := Time.get_ticks_msec() * 0.001
+			target = rest_foot + FWD * sin(t * 1.4 + sgn) * 0.06 * S + FWD * 0.05 * S
 		# tuck in the air (harder for flips and rolls, stretched out for leaps)
 		target += UP * _air * leg * 0.28 - FWD * _air * 0.04 * S
 		if trick_tuck > 0.0:
 			target += UP * trick_tuck * leg * 0.3 + FWD * trick_tuck * 0.08 * S
 		elif trick_tuck < 0.0:
 			target += -FWD * -trick_tuck * leg * 0.45 - UP * -trick_tuck * leg * 0.15
-		var hip := _g(ul).origin
-		var pole := hip + FWD * leg + RIGHT * sgn * 0.08 * S
 		_two_bone(ul, ll, ft, _seg_len[side + "_leg1"], _seg_len[side + "_leg2"], target, pole)
 		if ft >= 0:
 			# keep the foot at its rest orientation (flat), tilted slightly by the gait

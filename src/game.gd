@@ -281,9 +281,9 @@ func _toggle_pause() -> void:
 
 func _show_controls() -> void:
 	if GameInput.using_pad:
-		hud.show_message("Left stick move • Right stick aim • RT fire • LT aim • B club (empty paws)", "A jump/glide/pick up • L3 sprint • B crouch • X reload • LB/RB switch • D-pad ↓ heal • Back camera • R3 shoulder • D-pad ↑ map", 6.0)
+		hud.show_message("Left stick move • Right stick aim • RT fire • LT aim • R3 club • L3+R3 first person", "A jump/glide/pick up • L3 sprint • B crouch/crawl • X reload • LB/RB switch • D-pad ↓ heal ← drop → shoulder ↑ map", 6.0)
 	else:
-		hud.show_message("WASD move • Mouse aim • LMB fire • RMB aim • F club", "SPACE jump/glide • SHIFT sprint • CTRL crouch • R reload • E pick up • H heal • V camera • Q shoulder • M map", 6.0)
+		hud.show_message("WASD move • Mouse aim • LMB fire • RMB aim • F club", "SPACE jump/glide • SHIFT sprint • CTRL crouch/crawl • R reload • E pick up • H heal • V camera • Q shoulder • M map", 6.0)
 
 
 func _to_menu() -> void:

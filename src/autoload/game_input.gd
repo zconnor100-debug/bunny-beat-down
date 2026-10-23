@@ -31,11 +31,13 @@ const BINDINGS := {
 	&"weapon_3": [[KEY, KEY_3]],
 	&"weapon_next": [[MOUSE, MOUSE_BUTTON_WHEEL_DOWN], [PAD_BUTTON, JOY_BUTTON_RIGHT_SHOULDER]],
 	&"weapon_prev": [[MOUSE, MOUSE_BUTTON_WHEEL_UP], [PAD_BUTTON, JOY_BUTTON_LEFT_SHOULDER]],
-	&"drop_weapon": [[KEY, KEY_G]],
-	# melee: F, or fire with empty paws; on a pad B swings when the paws are empty
-	&"melee": [[KEY, KEY_F]],
+	&"drop_weapon": [[KEY, KEY_G], [PAD_BUTTON, JOY_BUTTON_DPAD_LEFT]],
+	# melee: F / R3 swing the club, even with a gun out (it's stowed for the
+	# swing); fire with empty paws swings too, and so does B on a pad
+	&"melee": [[KEY, KEY_F], [PAD_BUTTON, JOY_BUTTON_RIGHT_STICK]],
+	# first person: V / Back, or both stick clicks (or back paddles) together
 	&"toggle_camera": [[KEY, KEY_V], [PAD_BUTTON, JOY_BUTTON_BACK]],
-	&"swap_shoulder": [[KEY, KEY_Q], [PAD_BUTTON, JOY_BUTTON_RIGHT_STICK]],
+	&"swap_shoulder": [[KEY, KEY_Q], [PAD_BUTTON, JOY_BUTTON_DPAD_RIGHT]],
 	&"map": [[KEY, KEY_M], [PAD_BUTTON, JOY_BUTTON_DPAD_UP]],
 	&"pause": [[KEY, KEY_ESCAPE], [PAD_BUTTON, JOY_BUTTON_START]],
 	&"screenshot": [[KEY, KEY_F12]],
@@ -57,7 +59,13 @@ const PAD_BUTTON_NAMES := {
 	JOY_BUTTON_BACK: "Back", JOY_BUTTON_START: "Start",
 	JOY_BUTTON_DPAD_UP: "D-pad ↑", JOY_BUTTON_DPAD_DOWN: "D-pad ↓",
 	JOY_BUTTON_DPAD_LEFT: "D-pad ←", JOY_BUTTON_DPAD_RIGHT: "D-pad →",
+	JOY_BUTTON_PADDLE1: "P1", JOY_BUTTON_PADDLE2: "P2",
 }
+## Pressing both buttons of a pair within CHORD_SECONDS of each other is a
+## chord: L3 + R3 (or the two back paddles) flips first / third person. On an
+## 8BitDo Ultimate, map L4 → L3 and R4 → R3 on the pad and L4 + R4 does it.
+const CHORDS := [[JOY_BUTTON_LEFT_STICK, JOY_BUTTON_RIGHT_STICK], [JOY_BUTTON_PADDLE1, JOY_BUTTON_PADDLE2]]
+const CHORD_SECONDS := 0.15
 const PAD_AXIS_NAMES := {JOY_AXIS_TRIGGER_LEFT: "LT", JOY_AXIS_TRIGGER_RIGHT: "RT"}
 
 ## True while the player is on a gamepad (their last button or stick push came

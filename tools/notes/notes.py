@@ -9,8 +9,8 @@ short thread: what you want changed, then Claude's answer (done, or a question
 for you), then your reply if you reopen it. Claude waits for a quiet spell before
 starting, so you can keep adding notes while you play:
 
-    python3 tools/notes/notes.py --wait-idle 60      # returns once there are new notes
-                                                     # and nothing changed for 60 min
+    python3 tools/notes/notes.py --wait-idle 10      # returns once there are new notes
+                                                     # and nothing changed for 10 min
     python3 tools/notes/notes.py --claim             # new -> working, printed for Claude
     python3 tools/notes/notes.py --done 3 "what changed"
     python3 tools/notes/notes.py --needs-you 4 "a question"
@@ -52,7 +52,7 @@ REQUEST_TIMEOUT = 30
 IDLE_EXIT_S = 300                # --idle-exit: no page request for this long = the tab was closed
 NEVER_CONNECTED_S = 120
 WATCHER_FRESH_S = 150            # the watcher touches its heartbeat every poll (30 s)
-IDLE_MINUTES = 60                # Claude starts once nothing was added or edited for this long
+IDLE_MINUTES = 10                # Claude starts once nothing was added or edited for this long
 CATEGORIES = ("Gameplay", "Characters", "Weapons", "Map", "Visuals", "Audio", "Menus & UI", "Bug", "Other")
 STATUSES = ("new", "working", "done", "needs_you")
 STATIC = {"/": ("index.html", "text/html; charset=utf-8"),
