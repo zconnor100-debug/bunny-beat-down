@@ -1153,5 +1153,285 @@
     },
     "nodes": {},
     "notes": "Origin at the hand grip on the stipe; parasol-mushroom cap (re-skinned from a shaggy parasol scan) 2 m across, ~0.9-1.3 m overhead."
+  },
+  {
+    "id": "melee_barbed_carrot",
+    "file": "assets/weapons/melee_barbed_carrot.glb",
+    "kind": "melee",
+    "use": "Bun's club: a carrot wrapped in barbed wire",
+    "size_m": [
+      0.109,
+      0.119,
+      0.427
+    ],
+    "max_extent_m": 0.427,
+    "aabb_min": [
+      -0.0498,
+      -0.0628,
+      -0.3547
+    ],
+    "aabb_max": [
+      0.0589,
+      0.056,
+      0.072
+    ],
+    "origin": "hand grip on the handle",
+    "orientation": "striking end along -Z, +Y up",
+    "tris": 6942,
+    "texture_px": 1024,
+    "markers": {
+      "Tip": [
+        0.0,
+        0.0,
+        -0.295
+      ]
+    },
+    "nodes": {},
+    "notes": "Origin at the hand grip, striking end along -Z (Godot). Carrot club held by its tapering tip; barbed wire round the fat crown end."
+  },
+  {
+    "id": "melee_shadow_carrot",
+    "file": "assets/weapons/melee_shadow_carrot.glb",
+    "kind": "melee",
+    "use": "Bandit Bunny's club: a shadow carrot with thorns",
+    "size_m": [
+      0.092,
+      0.112,
+      0.432
+    ],
+    "max_extent_m": 0.432,
+    "aabb_min": [
+      -0.0468,
+      -0.0607,
+      -0.3604
+    ],
+    "aabb_max": [
+      0.0451,
+      0.0512,
+      0.072
+    ],
+    "origin": "hand grip on the handle",
+    "orientation": "striking end along -Z, +Y up",
+    "tris": 2978,
+    "texture_px": 1024,
+    "markers": {
+      "Tip": [
+        0.0,
+        0.0,
+        -0.295
+      ]
+    },
+    "nodes": {},
+    "notes": "Origin at the hand grip, striking end along -Z (Godot). Near-black carrot with violet veins and black thorns."
+  },
+  {
+    "id": "melee_fly_swatter",
+    "file": "assets/weapons/melee_fly_swatter.glb",
+    "kind": "melee",
+    "use": "Frog's club: a fly swatter with a dead fly stuck in it",
+    "size_m": [
+      0.118,
+      0.023,
+      0.434
+    ],
+    "max_extent_m": 0.434,
+    "aabb_min": [
+      -0.0588,
+      -0.0117,
+      -0.3588
+    ],
+    "aabb_max": [
+      0.0588,
+      0.0117,
+      0.075
+    ],
+    "origin": "hand grip on the handle",
+    "orientation": "striking end along -Z, +Y up",
+    "tris": 2422,
+    "texture_px": 1024,
+    "markers": {
+      "Tip": [
+        0.0,
+        0.0,
+        -0.356
+      ]
+    },
+    "nodes": {},
+    "notes": "Origin at the hand grip, striking end along -Z (Godot). Plastic swatter; the paddle lies flat (faces +-Y in Godot). Fly stuck through the mesh."
+  },
+  {
+    "id": "melee_bunny_spine",
+    "file": "assets/weapons/melee_bunny_spine.glb",
+    "kind": "melee",
+    "use": "Fox's club: a bunny spine with the head still attached",
+    "size_m": [
+      0.117,
+      0.161,
+      0.425
+    ],
+    "max_extent_m": 0.425,
+    "aabb_min": [
+      -0.0444,
+      -0.0422,
+      -0.342
+    ],
+    "aabb_max": [
+      0.073,
+      0.1186,
+      0.0825
+    ],
+    "origin": "hand grip on the handle",
+    "orientation": "striking end along -Z, +Y up",
+    "tris": 4834,
+    "texture_px": 1024,
+    "markers": {
+      "Tip": [
+        0.0,
+        0.0123,
+        -0.3245
+      ]
+    },
+    "nodes": {},
+    "notes": "Origin at the hand grip, striking end along -Z (Godot). Bunny spine (12 vertebrae, discs, broken ribs) with the head still attached."
+  },
+  {
+    "id": "melee_acorn_knocker",
+    "file": "assets/weapons/melee_acorn_knocker.glb",
+    "kind": "melee",
+    "use": "Squirrel's club: a stick with a bloody acorn dangling",
+    "size_m": [
+      0.064,
+      0.164,
+      0.416
+    ],
+    "max_extent_m": 0.416,
+    "aabb_min": [
+      -0.0272,
+      -0.145,
+      -0.3352
+    ],
+    "aabb_max": [
+      0.0363,
+      0.0188,
+      0.0807
+    ],
+    "origin": "hand grip on the handle",
+    "orientation": "striking end along -Z, +Y up",
+    "tris": 2830,
+    "texture_px": 1024,
+    "markers": {
+      "Tip": [
+        -0.0,
+        0.0,
+        -0.305
+      ]
+    },
+    "nodes": {},
+    "notes": "Origin at the hand grip, striking end along -Z (Godot). Bark stick; a bloody acorn hangs on a twine cord off the striking end."
+  },
+  {
+    "id": "melee_mousetrap_mallet",
+    "file": "assets/weapons/melee_mousetrap_mallet.glb",
+    "kind": "melee",
+    "use": "Hamster's club: a pencil with a sprung mousetrap",
+    "size_m": [
+      0.107,
+      0.084,
+      0.494
+    ],
+    "max_extent_m": 0.494,
+    "aabb_min": [
+      -0.0377,
+      -0.0284,
+      -0.3885
+    ],
+    "aabb_max": [
+      0.0689,
+      0.0551,
+      0.106
+    ],
+    "origin": "hand grip on the handle",
+    "orientation": "striking end along -Z, +Y up",
+    "tris": 3268,
+    "texture_px": 1024,
+    "markers": {
+      "Tip": [
+        0.0,
+        0.0,
+        -0.3885
+      ]
+    },
+    "nodes": {},
+    "notes": "Origin at the hand grip, striking end along -Z (Godot). Pencil handle; a sprung mousetrap board on the end, flat side down."
+  },
+  {
+    "id": "melee_nail_corncob",
+    "file": "assets/weapons/melee_nail_corncob.glb",
+    "kind": "melee",
+    "use": "Raccoon's club: a corncob with rusty nails",
+    "size_m": [
+      0.108,
+      0.11,
+      0.425
+    ],
+    "max_extent_m": 0.425,
+    "aabb_min": [
+      -0.0598,
+      -0.0597,
+      -0.345
+    ],
+    "aabb_max": [
+      0.0479,
+      0.0499,
+      0.08
+    ],
+    "origin": "hand grip on the handle",
+    "orientation": "striking end along -Z, +Y up",
+    "tris": 7208,
+    "texture_px": 1024,
+    "markers": {
+      "Tip": [
+        0.0,
+        0.0,
+        -0.345
+      ]
+    },
+    "nodes": {},
+    "notes": "Origin at the hand grip, striking end along -Z (Godot). Corncob on a pine dowel, gnawed patches, rusty nails through it."
+  },
+  {
+    "id": "melee_trout_stick",
+    "file": "assets/weapons/melee_trout_stick.glb",
+    "kind": "melee",
+    "use": "Beaver's club: a gnawed branch with a skewered trout",
+    "size_m": [
+      0.031,
+      0.078,
+      0.41
+    ],
+    "max_extent_m": 0.41,
+    "aabb_min": [
+      -0.0157,
+      -0.044,
+      -0.3296
+    ],
+    "aabb_max": [
+      0.0153,
+      0.0344,
+      0.0806
+    ],
+    "origin": "hand grip on the handle",
+    "orientation": "striking end along -Z, +Y up",
+    "tris": 2214,
+    "texture_px": 1024,
+    "markers": {
+      "Tip": [
+        0.0,
+        0.0,
+        -0.33
+      ]
+    },
+    "nodes": {},
+    "notes": "Origin at the hand grip, striking end along -Z (Godot). Gnawed branch with a trout skewered mouth-to-tail near the point."
   }
 ]

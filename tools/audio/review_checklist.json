@@ -20,7 +20,8 @@
         "reload_start": {"expect": "Grip rustle, a two-part magazine-release click, the magazine sliding out with a solid clack, caught in the off hand.", "when": "Start of every reload; also crate locks."},
         "reload_end": {"expect": "Magazine seated firmly (clack), then the bolt release slams the bolt home (CHAK, the loudest part) at ~0.12 s; over in ~0.25 s.", "when": "End of every reload."},
         "dry_fire": {"expect": "Small, dry metallic click with a puff of air.", "when": "Pulling the trigger on an empty gun."},
-        "weapon_swap": {"expect": "Quick draw: cloth/strap rustle, small sling-swivel rattle, a grip pat, ending in a sharp safety click-clack.", "when": "Switching weapon slots."}
+        "weapon_swap": {"expect": "Quick draw: cloth/strap rustle, small sling-swivel rattle, a grip pat, ending in a sharp safety click-clack.", "when": "Switching weapon slots."},
+        "melee_swing": {"expect": "One heavy \"vwoomp\" of air as a bat-sized club swings past (rising, then falling away), a low push under it; no sword whistle or ring.", "when": "Every club swing (each species' melee weapon, with empty paws)."}
       }
     },
     {
@@ -32,6 +33,7 @@
         "carrot_impact_flesh": {"expect": "Solid punch into something soft: a thick, wet, meaty squelch with a dull thud under it; no water-droplet blips or bubbly 'bloops'.", "when": "Your carrots hitting a critter (hit confirm)."},
         "headshot": {"expect": "Comedic hollow BONK with falling pitch and a little cork pop (both takes).", "when": "Your headshots."},
         "gore_splat": {"expect": "Hard body hit (fast low thump + heavy punch) under a meaty wet splat and squish, a few dark plips.", "when": "Gory kills with Gore: Full (a blast that tears a critter apart, or a headshot that pops the head off)."},
+        "melee_hit": {"expect": "Heavy blunt THWACK of a club landing: a big punch with a woody knock in it, a dull body under it and a short wet squelch; no pitched \"pock\".", "when": "A club swing connecting with a critter."},
         "gore_limb_pop": {"expect": "Cork-like POP, then a squelch, droplets and a fluff flick.", "when": "A limb or head coming off."},
         "body_fall": {"expect": "Heavy soft thud crushing dry leaves and grass right at the start, a softer limb slap just after, a small settle; no bounce.", "when": "A body hitting the ground 0.45 s after a critter dies (not after blasts), and the beaver's tail-slap jump landing."}
       }

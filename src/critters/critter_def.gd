@@ -32,6 +32,9 @@ enum JumpStyle {
 @export var jump_style := JumpStyle.FLIP
 @export var voice_pitch := 1.0
 @export var wears_acorn_helmet := false
+## The species' own club, pulled out to fight with bare paws.
+@export var melee_name := "Club"
+@export_file("*.glb") var melee_model := ""
 @export var spawn_weight := 1.0
 ## Names the AI critters of this species pick from.
 @export var names: PackedStringArray = []

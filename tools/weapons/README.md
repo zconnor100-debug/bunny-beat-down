@@ -1,7 +1,7 @@
 # Weapons & props generator
 
-Every carrot gun, projectile, pickup, crate, the acorn helmet, the dandelion
-glider and the dropship balloon in `assets/weapons/` and `assets/props/` is
+Every carrot gun, melee club, projectile, pickup, crate, the acorn helmet, the
+dandelion glider and the dropship balloon in `assets/weapons/` and `assets/props/` is
 **generated from code**: Blender Python builds the geometry, scripted materials
 sample real CC0 / CC-BY scans, Cycles bakes everything into one PBR atlas per
 asset and the result is exported as glTF. Nothing is hand-modelled, so any
@@ -53,6 +53,10 @@ blender/assets/*.py       one builder per asset + the ASSETS registry (id, folde
 Builders work in Blender space: **+Y forward, +Z up, metres**, which exports to
 Godot as forward **-Z**, up **+Y**.
 
+* Melee clubs (`blender/assets/melee.py`, one per species): origin at the hand
+  grip, striking end along -Z, `Tip` marks its far end. A swing leads with the
+  club's -Y (Godot) side, so that is where the blood goes. ~0.42 m long; the
+  game scales held weapons with the critter.
 * Weapons: origin at the trigger grip, barrel along -Z. Empties `Muzzle`,
   `SupportGrip`, `Sight` (eye point on the sight line), `Eject`. The rocket
   launcher's loaded rocket is a separate `Rocket` node (hide after firing).

@@ -32,6 +32,8 @@ const BINDINGS := {
 	&"weapon_next": [[MOUSE, MOUSE_BUTTON_WHEEL_DOWN], [PAD_BUTTON, JOY_BUTTON_RIGHT_SHOULDER]],
 	&"weapon_prev": [[MOUSE, MOUSE_BUTTON_WHEEL_UP], [PAD_BUTTON, JOY_BUTTON_LEFT_SHOULDER]],
 	&"drop_weapon": [[KEY, KEY_G]],
+	# melee: F, or fire with empty paws; on a pad B swings when the paws are empty
+	&"melee": [[KEY, KEY_F]],
 	&"toggle_camera": [[KEY, KEY_V], [PAD_BUTTON, JOY_BUTTON_BACK]],
 	&"swap_shoulder": [[KEY, KEY_Q], [PAD_BUTTON, JOY_BUTTON_RIGHT_STICK]],
 	&"map": [[KEY, KEY_M], [PAD_BUTTON, JOY_BUTTON_DPAD_UP]],

@@ -34,6 +34,7 @@ static var player_attack_slots := 2
 static var damage_to_player := 0.65
 static var _player_attackers: Dictionary = {}   # brain instance id -> msec its slot expires
 const ATTACK_SLOT_HOLD_MS := 1500
+const BRAWL_RANGE := 7.0          ## unarmed bots club anyone this close instead of fleeing
 
 var me: Critter
 var island: Island
@@ -247,8 +248,8 @@ func _choose_mode() -> void:
 		mode = Mode.FIGHT
 		return
 	if target and not armed:
-		# run away from danger while looking for a gun
-		mode = Mode.LOOT
+		# bare paws: club them if they're right here, else go find a gun
+		mode = Mode.FIGHT if target.global_position.distance_to(me.global_position) < BRAWL_RANGE else Mode.LOOT
 		return
 	if me.health < 60.0 and me.inventory.clovers > 0:
 		mode = Mode.HEAL
@@ -461,7 +462,10 @@ func _fight(delta: float) -> void:
 	_pick_weapon_for_range()
 	var w := me.current_weapon()
 	if w == null:
-		mode = Mode.LOOT
+		if target.global_position.distance_to(me.global_position) < BRAWL_RANGE:
+			_brawl()
+		else:
+			mode = Mode.LOOT
 		return
 	var eye := me.get_eye_position()
 	var visible := _clock - _last_seen_t < 0.35
@@ -530,6 +534,21 @@ func _fight(delta: float) -> void:
 			# tap the trigger: press on one tick, release on the next
 			_fire_toggle = not _fire_toggle
 			me.want_fire = _fire_toggle and randf() < lerpf(0.12, 0.35, skill)
+
+
+## Bare paws and someone close: run straight at them and swing the club.
+func _brawl() -> void:
+	var to := target.global_position - me.global_position
+	var dist := Vector2(to.x, to.z).length()
+	me.look_yaw = lerp_angle(me.look_yaw, atan2(-to.x, -to.z), 0.3)
+	me.look_pitch = lerpf(me.look_pitch, 0.0, 0.2)
+	me.aim_point = target.get_chest_position()
+	var reach := Critter.MELEE_REACH * me.visual.rig.scale
+	me.move_input = Vector2(0, 1) if dist > reach * 0.8 else Vector2.ZERO
+	me.want_sprint = dist > reach * 2.0
+	var ready := _clock - _spotted_t > lerpf(0.75, 0.22, skill)
+	if dist < reach * 1.3 and not me.is_swinging() and ready and (not target.is_player or _may_shoot_player()):
+		me.want_melee = true
 
 
 ## Only `player_attack_slots` bots shoot at the player at once; a slot is held

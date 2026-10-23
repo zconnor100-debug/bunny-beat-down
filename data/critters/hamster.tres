@@ -19,5 +19,7 @@ jump_style = 6
 gait = 0
 voice_pitch = 1.45
 wears_acorn_helmet = false
+melee_name = "Mousetrap Mallet"
+melee_model = "res://assets/weapons/melee_mousetrap_mallet.glb"
 spawn_weight = 0.8
 names = PackedStringArray("Squeaks", "Cheeks McGee", "Nibbler", "Pudge", "Whisker Biscuit", "Hammy")

@@ -19,5 +19,7 @@ jump_style = 3
 gait = 0
 voice_pitch = 0.95
 wears_acorn_helmet = false
+melee_name = "Rusty-Nail Corncob"
+melee_model = "res://assets/weapons/melee_nail_corncob.glb"
 spawn_weight = 1.0
 names = PackedStringArray("Bandit Bill", "Trash Panda", "Rocco", "Masky", "Dumpster Dan", "Ringtail")

@@ -34,9 +34,14 @@ PROP_SHEET = ["acorn_helmet", "pickup_health", "pickup_armor", "ammo_light", "am
               "ammo_rocket", "loot_crate", "supply_drop", "dandelion_glider", "dropship_balloon"]
 CHEST_GLIDER_SHEET = ["treasure_chest", "treasure_chest_golden", "glider_dandelion_plume", "glider_oak_leaf",
                       "glider_maple_leaf", "glider_tulip", "glider_daisy", "glider_mushroom"]
+MELEE_SHEET = ["melee_barbed_carrot", "melee_shadow_carrot", "melee_fly_swatter", "melee_bunny_spine",
+               "melee_acorn_knocker", "melee_mousetrap_mallet", "melee_nail_corncob", "melee_trout_stick"]
 CRITTER_CAPSULE = set(CHEST_GLIDER_SHEET)   # previewed next to a 1.1 m critter capsule
+ALL = WEAPON_SHEET + PROP_SHEET + CHEST_GLIDER_SHEET + MELEE_SHEET
+IN_WEAPONS = set(WEAPON_SHEET + MELEE_SHEET)   # assets/weapons/ (the rest go to assets/props/)
 ORIGINS = {
     "weapon": ("main (trigger) grip", "barrel along -Z, +Y up"),
+    "melee": ("hand grip on the handle", "striking end along -Z, +Y up"),
     "projectile": ("centre of the projectile", "tip / flight direction -Z"),
     "pickup": ("bottom centre (rests on the ground)", "front faces +Z"),
     "prop": ("bottom centre (rests on the ground)", "front faces +Z"),
@@ -83,7 +88,7 @@ def rel(p) -> str:
 
 def write_manifest(reports: dict) -> Path:
     entries = []
-    for i in WEAPON_SHEET + PROP_SHEET + CHEST_GLIDER_SHEET:
+    for i in ALL:
         r = reports.get(i)
         if not r:
             continue
@@ -136,8 +141,8 @@ def write_credits(reports: dict) -> Path:
     entries = []
     for key, m in meta.items():
         if m["kind"] == "polyhaven_hdri":
-            files = ["assets/weapons/preview_sheet.png", "assets/props/preview_sheet.png",
-                     "assets/props/acorn_helmet_closeup.png"]
+            files = ["assets/weapons/preview_sheet.png", "assets/weapons/preview_sheet_melee.png",
+                     "assets/props/preview_sheet.png", "assets/props/acorn_helmet_closeup.png"]
         else:
             files = sorted(rel(r["file"]) for r in reports.values() if key in r.get("sources", []))
         if not files:
@@ -153,12 +158,12 @@ def write_credits(reports: dict) -> Path:
             "used_for": m["used_for"],
             "files": files,
         })
-    for i in WEAPON_SHEET + PROP_SHEET + CHEST_GLIDER_SHEET:
+    for i in ALL:
         r = reports.get(i)
         if not r:
             continue
         module = {"weapon": "weapons.py", "projectile": "projectiles.py", "vehicle": "balloon.py",
-                  "glider": "gliders.py"}.get(r["kind"], "chests.py" if i.startswith("treasure") else "props.py")
+                  "glider": "gliders.py", "melee": "melee.py"}.get(r["kind"], "chests.py" if i.startswith("treasure") else "props.py")
         if i == "acorn_helmet":
             module = "helmet.py"
         entries.append({
@@ -183,7 +188,7 @@ def previews(ids: list[str], blender_bin: str, samples: int) -> None:
     for group, cap in (([i for i in ids if i not in CRITTER_CAPSULE], "1.0"), ([i for i in ids if i in CRITTER_CAPSULE], "1.1")):
         if not group:
             continue
-        glbs = [str(ROOT / "assets" / ("weapons" if i in WEAPON_SHEET else "props") / f"{i}.glb") for i in group]
+        glbs = [str(ROOT / "assets" / ("weapons" if i in IN_WEAPONS else "props") / f"{i}.glb") for i in group]
         blender("render_preview.py", "--out", str(tiles), "--tile", "400", "--samples", str(samples), "--capsule", cap,
                 *glbs, blender_bin=blender_bin)
     if "acorn_helmet" in ids:
@@ -196,12 +201,15 @@ def previews(ids: list[str], blender_bin: str, samples: int) -> None:
             shots += [tiles / f"acorn_helmet_on_bun_{v}.png" for v in ("front", "side", "front34", "back34")]
             title += "  |  rows 2-3: worn by bun (attach point (0, 0.875, -0.010))"
         compose_sheet.closeup(title, shots, ROOT / "assets" / "props" / "acorn_helmet_closeup.png")
-    present = lambda lst: [i for i in lst if (ROOT / "assets" / ("weapons" if i in WEAPON_SHEET else "props")
+    present = lambda lst: [i for i in lst if (ROOT / "assets" / ("weapons" if i in IN_WEAPONS else "props")
                                               / f"{i}.glb").exists()]
     compose_sheet.sheet("Bunny Beat Down - carrot weapons", present(WEAPON_SHEET), tiles, BUILD,
                         ROOT / "assets" / "weapons" / "preview_sheet.png", cols=4, tile=260)
     compose_sheet.sheet("Bunny Beat Down - props & pickups", present(PROP_SHEET), tiles, BUILD,
                         ROOT / "assets" / "props" / "preview_sheet.png", cols=4, tile=260)
+    if present(MELEE_SHEET):
+        compose_sheet.sheet("Bunny Beat Down - melee clubs (one per species)", present(MELEE_SHEET), tiles, BUILD,
+                            ROOT / "assets" / "weapons" / "preview_sheet_melee.png", cols=4, tile=260)
     if present(CHEST_GLIDER_SHEET):
         compose_sheet.sheet("Bunny Beat Down - treasure chests & gliders", present(CHEST_GLIDER_SHEET), tiles, BUILD,
                             ROOT / "assets" / "props" / "preview_sheet_chests_gliders.png", cols=4, tile=260,
@@ -220,7 +228,7 @@ def main() -> int:
     args = ap.parse_args()
     sys.stdout.reconfigure(line_buffering=True)
 
-    ids = args.only or (WEAPON_SHEET + PROP_SHEET + CHEST_GLIDER_SHEET)
+    ids = args.only or ALL
     print("1/6 sources")
     if not args.skip_fetch or not (CACHE / "sources_meta.json").exists():
         subprocess.run([sys.executable, str(HERE / "fetch_sources.py")], check=True)

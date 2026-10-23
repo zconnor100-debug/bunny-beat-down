@@ -3,6 +3,8 @@ extends Node
 ## Reads mouse/keyboard/gamepad and writes the owning Critter's intent.
 ## Recoil is applied to the real aim (not just the camera), and anything
 ## interactable under the crosshair is surfaced to the HUD.
+## On a gamepad A picks up the gun (or works the crate) in front of you and
+## jumps otherwise; B swings your club when your paws are empty.
 
 signal interact_hint_changed(text: String)
 
@@ -55,6 +57,12 @@ func _unhandled_input(event: InputEvent) -> void:
 		critter.use_clover()
 	elif event.is_action_pressed(&"interact"):
 		_interact()
+	elif event.is_action_pressed(&"melee"):
+		critter.want_melee = true
+	elif event is InputEventJoypadButton and event.is_action_pressed(&"crouch") and critter.current_weapon() == null:
+		critter.want_melee = true
+	elif event is InputEventJoypadButton and event.is_action_pressed(&"jump") and _pad_can_interact():
+		_interact()
 	elif event.is_action_pressed(&"drop_weapon"):
 		var w := critter.inventory.take_weapon(critter.current_slot)
 		if w:
@@ -89,18 +97,31 @@ func _physics_process(delta: float) -> void:
 	if rig.aiming and not was_aiming and critter.current_weapon().data.scoped:
 		Audio.play(&"scope_in", -4.0)
 	critter.want_sprint = Input.is_action_pressed(&"sprint")
-	critter.want_crouch = Input.is_action_pressed(&"crouch")
+	# on a pad, B is the club while the paws are empty (not crouch)
+	critter.want_crouch = Input.is_action_pressed(&"crouch") and not (GameInput.using_pad and critter.current_weapon() == null)
 	_jump_buffer -= delta
 	if _jump_buffer > 0.0 and (critter.is_on_floor() or critter.state != Critter.State.GROUND):
 		critter.want_jump = true
 		_jump_buffer = 0.0
 	critter.aim_point = rig.aim_point(critter.visual.hitbox_rids)
 	_update_focus()
-	# treasure chests: keep unlocking while interact is held
-	if _focus is LootCrate and is_instance_valid(_focus) and Input.is_action_pressed(&"interact"):
+	# treasure chests: keep unlocking while interact (or A, on a pad) is held
+	var holding := Input.is_action_pressed(&"interact") or (GameInput.using_pad and Input.is_action_pressed(&"jump"))
+	if _focus is LootCrate and is_instance_valid(_focus) and holding:
 		var crate := _focus as LootCrate
 		if crate.open_time > 0.0 and crate.channel(critter, delta):
 			_focus = null
+
+
+## A on a pad picks things up when there's something right in front of you
+## and on the ground (in the air it's still the glider / jump).
+func _pad_can_interact() -> bool:
+	return _focus != null and is_instance_valid(_focus) and critter.state == Critter.State.GROUND
+
+
+## The button the pickup prompt names: A on a pad, E on the keyboard.
+func _interact_key() -> String:
+	return GameInput.prompt(&"jump") if GameInput.using_pad else GameInput.prompt(&"interact")
 
 
 func _on_shot(shooter: Node, _origin: Vector3, weapon_id: StringName) -> void:
@@ -141,10 +162,10 @@ func _update_focus() -> void:
 		_focus = best
 		var text := ""
 		if best is Pickup:
-			text = "[%s] Pick up %s" % [GameInput.prompt(&"interact"), (best as Pickup).label()]
+			text = "[%s] Pick up %s" % [_interact_key(), (best as Pickup).label()]
 		elif best is LootCrate:
 			var crate := best as LootCrate
-			var key := GameInput.prompt(&"interact")
+			var key := _interact_key()
 			text = "[%s] Open garden crate" % key if crate.open_time <= 0.0 \
 				else "[Hold %s] Unlock %s (%d s)" % [key, crate.display_name, ceili(crate.open_time)]
 		if text != _hint:

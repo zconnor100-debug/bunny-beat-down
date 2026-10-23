@@ -94,6 +94,16 @@
     "sfx/gore_limb_pop_2.ogg",
     "sfx/gore_limb_pop_3.ogg"
   ],
+  "melee_swing": [
+    "sfx/melee_swing_1.ogg",
+    "sfx/melee_swing_2.ogg",
+    "sfx/melee_swing_3.ogg"
+  ],
+  "melee_hit": [
+    "sfx/melee_hit_1.ogg",
+    "sfx/melee_hit_2.ogg",
+    "sfx/melee_hit_3.ogg"
+  ],
   "body_fall": [
     "sfx/body_fall_1.ogg",
     "sfx/body_fall_2.ogg",

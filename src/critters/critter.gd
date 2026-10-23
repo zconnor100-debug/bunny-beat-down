@@ -20,6 +20,12 @@ const GLIDE_SPEED := 11.0
 const FREEFALL_STEER := 14.0
 const AUTO_GLIDE_HEIGHT := 28.0
 const CORPSE_LIFETIME := 75.0
+# melee: with no gun in hand, each species swings its own club
+const MELEE_TIME := 0.55          ## one swing: wind-up, strike, recover
+const MELEE_HIT_AT := 0.45        ## fraction of the swing when the club connects
+const MELEE_DAMAGE := 34.0
+const MELEE_REACH := 1.1          ## metres per unit of rig scale, from the chest
+const MELEE_KEEP := 3.0           ## the club stays out this long after a swing
 
 @export var def: CritterDef
 
@@ -46,6 +52,7 @@ var want_aim := false
 var want_sprint := false
 var want_crouch := false
 var want_jump := false             ## edge-triggered; consumed on use
+var want_melee := false            ## edge-triggered: swing the club (bare paws only)
 
 var inventory := Inventory.new()
 var current_slot := 0
@@ -64,6 +71,9 @@ var _crouch := 0.0
 var _gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity", 16.0)
 var swimming := false
 var _water_level := -INF
+var _melee_t := -1.0               # seconds into the current swing, -1 when not swinging
+var _melee_struck := false
+var _club_out := 0.0               # seconds before the club is put away
 
 
 ## Menu/picker previews: not part of any match (no group, no events, no AI sight).
@@ -165,6 +175,7 @@ func _physics_process(delta: float) -> void:
 		_:
 			_ground_move(delta)
 	_weapon_tick(delta)
+	_melee_tick(delta)
 	_update_facing(delta)
 	_update_visual(delta)
 	if state == State.GROUND:
@@ -398,10 +409,10 @@ func _height_above_ground() -> float:
 
 
 func _update_facing(delta: float) -> void:
-	# armed critters face where they aim; unarmed ones face where they run
+	# armed critters (gun or club) face where they aim; unarmed ones face where they run
 	var target_yaw := look_yaw
 	var hv := Vector2(velocity.x, velocity.z)
-	if current_weapon() == null and hv.length() > 0.5 and not want_aim:
+	if current_weapon() == null and visual.club_model == null and hv.length() > 0.5 and not want_aim:
 		target_yaw = atan2(-velocity.x, -velocity.z)
 	rotation.y = lerp_angle(rotation.y, target_yaw, IKMath.damp(14.0, delta))
 
@@ -413,7 +424,7 @@ func _update_visual(delta: float) -> void:
 	p.aim_dir = (aim_point - get_eye_position()).normalized() if aim_point.distance_squared_to(get_eye_position()) > 1.0 else look_direction()
 	p.crouch = _crouch
 	p.gliding = state == State.GLIDING or state == State.FREEFALL
-	p.armed = current_weapon() != null and not swimming
+	p.armed = (current_weapon() != null or visual.club_model != null) and not swimming
 	p.reload_progress = reload_progress()
 	_recoil = move_toward(_recoil, 0.0, delta * 6.0)
 	p.recoil = _recoil
@@ -477,6 +488,8 @@ func _weapon_tick(delta: float) -> void:
 	_equip_timer = maxf(0.0, _equip_timer - delta)
 	var w := current_weapon()
 	if w == null:
+		if want_fire and not _trigger_held:
+			want_melee = true   # bare paws: the trigger swings the club
 		_trigger_held = want_fire
 		return
 	_bloom = move_toward(_bloom, 0.0, delta * (w.data.bloom_max_deg * 1.5 + 1.0))
@@ -603,6 +616,78 @@ func _on_inventory_changed() -> void:
 
 
 # ---- damage & death ------------------------------------------------------------------------------
+
+# ---- melee -----------------------------------------------------------------------------------
+
+func is_swinging() -> bool:
+	return _melee_t >= 0.0
+
+
+func _melee_tick(delta: float) -> void:
+	if want_melee:
+		want_melee = false
+		if _melee_t < 0.0 and current_weapon() == null and state == State.GROUND and not swimming:
+			_melee_t = 0.0
+			_melee_struck = false
+			_club_out = MELEE_KEEP
+			visual.set_club(true)
+			Audio.play_at(&"melee_swing", global_position, -3.0, 0.12)
+	if _melee_t >= 0.0:
+		_melee_t += delta
+		if not _melee_struck and _melee_t >= MELEE_TIME * MELEE_HIT_AT:
+			_melee_struck = true
+			_melee_strike()
+		if _melee_t >= MELEE_TIME:
+			_melee_t = -1.0
+	elif _club_out > 0.0:
+		_club_out -= delta
+		if _club_out <= 0.0:
+			visual.set_club(false)
+	visual.poser.melee = _melee_t / MELEE_TIME if _melee_t >= 0.0 else -1.0
+
+
+## The club connects: everyone within reach in front of us takes a hit on the
+## body part nearest the club, and gets knocked back.
+func _melee_strike() -> void:
+	var reach := MELEE_REACH * visual.rig.scale
+	var fwd := look_direction()
+	var centre := get_chest_position() + fwd * reach * 0.6
+	var q := PhysicsShapeQueryParameters3D.new()
+	var ball := SphereShape3D.new()
+	ball.radius = reach * 0.65
+	q.shape = ball
+	q.transform = Transform3D(Basis(), centre)
+	q.collision_mask = Layers.HITBOXES
+	q.collide_with_areas = true
+	q.collide_with_bodies = false
+	q.exclude = visual.hitbox_rids
+	var victims := {}   # critter -> [role, distance, position]
+	for hit in get_world_3d().direct_space_state.intersect_shape(q, 64):
+		var area := hit.collider as Node3D
+		if area == null or not area.has_meta(&"critter"):
+			continue
+		var c := area.get_meta(&"critter") as Critter
+		if c == null or c == self or not c.alive:
+			continue
+		var d := area.global_position.distance_to(centre)
+		if not victims.has(c) or d < victims[c][1]:
+			victims[c] = [area.get_meta(&"role", &"chest"), d, area.global_position]
+	for c in victims:
+		var v: Array = victims[c]
+		var info := DamageInfo.make(MELEE_DAMAGE * RigInfo.DAMAGE_SCALE.get(v[0], 1.0), DamageInfo.Kind.MELEE, self, &"melee")
+		info.position = v[2]
+		info.direction = fwd
+		info.bone_role = v[0]
+		info.impulse = 7.0
+		info.dismember_power = 0.35
+		if v[0] == &"head":
+			info.headshot = true
+			info.amount *= 1.5
+		(c as Critter).take_damage(info)
+		(c as Critter).velocity += Vector3(fwd.x, 0.0, fwd.z).normalized() * 5.0 + Vector3.UP * 2.5
+	if not victims.is_empty():
+		Audio.play_at(&"melee_hit", centre, 0.0, 0.1)
+
 
 ## A carrot hit one of this critter's hitboxes.
 func receive_shot(shooter: Node, data: WeaponData, dmg: float, pos: Vector3, dir: Vector3, role: StringName) -> void:

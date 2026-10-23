@@ -19,5 +19,7 @@ jump_style = 5
 gait = 0
 voice_pitch = 0.85
 wears_acorn_helmet = false
+melee_name = "Trout on a Stick"
+melee_model = "res://assets/weapons/melee_trout_stick.glb"
 spawn_weight = 0.9
 names = PackedStringArray("Chompers", "Dam Dan", "Buck Toothington", "Timber", "Woody", "Lodge Lady")

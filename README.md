@@ -69,6 +69,22 @@ Built in **Godot 4.6** (GDScript, Jolt physics, Forward+).
   - Spring-bone ears and tails.
   - Hit flinches and landing squash.
   - Explosion knockback, with corpses and gibs that react to blasts.
+- **A club for every species**, pulled out when your paws are empty. Each
+  swing winds up over the shoulder and brings it down across the body, and
+  hits whoever is in front of you. Bots without a gun brawl up close too.
+
+  | Critter | Club |
+  |---|---|
+  | Bun | Barbed-Wire Carrot |
+  | Bandit Bunny | Shadow Carrot (violet veins, black thorns) |
+  | Frog | Fly Swatter, with the fly still in it |
+  | Fox | Bunny Spine, head still attached |
+  | Squirrel | Acorn Knocker: a stick with a bloody acorn dangling off it |
+  | Hamster | Mousetrap Mallet: a pencil with a sprung trap (and someone's tail) |
+  | Raccoon | Rusty-Nail Corncob |
+  | Beaver | Trout on a Stick |
+
+  ![The melee clubs](assets/weapons/preview_sheet_melee.png)
 - **Gore**:
   - Any limb or head can come off any critter, as a real skinned body part.
   - Blood fountains, splat decals, fur tufts and acorn helmets that fly off.
@@ -161,7 +177,8 @@ godot --headless --path . -s tests/check_scripts.gd     # compile every script
 | Fire / aim (scope) | LMB / RMB | RT / LT |
 | Jump (with species trick) · glide · leave the balloon | Space | A |
 | Sprint / crouch | Shift / Ctrl | L3 / B |
-| Reload / pick up | R / E | X / Y |
+| Reload / pick up | R / E | X / A (with a gun or crate in front of you) or Y |
+| Club swing (empty paws) | F or LMB | B or RT |
 | Switch weapon | 1-3, mouse wheel | LB / RB |
 | Heal (lucky clover) | H | D-pad ↓ |
 | First / third person | V | Back |

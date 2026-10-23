@@ -49,6 +49,7 @@ from `tools/audio/review_checklist.json` — edit that, not this.
 | `reload_end` | Magazine seated firmly (clack), then the bolt release slams the bolt home (CHAK, the loudest part) at ~0.12 s; over in ~0.25 s. | End of every reload. | [1](../assets/audio/sfx/reload_end.ogg) |
 | `dry_fire` | Small, dry metallic click with a puff of air. | Pulling the trigger on an empty gun. | [1](../assets/audio/sfx/dry_fire.ogg) |
 | `weapon_swap` | Quick draw: cloth/strap rustle, small sling-swivel rattle, a grip pat, ending in a sharp safety click-clack. | Switching weapon slots. | [1](../assets/audio/sfx/weapon_swap_1.ogg) [2](../assets/audio/sfx/weapon_swap_2.ogg) |
+| `melee_swing` | One heavy "vwoomp" of air as a bat-sized club swings past (rising, then falling away), a low push under it; no sword whistle or ring. | Every club swing (each species' melee weapon, with empty paws). | [1](../assets/audio/sfx/melee_swing_1.ogg) [2](../assets/audio/sfx/melee_swing_2.ogg) [3](../assets/audio/sfx/melee_swing_3.ogg) |
 
 ## Impacts & gore
 
@@ -59,6 +60,7 @@ from `tools/audio/review_checklist.json` — edit that, not this.
 | `carrot_impact_flesh` | Solid punch into something soft: a thick, wet, meaty squelch with a dull thud under it; no water-droplet blips or bubbly 'bloops'. | Your carrots hitting a critter (hit confirm). | [1](../assets/audio/sfx/carrot_impact_flesh_1.ogg) [2](../assets/audio/sfx/carrot_impact_flesh_2.ogg) [3](../assets/audio/sfx/carrot_impact_flesh_3.ogg) |
 | `headshot` | Comedic hollow BONK with falling pitch and a little cork pop (both takes). | Your headshots. | [1](../assets/audio/sfx/headshot_1.ogg) [2](../assets/audio/sfx/headshot_2.ogg) |
 | `gore_splat` | Hard body hit (fast low thump + heavy punch) under a meaty wet splat and squish, a few dark plips. | Gory kills with Gore: Full (a blast that tears a critter apart, or a headshot that pops the head off). | [1](../assets/audio/sfx/gore_splat_1.ogg) [2](../assets/audio/sfx/gore_splat_2.ogg) [3](../assets/audio/sfx/gore_splat_3.ogg) |
+| `melee_hit` | Heavy blunt THWACK of a club landing: a big punch with a woody knock in it, a dull body under it and a short wet squelch; no pitched "pock". | A club swing connecting with a critter. | [1](../assets/audio/sfx/melee_hit_1.ogg) [2](../assets/audio/sfx/melee_hit_2.ogg) [3](../assets/audio/sfx/melee_hit_3.ogg) |
 | `gore_limb_pop` | Cork-like POP, then a squelch, droplets and a fluff flick. | A limb or head coming off. | [1](../assets/audio/sfx/gore_limb_pop_1.ogg) [2](../assets/audio/sfx/gore_limb_pop_2.ogg) [3](../assets/audio/sfx/gore_limb_pop_3.ogg) |
 | `body_fall` | Heavy soft thud crushing dry leaves and grass right at the start, a softer limb slap just after, a small settle; no bounce. | A body hitting the ground 0.45 s after a critter dies (not after blasts), and the beaver's tail-slap jump landing. | [1](../assets/audio/sfx/body_fall_1.ogg) [2](../assets/audio/sfx/body_fall_2.ogg) [3](../assets/audio/sfx/body_fall_3.ogg) |
 

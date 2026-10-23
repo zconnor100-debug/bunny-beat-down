@@ -31,7 +31,10 @@
       "assets/props/loot_crate.glb",
       "assets/props/supply_drop.glb",
       "assets/weapons/carrot_rocket_launcher.glb",
-      "assets/weapons/carrot_smg.glb"
+      "assets/weapons/carrot_smg.glb",
+      "assets/weapons/melee_mousetrap_mallet.glb",
+      "assets/weapons/melee_nail_corncob.glb",
+      "assets/weapons/melee_trout_stick.glb"
     ]
   },
   {
@@ -72,7 +75,11 @@
       "assets/weapons/carrot_rocket_launcher.glb",
       "assets/weapons/carrot_shotgun.glb",
       "assets/weapons/carrot_smg.glb",
-      "assets/weapons/carrot_sniper.glb"
+      "assets/weapons/carrot_sniper.glb",
+      "assets/weapons/melee_barbed_carrot.glb",
+      "assets/weapons/melee_mousetrap_mallet.glb",
+      "assets/weapons/melee_nail_corncob.glb",
+      "assets/weapons/melee_shadow_carrot.glb"
     ]
   },
   {
@@ -122,7 +129,12 @@
       "assets/weapons/carrot_rocket_launcher.glb",
       "assets/weapons/carrot_shotgun.glb",
       "assets/weapons/carrot_smg.glb",
-      "assets/weapons/carrot_sniper.glb"
+      "assets/weapons/carrot_sniper.glb",
+      "assets/weapons/melee_acorn_knocker.glb",
+      "assets/weapons/melee_barbed_carrot.glb",
+      "assets/weapons/melee_nail_corncob.glb",
+      "assets/weapons/melee_shadow_carrot.glb",
+      "assets/weapons/melee_trout_stick.glb"
     ]
   },
   {
@@ -140,7 +152,9 @@
       "assets/props/dropship_balloon.glb",
       "assets/props/pickup_armor.glb",
       "assets/weapons/carrot_shotgun.glb",
-      "assets/weapons/carrot_sniper.glb"
+      "assets/weapons/carrot_sniper.glb",
+      "assets/weapons/melee_barbed_carrot.glb",
+      "assets/weapons/melee_shadow_carrot.glb"
     ]
   },
   {
@@ -153,7 +167,9 @@
     "changes": "Sampled (box/UV projected, rescaled, tinted) inside procedural Blender materials that add edge wear, cavity dirt and paint chipping, then baked by tools/weapons into each asset's own 512-2048 px PBR atlas. The original image files are not shipped.",
     "used_for": "Bark armour plates (pickup_armor)",
     "files": [
-      "assets/props/pickup_armor.glb"
+      "assets/props/pickup_armor.glb",
+      "assets/weapons/melee_acorn_knocker.glb",
+      "assets/weapons/melee_trout_stick.glb"
     ]
   },
   {
@@ -259,6 +275,7 @@
     "used_for": "Lighting for preview renders only (not shipped inside any glb)",
     "files": [
       "assets/weapons/preview_sheet.png",
+      "assets/weapons/preview_sheet_melee.png",
       "assets/props/preview_sheet.png",
       "assets/props/acorn_helmet_closeup.png"
     ]
@@ -301,7 +318,8 @@
       "assets/weapons/carrot_shell_pellet.glb",
       "assets/weapons/carrot_shotgun.glb",
       "assets/weapons/carrot_smg.glb",
-      "assets/weapons/carrot_sniper.glb"
+      "assets/weapons/carrot_sniper.glb",
+      "assets/weapons/melee_barbed_carrot.glb"
     ]
   },
   {
@@ -315,7 +333,8 @@
     "used_for": "Photoscanned acorn: unwrapped by prep_scans.py into cupule-scale and nut-shell strips (albedo + normal) for the acorn helmet and acorn-shell armour",
     "files": [
       "assets/props/acorn_helmet.glb",
-      "assets/props/pickup_armor.glb"
+      "assets/props/pickup_armor.glb",
+      "assets/weapons/melee_acorn_knocker.glb"
     ]
   },
   {
@@ -745,6 +764,110 @@
     "used_for": "Drop glider: parasol-mushroom cap",
     "files": [
       "assets/props/glider_mushroom.glb"
+    ]
+  },
+  {
+    "asset": "Melee Barbed Carrot",
+    "author": "Bunny Beat Down project",
+    "author_url": "",
+    "license": "MIT (project)",
+    "license_url": "",
+    "source_url": "tools/weapons/blender/assets/melee.py",
+    "changes": "Original model generated from code (Blender Python): procedural geometry, scripted materials and a baked PBR atlas. Third-party textures/scans it samples are credited separately.",
+    "used_for": "Bun's club: a carrot wrapped in barbed wire",
+    "files": [
+      "assets/weapons/melee_barbed_carrot.glb"
+    ]
+  },
+  {
+    "asset": "Melee Shadow Carrot",
+    "author": "Bunny Beat Down project",
+    "author_url": "",
+    "license": "MIT (project)",
+    "license_url": "",
+    "source_url": "tools/weapons/blender/assets/melee.py",
+    "changes": "Original model generated from code (Blender Python): procedural geometry, scripted materials and a baked PBR atlas. Third-party textures/scans it samples are credited separately.",
+    "used_for": "Bandit Bunny's club: a shadow carrot with thorns",
+    "files": [
+      "assets/weapons/melee_shadow_carrot.glb"
+    ]
+  },
+  {
+    "asset": "Melee Fly Swatter",
+    "author": "Bunny Beat Down project",
+    "author_url": "",
+    "license": "MIT (project)",
+    "license_url": "",
+    "source_url": "tools/weapons/blender/assets/melee.py",
+    "changes": "Original model generated from code (Blender Python): procedural geometry, scripted materials and a baked PBR atlas. Third-party textures/scans it samples are credited separately.",
+    "used_for": "Frog's club: a fly swatter with a dead fly stuck in it",
+    "files": [
+      "assets/weapons/melee_fly_swatter.glb"
+    ]
+  },
+  {
+    "asset": "Melee Bunny Spine",
+    "author": "Bunny Beat Down project",
+    "author_url": "",
+    "license": "MIT (project)",
+    "license_url": "",
+    "source_url": "tools/weapons/blender/assets/melee.py",
+    "changes": "Original model generated from code (Blender Python): procedural geometry, scripted materials and a baked PBR atlas. Third-party textures/scans it samples are credited separately.",
+    "used_for": "Fox's club: a bunny spine with the head still attached",
+    "files": [
+      "assets/weapons/melee_bunny_spine.glb"
+    ]
+  },
+  {
+    "asset": "Melee Acorn Knocker",
+    "author": "Bunny Beat Down project",
+    "author_url": "",
+    "license": "MIT (project)",
+    "license_url": "",
+    "source_url": "tools/weapons/blender/assets/melee.py",
+    "changes": "Original model generated from code (Blender Python): procedural geometry, scripted materials and a baked PBR atlas. Third-party textures/scans it samples are credited separately.",
+    "used_for": "Squirrel's club: a stick with a bloody acorn dangling",
+    "files": [
+      "assets/weapons/melee_acorn_knocker.glb"
+    ]
+  },
+  {
+    "asset": "Melee Mousetrap Mallet",
+    "author": "Bunny Beat Down project",
+    "author_url": "",
+    "license": "MIT (project)",
+    "license_url": "",
+    "source_url": "tools/weapons/blender/assets/melee.py",
+    "changes": "Original model generated from code (Blender Python): procedural geometry, scripted materials and a baked PBR atlas. Third-party textures/scans it samples are credited separately.",
+    "used_for": "Hamster's club: a pencil with a sprung mousetrap",
+    "files": [
+      "assets/weapons/melee_mousetrap_mallet.glb"
+    ]
+  },
+  {
+    "asset": "Melee Nail Corncob",
+    "author": "Bunny Beat Down project",
+    "author_url": "",
+    "license": "MIT (project)",
+    "license_url": "",
+    "source_url": "tools/weapons/blender/assets/melee.py",
+    "changes": "Original model generated from code (Blender Python): procedural geometry, scripted materials and a baked PBR atlas. Third-party textures/scans it samples are credited separately.",
+    "used_for": "Raccoon's club: a corncob with rusty nails",
+    "files": [
+      "assets/weapons/melee_nail_corncob.glb"
+    ]
+  },
+  {
+    "asset": "Melee Trout Stick",
+    "author": "Bunny Beat Down project",
+    "author_url": "",
+    "license": "MIT (project)",
+    "license_url": "",
+    "source_url": "tools/weapons/blender/assets/melee.py",
+    "changes": "Original model generated from code (Blender Python): procedural geometry, scripted materials and a baked PBR atlas. Third-party textures/scans it samples are credited separately.",
+    "used_for": "Beaver's club: a gnawed branch with a skewered trout",
+    "files": [
+      "assets/weapons/melee_trout_stick.glb"
     ]
   }
 ]

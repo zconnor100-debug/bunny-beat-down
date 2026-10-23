@@ -39,6 +39,8 @@ var two_handed := true
 var hold_distance := 0.26
 var gliding := false
 var reload_progress := -1.0   ## 0..1 while reloading, -1 otherwise
+var club := false             ## holding the species' melee club instead of a gun
+var melee := -1.0             ## 0..1 through a club swing, -1 otherwise
 var recoil := 0.0             ## 0..1, decays in CritterVisual
 var trick_tuck := 0.0         ## +1 tuck limbs in (flips, rolls), -1 stretch out (leaps)
 var trick_active := false     ## mid-trick: stop tracking the aim, the body is spinning
@@ -176,7 +178,16 @@ func _process_modification_with_delta(delta: float) -> void:
 		var down := -wbasis.y
 		var right := wbasis.x
 		var hold := hold_distance * S
-		if two_handed:
+		if club:
+			# club: held up by the right shoulder; a swing winds it back over the
+			# shoulder, then brings it down across the body
+			grip = sh_r + a * hold * 0.6 + down * 0.04 * S + right * 0.06 * S
+			wbasis = wbasis.rotated(right, _club_angle(melee))
+			if melee >= 0.0:
+				var strike := sin(clampf(melee, 0.0, 1.0) * PI)
+				grip += a * strike * 0.12 * S
+				wbasis = wbasis.rotated(a, -0.5 * strike)
+		elif two_handed:
 			grip = sh_r.lerp(sh_mid, 0.35) + a * hold + down * 0.07 * S
 		else:
 			grip = sh_mid.lerp(sh_r, 0.4) + a * hold + down * 0.02 * S
@@ -258,6 +269,20 @@ func _process_modification_with_delta(delta: float) -> void:
 			# keep the foot at its rest orientation (flat), tilted slightly by the gait
 			var fb: Basis = (rig.rest[StringName(side + "_foot")] as Transform3D).basis
 			_set_global_basis(ft, fb.rotated(RIGHT, _air * 0.3))
+
+
+## Club tilt above the aim line through a swing (0..1; -1 = resting).
+static func _club_angle(p: float) -> float:
+	const REST := 1.15     # up and forward, ready
+	const BACK := 2.5      # wound up over the shoulder
+	const LOW := -0.6      # follow-through, low in front
+	if p < 0.0:
+		return REST
+	if p < 0.35:
+		return lerpf(REST, BACK, smoothstep(0.0, 0.35, p))
+	if p < 0.5:
+		return lerpf(BACK, LOW, smoothstep(0.35, 0.5, p))
+	return lerpf(LOW, REST, smoothstep(0.5, 1.0, p))
 
 
 func _support_point(skel: Skeleton3D, grip: Vector3, wbasis: Basis, S: float) -> Vector3:

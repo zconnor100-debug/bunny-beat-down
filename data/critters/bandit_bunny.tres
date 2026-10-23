@@ -19,5 +19,7 @@ jump_style = 0
 gait = 1
 voice_pitch = 1.05
 wears_acorn_helmet = false
+melee_name = "Shadow Carrot"
+melee_model = "res://assets/weapons/melee_shadow_carrot.glb"
 spawn_weight = 1.0
 names = PackedStringArray("Thumper the Grim", "Cottontail", "Hops McGee", "Nibbles", "Lop-Eared Larry", "Bunnicula")

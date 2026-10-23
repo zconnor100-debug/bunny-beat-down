@@ -137,9 +137,10 @@ func set_first_person(on: bool) -> void:
 	if helmet:
 		for m in ModelUtil.find_all(helmet, "GeometryInstance3D"):
 			(m as GeometryInstance3D).cast_shadow = mode
-	if weapon_model:
-		for m in ModelUtil.find_all(weapon_model, "GeometryInstance3D"):
-			(m as GeometryInstance3D).cast_shadow = mode
+	for held in [weapon_model, club_model]:
+		if held:
+			for m in ModelUtil.find_all(held, "GeometryInstance3D"):
+				(m as GeometryInstance3D).cast_shadow = mode
 
 
 func eye_position() -> Vector3:
@@ -176,7 +177,9 @@ func set_weapon(w: WeaponInstance) -> void:
 	muzzle = null
 	_loaded_round = null
 	poser.support_marker = null
-	poser.armed = w != null
+	if w != null:
+		set_club(false)   # a gun in the paws puts the club away
+	poser.armed = w != null or club_model != null
 	if w == null:
 		return
 	poser.two_handed = w.data.two_handed
@@ -193,6 +196,52 @@ func set_weapon(w: WeaponInstance) -> void:
 	muzzle = ModelUtil.find_named(weapon_model, "Muzzle")
 	poser.support_marker = ModelUtil.find_named(weapon_model, "SupportGrip")
 	_loaded_round = ModelUtil.find_named(weapon_model, "Rocket")
+
+
+# --- melee club ---------------------------------------------------------------------------
+
+var club_model: Node3D
+
+
+## Pull out (or put away) the species' own club. Only with empty paws.
+func set_club(on: bool) -> void:
+	if on and club_model == null and weapon_model == null:
+		if def.melee_model != "" and ResourceLoader.exists(def.melee_model):
+			club_model = ModelUtil.instantiate(def.melee_model)
+		if club_model == null:
+			club_model = _fallback_club()
+		club_model.name = "Club"
+		holder.add_child(club_model)
+		club_model.scale = Vector3.ONE * rig.scale * WEAPON_SCALE
+		for gi in ModelUtil.find_all(club_model, "GeometryInstance3D"):
+			(gi as GeometryInstance3D).layers = RENDER_LAYER
+	elif not on and club_model:
+		club_model.queue_free()
+		club_model = null
+	poser.club = club_model != null
+	if club_model:
+		poser.armed = true
+		poser.two_handed = false
+	else:
+		poser.armed = weapon_model != null
+
+
+func _fallback_club() -> Node3D:
+	# Fallback only — shown until assets/weapons/melee_*.glb exists.
+	var root := Node3D.new()
+	var body := MeshInstance3D.new()
+	var cone := CylinderMesh.new()
+	cone.top_radius = 0.018
+	cone.bottom_radius = 0.045
+	cone.height = 0.5
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = def.fur_color.darkened(0.3)
+	cone.material = mat
+	body.mesh = cone
+	body.rotation.x = -PI / 2.0   # thick end forward (-Z)
+	body.position = Vector3(0, 0, -0.22)
+	root.add_child(body)
+	return root
 
 
 # --- enemy readability ----------------------------------------------------------------------

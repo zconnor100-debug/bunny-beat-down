@@ -1235,6 +1235,42 @@ def gore_limb_pop(c, v):
     return mix(0.6, (pop, 0, 0), (low, 0, -6), (slime, 0.03, -7), (drops, 0, -12), (fluff, 0.02, -15))
 
 
+@recipe("melee_swing", variants=3, loud=-15.0, src="mixed")
+def melee_swing(c, v):
+    """A club swung hard: one heavy 'vwoomp' of moving air (a bat, not a sword:
+    no whistle), the band of noise rising as the club comes over and falling
+    as it passes, with a low push under it and a cloth flick at the start."""
+    r = c.rng
+    dur = [0.30, 0.27, 0.33][v]
+    top = [1250, 1450, 1100][v]
+    up = B.whoosh(r, dur * 0.55, 330, top, q=1.0, peak=0.85, slope=-2.0)
+    down = B.whoosh(r, dur * 0.6, top, 380, q=1.0, peak=0.15, slope=-2.0)
+    body = B.lowbody(r, dur, 80, 380, dur * 0.3, attack=dur * 0.35)
+    flick = highpass(_tail(c.k("rpg-audio", "cloth1", speed=[1.15, 1.25, 1.05][v]), 0.04, 0.05), 400, 2)
+    x = mix(dur + 0.08, (up, 0, 0), (down, dur * 0.5, -1), (body, 0.02, -10), (flick, 0, -16))
+    return _glue(x, -15.0, drive=1.3)
+
+
+@recipe("melee_hit", variants=3, loud=-10.0)
+def melee_hit(c, v):
+    """A club connecting: a heavy blunt THWACK -- a big real punch, the club's
+    woody knock fused into it and a dull noise body under both (no pitched
+    thump: those read as 'pock') -- with a short wet squelch on top."""
+    r = c.rng
+    # the heavy punch / knock clips have a lead-in: trim them onto the hit
+    punch = _onset(_tail(highpass(c.k("impact-sounds", f"impactPunch_heavy_00{[0, 2, 1][v]}",
+                                      speed=[0.9, 0.95, 0.88][v]), 120, 2), 0.06, 0.07))
+    knock = _onset(_tail(highpass(c.k("impact-sounds", f"impactWood_heavy_00{[0, 1, 3][v]}", speed=0.85), 300, 2),
+                         0.025, 0.04))
+    body = B.lowbody(r, 0.16, 50, 500, 0.04, attack=0.0005)
+    sq = lowpass(highpass(_seg(c, SQUISH, [6, 1, 6][v], [0.06, 0.055, 0.06][v], 0.18, hold=0.03, tau=0.04), 200, 2),
+                 2600, 2)
+    smack = B.burst(r, 0.04, 1800, 0.7, 0.004, attack=0.0003)
+    crack = B.crack(r, 0.003, 2400)
+    x = mix(0.35, (punch, 0, 0), (knock, 0, -2), (body, 0, -9), (sq, 0.005, -4), (smack, 0, -8), (crack, 0, -14))
+    return _glue(x, -10.0, drive=1.7)
+
+
 @recipe("body_fall", variants=3, loud=-12.5)
 def body_fall(c, v):
     """A body collapsing onto the forest floor: the heavy soft mass thud
