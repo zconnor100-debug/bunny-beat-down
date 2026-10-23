@@ -49,6 +49,7 @@ var rival := false                ## this bot has your number: it hunts you
 ## How the player likes to fight, learned over past matches (PlayerProfile):
 ## "close" → bots keep their distance from you, "far" → they rush you.
 static var player_style := ""
+static var player_stealth := 1.0  ## the Light Step perk: bots spot you this much slower
 var _hunt_pos := Vector3.INF      # the director sent us to flush the player out of hiding
 var _hunt_until := 0.0
 
@@ -150,7 +151,7 @@ func _perceive() -> void:
 		var ahead := lerpf(0.4, 1.0, smoothstep(FOV_DOT, 0.8, facing))
 		var moving := 0.5 + 0.5 * clampf(Vector2(other.velocity.x, other.velocity.z).length() / 3.0, 0.0, 1.0)
 		var flash := 3.0 if _clock - float(_shots_seen.get(other, -100.0)) < 1.0 else 1.0
-		var rate := SPOT_RATE * lerpf(0.6, 1.4, skill) * near * ahead * moving * flash * vis
+		var rate := SPOT_RATE * lerpf(0.6, 1.4, skill) * near * ahead * moving * flash * vis * (player_stealth if other.is_player else 1.0)
 		var aware := minf(1.5, float(_awareness.get(other, 0.0)) + rate * dt)
 		_awareness[other] = aware
 		# a target is someone we're sure of (or still tracking)

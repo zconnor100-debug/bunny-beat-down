@@ -35,6 +35,7 @@ const WANDER_SPEED := 2.5           ## m/s the wandering circle creeps
 var variant := "classic"
 var player: Critter                 ## the Hungry Briar's favourite
 var nap_left := 0.0                 ## the Bribable Briar is asleep for this long
+var rush := false                   ## Briar Rush (a run modifier): no waiting before the first shrink
 const SHADER := preload("res://src/match/storm.gdshader")
 
 var stage := 0
@@ -73,7 +74,7 @@ func start(island_: Island, start_radius: float, pace_ := 1.0, variant_ := "clas
 	radius = start_radius
 	stage = 0
 	_plan_next()
-	time_left = _wait_of(0)
+	time_left = 0.5 if rush else _wait_of(0)
 	shrinking = false
 	active = true
 	_build_wall()

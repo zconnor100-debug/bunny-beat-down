@@ -143,6 +143,14 @@ Built in **Godot 4.6** (GDScript, Jolt physics, Forward+).
   them head there), and which guns you win with (they fight you at the
   range those guns are worst at). Sit still too long and the nearest bots
   come to flush you out; go on a hot streak and they sharpen up for a while.
+- **The Burrow (roguelike progression).** Every match pays acorns (by
+  placement, beat-downs and revenge on rivals). Spend them in the Burrow on
+  perks that are real power, because there's nobody else's fairness to
+  protect: Thick Fur (drop in with 50 shield), Pocket Clovers, Quick Paws,
+  Spring Legs, Lucky Start (land with a Prize-tier gun or better), Second
+  Wind (survive one killing blow), Light Step and Hawk Eye. Take two into
+  each match. Run modifiers (Low Gravity, Glass Cannon, Golden Hour, Briar
+  Rush) change a match and how much it pays.
 - **A Briar with moods.** Every match rolls one, announced as you drop:
   the *Hungry* Briar closes each circle in on you, the *Sticky* one slows
   you in its thorns, the *Bribable* one naps for 15 s if you munch a lucky
@@ -239,7 +247,7 @@ The full write-up is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
   `ToyProps`, `ToyRoom`), plus `ToyTrain`: `AnimatableBody3D` cars
   following a resampled loop, so riders are carried by the physics engine,
   and a bumper `Area3D` that bonks critters on the line.
-- **Tests that play the game.** A headless suite of 82 tests covers:
+- **Tests that play the game.** A headless suite of 84 tests covers:
   - the IK maths, hitboxes, ragdolls and dismemberment;
   - island navigation, the three biomes and the big buildings (a Bun walks
     in through the barn doors; every indoor loot spot is reachable on the
@@ -249,7 +257,8 @@ The full write-up is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
     whoever is on the track; the fishbowl is swimmable) and the game rules;
   - rivals (made, remembered across runs, back in the next match, hunting
     and taunting, revenge), the bots learning you (landings, fighting style,
-    camping, hot streaks) and every Briar mood;
+    camping, hot streaks), every Briar mood, and the Burrow (earning,
+    unlocking, equipping, every perk and modifier in a match);
   - the player's input loop through real keyboard and gamepad events (menus,
     crouch → crawl, the L3 + R3 chord, aim assist, one gun in first person)
     and licensing;

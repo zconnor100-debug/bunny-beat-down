@@ -45,6 +45,8 @@ var _spectating := false
 var _seed := 0
 var _picker: CharacterSelect
 var _map := "island"
+var _paid := false          # acorns for this match already added
+var _earned := 0
 
 
 func _ready() -> void:
@@ -385,7 +387,11 @@ func _show_end(title: String, sub: String, won: bool, killer: Critter) -> void:
 	v.add_child(s)
 	_end.set_meta(&"sub", s)
 	var p := match_manager.player
-	var stats := UITheme.label("Beat downs: %d   •   Damage: %d   •   %s #%d" % [p.kills, roundi(p.damage_dealt), island.map_title, _seed], 20, Color(UITheme.CREAM, 0.8))
+	if not _paid:
+		_paid = true
+		_earned = Burrow.reward(1 if won else p.placement, match_manager.total, p.kills, match_manager.revenges)
+		Burrow.add_acorns(_earned)
+	var stats := UITheme.label("Beat downs: %d   •   Damage: %d   •   %s #%d   •   +%d 🌰 (%d in the Burrow)" % [p.kills, roundi(p.damage_dealt), island.map_title, _seed, _earned, Burrow.acorns()], 20, Color(UITheme.CREAM, 0.8))
 	stats.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(stats)
 	var row := HBoxContainer.new()

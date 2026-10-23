@@ -36,6 +36,16 @@ func test_menu_buttons_answer_a_and_b() -> void:
 	await wait_frames(4)
 	check(_focus_text() == "Play", "the title screen starts on Play (focus: %s)" % _focus_text())
 
+	# The Burrow: open with A, B comes back to the same button
+	await _pad(JOY_BUTTON_DPAD_DOWN)
+	check(_focus_text() == "The Burrow", "D-pad down moves to The Burrow (focus: %s)" % _focus_text())
+	await _pad(JOY_BUTTON_A)
+	check(menu.find_children("*", "BurrowPanel", true, false).size() == 1, "A opens the Burrow")
+	await _pad(JOY_BUTTON_B)
+	await wait_frames(1)
+	check(menu.find_children("*", "BurrowPanel", true, false).is_empty(), "B closes the Burrow")
+	check(_focus_text() == "The Burrow", "and the pad is back on The Burrow (focus: %s)" % _focus_text())
+
 	# Settings: open with A, starts on its first option, B comes back to the same button
 	await _pad(JOY_BUTTON_DPAD_DOWN)
 	check(_focus_text() == "Settings", "D-pad down moves to Settings (focus: %s)" % _focus_text())
@@ -50,6 +60,7 @@ func test_menu_buttons_answer_a_and_b() -> void:
 	check(_focus_text() == "Settings", "and the pad is back on the Settings button (focus: %s)" % _focus_text())
 
 	# Play: the D-pad steps the opponent count, B goes back
+	await _pad(JOY_BUTTON_DPAD_UP)
 	await _pad(JOY_BUTTON_DPAD_UP)
 	await _pad(JOY_BUTTON_A)
 	check(_focus_text() == "Drop in!", "A on Play opens the match setup on 'Drop in!' (focus: %s)" % _focus_text())
@@ -67,6 +78,7 @@ func test_menu_buttons_answer_a_and_b() -> void:
 	check(_focus_text() == "Play", "B backs out to Play (focus: %s)" % _focus_text())
 
 	# Credits: opens on Back, B closes it
+	await _pad(JOY_BUTTON_DPAD_DOWN)
 	await _pad(JOY_BUTTON_DPAD_DOWN)
 	await _pad(JOY_BUTTON_DPAD_DOWN)
 	await _pad(JOY_BUTTON_A)

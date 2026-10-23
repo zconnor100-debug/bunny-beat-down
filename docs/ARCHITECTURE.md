@@ -201,6 +201,13 @@ The third map follows the cage's pattern (`ToyBox extends Island`,
   the wait time and damage (sleepy), a creep during waits (wandering), and a
   nap timer fed by `Events.clover_eaten` (bribable).
 
+- **`Burrow`** (in the profile file) holds acorns, unlocked and equipped
+  perks and run modifiers. `MatchManager._apply_perks` gives the player its
+  perks at spawn (armor, clovers, a gun, `Critter.reload_scale`,
+  `jump_scale`, `second_wind`); modifiers flip match-wide switches
+  (`Critter.glass_cannon`, gravity, loot tier, `Storm.rush`). The end screen
+  pays out `Burrow.reward()`.
+
 ## Battle-royale loop
 
 `MatchManager` spawns 1 player plus N bots (species weighted from

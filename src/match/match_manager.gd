@@ -40,6 +40,7 @@ var _clock := 0.0
 var _landed := false
 ## This match's Briar mood (see Storm.VARIANTS): classic a quarter of the time.
 var briar_variant := "classic"
+var revenges := 0                    ## rivals the player beat down this match (acorns!)
 var _taunted: Dictionary = {}       # "name|event" -> true (spot taunts once a match)
 var _supply_t := 0.0
 const SUPPLY_INTERVAL := 75.0
@@ -49,6 +50,10 @@ func setup(world_root_: Node3D, island_: Island, opponents: int, difficulty: int
 	world_root = world_root_
 	island = island_
 	pace = pace_
+	# this match's Burrow modifiers and perks that act on everyone
+	Critter.glass_cannon = Burrow.modifier_on("glass_cannon")
+	CritterVisual.name_tag_range_scale = 2.0 if Burrow.has_perk("hawk_eye") else 1.0
+	AIBrain.player_stealth = 0.6 if Burrow.has_perk("light_step") else 1.0
 	rng.seed = seed_ * 7 + 1
 	var moods := Storm.VARIANTS.keys().filter(func(k): return k != "classic")
 	briar_variant = "classic" if rng.randf() < 0.25 else moods[rng.randi() % moods.size()]
@@ -106,6 +111,7 @@ func spawn_player(def: CritterDef, skin_id: String) -> Critter:
 	var display := "Bun" if def.id == &"bun" else "You (%s)" % def.display_name
 	player = _spawn_critter(def, display)
 	player.visual.apply_skin(skin_id)
+	_apply_perks(player)
 	var pc := PlayerController.new()
 	pc.name = "PlayerController"
 	player.add_child(pc)
@@ -116,6 +122,24 @@ func spawn_player(def: CritterDef, skin_id: String) -> Critter:
 	total = critters.size()
 	Events.alive_count_changed.emit(total, total)
 	return player
+
+
+## The perks you took into this match from the Burrow.
+func _apply_perks(p: Critter) -> void:
+	if Burrow.has_perk("thick_fur"):
+		p.armor = 50.0
+	if Burrow.has_perk("pocket_clover"):
+		p.inventory.clovers += 2
+	if Burrow.has_perk("quick_paws"):
+		p.reload_scale = 0.75
+	if Burrow.has_perk("spring_legs"):
+		p.jump_scale *= 1.3
+	if Burrow.has_perk("second_wind"):
+		p.second_wind = true
+	if Burrow.has_perk("lucky_start"):
+		var w := WeaponInstance.new(WeaponDB.random_weapon(rng), rng.randi_range(Rarity.Tier.PRIZE, Rarity.Tier.GOLDEN))
+		p.give_weapon(w)
+		p.inventory.add_ammo(w.data.ammo_type, Inventory.AMMO_PICKUP[w.data.ammo_type] * 2)
 
 
 func _available_defs() -> Array[CritterDef]:
@@ -163,6 +187,9 @@ func _spawn_critter(def: CritterDef, display: String) -> Critter:
 	var c := Critter.new()
 	c.def = def
 	c.display_name = display
+	if Burrow.modifier_on("low_gravity"):
+		c._gravity *= 0.55
+		c.jump_scale = 1.8
 	c.name = "Critter_%s" % display.replace(" ", "_")
 	world_root.add_child(c)
 	critters.append(c)
@@ -189,7 +216,10 @@ func _spawn_loot() -> void:
 		var roll := rng.randf()
 		var spec: Dictionary
 		if roll < 0.45:
-			var w := WeaponInstance.new(WeaponDB.random_weapon(rng), Rarity.roll(Rarity.FLOOR_WEIGHTS, rng))
+			var tier := Rarity.roll(Rarity.FLOOR_WEIGHTS, rng)
+			if Burrow.modifier_on("golden_hour"):
+				tier = mini(tier + 1, Rarity.Tier.GOLDEN)
+			var w := WeaponInstance.new(WeaponDB.random_weapon(rng), tier)
 			Pickup.spawn(world_root, Pickup.weapon_spec(w), pos + Vector3.UP * 0.3)
 			spec = Pickup.ammo_spec(w.data.ammo_type, Inventory.AMMO_PICKUP[w.data.ammo_type])
 			pos += Vector3(rng.randf_range(-1, 1), 0, rng.randf_range(-1, 1))
@@ -259,6 +289,7 @@ func _process(delta: float) -> void:
 				anyone_aboard = true
 		if not anyone_aboard:
 			storm.player = player
+			storm.rush = Burrow.modifier_on("briar_rush")
 			storm.start(island, island.terrain.island_radius + 50.0, pace, briar_variant)
 			var v: Dictionary = Storm.VARIANTS[storm.variant]
 			Events.announce.emit(String(v.title).to_upper(), v.rule)
@@ -364,6 +395,7 @@ func _on_critter_died(victim: Node, info: DamageInfo) -> void:
 	elif killer == player and c != player:
 		_note_player_kill(info)
 		if RivalBook.note_you_beat(c.display_name, String(c.def.id)):
+			revenges += 1
 			Events.rival_news.emit("REVENGE!", "You beat down your rival %s — now %s" % [c.display_name, RivalBook.score(c.display_name)])
 		if c.display_name in _rival_names() or rng.randf() < 0.35:
 			taunt(c, "lose")

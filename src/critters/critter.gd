@@ -77,6 +77,13 @@ var _stand_height := 1.0
 var _gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity", 16.0)
 var swimming := false
 var slow_factor := 1.0              ## the Sticky Briar's thorns set this (1 = normal speed)
+## Burrow perks and run modifiers (see Burrow): jump height and reload time
+## multipliers, and a once-a-match Second Wind.
+var jump_scale := 1.0
+var reload_scale := 1.0
+var second_wind := false
+## Glass Cannon: the player deals and takes half as much again.
+static var glass_cannon := false
 var _water_level := -INF
 var _melee_t := -1.0               # seconds into the current swing, -1 when not swinging
 var _melee_struck := false
@@ -175,7 +182,7 @@ func reload_progress() -> float:
 	var w := current_weapon()
 	if w == null or _reload_timer < 0.0:
 		return -1.0
-	return 1.0 - _reload_timer / w.reload_time()
+	return 1.0 - _reload_timer / (w.reload_time() * reload_scale)
 
 
 func look_direction() -> Vector3:
@@ -255,7 +262,7 @@ func _ground_move(delta: float) -> void:
 	velocity.z = hv.z
 	if on_floor:
 		if want_jump:
-			velocity.y = sqrt(2.0 * _gravity * def.jump_height)
+			velocity.y = sqrt(2.0 * _gravity * def.jump_height * jump_scale)
 			Audio.play_at(&"hop" if def.gait == CritterDef.Gait.HOP else &"jump", global_position, -6.0)
 			# every species has its own move in the air (bunnies flip!)
 			visual.start_jump_trick(global_basis.inverse() * velocity, 2.0 * velocity.y / _gravity)
@@ -616,7 +623,7 @@ func start_reload() -> void:
 		return
 	if inventory.ammo[w.data.ammo_type] <= 0:
 		return
-	_reload_timer = w.reload_time()
+	_reload_timer = w.reload_time() * reload_scale
 	Audio.play_at(&"reload_start", global_position, -4.0)
 
 
@@ -779,6 +786,8 @@ func take_damage(info: DamageInfo) -> void:
 		return
 	if is_player and info.attacker is Critter and info.attacker != self and not (info.attacker as Critter).is_player:
 		info.amount *= AIBrain.damage_to_player   # bots hit softer than they look (per difficulty)
+	if glass_cannon and (is_player or (info.attacker is Critter and (info.attacker as Critter).is_player and info.attacker != self)):
+		info.amount *= 1.5
 	var dmg := info.amount
 	if info.kind != DamageInfo.Kind.STORM and info.kind != DamageInfo.Kind.FALL and armor > 0.0:
 		var absorbed := minf(armor, dmg)
@@ -804,6 +813,11 @@ func take_damage(info: DamageInfo) -> void:
 	Events.critter_damaged.emit(self, info)
 	if info.attacker is Critter and (info.attacker as Critter).is_player and info.attacker != self:
 		Events.player_hit_confirmed.emit(self, info.amount, info.headshot, health <= 0.0)
+	if health <= 0.0 and second_wind:
+		second_wind = false
+		health = 1.0
+		if is_player:
+			Events.announce.emit("SECOND WIND!", "Back on your paws with 1 HP. Run!")
 	if health <= 0.0:
 		_die(info)
 

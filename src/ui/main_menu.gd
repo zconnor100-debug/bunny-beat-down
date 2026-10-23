@@ -143,7 +143,7 @@ func _build_ui() -> void:
 	var tag := UITheme.label("One bunny. One acorn helmet. A whole lot of carrots.", 24, UITheme.CREAM)
 	_menu.add_child(tag)
 	_menu.add_child(Control.new())
-	for item in [["Play", _open_play], ["Settings", _open_settings], ["Credits", _open_credits], ["Quit", func(): get_tree().quit()]]:
+	for item in [["Play", _open_play], ["The Burrow", _open_burrow], ["Settings", _open_settings], ["Credits", _open_credits], ["Quit", func(): get_tree().quit()]]:
 		var b := UITheme.button(item[0], item[1])
 		b.custom_minimum_size = Vector2(320, 64)
 		b.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
@@ -196,6 +196,12 @@ func _close_overlay() -> void:
 
 func _open_settings() -> void:
 	var p := SettingsPanel.new()
+	p.closed.connect(_close_overlay)
+	_show_overlay(p)
+
+
+func _open_burrow() -> void:
+	var p := BurrowPanel.new()
 	p.closed.connect(_close_overlay)
 	_show_overlay(p)
 

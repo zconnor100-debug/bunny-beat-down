@@ -19,6 +19,7 @@ const GLIDER_VARIANTS := [
 const GOLD_SHADER := preload("res://src/fx/golden.gdshader")
 const ENEMY_RIM_SHADER := preload("res://src/fx/enemy_rim.gdshader")
 const NAME_TAG_RANGE := 45.0
+static var name_tag_range_scale := 1.0     ## the Hawk Eye perk doubles it
 
 static var _enemy_rim: ShaderMaterial
 
@@ -310,7 +311,7 @@ func set_enemy_highlight(display_name: String, rival := false) -> void:
 		name_tag.modulate = Color(1.0, 0.42, 0.3)
 		name_tag.outline_modulate = Color(0.1, 0.03, 0.02, 0.9)
 		name_tag.no_depth_test = false
-		name_tag.visibility_range_end = NAME_TAG_RANGE
+		name_tag.visibility_range_end = NAME_TAG_RANGE * name_tag_range_scale
 		name_tag.visibility_range_end_margin = 4.0
 		name_tag.visibility_range_fade_mode = GeometryInstance3D.VISIBILITY_RANGE_FADE_SELF
 		name_tag.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
