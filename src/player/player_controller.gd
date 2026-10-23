@@ -141,11 +141,12 @@ func _update_focus() -> void:
 		_focus = best
 		var text := ""
 		if best is Pickup:
-			text = "[E] Pick up %s" % (best as Pickup).label()
+			text = "[%s] Pick up %s" % [GameInput.prompt(&"interact"), (best as Pickup).label()]
 		elif best is LootCrate:
 			var crate := best as LootCrate
-			text = "[E] Open garden crate" if crate.open_time <= 0.0 \
-				else "[Hold E] Unlock %s (%d s)" % [crate.display_name, ceili(crate.open_time)]
+			var key := GameInput.prompt(&"interact")
+			text = "[%s] Open garden crate" % key if crate.open_time <= 0.0 \
+				else "[Hold %s] Unlock %s (%d s)" % [key, crate.display_name, ceili(crate.open_time)]
 		if text != _hint:
 			_hint = text
 			interact_hint_changed.emit(text)

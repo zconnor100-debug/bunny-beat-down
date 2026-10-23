@@ -7,6 +7,7 @@ extends PanelContainer
 
 signal closed
 
+const STICK_SCROLL := 1400.0   # px/s at full stick tilt
 const DIR := "res://assets/credits"
 const SECTIONS := {
 	"characters": "Critters",
@@ -15,6 +16,8 @@ const SECTIONS := {
 	"audio": "Sound & Music",
 	"fonts": "Fonts",
 }
+
+var _text: RichTextLabel
 
 
 func _ready() -> void:
@@ -26,20 +29,35 @@ func _ready() -> void:
 	var title := UITheme.label("Credits", 56, UITheme.CARROT_LIGHT, true)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(title)
-	var rt := RichTextLabel.new()
-	rt.bbcode_enabled = true
-	rt.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	rt.custom_minimum_size = Vector2(1000, 560)
-	rt.meta_clicked.connect(func(meta): OS.shell_open(str(meta)))
-	rt.text = build_bbcode()
-	v.add_child(rt)
+	_text = RichTextLabel.new()
+	_text.bbcode_enabled = true
+	_text.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_text.custom_minimum_size = Vector2(1000, 560)
+	_text.meta_clicked.connect(func(meta): OS.shell_open(str(meta)))
+	_text.text = build_bbcode()
+	v.add_child(_text)
 	var row := HBoxContainer.new()
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	row.add_theme_constant_override("separation", 16)
-	row.add_child(UITheme.button("Engine licenses", func(): rt.text = _engine_licenses()))
-	row.add_child(UITheme.button("Asset credits", func(): rt.text = build_bbcode()))
-	row.add_child(UITheme.button("Back", func(): closed.emit()))
+	row.add_child(UITheme.button("Engine licenses", func(): _text.text = _engine_licenses()))
+	row.add_child(UITheme.button("Asset credits", func(): _text.text = build_bbcode()))
+	var back := UITheme.button("Back", func(): closed.emit())
+	row.add_child(back)
 	v.add_child(row)
+	back.grab_focus.call_deferred()
+
+
+## Either stick scrolls the list; B / Escape goes back.
+func _process(delta: float) -> void:
+	var tilt := Input.get_axis(&"look_up", &"look_down") + Input.get_axis(&"move_forward", &"move_back")
+	if tilt != 0.0:
+		_text.get_v_scroll_bar().value += clampf(tilt, -1.0, 1.0) * STICK_SCROLL * delta
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed(&"ui_cancel"):
+		get_viewport().set_input_as_handled()
+		closed.emit()
 
 
 static func load_entries() -> Dictionary:

@@ -7,6 +7,7 @@ const GAME_SCENE := "res://scenes/game.tscn"
 var _ui: Control
 var _menu: VBoxContainer
 var _overlay: Control
+var _return_focus: Control   # the menu button that opened the overlay
 var _cam: Camera3D
 var _bun: Critter
 var _t := 0.0
@@ -143,7 +144,7 @@ func _build_ui() -> void:
 		b.custom_minimum_size = Vector2(320, 64)
 		b.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 		_menu.add_child(b)
-	(_menu.get_child(3) as Button).grab_focus.call_deferred()
+	_play_button().grab_focus.call_deferred()
 	var ver := UITheme.label("v%s  •  Godot %s" % [ProjectSettings.get_setting("application/config/version"), Engine.get_version_info().string], 16, Color(UITheme.CREAM, 0.7))
 	ver.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT)
 	ver.offset_left = 24
@@ -151,9 +152,28 @@ func _build_ui() -> void:
 	_ui.add_child(ver)
 
 
+func _play_button() -> Button:
+	return _menu.get_child(3) as Button
+
+
+## Pad / keyboard: B or Escape backs out of the open panel (Settings and
+## Credits handle it themselves), and a press with nothing focused picks the
+## menu back up.
+func _unhandled_input(event: InputEvent) -> void:
+	if _ui == null:
+		return
+	if _overlay and event.is_action_pressed(&"ui_cancel"):
+		_close_overlay()
+		get_viewport().set_input_as_handled()
+	else:
+		UITheme.refocus_if_lost(event, get_viewport(), UITheme.first_focusable(_overlay) if _overlay else _play_button())
+
+
 func _show_overlay(panel: Control) -> void:
 	if _overlay:
 		_overlay.queue_free()
+	else:
+		_return_focus = get_viewport().gui_get_focus_owner()
 	_menu.visible = false
 	var center := CenterContainer.new()
 	center.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -167,6 +187,7 @@ func _close_overlay() -> void:
 		_overlay.queue_free()
 		_overlay = null
 	_menu.visible = true
+	(_return_focus if is_instance_valid(_return_focus) else _play_button()).grab_focus()
 
 
 func _open_settings() -> void:
@@ -196,7 +217,7 @@ func _open_play() -> void:
 	grid.add_theme_constant_override("v_separation", 12)
 	v.add_child(grid)
 	grid.add_child(UITheme.label("Opponents", 22))
-	var opp := SpinBox.new()
+	var opp := UITheme.pad_spin_box(SpinBox.new())
 	opp.min_value = 1
 	opp.max_value = 49
 	opp.value = Settings.get_value(&"opponents")
@@ -210,7 +231,7 @@ func _open_play() -> void:
 	diff.item_selected.connect(func(i): Settings.set_value(&"difficulty", i))
 	grid.add_child(diff)
 	grid.add_child(UITheme.label("Island seed (0 = random)", 22))
-	var seed_box := SpinBox.new()
+	var seed_box := UITheme.pad_spin_box(SpinBox.new())
 	seed_box.min_value = 0
 	seed_box.max_value = 999999
 	seed_box.value = Settings.get_value(&"seed")

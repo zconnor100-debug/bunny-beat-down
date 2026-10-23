@@ -35,6 +35,8 @@ var _next_trick := 2.5
 var _spin := 0.0
 var _dragging := false
 const SPIN_PER_PIXEL := TAU / 420.0   # one preview-width drag = a full turn
+const SPIN_PAD_SPEED := PI            # rad/s at full right-stick tilt
+var _done := false
 
 
 func _ready() -> void:
@@ -76,11 +78,11 @@ func _ready() -> void:
 	_viewport.msaa_3d = Viewport.MSAA_4X
 	svc.add_child(_viewport)
 	_build_stage()
-	var hint := UITheme.label("⟲  drag to spin", 16, Color(UITheme.CREAM, 0.6))
+	var hint := UITheme.label("⟲  drag or right stick to spin", 16, Color(UITheme.CREAM, 0.6))
 	hint.set_anchors_and_offsets_preset(Control.PRESET_CENTER_BOTTOM)
 	hint.offset_top = -30
-	hint.offset_left = -80
-	hint.offset_right = 80
+	hint.offset_left = -160
+	hint.offset_right = 160
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	hint.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	stage.add_child(hint)
@@ -90,23 +92,26 @@ func _ready() -> void:
 	v.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	h.add_child(v)
 	v.add_child(UITheme.label("Choose your critter", 40, UITheme.CARROT_LIGHT, true))
+	# The picker's buttons are for the mouse; a pad or keyboard drives it
+	# directly (D-pad / arrows / WASD, A or Enter to drop), so they never
+	# take focus and swallow those presses.
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 12)
-	row.add_child(UITheme.button("◀", func(): _cycle(-1)))
+	row.add_child(_mouse_button("◀", func(): _cycle(-1)))
 	_name = UITheme.label("", 38, UITheme.CREAM, true)
 	_name.custom_minimum_size = Vector2(300, 0)
 	_name.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	row.add_child(_name)
-	row.add_child(UITheme.button("▶", func(): _cycle(1)))
+	row.add_child(_mouse_button("▶", func(): _cycle(1)))
 	v.add_child(row)
 	var srow := HBoxContainer.new()
 	srow.add_theme_constant_override("separation", 12)
-	srow.add_child(UITheme.button("◀", func(): _cycle_skin(-1)))
+	srow.add_child(_mouse_button("◀", func(): _cycle_skin(-1)))
 	_skin_label = UITheme.label("", 24)
 	_skin_label.custom_minimum_size = Vector2(300, 0)
 	_skin_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	srow.add_child(_skin_label)
-	srow.add_child(UITheme.button("▶", func(): _cycle_skin(1)))
+	srow.add_child(_mouse_button("▶", func(): _cycle_skin(1)))
 	v.add_child(srow)
 	_blurb = UITheme.label("", 20, Color(UITheme.CREAM, 0.9))
 	_blurb.autowrap_mode = TextServer.AUTOWRAP_WORD
@@ -117,12 +122,24 @@ func _ready() -> void:
 	var spacer := Control.new()
 	spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	v.add_child(spacer)
-	_go = UITheme.button("Growing the island…", func(): confirmed.emit())
+	_go = _mouse_button("Growing the island…", _confirm)
 	_go.custom_minimum_size = Vector2(320, 64)
 	_go.size_flags_horizontal = Control.SIZE_SHRINK_END
 	v.add_child(_go)
 	ready_to_drop = ready_to_drop
 	_show()
+
+
+func _mouse_button(text: String, on_press: Callable) -> Button:
+	var b := UITheme.button(text, on_press)
+	b.focus_mode = Control.FOCUS_NONE
+	return b
+
+
+func _confirm() -> void:
+	if ready_to_drop and not _done:
+		_done = true
+		confirmed.emit()
 
 
 func _build_stage() -> void:
@@ -253,6 +270,8 @@ func _process(delta: float) -> void:
 	if _next_trick <= 0.0:
 		_next_trick = 3.5
 		_preview.want_jump = true
+	if not _done:
+		_spin = wrapf(_spin + Input.get_axis(&"look_left", &"look_right") * SPIN_PAD_SPEED * delta, -PI, PI)
 
 
 ## Click (or touch) and drag on the preview to spin the critter 360° either way.
@@ -268,12 +287,22 @@ func _on_preview_input(event: InputEvent) -> void:
 		accept_event()
 
 
+## D-pad, arrow keys, WASD and the shoulder buttons step through critters
+## (sideways) and skins (up / down); A, Space or Enter drops in. The left
+## stick is ignored: it skipped past choices.
 func _unhandled_input(event: InputEvent) -> void:
-	if event.is_action_pressed(&"move_left") or event.is_action_pressed(&"weapon_prev"):
+	if _done or event is InputEventJoypadMotion:
+		return
+	if event.is_action_pressed(&"ui_left") or event.is_action_pressed(&"move_left") or event.is_action_pressed(&"weapon_prev"):
 		_cycle(-1)
-	elif event.is_action_pressed(&"move_right") or event.is_action_pressed(&"weapon_next"):
+	elif event.is_action_pressed(&"ui_right") or event.is_action_pressed(&"move_right") or event.is_action_pressed(&"weapon_next"):
 		_cycle(1)
-	elif event.is_action_pressed(&"move_forward"):
+	elif event.is_action_pressed(&"ui_up") or event.is_action_pressed(&"move_forward"):
 		_cycle_skin(1)
-	elif event.is_action_pressed(&"jump") and ready_to_drop:
-		confirmed.emit()
+	elif event.is_action_pressed(&"ui_down") or event.is_action_pressed(&"move_back"):
+		_cycle_skin(-1)
+	elif event.is_action_pressed(&"jump") or event.is_action_pressed(&"ui_accept"):
+		_confirm()
+	else:
+		return
+	get_viewport().set_input_as_handled()

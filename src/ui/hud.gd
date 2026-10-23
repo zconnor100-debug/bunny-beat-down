@@ -227,7 +227,7 @@ func _process(delta: float) -> void:
 		l.text = "%d  %s" % [i + 1, sw.data.display_name.replace("Carrot ", "") if sw else "—"]
 		var sb := _slot_style(sw.rarity if sw else -1, i == player.current_slot)
 		_slots[i].add_theme_stylebox_override("panel", sb)
-	_clover_label.text = "Lucky clovers: %d   [H] to heal" % player.inventory.clovers if player.inventory.clovers > 0 else ""
+	_clover_label.text = "Lucky clovers: %d   [%s] to heal" % [player.inventory.clovers, GameInput.prompt(&"heal")] if player.inventory.clovers > 0 else ""
 
 	# Briar status
 	var storm := match_manager.storm if match_manager else null

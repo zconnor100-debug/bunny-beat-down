@@ -155,6 +155,11 @@ godot --headless --path . -s tests/check_scripts.gd     # compile every script
 | First / third person | V | Back |
 | Swap shoulder | Q | R3 |
 | Map | M (hold) | D-pad ↑ |
+| Pause | Esc | Start |
+| Menus: move / select / back | Arrows / Enter / Esc | D-pad / A / B |
+| Character picker: critter / skin / spin | ← → / ↑ ↓ / drag | D-pad ← → / D-pad ↑ ↓ / right stick |
+
+On-screen prompts follow whichever you used last (“[Y] Pick up” vs “[E] Pick up”).
 
 ## Assets and credits
 

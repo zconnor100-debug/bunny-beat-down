@@ -161,3 +161,42 @@ static func button(text: String, on_press: Callable) -> Button:
 	b.mouse_entered.connect(func(): Audio.play(&"ui_hover", -14.0, 0.0))
 	b.focus_mode = Control.FOCUS_ALL
 	return b
+
+
+## A SpinBox ignores the D-pad (its text field only takes typing), so let pad
+## left / right step the value.
+static func pad_spin_box(spin: SpinBox) -> SpinBox:
+	var field := spin.get_line_edit()
+	field.gui_input.connect(func(e: InputEvent):
+		if e is InputEventJoypadButton and e.pressed and (e.is_action(&"ui_left") or e.is_action(&"ui_right")):
+			spin.value += spin.step if e.is_action(&"ui_right") else -spin.step
+			field.accept_event())
+	return spin
+
+
+## The first visible control under `root` that a pad / keyboard can focus.
+static func first_focusable(root: Node) -> Control:
+	for c in root.get_children():
+		var ctl := c as Control
+		if ctl == null or not ctl.is_visible_in_tree():
+			continue
+		if ctl.focus_mode == Control.FOCUS_ALL and not (ctl is BaseButton and (ctl as BaseButton).disabled):
+			return ctl
+		var inner := first_focusable(ctl)
+		if inner:
+			return inner
+	return null
+
+
+## Menus driven by a pad need something focused, or A and the D-pad do
+## nothing (a mouse click on empty space drops focus). On a menu press with
+## nothing focused, focus `fallback` and swallow the press. Returns true if it did.
+static func refocus_if_lost(event: InputEvent, viewport: Viewport, fallback: Control) -> bool:
+	if fallback == null or viewport.gui_get_focus_owner() != null:
+		return false
+	for a in [&"ui_accept", &"ui_up", &"ui_down", &"ui_left", &"ui_right"]:
+		if event.is_action_pressed(a) and not (event is InputEventJoypadMotion):
+			fallback.grab_focus()
+			viewport.set_input_as_handled()
+			return true
+	return false

@@ -39,6 +39,29 @@ const BINDINGS := {
 	&"screenshot": [[KEY, KEY_F12]],
 }
 
+## Godot's built-in menu actions have no gamepad button for "press the focused
+## button" or "back", so A selects and B goes back (alongside Enter / Space and
+## Escape, which stay).
+const UI_PAD := {&"ui_accept": JOY_BUTTON_A, &"ui_cancel": JOY_BUTTON_B}
+## Menus move with the D-pad only: Godot also steers them with the left stick,
+## which skips past choices (and the stick is for walking anyway).
+const UI_DIRECTIONS := [&"ui_up", &"ui_down", &"ui_left", &"ui_right"]
+
+## Short on-screen names for pad inputs, so prompts can say "[Y]" not "[E]".
+const PAD_BUTTON_NAMES := {
+	JOY_BUTTON_A: "A", JOY_BUTTON_B: "B", JOY_BUTTON_X: "X", JOY_BUTTON_Y: "Y",
+	JOY_BUTTON_LEFT_SHOULDER: "LB", JOY_BUTTON_RIGHT_SHOULDER: "RB",
+	JOY_BUTTON_LEFT_STICK: "L3", JOY_BUTTON_RIGHT_STICK: "R3",
+	JOY_BUTTON_BACK: "Back", JOY_BUTTON_START: "Start",
+	JOY_BUTTON_DPAD_UP: "D-pad ↑", JOY_BUTTON_DPAD_DOWN: "D-pad ↓",
+	JOY_BUTTON_DPAD_LEFT: "D-pad ←", JOY_BUTTON_DPAD_RIGHT: "D-pad →",
+}
+const PAD_AXIS_NAMES := {JOY_AXIS_TRIGGER_LEFT: "LT", JOY_AXIS_TRIGGER_RIGHT: "RT"}
+
+## True while the player is on a gamepad (their last button or stick push came
+## from one); prompts then name pad buttons instead of keys.
+var using_pad := false
+
 
 func _enter_tree() -> void:
 	for action in BINDINGS:
@@ -47,6 +70,28 @@ func _enter_tree() -> void:
 		InputMap.add_action(action, 0.25)
 		for b in BINDINGS[action]:
 			InputMap.action_add_event(action, _make_event(b))
+	for action in UI_PAD:
+		var e := _make_event([PAD_BUTTON, UI_PAD[action]])
+		if not InputMap.action_has_event(action, e):
+			InputMap.action_add_event(action, e)
+	for action in UI_DIRECTIONS:
+		for e in InputMap.action_get_events(action):
+			if e is InputEventJoypadMotion:
+				InputMap.action_erase_event(action, e)
+	using_pad = not Input.get_connected_joypads().is_empty()
+
+
+## The button to show in a prompt for `action` on the device in use:
+## "SPACE" / "E" on keyboard, "A" / "Y" on a gamepad.
+func prompt(action: StringName) -> String:
+	for b in BINDINGS.get(action, []):
+		if using_pad and b[0] == PAD_BUTTON:
+			return PAD_BUTTON_NAMES.get(b[1], "?")
+		if using_pad and b[0] == PAD_AXIS and PAD_AXIS_NAMES.has(b[1]):
+			return PAD_AXIS_NAMES[b[1]]
+		if not using_pad and b[0] == KEY:
+			return OS.get_keycode_string(b[1]).to_upper()
+	return String(action).capitalize()
 
 
 func _make_event(b: Array) -> InputEvent:
@@ -68,6 +113,13 @@ func _make_event(b: Array) -> InputEvent:
 			e.axis = b[1]
 			e.axis_value = b[2]
 			return e
+
+
+func _input(event: InputEvent) -> void:
+	if event is InputEventJoypadButton or (event is InputEventJoypadMotion and absf(event.axis_value) > 0.5):
+		using_pad = true
+	elif event is InputEventKey or event is InputEventMouseButton:
+		using_pad = false
 
 
 func _unhandled_input(event: InputEvent) -> void:

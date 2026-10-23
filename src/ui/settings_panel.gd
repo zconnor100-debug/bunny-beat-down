@@ -38,6 +38,14 @@ func _ready() -> void:
 	var note := UITheme.label("Graphics quality applies to the next match.", 16, Color(UITheme.CREAM, 0.7))
 	note.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(note)
+	# pads and keyboards start on the first option (D-pad ← → changes it)
+	UITheme.first_focusable(_grid).grab_focus.call_deferred()
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed(&"ui_cancel"):
+		get_viewport().set_input_as_handled()
+		closed.emit()
 
 
 func _row_label(text: String) -> void:

@@ -115,7 +115,7 @@ func _start() -> void:
 	if ambience:
 		ambience.volume_db = -10.0
 		ambience.play()
-	hud.show_message("Press SPACE to jump!", "Pick your spot — the balloon won't wait.", 6.0)
+	hud.show_message("Press %s to jump!" % GameInput.prompt(&"jump"), "Pick your spot — the balloon won't wait.", 6.0)
 	match_manager.player.state_changed.connect(_on_player_state)
 	GameSession.matches_played += 1
 	if OS.get_cmdline_user_args().has("--smoke-test"):
@@ -150,7 +150,7 @@ func _on_player_state(s: int) -> void:
 	match s:
 		Critter.State.FREEFALL:
 			rig.spectate_target = null
-			hud.show_message("Wheee!", "SPACE to pop your dandelion glider", 3.0)
+			hud.show_message("Wheee!", "%s to pop your dandelion glider" % GameInput.prompt(&"jump"), 3.0)
 		Critter.State.GROUND:
 			if match_manager.phase == MatchManager.Phase.DROPPING or match_manager.phase == MatchManager.Phase.PLAYING:
 				hud.show_message("Find a carrot gun!", "Crates and glowing loot have the good stuff", 3.0)
@@ -168,6 +168,12 @@ func _unhandled_input(event: InputEvent) -> void:
 		if _end == null:
 			_toggle_pause()
 		get_viewport().set_input_as_handled()
+	elif _pause and event.is_action_pressed(&"ui_cancel"):   # B backs out of the pause menu
+		_toggle_pause()
+		get_viewport().set_input_as_handled()
+	elif _pause or _end:
+		var menu := _pause if _pause else _end
+		UITheme.refocus_if_lost(event, get_viewport(), UITheme.first_focusable(menu))
 	elif event.is_action_pressed(&"jump") and match_manager and match_manager.phase == MatchManager.Phase.DROPPING:
 		match_manager.player_jump()
 	elif event is InputEventMouseButton and event.pressed and Input.mouse_mode != Input.MOUSE_MODE_CAPTURED and _pause == null and _end == null:
@@ -259,15 +265,25 @@ func _toggle_pause() -> void:
 	var resume := UITheme.button("Resume", _toggle_pause)
 	v.add_child(resume)
 	v.add_child(UITheme.button("Settings", func():
+		var back_to := get_viewport().gui_get_focus_owner()   # this button, for the pad
 		var p := SettingsPanel.new()
 		c.remove_child(v)
 		c.add_child(p)
 		p.closed.connect(func():
 			p.queue_free()
-			c.add_child(v))))
-	v.add_child(UITheme.button("Controls", func(): hud.show_message("WASD move • Mouse aim • LMB fire • RMB aim", "SPACE jump/glide • SHIFT sprint • CTRL crouch • R reload • E pick up • H heal • V camera • Q shoulder • M map", 6.0)))
+			c.add_child(v)
+			if back_to:
+				back_to.grab_focus())))
+	v.add_child(UITheme.button("Controls", _show_controls))
 	v.add_child(UITheme.button("Quit to menu", _to_menu))
 	resume.grab_focus.call_deferred()
+
+
+func _show_controls() -> void:
+	if GameInput.using_pad:
+		hud.show_message("Left stick move • Right stick aim • RT fire • LT aim", "A jump/glide • L3 sprint • B crouch • X reload • Y pick up • LB/RB switch • D-pad ↓ heal • Back camera • R3 shoulder • D-pad ↑ map", 6.0)
+	else:
+		hud.show_message("WASD move • Mouse aim • LMB fire • RMB aim", "SPACE jump/glide • SHIFT sprint • CTRL crouch • R reload • E pick up • H heal • V camera • Q shoulder • M map", 6.0)
 
 
 func _to_menu() -> void:
