@@ -1,10 +1,11 @@
 class_name Rocket
 extends Node3D
-## A rocket carrot: slow enough to see (and dodge), trails smoke, and
-## detonates on contact or after a few seconds.
+## A rocket carrot: fast, trails smoke, and detonates on contact or after a
+## few seconds. A direct hit on a critter hurts it far more than the blast,
+## which still catches everyone within the splash radius.
 
 const MODEL := "res://assets/weapons/carrot_rocket.glb"
-const LIFETIME := 6.0
+const LIFETIME := 4.0
 
 var shooter: Node
 var weapon: WeaponInstance
@@ -53,6 +54,7 @@ func _physics_process(delta: float) -> void:
 	var hit := get_world_3d().direct_space_state.intersect_ray(q)
 	if hit:
 		global_position = hit.position - velocity.normalized() * 0.15
+		_direct_hit(hit)
 		_detonate()
 		return
 	global_position = to
@@ -65,6 +67,24 @@ func _face() -> void:
 	if velocity.length_squared() > 0.01:
 		var f := velocity.normalized()
 		global_basis = Basis.looking_at(f, Vector3.UP if absf(f.y) < 0.98 else Vector3.RIGHT)
+
+
+## Square on a critter's hitbox: the weapon's (huge) direct damage, before
+## the blast adds its share.
+func _direct_hit(hit: Dictionary) -> void:
+	var col: Object = hit.collider
+	if not (col is Area3D and (col as Node).has_meta(&"critter")):
+		return
+	var critter := (col as Node).get_meta(&"critter") as Critter
+	if critter == null or not is_instance_valid(critter) or not critter.alive:
+		return
+	var info := DamageInfo.make(weapon.data.damage * weapon.damage_scale(), DamageInfo.Kind.EXPLOSION, shooter, weapon.data.id)
+	info.position = hit.position
+	info.direction = velocity.normalized()
+	info.bone_role = (col as Node).get_meta(&"role", &"chest")
+	info.impulse = weapon.data.impulse
+	info.dismember_power = weapon.data.dismember_power
+	critter.take_damage(info)
 
 
 func _detonate() -> void:

@@ -476,7 +476,7 @@ class HUDOverlay:
 		var bx := 30.0
 		var by := size.y - 110.0
 		var w := 360.0
-		_bar(Vector2(bx, by), w, 22.0, p.armor / p.max_armor, UITheme.ACORN, "ARMOR %d" % roundi(p.armor), font)
+		_bar(Vector2(bx, by), w, 22.0, p.armor / p.max_armor, UITheme.ACORN, "SHIELD %d" % roundi(p.armor), font)
 		_bar(Vector2(bx, by + 34.0), w, 30.0, p.health / p.max_health, Color("5fc23a") if p.health > 35 else UITheme.BERRY, "HP %d" % roundi(p.health), font)
 		# damage numbers
 		if hud.rig:

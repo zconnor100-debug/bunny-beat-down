@@ -103,7 +103,7 @@ func _run() -> void:
 	# --- under the glider: legs hanging, leaning into a steer to the right
 	var gliders: Array[Critter] = []
 	for i in 2:
-		var c := _spawn(["bun", "fox"][i], Vector3(40 + i * 7.0, 0.05, 40), 0.0)
+		var c := _spawn(["hamster", "frog"][i], Vector3(40 + i * 7.0, 0.05, 40), 0.0)
 		c.begin_freefall(Vector3(40 + i * 7.0, 80, 40), Vector3.ZERO)
 		c.want_jump = true
 		c.give_weapon(WeaponInstance.new(WeaponDB.get_weapon(&"carrot_pistol")))   # face the way they look
@@ -125,9 +125,10 @@ func _run() -> void:
 	var bun := _spawn("bun", Vector3(-1.5, 0.05, 30), PI * 0.8)
 	bun.process_mode = Node.PROCESS_MODE_DISABLED   # (a live Bun would scoop it up)
 	Pickup.spawn(self, Pickup.clover_spec(1), Vector3(2.5, 0.4, 30))
+	Pickup.spawn(self, Pickup.armor_spec(50.0), Vector3(5.5, 0.4, 30))
 	await _wait(1.0)
-	_look(Vector3(0.5, 2.4, 38), Vector3(0.5, 1.1, 30))
-	await _snap("36_clover")
+	_look(Vector3(2.0, 2.4, 39), Vector3(2.0, 1.1, 30))
+	await _snap("36_clover_and_shield")
 	bun.queue_free()
 
 	# --- first person: the club over a shotgun, mid-swing
@@ -143,6 +144,6 @@ func _run() -> void:
 	me.want_melee = true
 	await _wait(Critter.MELEE_TIME * 0.12)
 	await _snap("38_fp_club_ready")
-	await _wait(Critter.MELEE_TIME * 0.33)
+	await _wait(Critter.MELEE_TIME * (Critter.MELEE_HIT_AT - 0.12))
 	await _snap("39_fp_club_strike")
 	get_tree().quit()

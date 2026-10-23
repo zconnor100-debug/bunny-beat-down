@@ -33,8 +33,8 @@ Built in **Godot 4.6** (GDScript, Jolt physics, Forward+).
   | Carrot Shotgun | nine julienned pellets, pump action |
   | Carrot Assault Rifle | the all-rounder, banana-carrot magazine |
   | Carrot LMG | a pan of baby carrots and no off switch |
-  | The Long Carrot | bolt-action sniper with a real scope view |
-  | Carrot Rocket Launcher | one very large, very angry carrot |
+  | The Long Carrot | bolt-action sniper with a real scope view; 800 m/s, so little leading |
+  | Carrot Rocket Launcher | one very large, very angry carrot: a direct hit is lethal, and the blast reaches 10 m |
 
   Five loot rarities run from Baby to **Golden**, and Golden guns shimmer.
   Projectiles are real carrots that fly with drop and **stay stuck** in
@@ -60,15 +60,20 @@ Built in **Godot 4.6** (GDScript, Jolt physics, Forward+).
     to glide down on;
   - floor loot, garden crates and **treasure chests**: hold E for up to 5 s,
     out in the open, for the best gear;
+  - big glowing pickups: green **lucky clover** bottles to heal and orange
+    **acorn shields** for armor;
   - critter cottages, stumps, log piles and stone walls for cover;
   - the shrinking **Briar** and supply drops;
   - a kill feed, a minimap and full map, spectating, and *Winner Winner Carrot
     Dinner*.
 - **Moving like a critter**: long, bounding strides at an unhurried step
   rate (a short flight in every stride, so short legs don't patter); sprint
-  while aiming; crouch → lie down and army-crawl (opposite elbow and knee) →
-  stand, all on one button; legs dangle under the glider and critter and
-  canopy lean together into the steer.
+  while aiming; crouch → lie down and army-crawl → stand, all on one button.
+  The crawl plants each paw and drags the body past it while the opposite
+  knee draws up and pushes, so nothing slides; a gun rides along in the
+  right paw. Under the glider both paws grip the handle (short arms stretch,
+  cartoon-style, to reach it), the legs dangle, and critter and canopy lean
+  together into the steer.
 - **Small-critter physics**:
   - Jolt ragdolls with per-limb joint limits.
   - Spring-bone ears and tails.
@@ -77,8 +82,8 @@ Built in **Godot 4.6** (GDScript, Jolt physics, Forward+).
 - **A club for every species**, three quarters of the critter's height. It
   comes out with empty paws, or any time on F / R3 (a gun in the paws is
   stowed for the swing and comes straight back). Each swing winds up over the
-  shoulder and brings it down across the body, and hits whoever is in front of
-  you. Bots brawl with bare paws and bash point-blank with a gun out.
+  shoulder and whips down across the body, connecting the moment the club
+  passes chest height, and hits whoever is in front of you. Bots brawl with bare paws and bash point-blank with a gun out.
 
   | Critter | Club |
   |---|---|
@@ -93,7 +98,8 @@ Built in **Godot 4.6** (GDScript, Jolt physics, Forward+).
 
   ![The melee clubs](assets/weapons/preview_sheet_melee.png)
 - **Gore**:
-  - Any limb or head can come off any critter, as a real skinned body part.
+  - Any limb or head can come off any critter, as a real skinned body part
+    with a clean, capped stump.
   - Blood fountains, splat decals, fur tufts and acorn helmets that fly off.
   - Three settings: **Full**, **Plushie** (stuffing instead of blood) and **Off**.
 - **Situational awareness**:
@@ -132,7 +138,10 @@ Built in **Godot 4.6** (GDScript, Jolt physics, Forward+).
   - Seventeen named landmarks in all, among them Carrot Patch, Picnic Hill,
     Mushroom Ring, Duck Pond, Gnome Garden, Hollow Stump, Boulder Bluff,
     Log Jam, Bayou Shacks and Haystack Barn.
-  - Paths, ground cover that bends in the wind, PBR terrain and water.
+  - Paths, ground cover that bends in the wind, PBR terrain and water. The
+    textures are mipmapped and toned toward their average colour, with gentle
+    bumps, SMAA on top of MSAA and alpha-to-coverage leaves, for a smooth,
+    cartoony look instead of photo grain.
 
   ![The barn, the lodge, the swamp and the stilt shacks](docs/screenshots/biomes.jpg)
 - **Full UI**: menus, settings, pause, loading screen, gamepad support, and a
@@ -151,8 +160,10 @@ The full write-up is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
     markers.
 - **Dismemberment without pre-cut meshes.** A severed limb is a copy of the
   same skinned model with its skeleton *re-rooted* at the cut bone. On the
-  corpse, a final modifier collapses the missing subtree into the stump.
-  This works on every model in the roster.
+  corpse, a final modifier collapses the missing subtree into the stump; on
+  the gib, the rest of the body collapses *into the cut*, so skin shared
+  across the joint pinches shut instead of stretching off in spikes. This
+  works on every model in the roster.
 - **One body, two brains.** Players and bots write the same intent struct, so
   bots get no aim or movement cheats.
 - **Deterministic island generation**: fBm, ridged and mesa terrain blended
@@ -162,13 +173,14 @@ The full write-up is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
   assembled in code from textured boxes and logs (every wall run is a
   collider, so doorways are real gaps for the navmesh), and a tiled async
   navmesh bake.
-- **Tests that play the game.** A headless suite of 61 tests covers:
+- **Tests that play the game.** A headless suite of 65 tests covers:
   - the IK maths, hitboxes, ragdolls and dismemberment;
   - island navigation, the three biomes and the big buildings (a Bun walks
     in through the barn doors; every indoor loot spot is reachable on the
     navmesh) and the game rules;
   - the player's input loop through real keyboard and gamepad events (menus,
-    crouch → crawl, the L3 + R3 chord, aim assist) and licensing;
+    crouch → crawl, the L3 + R3 chord, aim assist, one gun in first person)
+    and licensing;
   - **a complete 8-bot match** that must loot, fight and finish.
 
   CI runs it on every push.

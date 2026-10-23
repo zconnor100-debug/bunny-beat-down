@@ -13,6 +13,7 @@ extends StaticBody3D
 enum Style { LODGE, BARN, SHACK }
 
 const TEXTURES := "res://assets/textures/%s/%s"
+const SOFT_SHADER := preload("res://src/world/shaders/soft_pbr.gdshader")
 const DOOR_W := 4.8
 const DOOR_H := 5.4
 
@@ -519,7 +520,8 @@ func _commit() -> void:
 	_surfaces.clear()
 
 
-## Shared PBR materials (texture tiles are in metres: UVs are in metres).
+## Shared materials (texture tiles are in metres: UVs are in metres). The
+## textured ones use the soft PBR shader (photo detail toned down).
 static func material(key: StringName) -> Material:
 	if _materials.has(key):
 		return _materials[key]
@@ -529,40 +531,41 @@ static func material(key: StringName) -> Material:
 		&"barn_red": ["planks", 2.4, Color(1.35, 0.36, 0.28), true],
 		&"barn_white": ["planks", 2.4, Color(0.9, 0.88, 0.82), false],
 		&"floorboards": ["floorboards", 2.2, Color(1, 1, 1), true],
-		&"thatch": ["thatch", 3.0, Color(1, 1, 1), true],
+		&"thatch": ["thatch", 4.5, Color(1, 1, 1), true],
 		&"slate_roof": ["slate_roof", 2.6, Color(1, 1, 1), true],
 		&"tin_roof": ["tin_roof", 2.2, Color(1, 1, 1), true],
-		&"bark": ["bark", 1.6, Color(1, 1, 1), true],
+		&"bark": ["bark", 2.4, Color(1, 1, 1), true],
 		&"rock": ["rock", 3.0, Color(1, 1, 1), true],
 	}.get(key, [])
-	var m := StandardMaterial3D.new()
-	if spec.is_empty():
-		match key:
-			&"carrot":
-				m.albedo_color = Color(0.95, 0.45, 0.1)
-			&"leaf":
-				m.albedo_color = Color(0.3, 0.6, 0.15)
-			&"lantern":
-				m.albedo_color = Color(1.0, 0.8, 0.45)
-				m.emission_enabled = true
-				m.emission = Color(1.0, 0.7, 0.35)
-				m.emission_energy_multiplier = 3.0
-		m.roughness = 0.6
-	else:
+	if not spec.is_empty():
+		var sm := ShaderMaterial.new()
+		sm.shader = SOFT_SHADER
 		var dir: String = spec[0]
-		if spec[3]:
-			m.albedo_texture = _tex(TEXTURES % [dir, "albedo.jpg"])
-		m.albedo_color = spec[2]
+		var alb := _tex(TEXTURES % [dir, "albedo.jpg"]) if spec[3] else null
 		var nrm := _tex(TEXTURES % [dir, "normal.png"])
-		if nrm:
-			m.normal_enabled = true
-			m.normal_texture = nrm
 		var rgh := _tex(TEXTURES % [dir, "roughness.jpg"])
-		if rgh:
-			m.roughness_texture = rgh
-			m.roughness_texture_channel = BaseMaterial3D.TEXTURE_CHANNEL_GREEN
-		m.uv1_scale = Vector3.ONE / float(spec[1])
-		m.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS_ANISOTROPIC
+		sm.set_shader_parameter(&"albedo_tex", alb)
+		sm.set_shader_parameter(&"use_albedo", alb != null)
+		sm.set_shader_parameter(&"normal_tex", nrm)
+		sm.set_shader_parameter(&"use_normal", nrm != null)
+		sm.set_shader_parameter(&"rough_tex", rgh)
+		sm.set_shader_parameter(&"use_rough", rgh != null)
+		sm.set_shader_parameter(&"tint", spec[2])
+		sm.set_shader_parameter(&"metres_per_repeat", float(spec[1]))
+		_materials[key] = sm
+		return sm
+	var m := StandardMaterial3D.new()
+	match key:
+		&"carrot":
+			m.albedo_color = Color(0.95, 0.45, 0.1)
+		&"leaf":
+			m.albedo_color = Color(0.3, 0.6, 0.15)
+		&"lantern":
+			m.albedo_color = Color(1.0, 0.8, 0.45)
+			m.emission_enabled = true
+			m.emission = Color(1.0, 0.7, 0.35)
+			m.emission_energy_multiplier = 3.0
+	m.roughness = 0.6
 	m.cull_mode = BaseMaterial3D.CULL_BACK
 	_materials[key] = m
 	return m

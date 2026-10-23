@@ -32,14 +32,22 @@ const HOP_AIR := 0.72
 const STEP_RATE := 1.4
 const STEP_RATE_PER_HEIGHT := 0.33
 const PLANT := 1.1
-## One crawl cycle (both elbows) covers this many leg lengths.
-const CRAWL_STRIDE := 1.3
+## Army crawl: each paw is planted for CRAWL_STANCE of a cycle and drags the
+## body CRAWL_PULL arm lengths forward (it stays put on the ground while the
+## body slides past it), then lifts and reaches ahead again; the opposite knee
+## draws up and pushes in step with it.
+const CRAWL_STANCE := 0.6
+const CRAWL_PULL := 0.9
+## Hanging from a glider, short arms stretch (cartoon-style, up to this many
+## times their length) so both paws really hold the handle.
+const ARM_STRETCH_MAX := 2.6
 
 signal footstep(hop: bool)
 
 var rig: RigInfo
 var holder: Node3D            ## weapon holder, placed by this modifier
 var support_marker: Node3D    ## "SupportGrip" inside the weapon model (optional)
+var glide_grip: Node3D        ## the glider, whose origin is its handle (while gliding)
 
 # ---- inputs, written by CritterVisual every frame (world space) ------------------
 var velocity := Vector3.ZERO
@@ -63,6 +71,7 @@ var trick_active := false     ## mid-trick: stop tracking the aim, the body is s
 var _phase := 0.0
 var _prev_phase := 0.0
 var _move := 0.0
+var _crawl := 0.0             # 0..1: how hard the limbs work at the army crawl
 var _air := 0.0
 var _land := 0.0
 var _flinch := Vector3.ZERO
@@ -106,8 +115,10 @@ func _process_modification_with_delta(delta: float) -> void:
 	var to_skel := skel.global_basis.orthonormalized().inverse()
 	var v := to_skel * velocity / rig.size   # model units (the model node is scaled)
 	var hv := Vector3(v.x, 0.0, v.z)
-	var speed := hv.length()
-	var move_dir := hv / speed if speed > 0.05 else FWD
+	# ground speed from the world velocity: lying prone (or mid-flip) the
+	# skeleton is tipped over, and its own "horizontal" would read ~0
+	var speed := Vector2(velocity.x, velocity.z).length() / rig.size
+	var move_dir := hv.normalized() if hv.length() > 0.05 else FWD
 	var S := rig.scale
 	var leg: float = (rig.leg_length[&"l"] + rig.leg_length[&"r"]) * 0.5
 
@@ -129,10 +140,15 @@ func _process_modification_with_delta(delta: float) -> void:
 	# bunnies take long bounding hops (~2–3 per second), not a rapid patter
 	var hop_len := leg * (HOP_BASE + speed * HOP_PER_SPEED / S)
 	var crawling := prone > 0.5
+	# crawling is slow, so its limbs go full stroke at a slow speed (the walk
+	# measure `_move` would barely stir them, and the critter would just slide)
+	_crawl = lerpf(_crawl, clampf(speed / (0.1 * S), 0.0, 1.0) if crawling else 0.0, IKMath.damp(8.0, delta))
+	var arm_avg: float = (_seg_len["r_arm1"] + _seg_len["r_arm2"] + _seg_len["l_arm1"] + _seg_len["l_arm2"]) * 0.5
 	if gliding:
 		pass   # the legs dangle; the clock waits for the landing
 	elif crawling:
-		_phase = fposmod(_phase + speed / (leg * CRAWL_STRIDE) * TAU * delta, TAU)
+		# one cycle per (planted share × pull length): planted paws keep still
+		_phase = fposmod(_phase + speed / (arm_avg * CRAWL_PULL / CRAWL_STANCE) * TAU * delta, TAU)
 	elif gait == CritterDef.Gait.HOP:
 		_phase = fposmod(_phase + speed / hop_len * TAU * delta, TAU)
 	else:
@@ -156,7 +172,7 @@ func _process_modification_with_delta(delta: float) -> void:
 	var hop_air := 0.0
 	if crawling:
 		# the body rolls a little toward each elbow as it pulls
-		hip_pos += RIGHT * sin(_phase) * 0.02 * S * _move
+		hip_pos += RIGHT * sin(_phase) * 0.03 * S * _crawl
 	elif gait == CritterDef.Gait.HOP:
 		var u := _phase / TAU
 		hop_air = sin(u / HOP_AIR * PI) if u < HOP_AIR else 0.0
@@ -176,7 +192,7 @@ func _process_modification_with_delta(delta: float) -> void:
 	_set_global_origin(hips, hip_pos)
 	_rotate_global(hips, Quaternion(RIGHT, -_lean))
 	if crawling:
-		_rotate_global(hips, Quaternion(UP, sin(_phase) * 0.14 * _move))
+		_rotate_global(hips, Quaternion(UP, sin(_phase) * 0.16 * _crawl))
 	elif gait == CritterDef.Gait.RUN:
 		_rotate_global(hips, Quaternion(UP, sin(_phase) * 0.12 * _move))
 
@@ -221,6 +237,14 @@ func _process_modification_with_delta(delta: float) -> void:
 		reload_k = sin(clampf(reload_progress, 0.0, 1.0) * PI)
 	if holder:
 		holder.visible = armed and not gliding
+	# army-crawl paw targets (the gun, if any, rides along in the right paw)
+	var crawl_paw := {}
+	if crawling:
+		var depth: float = maxf(rig.radii.get(&"chest", 0.05), rig.radii.get(&"spine", 0.05))
+		for side in [&"r", &"l"]:
+			var shoulder_c := sh_r if side == &"r" else sh_l
+			var len_c: float = _seg_len[side + "_arm1"] + _seg_len[side + "_arm2"]
+			crawl_paw[side] = _crawl_paw(side, shoulder_c, len_c, depth, S)
 	if armed and not gliding:
 		var down := -wbasis.y
 		var right := wbasis.x
@@ -231,7 +255,7 @@ func _process_modification_with_delta(delta: float) -> void:
 			grip = sh_r + a * hold * 0.6 + down * 0.04 * S + right * 0.06 * S
 			wbasis = wbasis.rotated(right, _club_angle(melee))
 			if melee >= 0.0:
-				var strike := sin(clampf(melee, 0.0, 1.0) * PI)
+				var strike := _club_strike(melee)
 				grip += a * strike * 0.12 * S
 				wbasis = wbasis.rotated(a, -0.5 * strike)
 		elif two_handed:
@@ -243,6 +267,8 @@ func _process_modification_with_delta(delta: float) -> void:
 		if reload_k > 0.0:
 			wbasis = wbasis.rotated(a, -reload_k * 0.6).rotated(right, -reload_k * 0.35)
 			grip += down * reload_k * 0.05 * S
+		if crawling and _crawl > 0.01:
+			grip = grip.lerp(crawl_paw[&"r"], _crawl)
 		if holder:
 			holder.global_transform = skel.global_transform * Transform3D(wbasis, grip)
 
@@ -257,19 +283,35 @@ func _process_modification_with_delta(delta: float) -> void:
 		var arm_len: float = _seg_len[side + "_arm1"] + _seg_len[side + "_arm2"]
 		var target: Vector3
 		var pole := shoulder + RIGHT * sgn * 0.35 * S - UP * 0.45 * S - FWD * 0.25 * S
-		if gliding:
+		var l1: float = _seg_len[side + "_arm1"]
+		var l2: float = _seg_len[side + "_arm2"]
+		if gliding and glide_grip and is_instance_valid(glide_grip):
+			# both paws wrap the handle, one above the other; arms too short to
+			# reach it stretch so the critter visibly hangs from its paws
+			var handle := skel.global_transform.affine_inverse() * glide_grip.global_position
+			target = handle + UP * sgn * 0.035 * S + RIGHT * sgn * 0.02 * S
+			pole = shoulder + RIGHT * sgn * 0.5 * S - FWD * 0.2 * S
+			var k := clampf(shoulder.distance_to(target) / (arm_len * 0.97), 1.0, ARM_STRETCH_MAX)
+			if k > 1.0:
+				_stretch_arm(lo_i, hand_i, k)
+				l1 *= k
+				l2 *= k
+		elif gliding:
 			target = sh_mid + UP * 0.5 * S + RIGHT * sgn * 0.1 * S
 			pole = shoulder + RIGHT * sgn * 0.5 * S - FWD * 0.2 * S
 		elif crawling and not armed:
-			# army crawl: reach ahead (skeleton +Y), plant the elbow, drag forward
-			var reach := 0.5 + 0.5 * sin(_phase + (0.0 if side == &"r" else PI)) * _move
-			target = shoulder + UP * arm_len * (0.25 + 0.45 * reach) + FWD * arm_len * 0.5 + RIGHT * sgn * 0.12 * S
+			# army crawl: reach ahead (skeleton +Y is ahead), plant, drag forward
+			target = crawl_paw[side]
 			pole = shoulder + RIGHT * sgn * 0.5 * S - UP * 0.3 * S + FWD * 0.2 * S
 		elif armed:
 			if side == &"r":
 				target = grip
 			else:
 				target = _support_point(skel, grip, wbasis, S)
+				if crawling:
+					target = target.lerp(crawl_paw[side], _crawl)
+			if crawling:
+				pole = pole.lerp(shoulder + RIGHT * sgn * 0.5 * S - UP * 0.3 * S + FWD * 0.2 * S, _crawl)
 				if reload_k > 0.0:
 					var pouch := (rig.rest[&"hips"] as Transform3D).origin + RIGHT * -0.12 * S + FWD * 0.05 * S
 					var mag := grip - wbasis.y * 0.08 * S - wbasis.z * 0.06 * S
@@ -280,7 +322,7 @@ func _process_modification_with_delta(delta: float) -> void:
 			if gait == CritterDef.Gait.HOP:
 				s = -hop_air * 0.12 * S * _move
 			target = shoulder - UP * arm_len * 0.9 + FWD * s + RIGHT * sgn * 0.05 * S + UP * _air * arm_len * 0.5
-		_two_bone(up_i, lo_i, hand_i, _seg_len[side + "_arm1"], _seg_len[side + "_arm2"], target, pole)
+		_two_bone(up_i, lo_i, hand_i, l1, l2, target, pole)
 
 	# ---- legs -------------------------------------------------------------------------
 	for side in [&"l", &"r"]:
@@ -320,10 +362,20 @@ func _process_modification_with_delta(delta: float) -> void:
 		var hip := _g(ul).origin
 		var pole := hip + FWD * leg + RIGHT * sgn * 0.08 * S
 		if crawling:
-			# frog-kick: each knee draws up and out to the side in turn (with the
-			# opposite elbow), then the leg pushes back out straight
-			var draw := maxf(0.0, sin(_phase + (PI if side == &"r" else 0.0))) * _move
-			target = rest_foot + UP * leg * 0.4 * draw + RIGHT * sgn * leg * 0.3 * draw + FWD * 0.04 * S
+			# frog-kick: each knee draws up and out to the side (with the opposite
+			# paw's reach), then the leg pushes back out straight while that paw pulls
+			var u := fposmod((_phase + (PI if side == &"r" else 0.0)) / TAU, 1.0)
+			var draw: float
+			var lift := 0.0
+			if u < CRAWL_STANCE:
+				draw = 1.0 - u / CRAWL_STANCE
+			else:
+				var t := (u - CRAWL_STANCE) / (1.0 - CRAWL_STANCE)
+				draw = smoothstep(0.0, 1.0, t)
+				lift = sin(t * PI)
+			draw *= _crawl
+			target = rest_foot + UP * leg * 0.45 * draw + RIGHT * sgn * leg * 0.35 * draw \
+				+ FWD * 0.04 * S - FWD * lift * leg * 0.12 * _crawl
 			pole = hip + RIGHT * sgn * leg + FWD * leg * 0.4
 		elif gliding:
 			# dangling: a slow, lazy swing from the hips
@@ -342,18 +394,51 @@ func _process_modification_with_delta(delta: float) -> void:
 			_set_global_basis(ft, fb.rotated(RIGHT, _air * 0.3))
 
 
-## Club tilt above the aim line through a swing (0..1; -1 = resting).
+## Where a paw goes in the army crawl (skeleton space; the body lies on its
+## belly, so +Y points ahead and +Z down at the ground `depth` below the spine).
+## Planted for CRAWL_STANCE of the cycle, sliding back exactly as fast as the
+## body moves forward; then lifted and swung ahead to plant again.
+func _crawl_paw(side: StringName, shoulder: Vector3, arm_len: float, depth: float, S: float) -> Vector3:
+	var sgn := 1.0 if side == &"r" else -1.0
+	var u := fposmod((_phase + (0.0 if side == &"r" else PI)) / TAU, 1.0)
+	var along: float
+	var lift := 0.0
+	if u < CRAWL_STANCE:
+		along = lerpf(0.5, -0.5, u / CRAWL_STANCE)
+	else:
+		var t := (u - CRAWL_STANCE) / (1.0 - CRAWL_STANCE)
+		along = lerpf(-0.5, 0.5, smoothstep(0.0, 1.0, t))
+		lift = sin(t * PI)
+	var ahead := arm_len * 0.35 + along * arm_len * CRAWL_PULL * _crawl
+	var down := minf(depth, arm_len * 0.8) - lift * arm_len * 0.22 * _crawl
+	return shoulder + UP * ahead + FWD * down + RIGHT * sgn * 0.1 * S
+
+
+## Club tilt above the aim line through a swing (0..1; -1 = resting). A quick
+## wind-up, then the club whips down through level with the chest exactly at
+## Critter.MELEE_HIT_AT (when the hit lands), and a slower recovery.
+const CLUB_WIND_END := 0.18
+const CLUB_STRIKE_END := 0.34
+
+
 static func _club_angle(p: float) -> float:
 	const REST := 1.15     # up and forward, ready
 	const BACK := 2.5      # wound up over the shoulder
 	const LOW := -0.6      # follow-through, low in front
 	if p < 0.0:
 		return REST
-	if p < 0.35:
-		return lerpf(REST, BACK, smoothstep(0.0, 0.35, p))
-	if p < 0.5:
-		return lerpf(BACK, LOW, smoothstep(0.35, 0.5, p))
-	return lerpf(LOW, REST, smoothstep(0.5, 1.0, p))
+	if p < CLUB_WIND_END:
+		return lerpf(REST, BACK, smoothstep(0.0, CLUB_WIND_END, p))
+	if p < CLUB_STRIKE_END:
+		return lerpf(BACK, LOW, smoothstep(CLUB_WIND_END, CLUB_STRIKE_END, p))
+	return lerpf(LOW, REST, smoothstep(CLUB_STRIKE_END, 1.0, p))
+
+
+## 0..1: how far into the blow the swing is (lunge and twist), peaking on impact.
+static func _club_strike(p: float) -> float:
+	if p < 0.0:
+		return 0.0
+	return smoothstep(CLUB_WIND_END - 0.06, 0.29, p) * (1.0 - smoothstep(CLUB_STRIKE_END, 0.8, p))
 
 
 func _support_point(skel: Skeleton3D, grip: Vector3, wbasis: Basis, S: float) -> Vector3:
@@ -387,6 +472,17 @@ func _set_global_origin(idx: int, pos: Vector3) -> void:
 	var p := skel.get_bone_parent(idx)
 	var local := pos if p < 0 else _g(p).affine_inverse() * pos
 	skel.set_bone_pose_position(idx, local)
+
+
+## Lengthen a whole arm k times by sliding the elbow and the paw out along
+## their bones (no bone scale: hitboxes ride on the bones, and the physics
+## engine wants them unscaled). The skin between stretches like taffy.
+## The skeleton restores the rest pose every frame, so this lasts one frame.
+func _stretch_arm(lower: int, hand: int, k: float) -> void:
+	var skel := get_skeleton()
+	skel.set_bone_pose_position(lower, skel.get_bone_rest(lower).origin * k)
+	if hand >= 0:
+		skel.set_bone_pose_position(hand, skel.get_bone_rest(hand).origin * k)
 
 
 func _two_bone(upper: int, lower: int, end: int, l1: float, l2: float, target: Vector3, pole: Vector3) -> void:

@@ -70,9 +70,9 @@ func _run() -> void:
 	await _snap("21_clubs_ready")
 	for c in critters:
 		c.want_melee = true
-	await _wait(Critter.MELEE_TIME * 0.3)
+	await _wait(Critter.MELEE_TIME * CritterPoser.CLUB_WIND_END * 0.8)
 	await _snap("22_clubs_windup")
-	await _wait(Critter.MELEE_TIME * 0.18)
+	await _wait(Critter.MELEE_TIME * (Critter.MELEE_HIT_AT - CritterPoser.CLUB_WIND_END * 0.8))
 	await _snap("23_clubs_strike")
 	# close-ups: the two ends of the line from a 3/4 view
 	for c in critters:

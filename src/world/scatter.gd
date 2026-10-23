@@ -136,6 +136,7 @@ func place(e: Dictionary, pos: Vector3, yaw: float, scale_: float, normal := Vec
 		return null
 	add_child(inst)
 	inst.transform = xf
+	smooth_cutouts(inst)
 	var vis_end := 900.0 if cat in ["tree", "landmark"] else 260.0
 	for gi in ModelUtil.find_all(inst, "GeometryInstance3D"):
 		(gi as GeometryInstance3D).visibility_range_end = vis_end
@@ -146,6 +147,27 @@ func place(e: Dictionary, pos: Vector3, yaw: float, scale_: float, normal := Vec
 		_add_collision(inst, e, scale_, col)
 		add_obstacle(Vector2(pos.x, pos.z), maxf(float(e.get("collision_radius_m", 0.5)), 0.3) * scale_)
 	return inst
+
+
+## Leaf cards on imported models: dithered (alpha-hash) cut-outs read as
+## grain, and hard alpha-scissor edges shimmer; switch both to alpha-scissor
+## with alpha-to-coverage, which MSAA blends smoothly. Materials are shared
+## between instances, so each is converted once.
+static func smooth_cutouts(root: Node) -> void:
+	for gi in ModelUtil.find_all(root, "MeshInstance3D"):
+		var mi := gi as MeshInstance3D
+		if mi.mesh == null:
+			continue
+		for i in mi.mesh.get_surface_count():
+			var m := mi.get_active_material(i) as BaseMaterial3D
+			if m == null or m.has_meta(&"smoothed"):
+				continue
+			m.set_meta(&"smoothed", true)
+			if m.transparency in [BaseMaterial3D.TRANSPARENCY_ALPHA_HASH, BaseMaterial3D.TRANSPARENCY_ALPHA_SCISSOR]:
+				m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA_SCISSOR
+				m.alpha_scissor_threshold = clampf(m.alpha_scissor_threshold, 0.3, 0.6)
+				m.alpha_antialiasing_mode = BaseMaterial3D.ALPHA_ANTIALIASING_ALPHA_TO_COVERAGE
+				m.alpha_antialiasing_edge = 0.3
 
 
 func _add_collision(inst: Node3D, e: Dictionary, scale_: float, kind: String) -> void:

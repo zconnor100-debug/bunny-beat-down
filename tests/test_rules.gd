@@ -60,6 +60,25 @@ func test_storm_geometry() -> void:
 	check(Vector2(sp.x, sp.z).distance_to(storm.next_center) < storm.next_radius, "safe point lies inside the next circle")
 
 
+func test_rockets_fly_fast_and_hit_hard() -> void:
+	make_arena(80.0)
+	var rocket := WeaponDB.get_weapon(&"carrot_rocket_launcher")
+	check(rocket.projectile_speed >= 100.0, "rockets are fast (%.0f m/s)" % rocket.projectile_speed)
+	check(rocket.splash_radius >= 10.0, "the blast reaches 10 m")
+	check(WeaponDB.get_weapon(&"carrot_sniper").projectile_speed >= 700.0, "sniper carrots arrive almost at once (little leading)")
+	var target := spawn_critter(TEST_DEF, Vector3(0, 0.1, 0))
+	var near := spawn_critter(TEST_DEF, Vector3(8, 0.1, 0))
+	var far := spawn_critter(TEST_DEF, Vector3(0, 0.1, 14))
+	await wait_physics(5)
+	target.armor = target.max_armor
+	var origin := target.get_chest_position() + Vector3(0, 0, -20)
+	Projectiles.fire(null, WeaponInstance.new(rocket), origin, Vector3(0, 0, 1), 0.0, [])
+	await wait_physics(20)   # 20 m at 120 m/s: well under a third of a second
+	check(not target.alive, "a direct hit kills, even through full armor")
+	check(near.health < near.max_health, "8 m away, the blast still hurts (%.0f hp)" % near.health)
+	check(is_equal_approx(far.health, far.max_health), "14 m away is out of the blast")
+
+
 func test_armor_absorbs_first() -> void:
 	make_arena()
 	var c := spawn_critter(TEST_DEF, Vector3(0, 0.1, 0))

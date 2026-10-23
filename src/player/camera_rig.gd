@@ -32,6 +32,7 @@ var _fp_blend := 0.0
 var _viewmodel_root: Node3D
 var _viewmodel: Node3D
 var _viewmodel_weapon: Variant = null   ## the WeaponInstance shown, or &"club"
+var _body_hidden: Variant = null        ## last set_first_person() state (null: not applied yet)
 var _sway := Vector2.ZERO
 var _last_yaw := 0.0
 var _last_pitch := 0.0
@@ -79,9 +80,19 @@ func toggle_first_person() -> void:
 
 
 func _apply_first_person() -> void:
-	if target and is_instance_valid(target) and target.visual:
-		target.visual.set_first_person(first_person and target.alive)
+	_body_hidden = null   # re-applied on the next frame
 	_viewmodel_root.visible = first_person
+
+
+## Hide our own body (shadows only) while looking out of its eyes, show it
+## again for the third-person drop camera, on death, or back in third person.
+func _sync_body(hide: bool) -> void:
+	if typeof(_body_hidden) == TYPE_BOOL and _body_hidden == hide:
+		return
+	_body_hidden = hide
+	if target.visual:
+		target.visual.set_first_person(hide)
+	_viewmodel_root.visible = hide and not scoped
 
 
 func add_trauma(amount: float) -> void:
@@ -107,10 +118,9 @@ func _process(delta: float) -> void:
 	var now_scoped := aiming and alive and not dropping and cur != null and cur.data.scoped and _aim_blend > 0.55
 	if now_scoped != scoped:
 		scoped = now_scoped
-		if target.visual:
-			target.visual.set_first_person((first_person or scoped) and alive)
-		_viewmodel_root.visible = first_person and not scoped
+		_body_hidden = null
 	_fp_blend = 1.0 if (first_person or scoped) and alive and not dropping else 0.0
+	_sync_body(_fp_blend > 0.5)
 	var rig_scale := target.visual.rig.world_scale if target.visual.rig else 1.0
 	var eye_h := target.eye_height()   # drops when crouched, to the grass when prone
 
@@ -172,7 +182,7 @@ func aim_point(exclude: Array[RID]) -> Vector3:
 # ---- first-person viewmodel ----------------------------------------------------------------------
 
 func _update_viewmodel(delta: float, w: WeaponInstance) -> void:
-	if not first_person:
+	if not first_person or _fp_blend < 0.5:
 		return
 	var club := target.visual != null and target.visual.club_model != null
 	var shown: Variant = &"club" if club else w
@@ -239,11 +249,9 @@ func _update_viewmodel(delta: float, w: WeaponInstance) -> void:
 ## to the lower left on the strike, and back.
 func _club_viewmodel(delta: float) -> void:
 	var swing: float = target.visual.poser.melee if target.visual else -1.0
-	var strike := 0.0
-	if swing >= 0.0:
-		strike = smoothstep(0.3, 0.5, swing) * (1.0 - smoothstep(0.6, 1.0, swing))
+	var strike := CritterPoser._club_strike(swing)
 	var pos := Vector3(0.55 - 0.6 * strike, -0.6 + 0.08 * strike, -0.95)
-	_viewmodel_root.position = _viewmodel_root.position.lerp(pos, IKMath.damp(30.0, delta))
+	_viewmodel_root.position = _viewmodel_root.position.lerp(pos, IKMath.damp(60.0, delta))
 	_viewmodel_root.rotation = Vector3(CritterPoser._club_angle(swing) * 0.8, -0.3 + 0.95 * strike, 0.0)
 
 

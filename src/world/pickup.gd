@@ -3,7 +3,8 @@ extends RigidBody3D
 ## Loot lying in the world. Ammo, clovers and armor are scooped up by walking
 ## over them; weapons need the interact key (or an AI deciding it wants them).
 ## Rare loot gets a coloured light beam so it reads from across a clearing;
-## lucky clovers are huge (half a critter tall) and glow green.
+## lucky clovers are huge (half a critter tall) and glow green, and shield
+## acorns are just as big and glow orange.
 
 const MODELS := {
 	"ammo_0": "res://assets/props/ammo_light.glb",
@@ -18,6 +19,7 @@ const CLOVER_HEIGHT := 1.25           ## half the height of a Bun
 const CLOVER_GLOW := Color(0.3, 1.0, 0.35)
 const CLOVER_SHADER := preload("res://src/fx/clover_glow.gdshader")
 static var _clover_glow: ShaderMaterial
+static var _acorn_glow: ShaderMaterial
 
 var spec: Dictionary = {}
 var _spin: Node3D
@@ -79,6 +81,8 @@ func _ready() -> void:
 		_add_beam(Rarity.COLORS[rarity])
 	if spec.get("type") == "clover":
 		_glow(model)
+	elif spec.get("type") == "armor":
+		_glow_acorn(model)
 	if not is_weapon():
 		_sensor = Area3D.new()
 		_sensor.collision_layer = 0
@@ -86,7 +90,7 @@ func _ready() -> void:
 		_sensor.monitorable = false
 		var scs := CollisionShape3D.new()
 		var ss := SphereShape3D.new()
-		ss.radius = AUTO_RADIUS * (1.4 if spec.get("type") == "clover" else 1.0)
+		ss.radius = AUTO_RADIUS * (1.4 if spec.get("type") in ["clover", "armor"] else 1.0)
 		scs.shape = ss
 		_sensor.add_child(scs)
 		add_child(_sensor)
@@ -107,7 +111,7 @@ func label() -> String:
 		"clover":
 			return "%d Lucky Clover%s" % [spec["amount"], "" if spec["amount"] == 1 else "s"]
 		"armor":
-			return "Acorn-Shell Armor (+%d)" % int(spec["amount"])
+			return "Acorn Shield (+%d)" % int(spec["amount"])
 	return "?"
 
 
@@ -182,6 +186,8 @@ func try_collect(critter: Critter) -> bool:
 
 
 func _make_model() -> Node3D:
+	if spec.get("type") == "armor":
+		return AcornShield.make()
 	var path := ""
 	match spec.get("type"):
 		"weapon":
@@ -223,6 +229,36 @@ func _glow(model: Node3D) -> void:
 	light.shadow_enabled = false
 	light.position.y = CLOVER_HEIGHT * 0.6
 	add_child(light)
+
+
+## Shield acorns: the same breathing glow as clovers, in orange, on the nut
+## (the cap stays woody), and an orange light on the ground around it.
+func _glow_acorn(model: Node3D) -> void:
+	if _acorn_glow == null:
+		_acorn_glow = ShaderMaterial.new()
+		_acorn_glow.shader = CLOVER_SHADER
+		_acorn_glow.set_shader_parameter(&"glow", AcornShield.GLOW)
+		_acorn_glow.set_shader_parameter(&"strength", 0.9)
+	var mi := model as MeshInstance3D
+	if mi:
+		mi.set_surface_override_material(0, _nut_with_glow())
+	var light := OmniLight3D.new()
+	light.light_color = AcornShield.GLOW
+	light.light_energy = 1.8
+	light.omni_range = 3.5
+	light.shadow_enabled = false
+	light.position.y = AcornShield.HEIGHT * 0.5
+	add_child(light)
+
+
+static var _nut_glow_mat: Material
+
+
+static func _nut_with_glow() -> Material:
+	if _nut_glow_mat == null:
+		_nut_glow_mat = AcornShield.mesh().surface_get_material(0).duplicate()
+		_nut_glow_mat.next_pass = _acorn_glow
+	return _nut_glow_mat
 
 
 func _add_beam(col: Color) -> void:

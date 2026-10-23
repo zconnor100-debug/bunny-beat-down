@@ -139,17 +139,24 @@ func _process(delta: float) -> void:
 
 
 func set_first_person(on: bool) -> void:
-	var mode := GeometryInstance3D.SHADOW_CASTING_SETTING_SHADOWS_ONLY if on else GeometryInstance3D.SHADOW_CASTING_SETTING_ON
-	for m in meshes:
-		m.cast_shadow = mode
-	if helmet:
-		for m in ModelUtil.find_all(helmet, "GeometryInstance3D"):
-			(m as GeometryInstance3D).cast_shadow = mode
-	for held in [weapon_model, club_model]:
-		if held:
-			for m in ModelUtil.find_all(held, "GeometryInstance3D"):
-				(m as GeometryInstance3D).cast_shadow = mode
 	_first_person = on
+	for m in meshes:
+		m.cast_shadow = _shadow_mode()
+	for n in [helmet, weapon_model, club_model]:
+		_match_first_person(n)
+
+
+## Looking out of this critter's eyes, its body and whatever it holds only
+## cast shadows (the camera draws its own viewmodel). Anything put in its
+## paws later — a gun picked up, the club — follows the same rule.
+func _match_first_person(n: Node) -> void:
+	if n:
+		for m in ModelUtil.find_all(n, "GeometryInstance3D"):
+			(m as GeometryInstance3D).cast_shadow = _shadow_mode()
+
+
+func _shadow_mode() -> GeometryInstance3D.ShadowCastingSetting:
+	return GeometryInstance3D.SHADOW_CASTING_SETTING_SHADOWS_ONLY if _first_person else GeometryInstance3D.SHADOW_CASTING_SETTING_ON
 
 
 var _first_person := false
@@ -206,6 +213,7 @@ func set_weapon(w: WeaponInstance) -> void:
 		(gi as GeometryInstance3D).layers = RENDER_LAYER
 	if w.rarity == Rarity.Tier.GOLDEN:
 		_gild(weapon_model)
+	_match_first_person(weapon_model)
 	muzzle = ModelUtil.find_named(weapon_model, "Muzzle")
 	poser.support_marker = ModelUtil.find_named(weapon_model, "SupportGrip")
 	_loaded_round = ModelUtil.find_named(weapon_model, "Rocket")
@@ -224,8 +232,7 @@ func set_club(on: bool) -> void:
 		holder.add_child(club_model)
 		for gi in ModelUtil.find_all(club_model, "GeometryInstance3D"):
 			(gi as GeometryInstance3D).layers = RENDER_LAYER
-			if _first_person:
-				(gi as GeometryInstance3D).cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_SHADOWS_ONLY
+		_match_first_person(club_model)
 	elif not on and club_model:
 		club_model.queue_free()
 		club_model = null
@@ -403,14 +410,16 @@ func set_glider(on: bool) -> void:
 			return
 		add_child(_glider)
 		var full := Vector3.ONE * rig.world_scale * (1.4 if path == GLIDER_MODEL else 1.0)
-		# origin = where the paws grip it, just above the head with arms raised
+		# origin = where the paws grip it, above the head with arms raised
 		_glider.position = Vector3(0, rig.world_head_top + 0.12 * rig.world_scale, 0)
+		poser.glide_grip = _glider
 		_glider.scale = full * 0.2
 		var tw := _glider.create_tween()
 		tw.tween_property(_glider, "scale", full, 0.35).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	elif not on and _glider:
 		var g := _glider
 		_glider = null
+		poser.glide_grip = null
 		var tw := g.create_tween()
 		tw.tween_property(g, "scale", Vector3.ONE * 0.01, 0.25)
 		tw.tween_callback(g.queue_free)

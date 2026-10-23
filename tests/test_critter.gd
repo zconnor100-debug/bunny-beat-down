@@ -99,6 +99,20 @@ func test_dismember_spawns_gib_and_hides_limb() -> void:
 	await wait_frames(3)
 	var hand := c.visual.attachments.get(&"l_hand") as Node3D
 	check(hand == null, "attachments in the severed limb were freed")
+	# the gib's copy of the body collapses into the cut, so skin weighted partly
+	# to the body pinches shut there instead of stretching off in spikes
+	var gib: Node = null
+	for node in get_tree().root.find_children("*", "RigidBody3D", true, false):
+		if node.has_meta(&"gib"):
+			gib = node
+	var gskel := ModelUtil.find_first(gib, "Skeleton3D") as Skeleton3D
+	var cut := gskel.get_bone_global_pose(idx).origin
+	var sub := c.visual.rig.subtree(idx)
+	var spread := 0.0
+	for i in gskel.get_bone_count():
+		if not sub.has(i):
+			spread = maxf(spread, gskel.get_bone_global_pose(i).origin.distance_to(cut))
+	check(spread < 0.01, "the rest of the body sits in the cut (%.3f m away at most)" % spread)
 
 
 func _count_gibs() -> int:

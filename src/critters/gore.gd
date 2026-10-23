@@ -27,10 +27,14 @@ static func spawn_limb_gib(visual: CritterVisual, bone_idx: int, impulse: Vector
 	var globals := {}
 	for i in sub:
 		globals[i] = visual.current_bone_global(i)
-	# re-root the limb and collapse everything else
+	# re-root the limb and collapse everything else — into the cut itself, so
+	# skin weighted partly to the body (around the joint) is pinched shut at
+	# the stump instead of being dragged off in long spikes toward the hips
 	skel.set_bone_parent(bone_idx, -1)
+	var cut: Vector3 = (globals[bone_idx] as Transform3D).origin
 	for i in skel.get_bone_count():
 		if skel.get_bone_parent(i) < 0 and i != bone_idx:
+			skel.set_bone_pose_position(i, cut)
 			skel.set_bone_pose_scale(i, Vector3(0.0001, 0.0001, 0.0001))
 	for i in sub:
 		var g: Transform3D = globals[i]

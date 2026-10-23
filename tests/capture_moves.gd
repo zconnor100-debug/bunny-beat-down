@@ -1,7 +1,7 @@
 extends SceneTree
-## Screenshots of how critters move: the army crawl, legs hanging under the
-## glider while it leans into a steer, a mid-stride bound, giant glowing lucky
-## clovers and the first-person club.
+## Screenshots of how critters move: the army crawl, paws gripping the glider
+## (legs hanging) while it leans into a steer, a mid-stride bound, a giant
+## glowing lucky clover beside a shield acorn, and the first-person club.
 ##   godot --path . -s tests/capture_moves.gd -- <out_dir>
 
 

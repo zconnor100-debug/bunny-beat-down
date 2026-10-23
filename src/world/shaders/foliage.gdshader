@@ -46,6 +46,10 @@ void fragment() {
 	float dither = fract(sin(dot(floor(FRAGCOORD.xy), vec2(12.9898, 78.233))) * 43758.5453);
 	ALPHA = c.a * step(dither, keep);
 	ALPHA_SCISSOR_THRESHOLD = alpha_scissor;
+	// alpha-to-coverage: leaf and blade edges blend over the MSAA samples
+	// instead of stair-stepping and shimmering
+	ALPHA_ANTIALIASING_EDGE = 0.3;
+	ALPHA_TEXTURE_COORDINATE = UV * vec2(textureSize(albedo_tex, 0));
 	ROUGHNESS = roughness;
 	// double-sided cards: light the back face as if it faced the camera,
 	// otherwise leaves seen from behind/above render almost black

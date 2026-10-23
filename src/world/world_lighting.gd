@@ -45,7 +45,8 @@ func build(quality: int) -> void:
 	env.fog_aerial_perspective = 0.5
 	env.ssao_enabled = quality >= 1
 	env.ssao_radius = 1.2
-	env.ssao_intensity = 1.6
+	env.ssao_intensity = 1.2
+	env.ssao_sharpness = 0.8
 	env.ssil_enabled = quality >= 3
 	env.sdfgi_enabled = false
 	env.adjustment_enabled = true
@@ -60,17 +61,20 @@ func build(quality: int) -> void:
 	sun.light_color = Color(1.0, 0.95, 0.86)
 	sun.light_energy = 1.25
 	sun.shadow_enabled = true
-	sun.shadow_blur = 1.2
+	sun.shadow_blur = 1.0
 	sun.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS
 	sun.directional_shadow_max_distance = [80.0, 140.0, 220.0, 320.0][clampi(quality, 0, 3)]
 	sun.directional_shadow_split_1 = 0.05
 	sun.directional_shadow_split_2 = 0.16
 	sun.directional_shadow_split_3 = 0.42
-	sun.light_angular_distance = 0.6
+	# (a wide sun disc means noisy PCSS penumbras without TAA to smooth them)
+	sun.light_angular_distance = 0.25
 	add_child(sun)
 	var vp := get_viewport()
 	if vp:
 		vp.msaa_3d = [Viewport.MSAA_DISABLED, Viewport.MSAA_2X, Viewport.MSAA_2X, Viewport.MSAA_4X][clampi(quality, 0, 3)]
-		vp.screen_space_aa = Viewport.SCREEN_SPACE_AA_FXAA if quality == 0 else Viewport.SCREEN_SPACE_AA_DISABLED
+		# SMAA on top of MSAA smooths what MSAA misses: specular sparkle on
+		# bumpy ground, thin twigs and leaf-card edges (the "grainy" look)
+		vp.screen_space_aa = Viewport.SCREEN_SPACE_AA_FXAA if quality == 0 else Viewport.SCREEN_SPACE_AA_SMAA
 		vp.use_taa = false
 		RenderingServer.directional_shadow_atlas_set_size([2048, 4096, 4096, 8192][clampi(quality, 0, 3)], true)

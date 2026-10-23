@@ -3,7 +3,9 @@
 // biome map (R swamp, G grassland, B forest): swamp mud around the still
 // water, sun-warmed grass on the grasslands.
 // World-space UVs at critter scale, macro colour variation to hide tiling,
-// and tri-planar rock on steep slopes.
+// and tri-planar rock on steep slopes. Photo textures are softened toward
+// their own average colour (`detail`) and the bumps kept gentle, so the
+// ground reads as smooth, painterly colour instead of fine grainy noise.
 shader_type spatial;
 render_mode blend_mix, cull_back, diffuse_burley, specular_schlick_ggx;
 
@@ -45,6 +47,8 @@ uniform float moss_tile = 6.0;
 uniform float sand_tile = 6.0;
 uniform float sand_height = 1.6;
 uniform vec3 grass_tint : source_color = vec3(1.0);
+uniform float detail = 0.75;         // share of a texture's fine contrast kept
+uniform float bumpiness = 0.5;       // normal-map strength
 
 varying vec3 world_pos;
 varying vec3 world_nrm;
@@ -66,6 +70,16 @@ vec4 anti_tile(sampler2D tex, vec2 uv, float m) {
 	return mix(a, b, smoothstep(0.35, 0.65, m));
 }
 
+// a colour texture with its fine contrast turned down toward its average
+vec3 soft(sampler2D tex, vec2 uv, float m) {
+	vec3 avg = textureLod(tex, uv, 9.0).rgb;
+	return mix(avg, anti_tile(tex, uv, m).rgb, detail);
+}
+
+vec3 soft1(sampler2D tex, vec2 uv) {
+	return mix(textureLod(tex, uv, 9.0).rgb, texture(tex, uv).rgb, detail);
+}
+
 void fragment() {
 	vec2 cuv = (world_pos.xz + terrain_size * 0.5) / terrain_size;
 	vec4 ctl = texture(control_map, cuv);
@@ -74,7 +88,7 @@ void fragment() {
 	float macro2 = texture(macro_noise, world_pos.xz / 37.0).r;
 
 	vec2 p = world_pos.xz;
-	vec3 alb = anti_tile(floor_albedo, p / floor_tile, macro2).rgb;
+	vec3 alb = soft(floor_albedo, p / floor_tile, macro2);
 	vec3 nrm = anti_tile(floor_normal, p / floor_tile, macro2).rgb;
 	float rgh = anti_tile(floor_rough, p / floor_tile, macro2).g;
 
@@ -84,27 +98,27 @@ void fragment() {
 	float w_dirt = ctl.g;
 	float w_rock = ctl.b;
 
-	vec3 g_alb = anti_tile(grass_albedo, p / grass_tile, macro2).rgb * grass_tint;
+	vec3 g_alb = soft(grass_albedo, p / grass_tile, macro2) * grass_tint;
 	g_alb *= mix(vec3(1.0), vec3(1.1, 1.05, 0.82), bio.g);   // sunny meadow grass
 	alb = mix(alb, g_alb, w_grass);
 	nrm = mix(nrm, anti_tile(grass_normal, p / grass_tile, macro2).rgb, w_grass);
 	rgh = mix(rgh, texture(grass_rough, p / grass_tile).g, w_grass);
 
-	alb = mix(alb, texture(moss_albedo, p / moss_tile).rgb, w_moss);
+	alb = mix(alb, soft1(moss_albedo, p / moss_tile), w_moss);
 	nrm = mix(nrm, texture(moss_normal, p / moss_tile).rgb, w_moss);
 	rgh = mix(rgh, texture(moss_rough, p / moss_tile).g, w_moss);
 
 	// swamp mud: on the low ground around (and under) the still water
 	float w_mud = bio.r * smoothstep(swamp_level + 1.6, swamp_level + 0.3, world_pos.y) * (1.0 - w_rock) * (1.0 - ctl.g);
-	alb = mix(alb, anti_tile(mud_albedo, p / mud_tile, macro2).rgb, w_mud);
+	alb = mix(alb, soft(mud_albedo, p / mud_tile, macro2), w_mud);
 	nrm = mix(nrm, texture(mud_normal, p / mud_tile).rgb, w_mud);
 	rgh = mix(rgh, texture(mud_rough, p / mud_tile).g * 0.7, w_mud);
 
-	alb = mix(alb, texture(sand_albedo, p / sand_tile).rgb, w_sand);
+	alb = mix(alb, soft1(sand_albedo, p / sand_tile), w_sand);
 	nrm = mix(nrm, texture(sand_normal, p / sand_tile).rgb, w_sand);
 	rgh = mix(rgh, texture(sand_rough, p / sand_tile).g, w_sand);
 
-	alb = mix(alb, anti_tile(dirt_albedo, p / dirt_tile, macro2).rgb, w_dirt);
+	alb = mix(alb, soft(dirt_albedo, p / dirt_tile, macro2), w_dirt);
 	nrm = mix(nrm, texture(dirt_normal, p / dirt_tile).rgb, w_dirt);
 	rgh = mix(rgh, texture(dirt_rough, p / dirt_tile).g, w_dirt);
 
@@ -133,7 +147,8 @@ void fragment() {
 
 	ALBEDO = alb;
 	NORMAL_MAP = nrm;
-	NORMAL_MAP_DEPTH = 1.0;
-	ROUGHNESS = clamp(rgh, 0.05, 1.0);
-	SPECULAR = 0.35;
+	NORMAL_MAP_DEPTH = bumpiness;
+	// dry ground stays matte (no sparkle off the bumps); wet ground may shine
+	ROUGHNESS = clamp(max(rgh, mix(0.6, 0.0, wet)), 0.05, 1.0);
+	SPECULAR = 0.25;
 }

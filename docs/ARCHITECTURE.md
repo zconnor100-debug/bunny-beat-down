@@ -81,8 +81,11 @@ velocity, and the killing blow's impulse is applied at the bone that was hit.
    bodies and hitboxes are removed.
 2. A **second copy of the same model** is spawned. Its skeleton is re-rooted
    at the severed bone (`set_bone_parent(bone, -1)`) and every other root is
-   collapsed, so only the real skinned limb remains, wearing the pose it had
-   when it came off. It flies as a `RigidBody3D`.
+   collapsed to zero scale *at the cut*, so only the real skinned limb
+   remains, wearing the pose it had when it came off. (Collapsing them where
+   they stood would drag skin that is weighted partly to the body, around the
+   joint, off toward the hips in long spikes; collapsed into the cut, it
+   pinches shut under the cap.) It flies as a `RigidBody3D`.
 3. Both cut ends get a meaty cap with a bone nub and a spurting blood fountain.
    Decals land on the ground.
 
@@ -99,9 +102,10 @@ one `MultiMesh` per kind, extrapolated between ticks for smooth motion. A
 carrot that hits something **stays stuck in it**. It is parented to the hit
 bone's attachment, so carrots ride along on a ragdoll.
 
-Rockets are real nodes with smoke trails; `Explosion` applies falloff damage
-with a cover check, shoves every ragdoll, gib and prop in range, and blows
-limbs off nearby corpses.
+Rockets are real nodes with smoke trails. A rocket that hits a critter's
+hitbox deals the launcher's huge direct damage first; then `Explosion` applies
+falloff damage (out to 10 m) with a cover check, shoves every ragdoll, gib and
+prop in range, and blows limbs off nearby corpses.
 
 Weapons are `.tres` resources (`data/weapons/`). Balancing happens in the
 inspector, and loot **rarity** (Baby → Garden → Prize → Heirloom → Golden)

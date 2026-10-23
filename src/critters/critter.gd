@@ -22,7 +22,7 @@ const AUTO_GLIDE_HEIGHT := 28.0
 const CORPSE_LIFETIME := 75.0
 # melee: each species swings its own club (a gun in the paws is stowed for it)
 const MELEE_TIME := 0.55          ## one swing: wind-up, strike, recover
-const MELEE_HIT_AT := 0.45        ## fraction of the swing when the club connects
+const MELEE_HIT_AT := 0.29        ## fraction of the swing when the club connects (level with the chest)
 const MELEE_DAMAGE := 34.0
 const MELEE_REACH := 0.85         ## from the chest, per metre of the critter's height
 const MELEE_KEEP := 3.0           ## bare paws: the club stays out this long after a swing

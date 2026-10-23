@@ -1,9 +1,10 @@
 extends TestCase
 ## Moving like a critter: crouch → crawl → stand on one button, sprinting while
 ## aiming, long unhurried strides, legs hanging (not running) under a glider,
-## the club on R3 with a gun out, L3 + R3 for first person, a light aim assist
-## on the pad, and giant glowing lucky clovers. Input goes through Input like a
-## real keyboard or pad's.
+## the club on R3 with a gun out, L3 + R3 for first person (one gun in view),
+## a light aim assist on the pad, paws gripping the glider, and giant glowing
+## lucky clovers and shield acorns. Input goes through Input like a real
+## keyboard or pad's.
 
 const BUN := "res://data/critters/bun.tres"
 const ROSTER := ["bun", "bandit_bunny", "squirrel", "fox", "raccoon", "frog", "beaver", "hamster"]
@@ -79,6 +80,7 @@ func test_crouch_button_cycles_crouch_crawl_stand() -> void:
 	var crawl := _flat_speed(player)
 	check_near(crawl, player.def.move_speed * Critter.PRONE_SPEED, 0.4, "crawling speed")
 	check(not is_equal_approx(player.visual.poser._phase, phase0), "the crawl cycle runs")
+	check(player.visual.poser._crawl > 0.8, "paws and knees work at full stroke, not a slide (%.2f)" % player.visual.poser._crawl)
 	check(steps[0] == 0, "no footsteps while crawling")
 	Input.action_release(&"move_forward")
 	await _action(&"crouch")
@@ -151,6 +153,46 @@ func test_legs_hang_under_the_glider() -> void:
 	check(lean < -0.2, "and the other way (%.2f)" % lean)
 	var body_up := (c.visual.model.global_basis.y).normalized().x
 	check(body_up < -0.2, "the body leans with it (%.2f)" % body_up)
+
+
+func test_paws_hold_the_glider_handle() -> void:
+	for id in ["hamster", "frog", "fox"]:
+		var c := spawn_critter("res://data/critters/%s.tres" % id, Vector3(30, 0.1, 30), 0.0)
+		await wait_physics(3)
+		c.begin_freefall(Vector3(30, 80, 30), Vector3.ZERO)
+		c.want_jump = true
+		await wait_physics(40)
+		var handle: Vector3 = c.visual._glider.global_position
+		var reach := 0.0
+		for side in ["l", "r"]:
+			reach = maxf(reach, c.visual.bone_world_position(StringName(side + "_hand")).distance_to(handle))
+		check(reach < 0.25 * c.visual.rig.world_scale, "%s: both paws on the handle (%.2f m off)" % [id, reach])
+		c.queue_free()
+		await wait_physics(1)
+
+
+func test_first_person_shows_one_gun() -> void:
+	rig.first_person = true
+	rig.set_target(player)
+	await wait_frames(3)
+	# a gun picked up while already looking out of the critter's eyes
+	player.give_weapon(WeaponInstance.new(WeaponDB.get_weapon(&"carrot_rifle")))
+	await wait_frames(5)
+	var body_gun := ModelUtil.find_all(player.visual.weapon_model, "GeometryInstance3D")
+	check(not body_gun.is_empty() and body_gun.all(func(g): return (g as GeometryInstance3D).cast_shadow == GeometryInstance3D.SHADOW_CASTING_SETTING_SHADOWS_ONLY),
+		"the gun in the body's paws only casts a shadow")
+	check(rig._viewmodel != null and rig._viewmodel_root.visible, "the first-person gun is the one you see")
+	# and after a club swing puts it back in the paws
+	player.want_melee = true
+	await wait_physics(int((Critter.MELEE_TIME + Critter.QUICK_KEEP) * 60.0) + 10)
+	check(player.visual.club_model == null, "club put away")
+	check(ModelUtil.find_all(player.visual.weapon_model, "GeometryInstance3D").all(func(g): return (g as GeometryInstance3D).cast_shadow == GeometryInstance3D.SHADOW_CASTING_SETTING_SHADOWS_ONLY),
+		"still hidden from the camera after the swing")
+	rig.first_person = false
+	rig.set_target(player)
+	await wait_frames(3)
+	check(ModelUtil.find_all(player.visual.weapon_model, "GeometryInstance3D").all(func(g): return (g as GeometryInstance3D).cast_shadow == GeometryInstance3D.SHADOW_CASTING_SETTING_ON),
+		"back in third person the body's gun shows again")
 
 
 func test_r3_swings_the_club_even_with_a_gun() -> void:
@@ -243,3 +285,17 @@ func test_lucky_clovers_are_big_and_glow() -> void:
 	check(glowing, "it glows (overlay on every mesh)")
 	var lights := p.find_children("*", "OmniLight3D", false, false)
 	check(lights.size() == 1 and (lights[0] as OmniLight3D).light_color.g > 0.8, "with a green light")
+
+
+func test_shields_are_big_glowing_acorns() -> void:
+	var p := Pickup.spawn(self, Pickup.armor_spec(50.0), Vector3(-5, 0.5, 0))
+	await wait_physics(5)
+	var model := p._spin.get_child(0) as MeshInstance3D
+	check(model != null and model.name == "AcornShield", "a shield is an acorn")
+	var h := ModelUtil.aabb_of(model).size.y
+	check_near(h, Pickup.CLOVER_HEIGHT, 0.1, "as tall as a lucky clover (%.2f m)" % h)
+	var nut := model.get_surface_override_material(0)
+	check(nut != null and nut.next_pass is ShaderMaterial, "the nut glows")
+	var lights := p.find_children("*", "OmniLight3D", false, false)
+	check(lights.size() == 1 and (lights[0] as OmniLight3D).light_color.r > 0.9 and (lights[0] as OmniLight3D).light_color.b < 0.3, "with an orange light")
+	check(p.label().begins_with("Acorn Shield"), "called an Acorn Shield")
