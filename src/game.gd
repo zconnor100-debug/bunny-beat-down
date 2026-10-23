@@ -57,6 +57,9 @@ func _ready() -> void:
 		_map = args[args.find("--map") + 1]   # `-- --smoke-test --map cage`
 	if not MAP_NAMES.has(_map):
 		_map = "island"
+	if GameSession.replay_seed > 0:
+		_seed = GameSession.replay_seed   # "Rematch (same seed)"
+		GameSession.replay_seed = 0
 	if _seed == 0:
 		_seed = randi_range(1, 999999)
 	GameSession.last_seed = _seed
@@ -146,6 +149,11 @@ func _start() -> void:
 	hud.show_message("Press %s to jump!" % GameInput.prompt(&"jump"), "Pick your spot — the %s won't wait." % match_manager.dropship.display_name(), 6.0)
 	match_manager.player.state_changed.connect(_on_player_state)
 	GameSession.matches_played += 1
+	if not match_manager.rivals_here.is_empty():
+		var names := match_manager.rivals_here.map(func(r): return "%s the %s (%s)" % [r.display_name, RivalBook.label_of(r.display_name), RivalBook.score(r.display_name)])
+		get_tree().create_timer(7.0).timeout.connect(func():
+			if hud:
+				hud.show_message("⚔ YOUR RIVAL%s %s HERE" % ["S" if names.size() > 1 else "", "ARE" if names.size() > 1 else "IS"], ", ".join(names), 5.0))
 	if OS.get_cmdline_user_args().has("--smoke-test"):
 		_smoke_test()
 
@@ -326,7 +334,13 @@ func _on_player_eliminated(placement: int, killer: Critter) -> void:
 	rig.set_target(match_manager.player)
 	Audio.play(&"defeat_sting", -2.0)
 	var who := killer.display_name if killer and killer != match_manager.player else "the Briar"
-	_show_end("BEAT DOWN", "You placed #%d of %d — taken out by %s" % [placement, match_manager.total, who], false, killer)
+	var sub := "You placed #%d of %d — taken out by %s" % [placement, match_manager.total, who]
+	if killer and killer != match_manager.player:
+		if killer.has_meta(&"new_rival"):
+			sub += "\n%s the %s is now your RIVAL (%s). It'll be back." % [who, RivalBook.label_of(who), RivalBook.score(who)]
+		elif RivalBook.is_rival(who):
+			sub += "\nYour rival %s leads %d–%d." % [who, RivalBook.kills_on_you(who), RivalBook.your_kills(who)]
+	_show_end("BEAT DOWN", sub, false, killer)
 
 
 func _on_match_finished(winner: Critter, _placement: int) -> void:
@@ -387,6 +401,9 @@ func _show_end(title: String, sub: String, won: bool, killer: Critter) -> void:
 			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED))
 	var again := UITheme.button("Play again", func(): get_tree().reload_current_scene())
 	row.add_child(again)
+	row.add_child(UITheme.button("Rematch (same seed)", func():
+		GameSession.replay_seed = _seed
+		get_tree().reload_current_scene()))
 	row.add_child(UITheme.button("Main menu", _to_menu))
 	again.grab_focus.call_deferred()
 	t.pivot_offset = Vector2(600, 60)

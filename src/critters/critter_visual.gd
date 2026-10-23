@@ -294,7 +294,7 @@ var _reveal_tween: Tween
 
 ## Warm rim light + a name tag above the head (only within NAME_TAG_RANGE, and
 ## hidden behind cover by the depth test) so opponents are easy to pick out.
-func set_enemy_highlight(display_name: String) -> void:
+func set_enemy_highlight(display_name: String, rival := false) -> void:
 	if _enemy_rim == null:
 		_enemy_rim = ShaderMaterial.new()
 		_enemy_rim.shader = ENEMY_RIM_SHADER
@@ -315,8 +315,33 @@ func set_enemy_highlight(display_name: String) -> void:
 		name_tag.visibility_range_fade_mode = GeometryInstance3D.VISIBILITY_RANGE_FADE_SELF
 		name_tag.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		add_child(name_tag)
-	name_tag.text = "▼ " + display_name
+	name_tag.text = ("⚔ RIVAL %s" if rival else "▼ %s") % display_name
+	if rival:
+		name_tag.modulate = Color(0.85, 0.45, 1.0)
 	name_tag.position = Vector3(0, (rig.world_head_top if rig else 1.2) + 0.35, 0)
+
+
+## A speech bubble over this critter's head for a few seconds (a taunt).
+func say(text: String, seconds := 3.5) -> void:
+	var bubble := Label3D.new()
+	bubble.text = text
+	bubble.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	bubble.fixed_size = true
+	bubble.pixel_size = 0.0014
+	bubble.font_size = 30
+	bubble.outline_size = 12
+	bubble.modulate = Color(1.0, 0.97, 0.88)
+	bubble.outline_modulate = Color(0.25, 0.1, 0.35, 0.95)
+	bubble.no_depth_test = true
+	bubble.width = 420.0
+	bubble.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	bubble.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(bubble)
+	bubble.position = Vector3(0, (rig.world_head_top if rig else 1.2) + 1.1, 0)
+	var tw := bubble.create_tween()
+	tw.tween_interval(seconds)
+	tw.tween_property(bubble, "modulate:a", 0.0, 0.5)
+	tw.tween_callback(bubble.queue_free)
 
 
 ## Show the name tag at any distance for a while (this one is shooting at

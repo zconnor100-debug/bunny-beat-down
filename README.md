@@ -66,7 +66,10 @@ Built in **Godot 4.6** (GDScript, Jolt physics, Forward+).
   - big glowing pickups: green **lucky clover** bottles to heal and orange
     **acorn shields** for armor;
   - critter cottages, stumps, log piles and stone walls for cover;
-  - the shrinking **Briar** and supply drops;
+  - the shrinking **Briar**, in a different mood every match (see below),
+    and supply drops;
+  - short matches: the Briar's whole run takes about eight minutes, and a
+    **Rematch (same seed)** button replays the exact same map and drop;
   - a kill feed, a minimap and full map, spectating, and *Winner Winner Carrot
     Dinner*.
 - **Moving like a critter**: long, bounding strides at an unhurried step
@@ -128,6 +131,24 @@ Built in **Godot 4.6** (GDScript, Jolt physics, Forward+).
   - Only one to three bots (by difficulty) shoot at you at once, in bursts,
     and their hits on you are softened by difficulty.
   - They heal, flee the Briar, and path across a navmesh baked from tiles.
+- **Bots are characters, not targets.** The 63 bots each have a name and a
+  personality for life (Hothead, Sneak, Show-off, Grudge-holder,
+  Scaredy-cat, Prankster), and the game remembers the score between each of
+  them and you, across runs. A bot that has beaten you down twice becomes
+  your **rival**: it is always in your next matches (with a purple
+  "⚔ RIVAL" name tag), it hunts you, and it taunts you in its own voice,
+  in speech bubbles and the kill feed ("Didn't see me, did you? 3–1.").
+  Beat it and the game calls it **revenge**.
+- **The bots learn you.** They remember where you like to land (and more of
+  them head there), and which guns you win with (they fight you at the
+  range those guns are worst at). Sit still too long and the nearest bots
+  come to flush you out; go on a hot streak and they sharpen up for a while.
+- **A Briar with moods.** Every match rolls one, announced as you drop:
+  the *Hungry* Briar closes each circle in on you, the *Sticky* one slows
+  you in its thorns, the *Bribable* one naps for 15 s if you munch a lucky
+  clover in its thorns, the *Wandering* circle never stops drifting, the
+  *Sleepy* one waits longer but bites twice as hard, and the *Bouncy* one
+  bounces you sky-high. (A quarter of matches get the classic Briar.)
 - **Procedural island** from a seed, 1.3 km across, in three biomes:
   - a hilly **forest** with ridges and valleys, giant oaks and ferns;
   - open **grasslands** of rolling meadow, flat-topped mesas and wildflowers;
@@ -218,7 +239,7 @@ The full write-up is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
   `ToyProps`, `ToyRoom`), plus `ToyTrain`: `AnimatableBody3D` cars
   following a resampled loop, so riders are carried by the physics engine,
   and a bumper `Area3D` that bonks critters on the line.
-- **Tests that play the game.** A headless suite of 73 tests covers:
+- **Tests that play the game.** A headless suite of 82 tests covers:
   - the IK maths, hitboxes, ragdolls and dismemberment;
   - island navigation, the three biomes and the big buildings (a Bun walks
     in through the barn doors; every indoor loot spot is reachable on the
@@ -226,6 +247,9 @@ The full write-up is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
     tub; the glass holds; the bowls are swimmable), Toy Box Bash (every floor
     of the dollhouse is reachable; the train runs, carries a rider and bonks
     whoever is on the track; the fishbowl is swimmable) and the game rules;
+  - rivals (made, remembered across runs, back in the next match, hunting
+    and taunting, revenge), the bots learning you (landings, fighting style,
+    camping, hot streaks) and every Briar mood;
   - the player's input loop through real keyboard and gamepad events (menus,
     crouch → crawl, the L3 + R3 chord, aim assist, one gun in first person)
     and licensing;

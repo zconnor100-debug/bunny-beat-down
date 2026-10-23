@@ -22,6 +22,25 @@ var rng := RandomNumberGenerator.new()
 var pace := 1.0
 var world_root: Node3D
 var _alive_cache := 0
+## Your rivals (see RivalBook) who made it into this match.
+var rivals_here: Array[Critter] = []
+## The director: bots that learn you (see PlayerProfile). Camping draws
+## hunters, a hot streak makes the bots sharpen up for a while.
+const CAMP_RADIUS := 14.0
+const CAMP_SECONDS := 25.0
+const CAMP_COOLDOWN := 45.0
+const STREAK_WINDOW := 30.0
+const ADAPT_SECONDS := 60.0
+var _camp_anchor := Vector3.INF
+var _camp_t := 0.0
+var _camp_cooldown := 0.0
+var _player_kills: Array[float] = []   # match clock of each of the player's beat-downs
+var _adapt_left := 0.0
+var _clock := 0.0
+var _landed := false
+## This match's Briar mood (see Storm.VARIANTS): classic a quarter of the time.
+var briar_variant := "classic"
+var _taunted: Dictionary = {}       # "name|event" -> true (spot taunts once a match)
 var _supply_t := 0.0
 const SUPPLY_INTERVAL := 75.0
 
@@ -31,6 +50,8 @@ func setup(world_root_: Node3D, island_: Island, opponents: int, difficulty: int
 	island = island_
 	pace = pace_
 	rng.seed = seed_ * 7 + 1
+	var moods := Storm.VARIANTS.keys().filter(func(k): return k != "classic")
+	briar_variant = "classic" if rng.randf() < 0.25 else moods[rng.randi() % moods.size()]
 	storm = Storm.new()
 	storm.name = "Storm"
 	world_root.add_child(storm)
@@ -41,19 +62,40 @@ func setup(world_root_: Node3D, island_: Island, opponents: int, difficulty: int
 	_spawn_loot()
 	var defs := _available_defs()
 	var used_names := {}
-	for i in opponents:
+	# your rivals always come back for more (up to three of them)
+	var roster := []
+	for r in RivalBook.rivals():
+		if roster.size() >= mini(3, opponents):
+			break
+		for rd in defs:
+			if String(rd.id) == r[1] and Array(rd.names).has(r[0]):
+				roster.append([rd, r[0]])
+				used_names[r[0]] = true
+	while roster.size() < opponents:
 		var def: CritterDef = _pick_def(defs)
-		var n := _unique_name(def, used_names)
+		roster.append([def, _unique_name(def, used_names)])
+	for entry in roster:
+		var def: CritterDef = entry[0]
+		var n: String = entry[1]
 		var c := _spawn_critter(def, n)
-		c.visual.set_enemy_highlight(n)
+		var rival := RivalBook.is_rival(n)
+		c.visual.set_enemy_highlight(n, rival)
+		if rival:
+			rivals_here.append(c)
+		RivalBook.note_meeting(n, String(def.id))
 		var skins := def.skins()
 		c.visual.apply_skin(String(skins[rng.randi() % skins.size()].get("id", "default")))
 		var brain := AIBrain.new()
 		brain.name = "AIBrain"
 		brain.island = island
 		brain.match_manager = self
-		brain.skill = clampf(_skill_for(difficulty) + rng.randf_range(-0.12, 0.12), 0.05, 0.98)
+		AIBrain.player_style = PlayerProfile.fighting_style()
+		brain.personality = RivalBook.personality_of(n)
+		brain.rival = rival
+		var p: Dictionary = RivalBook.PERSONALITIES[brain.personality]
+		brain.skill = clampf(_skill_for(difficulty) + rng.randf_range(-0.12, 0.12) + float(p.skill) + (0.06 if rival else 0.0), 0.05, 0.98)
 		c.add_child(brain)
+	RivalBook.save()
 	total = critters.size() + 1   # + the player, who joins after picking a critter
 	_alive_cache = total
 	Events.alive_count_changed.emit(total, total)
@@ -167,6 +209,15 @@ func begin_drop() -> void:
 	dropship.name = "Dropship"
 	world_root.add_child(dropship)
 	dropship.setup(island.terrain.island_radius, rng, island.drop_vehicle, island.play_bounds())
+	# the bots know where you like to land
+	var fav := PlayerProfile.favourite_landing(island.pois.map(func(p): return p.name))
+	var fav_poi: Dictionary = {}
+	for p in island.pois:
+		if p.name == fav:
+			fav_poi = p
+	if not fav_poi.is_empty():
+		get_tree().create_timer(12.0).timeout.connect(func():
+			Events.announce.emit("THEY KNOW WHERE YOU LAND", "More critters are heading for %s this time." % fav))
 	for c in critters:
 		dropship.board(c)
 		var brain := c.get_node_or_null("AIBrain") as AIBrain
@@ -177,6 +228,9 @@ func begin_drop() -> void:
 				var poi: Dictionary = island.pois[rng.randi() % island.pois.size()]
 				var cc: Vector2 = poi.center + Vector2(rng.randf_range(-12, 12), rng.randf_range(-12, 12))
 				spot = Vector3(cc.x, island.terrain.height_at(cc.x, cc.y), cc.y)
+			if not fav_poi.is_empty() and rng.randf() < 0.3:
+				var fc: Vector2 = fav_poi.center + Vector2(rng.randf_range(-10, 10), rng.randf_range(-10, 10))
+				spot = Vector3(fc.x, island.terrain.height_at(fc.x, fc.y), fc.y)
 			brain.drop_spot = spot
 			brain.drop_progress = clampf(dropship.progress_nearest(spot) + rng.randf_range(-0.06, 0.03), 0.02, 0.98)
 	dropship.launch()
@@ -184,7 +238,9 @@ func begin_drop() -> void:
 
 
 func _process(delta: float) -> void:
+	_clock += delta
 	if phase == Phase.PLAYING:
+		_direct(delta)
 		_supply_t += delta
 		if _supply_t >= SUPPLY_INTERVAL * pace:
 			_supply_t = 0.0
@@ -202,8 +258,74 @@ func _process(delta: float) -> void:
 			if c.state == Critter.State.IN_DROPSHIP:
 				anyone_aboard = true
 		if not anyone_aboard:
-			storm.start(island, island.terrain.island_radius + 50.0, pace)
+			storm.player = player
+			storm.start(island, island.terrain.island_radius + 50.0, pace, briar_variant)
+			var v: Dictionary = Storm.VARIANTS[storm.variant]
+			Events.announce.emit(String(v.title).to_upper(), v.rule)
 			_set_phase(Phase.PLAYING)
+
+
+## The director: notices where the player landed, camping, and hot streaks.
+func _direct(delta: float) -> void:
+	if player == null or not is_instance_valid(player) or not player.alive:
+		return
+	if not _landed and player.state == Critter.State.GROUND:
+		_landed = true
+		var p := Vector2(player.global_position.x, player.global_position.z)
+		var near := island.in_poi(p, 1.6)
+		if not near.is_empty():
+			PlayerProfile.note_landing(near.name)
+	# camping: sitting in one small spot for a while draws a few hunters
+	_camp_cooldown = maxf(0.0, _camp_cooldown - delta)
+	if _camp_anchor == Vector3.INF or player.global_position.distance_to(_camp_anchor) > CAMP_RADIUS:
+		_camp_anchor = player.global_position
+		_camp_t = 0.0
+	else:
+		_camp_t += delta
+		if _camp_t > CAMP_SECONDS and _camp_cooldown <= 0.0:
+			_camp_t = 0.0
+			_camp_cooldown = CAMP_COOLDOWN
+			flush_out_player()
+	# a hot streak: the bots sharpen up for a while
+	if _adapt_left > 0.0:
+		_adapt_left -= delta
+		if _adapt_left <= 0.0:
+			_set_adapted(false)
+
+
+## Send the nearest armed bots to where the player is hiding (and say so).
+func flush_out_player() -> Array[Critter]:
+	var hunters: Array[Critter] = []
+	var bots := alive_critters().filter(func(c): return c != player and c.inventory.has_any_weapon())
+	bots.sort_custom(func(a, b): return a.global_position.distance_to(player.global_position) < b.global_position.distance_to(player.global_position))
+	for c in bots.slice(0, 3):
+		var brain := c.get_node_or_null("AIBrain") as AIBrain
+		if brain:
+			brain.hunt(player.global_position + Vector3(rng.randf_range(-6, 6), 0, rng.randf_range(-6, 6)))
+			hunters.append(c)
+	if not hunters.is_empty():
+		Events.taunt.emit(hunters[0], "Somebody's been sitting still... coming for you, %s!" % player.def.display_name)
+	return hunters
+
+
+func _note_player_kill(info: DamageInfo) -> void:
+	PlayerProfile.note_kill(info.weapon_id if info.weapon_id != &"" else &"melee")
+	_player_kills.append(_clock)
+	_player_kills = _player_kills.filter(func(t): return _clock - t < STREAK_WINDOW)
+	if _player_kills.size() >= 2 and _adapt_left <= 0.0:
+		_set_adapted(true)
+		Events.announce.emit("THE BOTS ARE ADAPTING", "They've seen that trick before...")
+	elif _adapt_left > 0.0:
+		_adapt_left = ADAPT_SECONDS
+
+
+func _set_adapted(on: bool) -> void:
+	_adapt_left = ADAPT_SECONDS if on else 0.0
+	AIBrain.player_attack_slots += 1 if on else -1
+	for c in critters:
+		var brain := c.get_node_or_null("AIBrain") if is_instance_valid(c) else null
+		if brain:
+			(brain as AIBrain).skill = clampf((brain as AIBrain).skill + (0.08 if on else -0.08), 0.05, 0.98)
 
 
 func _spawn_supply_drop() -> void:
@@ -234,6 +356,17 @@ func _on_critter_died(victim: Node, info: DamageInfo) -> void:
 	c.placement = alive.size() + 1
 	_alive_cache = alive.size()
 	Events.alive_count_changed.emit(alive.size(), total)
+	var killer := info.attacker as Critter
+	if c == player and killer and killer != player:
+		if RivalBook.note_you_died_to(killer.display_name, String(killer.def.id)):
+			killer.set_meta(&"new_rival", true)
+		taunt(killer, "kill")
+	elif killer == player and c != player:
+		_note_player_kill(info)
+		if RivalBook.note_you_beat(c.display_name, String(c.def.id)):
+			Events.rival_news.emit("REVENGE!", "You beat down your rival %s — now %s" % [c.display_name, RivalBook.score(c.display_name)])
+		if c.display_name in _rival_names() or rng.randf() < 0.35:
+			taunt(c, "lose")
 	if c == player:
 		player_eliminated.emit(c.placement, info.attacker as Critter)
 	if alive.size() <= 1 and phase != Phase.ENDED:
@@ -243,6 +376,21 @@ func _on_critter_died(victim: Node, info: DamageInfo) -> void:
 		_set_phase(Phase.ENDED)
 		storm.active = false
 		finished.emit(winner, player.placement if not player.alive else 1)
+
+
+func _rival_names() -> Array:
+	return rivals_here.filter(func(r): return is_instance_valid(r)).map(func(r): return r.display_name)
+
+
+## A bot says something in its own voice ("spot" taunts once a match).
+func taunt(c: Critter, event: String) -> void:
+	if c == null or not is_instance_valid(c) or c == player or player == null:
+		return
+	var key := "%s|%s" % [c.display_name, event]
+	if event == "spot" and _taunted.has(key):
+		return
+	_taunted[key] = true
+	Events.taunt.emit(c, RivalBook.line(c.display_name, event, String(player.def.display_name), rng))
 
 
 func alive_critters() -> Array[Critter]:

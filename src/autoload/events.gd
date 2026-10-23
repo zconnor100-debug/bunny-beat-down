@@ -14,3 +14,7 @@ signal storm_changed(stage: int, center: Vector2, radius: float, next_center: Ve
 signal alive_count_changed(alive: int, total: int)
 signal supply_drop_incoming(position: Vector3)
 signal player_hit_confirmed(victim: Node, damage: float, headshot: bool, killed: bool)
+signal taunt(critter: Node, text: String)          ## a bot says something (see RivalBook)
+signal rival_news(text: String, sub: String)        ## a rival turned up, or you got revenge
+signal announce(text: String, sub: String)          ## a big centre-screen message (the Briar's rules...)
+signal clover_eaten(critter: Node)

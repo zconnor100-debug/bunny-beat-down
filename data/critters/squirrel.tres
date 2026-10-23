@@ -22,4 +22,4 @@ wears_acorn_helmet = false
 melee_name = "Acorn Knocker"
 melee_model = "res://assets/weapons/melee_acorn_knocker.glb"
 spawn_weight = 1.0
-names = PackedStringArray("Nutsy", "Chitter", "Acorn Al", "Bushytail", "Sir Scamper", "Hazel")
+names = PackedStringArray("Nutsy", "Chitter", "Acorn Al", "Bushytail", "Sir Scamper", "Hazel", "Twitch", "Kernel", "Squeakers")

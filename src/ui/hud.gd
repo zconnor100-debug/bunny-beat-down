@@ -173,6 +173,9 @@ func setup(player_: Critter, rig_: CameraRig, mm: MatchManager) -> void:
 	_root.add_child(_fps)
 
 	Events.critter_died.connect(_on_critter_died)
+	Events.taunt.connect(_on_taunt)
+	Events.rival_news.connect(func(t, sub): show_message(t, sub, 4.0))
+	Events.announce.connect(func(t, sub): show_message(t, sub, 5.0))
 	Events.alive_count_changed.connect(func(a, _t): _alive_label.text = "%d CRITTER%s LEFT" % [a, "" if a == 1 else "S"])
 	Events.player_hit_confirmed.connect(_overlay.on_hit_confirmed)
 	Events.critter_damaged.connect(_on_damaged)
@@ -245,7 +248,11 @@ func _process(delta: float) -> void:
 	if storm and storm.active:
 		var t := int(ceil(storm.time_left))
 		var mmss := "%d:%02d" % [t / 60, t % 60]
-		_storm_label.text = ("THE BRIAR IS CLOSING  %s" % mmss) if storm.shrinking else ("Briar closes in %s" % mmss)
+		var title: String = Storm.VARIANTS[storm.variant].title
+		if storm.nap_left > 0.0:
+			_storm_label.text = "%s is napping  %d" % [title, ceili(storm.nap_left)]
+		else:
+			_storm_label.text = ("%s IS CLOSING  %s" % [title.to_upper(), mmss]) if storm.shrinking else ("%s closes in %s" % [title, mmss])
 		_storm_label.add_theme_color_override("font_color", Color("d9a0ff") if storm.shrinking else UITheme.CREAM)
 		var outside := not storm.is_safe(player.global_position) and player.alive
 		_storm_tint.color.a = lerpf(_storm_tint.color.a, 0.28 if outside else 0.0, IKMath.damp(4.0, delta))
@@ -323,6 +330,28 @@ func _on_critter_died(victim: Node, info: DamageInfo) -> void:
 	if killer == player and v != player:
 		Audio.play(&"kill_confirm", -2.0)
 		show_message("BEAT DOWN!", "%s is out%s" % [v.display_name, " — headshot!" if info.headshot else ""], 2.2)
+
+
+const SPEECH := Color(0.88, 0.72, 1.0)
+
+
+func _on_taunt(c: Node, text: String) -> void:
+	var critter := c as Critter
+	if critter == null or not is_instance_valid(critter):
+		return
+	var l := UITheme.label("💬 %s: “%s”" % [critter.display_name, text], 19, SPEECH)
+	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	_feed.add_child(l)
+	while _feed.get_child_count() > 6:
+		var oldest := _feed.get_child(0)
+		_feed.remove_child(oldest)
+		oldest.queue_free()
+	Despawner.after(l, 8.0, func(n: Node):
+		var tw := n.create_tween()
+		tw.tween_property(n, "modulate:a", 0.0, 0.6)
+		tw.tween_callback(n.queue_free))
+	if critter.visual and critter.alive:
+		critter.visual.say(text)
 
 
 func _on_damaged(victim: Node, info: DamageInfo) -> void:

@@ -179,6 +179,28 @@ The third map follows the cage's pattern (`ToyBox extends Island`,
   (the kill feed: "bonked by the toy train"). The train is added after the
   navmesh bake, so it never becomes part of the walkable floor.
 
+## Characters, rivals and a director
+
+- **`RivalBook`** (a `ConfigFile` in `user://`, a separate one for test runs)
+  keeps the score between the player and each bot by name. Personalities are
+  a fixed function of the name, so "Vex" is always the same character; each
+  has its own taunt lines for spotting you, beating you and losing to you.
+  A bot with two or more beat-downs on you (and more than yours on it) is a
+  rival: `MatchManager` puts up to three rivals in every match, their
+  `AIBrain` scores the player as a preferred target and skips the
+  "attack slot" queue, and `Events.taunt` drives the HUD's speech bubbles.
+- **`PlayerProfile`** remembers the player's landings and beat-downs by
+  weapon. `MatchManager` acts as a small director: some bots drop at your
+  favourite landmark, `AIBrain.player_style` shifts the bots' preferred
+  range against your favourite guns, camping (25 s within 14 m) sends the
+  three nearest armed bots to `hunt()` your spot, and two quick beat-downs
+  give the bots an extra attack slot and a skill bump for a minute.
+- **`Storm.VARIANTS`**: the Briar's moods are small switches in the same
+  state machine: the next centre (hungry), the per-tick effect on critters
+  outside (sticky sets `Critter.slow_factor`, bouncy sets `velocity.y`),
+  the wait time and damage (sleepy), a creep during waits (wandering), and a
+  nap timer fed by `Events.clover_eaten` (bribable).
+
 ## Battle-royale loop
 
 `MatchManager` spawns 1 player plus N bots (species weighted from

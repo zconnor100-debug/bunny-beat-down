@@ -44,6 +44,13 @@ var mode := Mode.ROAM
 var target: Critter
 var drop_spot := Vector3.ZERO
 var drop_progress := 0.5          ## when along the balloon route to jump
+var personality := ""             ## see RivalBook.PERSONALITIES
+var rival := false                ## this bot has your number: it hunts you
+## How the player likes to fight, learned over past matches (PlayerProfile):
+## "close" → bots keep their distance from you, "far" → they rush you.
+static var player_style := ""
+var _hunt_pos := Vector3.INF      # the director sent us to flush the player out of hiding
+var _hunt_until := 0.0
 
 var _think_t := randf() * THINK_INTERVAL
 var _last_seen_pos := Vector3.ZERO
@@ -149,8 +156,8 @@ func _perceive() -> void:
 		# a target is someone we're sure of (or still tracking)
 		if aware < (0.5 if other == target else 1.0):
 			continue
-		# prefer close, weak, and whoever is already our target
-		var score := d * (0.6 + other.health / 200.0) * (0.6 if other == target else 1.0)
+		# prefer close, weak, and whoever is already our target (a rival: you)
+		var score := d * (0.6 + other.health / 200.0) * (0.6 if other == target else 1.0) * (0.35 if rival and other.is_player else 1.0)
 		if score < best_score:
 			best_score = score
 			best = other
@@ -163,6 +170,8 @@ func _perceive() -> void:
 	if best:
 		if best != target or _clock - _last_seen_t > 1.0:
 			_spotted_t = _clock
+			if best.is_player and match_manager and match_manager.has_method("taunt") and (rival or randf() < 0.1):
+				match_manager.taunt(me, "spot")
 			# half-hidden targets are harder to aim at
 			_aim_err = _random_aim_error(eye.distance_to(best.get_chest_position())) * (1.0 + (1.0 - best_vis) * 1.5)
 		target = best
@@ -255,6 +264,10 @@ func _choose_mode() -> void:
 		return
 	if me.health < 60.0 and me.inventory.clovers > 0:
 		mode = Mode.HEAL
+		return
+	if _hunt_pos != Vector3.INF and _clock < _hunt_until and armed:
+		_set_dest(_hunt_pos)   # (roaming toward where the player is hiding)
+		mode = Mode.ROAM
 		return
 	if _wants_loot():
 		mode = Mode.LOOT
@@ -388,7 +401,15 @@ func _act(delta: float) -> void:
 	_unstick(delta)
 
 
+## The match director wants this bot to go and flush the player out.
+func hunt(pos: Vector3, seconds := 30.0) -> void:
+	_hunt_pos = pos
+	_hunt_until = _clock + seconds
+
+
 func _roam() -> void:
+	if _hunt_pos != Vector3.INF and (_clock >= _hunt_until or me.global_position.distance_to(_hunt_pos) < 6.0):
+		_hunt_pos = Vector3.INF
 	if _dest == Vector3.INF or me.global_position.distance_to(_dest) < 4.0:
 		var center := Vector2.ZERO
 		var radius := 1e9
@@ -476,6 +497,8 @@ func _fight(delta: float) -> void:
 
 	# --- positioning
 	var pref := w.data.ai_preferred_range * lerpf(1.2, 0.9, skill)
+	if target.is_player and player_style != "":
+		pref *= 1.6 if player_style == "close" else 0.5   # fight you where your guns are weakest
 	_strafe_t -= delta
 	if _strafe_t <= 0.0:
 		_strafe = -_strafe if randf() < 0.7 else _strafe
@@ -563,6 +586,8 @@ func _brawl() -> void:
 ## Only `player_attack_slots` bots shoot at the player at once; a slot is held
 ## while firing and freed 1.5 s after the bot stops.
 func _may_shoot_player() -> bool:
+	if rival:
+		return true   # a rival doesn't wait its turn
 	var now := Time.get_ticks_msec()
 	var id := get_instance_id()
 	for k in _player_attackers.keys():

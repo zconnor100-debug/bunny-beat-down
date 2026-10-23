@@ -76,6 +76,7 @@ var _body: CollisionShape3D
 var _stand_height := 1.0
 var _gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity", 16.0)
 var swimming := false
+var slow_factor := 1.0              ## the Sticky Briar's thorns set this (1 = normal speed)
 var _water_level := -INF
 var _melee_t := -1.0               # seconds into the current swing, -1 when not swinging
 var _melee_struck := false
@@ -239,6 +240,7 @@ func _ground_move(delta: float) -> void:
 		speed *= lerpf(1.0, 0.7, clampf(wade / (h * 0.5), 0.0, 1.0))
 	if w:
 		speed *= w.data.move_speed_scale
+	speed *= slow_factor
 	var basis := Basis(Vector3.UP, look_yaw)
 	var wish := basis * Vector3(move_input.x, 0, -move_input.y)
 	if wish.length() > 1.0:
@@ -671,6 +673,7 @@ func use_clover() -> bool:
 	inventory.changed.emit()
 	health = minf(max_health, health + 40.0)
 	Audio.play_at(&"pickup_health", global_position)
+	Events.clover_eaten.emit(self)
 	return true
 
 
