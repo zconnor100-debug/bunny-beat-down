@@ -822,10 +822,32 @@ func _bake_navigation() -> void:
 	# left out of the map
 	for i in nav_regions.size():
 		nav_regions[i].navigation_mesh = baked[i]
-	# let the server sync the new regions before anyone asks for a path
+	await _wait_for_nav_map(baked)
+
+
+## Don't hand the island over until the navigation map really has every tile
+## (a vertex of each tile must be findable on the map). The map rebuilds on
+## its own schedule, slower on slow machines; a tile still missing after a
+## couple of seconds is handed to the server again.
+func _wait_for_nav_map(baked: Array[NavigationMesh]) -> void:
 	var map := get_world_3d().navigation_map
-	var iteration := NavigationServer3D.map_get_iteration_id(map)
-	for i in 120:
+	var probes := {}   # region index -> a vertex of its tile
+	for i in baked.size():
+		var vs := baked[i].get_vertices()
+		if not vs.is_empty():
+			probes[i] = vs[vs.size() / 2]
+	for frame in 1200:
 		await get_tree().physics_frame
-		if i >= 5 and NavigationServer3D.map_get_iteration_id(map) != iteration:
-			break
+		if frame < 2:
+			continue
+		var missing := []
+		for i in probes:
+			var v: Vector3 = probes[i]
+			if NavigationServer3D.map_get_closest_point(map, v).distance_squared_to(v) > 1.0:
+				missing.append(i)
+		if missing.is_empty():
+			return
+		if frame % 120 == 119:
+			for i in missing:
+				NavigationServer3D.region_set_navigation_mesh(nav_regions[i].get_rid(), baked[i])
+	push_warning("navigation map still missing tiles after 20 s")
