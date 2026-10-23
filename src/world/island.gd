@@ -538,7 +538,7 @@ func random_land_point(min_h := 2.0, inside_center := Vector2.ZERO, inside_radiu
 func _bake_navigation() -> void:
 	var template := NavigationMesh.new()
 	template.agent_radius = 0.5
-	template.agent_height = 1.75
+	template.agent_height = 2.4   # the tallest critter (fox) stands 2.24 m
 	template.agent_max_climb = 0.75
 	template.agent_max_slope = 44.0
 	template.cell_size = 0.5

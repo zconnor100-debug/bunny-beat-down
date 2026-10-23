@@ -21,6 +21,7 @@ var _skin_index := 0
 var _defs: Array[CritterDef] = []
 var _viewport: SubViewport
 var _stage: Node3D
+var _cam: Camera3D
 var _preview: Critter
 var _turntable: Node3D
 var _name: Label
@@ -192,12 +193,11 @@ func _build_stage() -> void:
 	_stage.add_child(floor_body)
 	_turntable = Node3D.new()
 	_stage.add_child(_turntable)
-	var cam := Camera3D.new()
-	cam.fov = 30
-	_stage.add_child(cam)
-	cam.position = Vector3(0, 1.0, 4.3)
-	cam.look_at(Vector3(0, 0.7, 0), Vector3.UP)
-	cam.current = true
+	_cam = Camera3D.new()
+	_cam.fov = 30
+	_stage.add_child(_cam)
+	_cam.current = true
+	_frame(1.33)
 
 
 func _show() -> void:
@@ -211,6 +211,7 @@ func _show() -> void:
 	_stage.add_child(_preview)
 	_preview.place_at(Vector3(0, 0.05, 0), 0.0)
 	_preview.give_weapon(WeaponInstance.new(WeaponDB.get_weapon(&"carrot_rifle"), Rarity.Tier.PRIZE))
+	_frame(_preview.visual.rig.world_head_top if _preview.visual.rig else 1.33)
 	var skins := d.skins()
 	var cur_skin := String(Settings.get_value(&"player_skin"))
 	_skin_index = 0
@@ -226,6 +227,13 @@ func _show() -> void:
 	Settings.set_value(&"player_character", String(d.id))
 	_next_trick = 1.5
 	_spin = 0.0
+
+
+## Pull the camera back to fit a critter `height` metres tall (with room for
+## its jump trick).
+func _frame(height: float) -> void:
+	_cam.position = Vector3(0, 0.75, 3.2) * height
+	_cam.look_at(Vector3(0, 0.53 * height, 0), Vector3.UP)
 
 
 func _apply_skin() -> void:

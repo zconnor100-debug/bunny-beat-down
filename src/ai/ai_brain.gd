@@ -7,6 +7,12 @@ extends Node
 ##
 ## Decision loop (every ~0.2 s): perceive → pick a mode:
 ##   DROP → LOOT → ROAM, interrupted by FIGHT, HEAL and FLEE_STORM.
+##
+## Seeing is not knowing: every critter in view fills an awareness meter,
+## fast when it is close, moving, in front of the bot or firing, slowly when
+## it is far, still, crouched or hidden in grass and bushes. Only a full meter
+## makes it a target. Getting shot turns the bot toward the noise; it still
+## has to spot the shooter.
 
 enum Mode { DROP, LOOT, ROAM, FIGHT, HEAL, FLEE_STORM }
 
@@ -15,6 +21,19 @@ const VISION_RANGE := 75.0
 const HEARING_RANGE := 45.0
 const FOV_DOT := -0.1             ## ~190° awareness cone
 const MEMORY := 4.0               ## seconds a lost target is remembered
+const SPOT_RATE := 1.6            ## awareness/s: close, in the open, in front, moving
+const AWARENESS_FADE := 0.25      ## awareness/s lost while out of sight
+## head, chest and hips: how much each counts toward being seen
+const BODY_POINTS := [[0.9, 0.3], [0.6, 0.45], [0.3, 0.25]]
+
+## How many bots may shoot at the player at once (set per difficulty by
+## MatchManager): the rest keep their distance and wait their turn, so the
+## player gets fights, not a firing squad.
+static var player_attack_slots := 2
+## Damage bots deal to the player is multiplied by this (per difficulty).
+static var damage_to_player := 0.65
+static var _player_attackers: Dictionary = {}   # brain instance id -> msec its slot expires
+const ATTACK_SLOT_HOLD_MS := 1500
 
 var me: Critter
 var island: Island
@@ -43,6 +62,14 @@ var _fire_toggle := false
 var _clock := 0.0
 var _heard_pos := Vector3.INF
 var _heard_t := -100.0
+var _awareness: Dictionary = {}   # Critter -> 0..1.5
+var _shots_seen: Dictionary = {}  # Critter -> clock of its last shot (a muzzle flash gives you away)
+var _last_perceive := 0.0
+var _target_vis := 1.0            # how much of the target is showing (0..1)
+var _alert_pos := Vector3.INF     # where a shot that hit us came from (roughly)
+var _alert_t := -100.0
+var _bursting := false
+var _burst_t := 0.0
 ## Loot we couldn't reach (behind rocks, on a roof…): ignored for a while.
 var _unreachable: Dictionary = {}   # node -> clock time it can be tried again
 var _goal_since := 0.0
@@ -84,12 +111,17 @@ func _think() -> void:
 
 
 func _perceive() -> void:
+	var dt := clampf(_clock - _last_perceive, 0.0, 0.5)
+	_last_perceive = _clock
 	var eye := me.get_eye_position()
 	var fwd := me.look_direction()
 	var space := me.get_world_3d().direct_space_state
+	var cover: Scatter = island.scatter if island else null
 	var best: Critter = null
 	var best_score := INF
+	var best_vis := 0.0
 	var range_ := VISION_RANGE * lerpf(0.7, 1.15, skill)
+	var seen := {}
 	for c in me.get_tree().get_nodes_in_group(&"critters"):
 		var other := c as Critter
 		if other == null or other == me or not other.alive or other.state != Critter.State.GROUND:
@@ -98,25 +130,68 @@ func _perceive() -> void:
 		var d := to.length()
 		if d > range_:
 			continue
-		if d > 10.0 and to.normalized().dot(fwd) < FOV_DOT:
+		var facing := to.normalized().dot(fwd)
+		if d > 10.0 and facing < FOV_DOT:
 			continue
-		var q := PhysicsRayQueryParameters3D.create(eye, other.get_chest_position(), Layers.SIGHT_MASK)
-		if space.intersect_ray(q):
+		var vis := _visibility_of(other, eye, space, cover)
+		if vis < 0.02:
+			continue
+		seen[other] = true
+		# fill the awareness meter
+		var near := clampf(1.25 - d / range_, 0.2, 1.0)
+		var ahead := lerpf(0.4, 1.0, smoothstep(FOV_DOT, 0.8, facing))
+		var moving := 0.5 + 0.5 * clampf(Vector2(other.velocity.x, other.velocity.z).length() / 3.0, 0.0, 1.0)
+		var flash := 3.0 if _clock - float(_shots_seen.get(other, -100.0)) < 1.0 else 1.0
+		var rate := SPOT_RATE * lerpf(0.6, 1.4, skill) * near * ahead * moving * flash * vis
+		var aware := minf(1.5, float(_awareness.get(other, 0.0)) + rate * dt)
+		_awareness[other] = aware
+		# a target is someone we're sure of (or still tracking)
+		if aware < (0.5 if other == target else 1.0):
 			continue
 		# prefer close, weak, and whoever is already our target
 		var score := d * (0.6 + other.health / 200.0) * (0.6 if other == target else 1.0)
 		if score < best_score:
 			best_score = score
 			best = other
+			best_vis = vis
+	for k in _awareness.keys():
+		if not is_instance_valid(k) or not (k as Critter).alive:
+			_awareness.erase(k)
+		elif not seen.has(k):
+			_awareness[k] = maxf(0.0, float(_awareness[k]) - AWARENESS_FADE * dt)
 	if best:
 		if best != target or _clock - _last_seen_t > 1.0:
 			_spotted_t = _clock
-			_aim_err = _random_aim_error(eye.distance_to(best.get_chest_position()))
+			# half-hidden targets are harder to aim at
+			_aim_err = _random_aim_error(eye.distance_to(best.get_chest_position())) * (1.0 + (1.0 - best_vis) * 1.5)
 		target = best
+		_target_vis = best_vis
 		_last_seen_pos = best.get_chest_position()
 		_last_seen_t = _clock
 	elif target and (not target.alive or _clock - _last_seen_t > MEMORY):
 		target = null
+
+
+## How much of `other` shows from `eye`: head, chest and hips each count if no
+## solid thing is in the way, and less through the leaves. 0 = hidden.
+func _visibility_of(other: Critter, eye: Vector3, space: PhysicsDirectSpaceState3D, cover: Scatter) -> float:
+	var h := (other.visual.rig.world_head_top if other.visual and other.visual.rig else 1.0) * (1.0 - 0.3 * other.crouch_amount())
+	var pts := PackedVector3Array()
+	var shown := 0.0
+	for bp in BODY_POINTS:
+		var pt := other.global_position + Vector3.UP * h * float(bp[0])
+		var q := PhysicsRayQueryParameters3D.create(eye, pt, Layers.SIGHT_MASK)
+		if not space.intersect_ray(q):
+			pts.append(pt)
+			shown += float(bp[1])
+	if pts.is_empty():
+		return 0.0
+	return shown * (cover.visibility(eye, pts) if cover else 1.0)
+
+
+## How sure this bot is that it has seen `c` (0..1.5; 1 = spotted).
+func awareness_of(c: Critter) -> float:
+	return float(_awareness.get(c, 0.0))
 
 
 func _random_aim_error(dist: float) -> Vector3:
@@ -127,6 +202,7 @@ func _random_aim_error(dist: float) -> Vector3:
 func _on_shot_heard(shooter: Node, origin: Vector3, _id: StringName) -> void:
 	if shooter == me or me == null or not me.alive:
 		return
+	_shots_seen[shooter] = _clock
 	if origin.distance_to(me.global_position) < HEARING_RANGE:
 		_heard_pos = origin
 		_heard_t = _clock
@@ -135,14 +211,21 @@ func _on_shot_heard(shooter: Node, origin: Vector3, _id: StringName) -> void:
 func _on_damaged(victim: Node, info: DamageInfo) -> void:
 	if victim != me or info.attacker == null or info.attacker == me or not info.attacker is Critter:
 		return
-	# getting shot reveals roughly where it came from
+	# getting shot says roughly where it came from: turn that way and go and
+	# look (the bot still has to spot the shooter before it fires back)
 	var attacker := info.attacker as Critter
-	if target == null or not target.alive:
-		target = attacker
-		_last_seen_pos = attacker.get_chest_position()
-		_last_seen_t = _clock - 1.0
-		_spotted_t = _clock
-		_aim_err = _random_aim_error(me.global_position.distance_to(attacker.global_position)) * 1.5
+	var err := me.global_position.distance_to(attacker.global_position) * 0.15
+	_alert_pos = attacker.global_position + Vector3(randf_range(-err, err), 0.0, randf_range(-err, err))
+	_alert_t = _clock
+	_heard_pos = _alert_pos
+	_heard_t = _clock
+	_awareness[attacker] = maxf(float(_awareness.get(attacker, 0.0)), 0.6)
+	_think_t = minf(_think_t, 0.05)
+
+
+## Recently shot: keep looking toward where it came from.
+func _alerted() -> bool:
+	return _alert_pos != Vector3.INF and _clock - _alert_t < 2.5
 
 
 # ---- decisions -------------------------------------------------------------------------------------
@@ -416,7 +499,7 @@ func _fight(delta: float) -> void:
 			aim = target.global_position + Vector3.UP * 0.15 + lead
 		elif randf() < skill * 0.3:
 			aim = target.get_eye_position() + lead
-		_aim_err = _aim_err.lerp(Vector3.ZERO, IKMath.damp(lerpf(0.6, 2.4, skill), delta))
+		_aim_err = _aim_err.lerp(Vector3.ZERO, IKMath.damp(lerpf(0.6, 2.4, skill) * (0.3 + 0.7 * _target_vis), delta))
 	aim += _aim_err
 	var want := (aim - eye).normalized()
 	var want_yaw := atan2(-want.x, -want.z)
@@ -434,14 +517,33 @@ func _fight(delta: float) -> void:
 	var in_range := dist <= w.data.ai_max_range and dist >= w.data.ai_min_range
 	if w.ammo_in_mag <= 0:
 		me.start_reload()
-	elif visible and on_target and in_range and _clock - _spotted_t > reaction:
+	elif visible and on_target and in_range and _clock - _spotted_t > reaction and (not target.is_player or _may_shoot_player()):
 		me.want_aim = (dist > 18.0 and skill > 0.5) or w.data.scoped
 		if w.data.fire_mode == WeaponData.FireMode.AUTO:
-			me.want_fire = true
+			# bursts with pauses between, like a person (not a sprinkler)
+			_burst_t -= delta
+			if _burst_t <= 0.0:
+				_bursting = not _bursting
+				_burst_t = randf_range(0.3, 0.8) * lerpf(0.8, 1.4, skill) if _bursting else randf_range(0.25, 0.6) * lerpf(1.3, 0.8, skill)
+			me.want_fire = _bursting
 		else:
 			# tap the trigger: press on one tick, release on the next
 			_fire_toggle = not _fire_toggle
-			me.want_fire = _fire_toggle and randf() < lerpf(0.35, 0.8, skill)
+			me.want_fire = _fire_toggle and randf() < lerpf(0.12, 0.35, skill)
+
+
+## Only `player_attack_slots` bots shoot at the player at once; a slot is held
+## while firing and freed 1.5 s after the bot stops.
+func _may_shoot_player() -> bool:
+	var now := Time.get_ticks_msec()
+	var id := get_instance_id()
+	for k in _player_attackers.keys():
+		if _player_attackers[k] < now or k == id and not me.alive:
+			_player_attackers.erase(k)
+	if _player_attackers.has(id) or _player_attackers.size() < player_attack_slots:
+		_player_attackers[id] = now + ATTACK_SLOT_HOLD_MS
+		return true
+	return false
 
 
 func _pick_weapon_for_range() -> void:
@@ -483,6 +585,8 @@ func _set_dest(p: Vector3) -> void:
 func _follow_path(look_ahead: bool) -> void:
 	if _path.is_empty():
 		me.move_input = Vector2.ZERO
+		if _alerted():
+			me.look_yaw = lerp_angle(me.look_yaw, _yaw_to(_alert_pos), 0.15)
 		return
 	var pos := me.global_position
 	while _path_i < _path.size() - 1 and Vector2(_path[_path_i].x - pos.x, _path[_path_i].z - pos.z).length() < 1.2:
@@ -494,8 +598,8 @@ func _follow_path(look_ahead: bool) -> void:
 		return
 	var dir := to.normalized()
 	if look_ahead or mode != Mode.FIGHT:
-		# face where we're going, like a human would
-		var yaw := atan2(-dir.x, -dir.z)
+		# face where we're going, like a human would (or where the shots came from)
+		var yaw := _yaw_to(_alert_pos) if _alerted() and mode != Mode.FIGHT else atan2(-dir.x, -dir.z)
 		me.look_yaw = lerp_angle(me.look_yaw, yaw, 0.2)
 		me.look_pitch = lerpf(me.look_pitch, 0.0, 0.1)
 		me.aim_point = me.get_eye_position() + me.look_direction() * 30.0
@@ -504,6 +608,11 @@ func _follow_path(look_ahead: bool) -> void:
 	me.move_input = Vector2(local.x, -local.z).limit_length(1.0)
 	if mode == Mode.ROAM:
 		me.want_sprint = to.length() > 20.0 and randf() < 0.5
+
+
+func _yaw_to(p: Vector3) -> float:
+	var to := p - me.global_position
+	return atan2(-to.x, -to.z)
 
 
 func _unstick(delta: float) -> void:

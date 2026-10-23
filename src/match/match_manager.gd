@@ -35,6 +35,9 @@ func setup(world_root_: Node3D, island_: Island, opponents: int, difficulty: int
 	storm.name = "Storm"
 	world_root.add_child(storm)
 	Events.critter_died.connect(_on_critter_died)
+	var d := clampi(difficulty, 0, 2)
+	AIBrain.player_attack_slots = [1, 2, 3][d]
+	AIBrain.damage_to_player = [0.45, 0.65, 0.85][d]
 	_spawn_loot()
 	var defs := _available_defs()
 	var used_names := {}

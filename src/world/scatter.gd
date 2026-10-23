@@ -19,6 +19,17 @@ var _batches: Dictionary = {}           # "id|cx|cz" -> Array[Transform3D]
 var _batch_entry: Dictionary = {}       # "id|cx|cz" -> entry
 var obstacles: Array = []               # [Vector2 pos, radius] of solid things, for spacing
 
+## Ground cover hides critters from bots the way it hides them from you.
+## Optical depth per metre of sight line through each kind of cover:
+## bushes and ferns hide you, grass hides legs, a dandelion barely anything.
+const COVER_DENSITY := {"bush": 1.3, "grass": 0.55, "flower": 0.25}
+const COVER_CELL := 6.0
+const COVER_MIN_HEIGHT := 0.6           ## clover and fallen leaves hide nothing
+const LOW_COVER_REACH := 10.0           ## grass and flowers only matter near the target
+## cell (Vector2i) -> PackedFloat32Array of [x, z, radius, base_y, top_y, density] per plant
+var _cover_tall: Dictionary = {}        # bushes and ferns: block a whole sight line
+var _cover_low: Dictionary = {}         # grass and flowers
+
 
 func load_manifest() -> void:
 	if not FileAccess.file_exists(MANIFEST):
@@ -168,6 +179,7 @@ func _merged_mesh(path: String) -> ArrayMesh:
 
 
 func _add_batched(e: Dictionary, xf: Transform3D) -> void:
+	_add_cover(e, xf)
 	var cx := int(floor(xf.origin.x / CHUNK))
 	var cz := int(floor(xf.origin.z / CHUNK))
 	var key := "%s|%d|%d" % [e["id"], cx, cz]
@@ -175,6 +187,92 @@ func _add_batched(e: Dictionary, xf: Transform3D) -> void:
 		_batches[key] = []
 		_batch_entry[key] = e
 	_batches[key].append(xf)
+
+
+func _add_cover(e: Dictionary, xf: Transform3D) -> void:
+	var cat: String = e.get("category", "")
+	var sc := xf.basis.get_scale().y
+	var height := float(e.get("height_m", 0.0)) * sc
+	if not COVER_DENSITY.has(cat) or height < COVER_MIN_HEIGHT:
+		return
+	var grid := _cover_tall if cat == "bush" else _cover_low
+	var cell := Vector2i(floori(xf.origin.x / COVER_CELL), floori(xf.origin.z / COVER_CELL))
+	if not grid.has(cell):
+		grid[cell] = PackedFloat32Array()
+	# the footprint includes the sparse tips of the leaves
+	var radius := float(e.get("footprint_radius_m", 0.5)) * sc * 0.75
+	grid[cell].append_array([xf.origin.x, xf.origin.z, radius, xf.origin.y, xf.origin.y + height * 0.9, COVER_DENSITY[cat]])
+
+
+## How much of `points` (say a critter's head, chest and hips) can be seen
+## from `eye` through the ground cover in between: 1 = in plain view, toward 0
+## = hidden in the leaves. Solid things are not counted (use a raycast).
+func visibility(eye: Vector3, points: PackedVector3Array) -> float:
+	if points.is_empty():
+		return 0.0
+	var target := points[points.size() / 2]
+	var plants := PackedFloat32Array()
+	_gather(_cover_tall, eye, target, plants)
+	var reach := minf(LOW_COVER_REACH, eye.distance_to(target))
+	_gather(_cover_low, target + (eye - target).normalized() * reach, target, plants)
+	if plants.is_empty():
+		return 1.0
+	var total := 0.0
+	for p in points:
+		total += exp(-_cover_depth(eye, p, plants))
+	return total / points.size()
+
+
+## Appends every plant within reach of the segment a→b (in plan view).
+func _gather(grid: Dictionary, a: Vector3, b: Vector3, out: PackedFloat32Array) -> void:
+	if grid.is_empty():
+		return
+	var a2 := Vector2(a.x, a.z)
+	var b2 := Vector2(b.x, b.z)
+	var cells := {}
+	var steps := ceili(a2.distance_to(b2) / (COVER_CELL * 0.5))
+	for i in steps + 1:
+		var p := a2.lerp(b2, float(i) / maxf(steps, 1))
+		var c := Vector2i(floori(p.x / COVER_CELL), floori(p.y / COVER_CELL))
+		for dx in [-1, 0, 1]:
+			for dz in [-1, 0, 1]:
+				cells[c + Vector2i(dx, dz)] = true
+	for c in cells:
+		var arr: PackedFloat32Array = grid.get(c, PackedFloat32Array())
+		for j in range(0, arr.size(), 6):
+			var centre := Vector2(arr[j], arr[j + 1])
+			var r := arr[j + 2]
+			if Geometry2D.get_closest_point_to_segment(centre, a2, b2).distance_squared_to(centre) < r * r:
+				out.append_array(arr.slice(j, j + 6))
+
+
+## Optical depth of the leaves along eye→p: for each plant, the length of the
+## sight line inside its (cylindrical) crown, if the line passes at a height
+## the plant reaches.
+func _cover_depth(eye: Vector3, p: Vector3, plants: PackedFloat32Array) -> float:
+	var a := Vector2(eye.x, eye.z)
+	var ab := Vector2(p.x, p.z) - a
+	var length := ab.length()
+	if length < 0.01:
+		return 0.0
+	var dir := ab / length
+	var depth := 0.0
+	for j in range(0, plants.size(), 6):
+		var rel := Vector2(plants[j], plants[j + 1]) - a
+		var along := rel.dot(dir)
+		var off := absf(rel.cross(dir))
+		var r := plants[j + 2]
+		if off >= r:
+			continue
+		var half := sqrt(r * r - off * off)
+		var t0 := clampf(along - half, 0.0, length)
+		var t1 := clampf(along + half, 0.0, length)
+		if t1 <= t0:
+			continue
+		var y := lerpf(eye.y, p.y, (t0 + t1) * 0.5 / length)
+		if y >= plants[j + 3] and y <= plants[j + 4]:
+			depth += (t1 - t0) * plants[j + 5]
+	return depth
 
 
 ## Turn every collected batch into a MultiMeshInstance3D.

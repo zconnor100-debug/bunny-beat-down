@@ -145,6 +145,76 @@ func _run() -> void:
 		await _wait(0.8)
 		await _snap("17_sniper_scope")
 		Input.action_release(&"aim")
+	if which in ["incoming"]:
+		# three bots open up on you from the front: tracers, blood on the lens,
+		# damage arcs and the shooters' name tags
+		change_scene_to_file("res://scenes/game.tscn")
+		var gi: Node = null
+		while gi == null or gi.match_manager == null:
+			await process_frame
+			gi = current_scene
+		await _wait(1.0)
+		var mi = gi.match_manager
+		mi.player_jump()
+		var pi = mi.player
+		var t3 := Time.get_ticks_msec()
+		while pi.state != 3 and Time.get_ticks_msec() - t3 < 40000:
+			pi.want_jump = pi.state == 1
+			await process_frame
+		# stage it on dry land (swimmers can't shoot): a high meadow spot
+		var dry: Vector3 = gi.island.random_land_point(6.0)
+		pi.place_at(dry + Vector3.UP * 0.3, gi.rig.yaw)
+		await _wait(0.5)
+		pi.max_health = 100000.0   # survive the volley for the picture
+		pi.health = pi.max_health
+		var fwd3: Vector3 = -Basis(Vector3.UP, gi.rig.yaw).z
+		var side3: Vector3 = fwd3.cross(Vector3.UP)
+		var shooters := []
+		for c in mi.critters:
+			if c != pi and c.alive and c.state == 3 and shooters.size() < 3:
+				shooters.append(c)
+		for k in shooters.size():
+			var c = shooters[k]
+			c.get_node("AIBrain").process_mode = Node.PROCESS_MODE_DISABLED
+			var at: Vector3 = pi.global_position + fwd3 * (24.0 + k * 6.0) + side3 * (k - 1) * 9.0
+			at.y = gi.island.terrain.height_at(at.x, at.z) + 0.2
+			c.place_at(at, 0.0)
+			c.give_weapon(load("res://src/weapons/weapon_instance.gd").new(load("res://data/weapons/%s.tres" % ["carrot_rifle", "carrot_lmg", "carrot_smg"][k]), 1))
+		gi.rig.pitch = -0.05
+		await _wait(0.6)
+		var fired := [0]
+		root.get_node("Events").shot_fired.connect(func(_a, _b, _c): fired[0] += 1)
+		var t4 := Time.get_ticks_msec()
+		while Time.get_ticks_msec() - t4 < 900:
+			for c in shooters:
+				var to: Vector3 = pi.get_chest_position() - c.get_eye_position()
+				c.look_yaw = atan2(-to.x, -to.z)
+				c.look_pitch = asin(clampf(to.normalized().y, -1.0, 1.0))
+				c.aim_point = pi.get_chest_position() + Vector3(randf_range(-0.6, 0.6), randf_range(-0.4, 0.4), 0)
+				c.want_fire = true
+			await physics_frame
+		await _snap("18_incoming")
+		print("incoming: %d shots fired, player took %d, shooters %s" % [fired[0], roundi(pi.max_health - pi.health), shooters.map(func(c): return "%s %s state %d w %s" % [c.display_name, c.global_position, c.state, c.current_weapon() != null])])
+		for c in shooters:
+			c.want_fire = false
+		await _wait(1.2)
+		await _snap("19_incoming_after")
+		# crossfire: the same three shoot at a spot off to your right, so the
+		# tracers cross the view side-on
+		var mark: Vector3 = pi.global_position + fwd3 * 14.0 + side3 * 16.0 + Vector3.UP * 1.5
+		var t5 := Time.get_ticks_msec()
+		while Time.get_ticks_msec() - t5 < 700:
+			for c in shooters:
+				var to2: Vector3 = mark - c.get_eye_position()
+				c.look_yaw = atan2(-to2.x, -to2.z)
+				c.look_pitch = asin(clampf(to2.normalized().y, -1.0, 1.0))
+				c.aim_point = mark
+				c.want_fire = true
+			await physics_frame
+		await _snap("20_crossfire")
+		print("crossfire: %d shots fired in total, %d tracers on screen" % [fired[0], gi.find_child("Tracers", true, false).multimesh.visible_instance_count])
+		for c in shooters:
+			c.want_fire = false
 	if which in ["ui"]:
 		change_scene_to_file("res://scenes/main.tscn")
 		await _wait(3.0)

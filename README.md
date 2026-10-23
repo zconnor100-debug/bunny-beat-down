@@ -80,9 +80,21 @@ Built in **Godot 4.6** (GDScript, Jolt physics, Forward+).
   - Enemy footsteps are directional: loud, strongly panned, and muffled when
     they're behind you. The audio listener sits at your critter's head, so you
     can hear where someone is and turn to take the shot.
+  - Every carrot leaves a glowing tracer, so you can see shots fly and where
+    they came from.
+  - When you're hit, the shooter's name tag lights up at any range and an
+    arrow points their way. Blood splats land on that side of the screen
+    (stuffing with Plushie gore).
 - **AI opponents** drive the same controls as you:
   - They loot, choose guns by range, strafe and jump in fights, lead targets,
     hear gunshots and react to being hit.
+  - They have to *spot* you first. Each critter in view fills an awareness
+    meter, quickly if it's close, moving or firing, and slowly if it's far,
+    still or crouched. Bushes, ferns and tall grass hide you from bots just as
+    they hide bots from you. Getting shot turns a bot toward the noise, but it
+    still has to find you.
+  - Only one to three bots (by difficulty) shoot at you at once, in bursts,
+    and their hits on you are softened by difficulty.
   - They heal, flee the Briar, and path across a navmesh baked from tiles.
 - **Procedural island** from a seed:
   - Eight named landmarks: Carrot Patch, Picnic Hill, Mushroom Ring,

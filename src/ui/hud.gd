@@ -1,7 +1,11 @@
 class_name HUD
 extends CanvasLayer
 ## In-match heads-up display: vitals, weapons, crosshair with live spread,
-## hit markers, damage direction, kill feed, Briar timer, minimap, prompts.
+## hit markers, damage direction, blood on the lens, kill feed, Briar timer,
+## minimap, prompts.
+
+const SPLAT_LIFE := 3.0        ## seconds a splat stays on screen (plus up to 1 s)
+const MAX_SPLATS := 12
 
 var player: Critter
 var rig: CameraRig
@@ -24,6 +28,9 @@ var _minimap: Minimap
 var _bigmap: Minimap
 var _storm_tint: ColorRect
 var _hurt_tint: ColorRect
+var _blood: Control
+var _splats: Array = []        # [TextureRect, seconds left, starting alpha]
+var _hit_flash := 0.0
 var _fps: Label
 var _message_t := 0.0
 
@@ -41,6 +48,10 @@ func setup(player_: Critter, rig_: CameraRig, mm: MatchManager) -> void:
 
 	_storm_tint = _tint(Color(0.45, 0.1, 0.6, 0.0))
 	_hurt_tint = _tint(Color(0.7, 0.0, 0.05, 0.0))
+	_blood = Control.new()
+	_blood.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_blood.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_root.add_child(_blood)
 
 	_overlay = HUDOverlay.new()
 	_overlay.hud = self
@@ -243,7 +254,16 @@ func _process(delta: float) -> void:
 	else:
 		_storm_label.text = ""
 	var hurt := clampf(1.0 - player.health / 35.0, 0.0, 1.0) if player.alive else 0.0
-	_hurt_tint.color.a = hurt * (0.18 + 0.06 * sin(Time.get_ticks_msec() * 0.008))
+	_hit_flash = maxf(0.0, _hit_flash - delta * 1.6)
+	_hurt_tint.color.a = hurt * (0.18 + 0.06 * sin(Time.get_ticks_msec() * 0.008)) + _hit_flash * 0.5
+	for s in _splats:
+		s[1] -= delta
+		var tr: TextureRect = s[0]
+		tr.modulate.a = s[2] * clampf(s[1] / 1.2, 0.0, 1.0)
+		tr.position.y += delta * 6.0   # runs down the lens
+	for s in _splats.filter(func(s): return s[1] <= 0.0):
+		(s[0] as Node).queue_free()
+	_splats = _splats.filter(func(s): return s[1] > 0.0)
 
 	_message_t -= delta
 	if _message_t < 0.6:
@@ -306,6 +326,48 @@ func _on_damaged(victim: Node, info: DamageInfo) -> void:
 	if victim != player or info.attacker == null or info.attacker == player:
 		return
 	_overlay.add_damage_direction((info.attacker as Node3D).global_position)
+	_splatter(info)
+	if info.attacker is Critter and (info.attacker as Critter).alive:
+		(info.attacker as Critter).visual.reveal_name_tag(3.0)   # who's shooting
+
+
+## Blood on the lens: a few splats on the side the shot came from, more and
+## bigger for harder hits, plus a red flash. Stuffing with Plushie gore; just
+## the flash with gore off.
+func _splatter(info: DamageInfo) -> void:
+	_hit_flash = minf(0.45, _hit_flash + clampf(info.amount / 40.0, 0.12, 0.35))
+	if Settings.gore == Settings.Gore.OFF:
+		return
+	var col := Color(0.55, 0.02, 0.03) if Settings.gore == Settings.Gore.BLOOD else Color(0.96, 0.92, 0.84)
+	var view := _root.size
+	var from := Vector2.ZERO   # where the shooter is on screen: up = ahead, down = behind
+	if rig and info.attacker is Node3D:
+		var local := rig.camera.global_basis.inverse() * ((info.attacker as Node3D).global_position - player.global_position)
+		from = Vector2(local.x, local.z).normalized()
+	for i in clampi(roundi(info.amount / 8.0), 1, 5):
+		var dir := from.rotated(randf_range(-0.9, 0.9)) if from != Vector2.ZERO else Vector2.from_angle(randf() * TAU)
+		var pos := view * 0.5 + dir * view * Vector2(randf_range(0.28, 0.48), randf_range(0.25, 0.45))
+		var side := randf_range(130.0, 260.0) * clampf(info.amount / 20.0, 0.8, 1.7)
+		var tr := TextureRect.new()
+		tr.texture = FXTextures.splat(randi() % 6, col)
+		tr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		tr.stretch_mode = TextureRect.STRETCH_SCALE
+		tr.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		tr.size = Vector2(side, side)
+		tr.position = pos - tr.size * 0.5
+		tr.pivot_offset = tr.size * 0.5
+		tr.rotation = randf() * TAU
+		var a := randf_range(0.7, 0.92)
+		tr.modulate.a = a
+		_blood.add_child(tr)
+		_splats.append([tr, SPLAT_LIFE + randf(), a])
+	while _splats.size() > MAX_SPLATS:
+		(_splats.pop_front()[0] as Node).queue_free()
+
+
+## Splats on screen right now (tests).
+func splat_count() -> int:
+	return _splats.size()
 
 
 func _on_picked_up(who: Node, what: String) -> void:
@@ -325,6 +387,7 @@ class HUDOverlay:
 	var _dirs: Array = []      # [world_pos, time_left]
 	var _numbers: Array = []   # [world_pos, text, time_left, color]
 	var _toasts: Array = []    # [text, time_left]
+	const DIR_LIFE := 2.2      # seconds a damage-direction marker shows
 
 	func on_hit_confirmed(victim: Node, damage: float, headshot: bool, killed: bool) -> void:
 		_hit_t = 0.22
@@ -335,7 +398,7 @@ class HUDOverlay:
 		Audio.play(&"headshot" if headshot else &"carrot_impact_flesh", -6.0 if headshot else -10.0)
 
 	func add_damage_direction(from: Vector3) -> void:
-		_dirs.append([from, 1.3])
+		_dirs.append([from, DIR_LIFE])
 
 	func add_toast(text: String) -> void:
 		_toasts.append([text, 2.0])
@@ -401,8 +464,14 @@ class HUDOverlay:
 				var to: Vector3 = d[0] - p.global_position
 				var local := cam_basis.inverse() * to
 				var ang := atan2(local.x, -local.z)
-				var a := clampf(d[1] / 1.3, 0.0, 1.0)
-				draw_arc(c, 120.0, ang - PI / 2 - 0.3, ang - PI / 2 + 0.3, 16, Color(1, 0.2, 0.15, 0.75 * a), 8.0)
+				var a := clampf(d[1] / DIR_LIFE * 1.5, 0.0, 1.0)
+				var col := Color(1, 0.2, 0.15, 0.85 * a)
+				draw_arc(c, 150.0, ang - PI / 2 - 0.45, ang - PI / 2 + 0.45, 24, Color(0, 0, 0, 0.35 * a), 16.0)
+				draw_arc(c, 150.0, ang - PI / 2 - 0.45, ang - PI / 2 + 0.45, 24, col, 11.0)
+				# and an arrowhead pointing at the shooter
+				var dir := Vector2.from_angle(ang - PI / 2)
+				var tip := c + dir * 184.0
+				draw_colored_polygon(PackedVector2Array([tip, c + dir * 160.0 + dir.orthogonal() * 16.0, c + dir * 160.0 - dir.orthogonal() * 16.0]), col)
 		# vitals
 		var bx := 30.0
 		var by := size.y - 110.0

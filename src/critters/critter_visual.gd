@@ -198,6 +198,7 @@ func set_weapon(w: WeaponInstance) -> void:
 # --- enemy readability ----------------------------------------------------------------------
 
 var name_tag: Label3D
+var _reveal_tween: Tween
 
 ## Warm rim light + a name tag above the head (only within NAME_TAG_RANGE, and
 ## hidden behind cover by the depth test) so opponents are easy to pick out.
@@ -224,6 +225,23 @@ func set_enemy_highlight(display_name: String) -> void:
 		add_child(name_tag)
 	name_tag.text = "▼ " + display_name
 	name_tag.position = Vector3(0, (rig.world_head_top if rig else 1.2) + 0.35, 0)
+
+
+## Show the name tag at any distance for a while (this one is shooting at
+## you). It still hides behind cover.
+func reveal_name_tag(seconds: float) -> void:
+	if name_tag == null:
+		return
+	name_tag.visibility_range_end = 0.0   # 0 = no limit
+	name_tag.modulate = Color(1.0, 0.25, 0.2)
+	if _reveal_tween:
+		_reveal_tween.kill()
+	_reveal_tween = create_tween()
+	_reveal_tween.tween_interval(seconds)
+	_reveal_tween.tween_callback(func():
+		if name_tag:
+			name_tag.visibility_range_end = NAME_TAG_RANGE
+			name_tag.modulate = Color(1.0, 0.42, 0.3))
 
 
 func clear_enemy_highlight() -> void:

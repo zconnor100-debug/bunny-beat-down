@@ -3,6 +3,8 @@ extends Node3D
 ## Every carrot in flight. Bolts and pellets are plain data stepped with a
 ## ray per physics tick (so fast carrots never tunnel) and drawn with one
 ## MultiMesh per kind; rockets are real nodes (see Rocket).
+## Every carrot also draws a glowing tracer streak behind it, so you can see
+## shots fly and tell where they came from.
 ## Carrots that hit something stay stuck in it — trees, crates, and critters.
 
 const MAX_STUCK := 220
@@ -10,6 +12,10 @@ const MAX_LIFE := 3.0
 
 const BOLT_MODEL := "res://assets/weapons/carrot_bolt.glb"
 const PELLET_MODEL := "res://assets/weapons/carrot_shell_pellet.glb"
+const TRACER_SHADER := preload("res://src/fx/tracer.gdshader")
+const TRACER_SECONDS := 0.06         ## a tracer is as long as this much flight
+const TRACER_ENEMY := Color(1.0, 0.3, 0.04, 1.0)     ## shots at you: hot orange
+const TRACER_OWN := Color(1.0, 0.85, 0.5, 0.35)      ## your own: faint, out of your way
 
 static var instance: Projectiles
 
@@ -28,6 +34,7 @@ class Shot:
 
 var _shots: Array[Shot] = []
 var _mm: Dictionary = {}          # ProjectileKind -> MultiMeshInstance3D
+var _tracers: MultiMeshInstance3D
 var _stuck: Array[Node3D] = []
 var _bolt_mesh: Mesh
 var _pellet_mesh: Mesh
@@ -61,6 +68,18 @@ func _ready() -> void:
 		mmi.custom_aabb = AABB(Vector3(-2000, -500, -2000), Vector3(4000, 2000, 4000))
 		add_child(mmi)
 		_mm[kind] = mmi
+	_tracers = MultiMeshInstance3D.new()
+	_tracers.name = "Tracers"
+	var tm := MultiMesh.new()
+	tm.transform_format = MultiMesh.TRANSFORM_3D
+	tm.use_custom_data = true
+	tm.mesh = _tracer_strip()
+	tm.instance_count = 1024
+	tm.visible_instance_count = 0
+	_tracers.multimesh = tm
+	_tracers.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	_tracers.custom_aabb = AABB(Vector3(-2000, -500, -2000), Vector3(4000, 2000, 4000))
+	add_child(_tracers)
 
 
 ## Fire one trigger pull: spawns `pellets` projectiles inside the spread cone.
@@ -154,6 +173,52 @@ func _process(_delta: float) -> void:
 		counts[kind] = n + 1
 	for kind in counts:
 		_mm[kind].multimesh.visible_instance_count = counts[kind]
+	_draw_tracers(frac)
+
+
+## One streak per carrot: from the carrot back along its path, never further
+## back than the muzzle. Shotgun pellets get shorter, fainter streaks.
+func _draw_tracers(frac: float) -> void:
+	var tm := _tracers.multimesh
+	var n := 0
+	for s in _shots:
+		if n >= tm.instance_count:
+			break
+		var speed := s.vel.length()
+		var length := minf(speed * TRACER_SECONDS, s.travelled + speed * frac)
+		if length < 0.05:
+			continue
+		var back := -s.vel / speed
+		var side := back.cross(Vector3.UP if absf(back.y) < 0.98 else Vector3.RIGHT).normalized()
+		tm.set_instance_transform(n, Transform3D(Basis(side, back.cross(side), back * length), s.pos + s.vel * frac))
+		var own := s.shooter is Critter and (s.shooter as Critter).is_player
+		var col := TRACER_OWN if own else TRACER_ENEMY
+		if s.data.pellets > 1:
+			col.a *= 0.55
+		tm.set_instance_custom_data(n, col)
+		n += 1
+	tm.visible_instance_count = n
+
+
+## Number of tracer streaks drawn last frame (tests).
+func tracer_count() -> int:
+	return _tracers.multimesh.visible_instance_count
+
+
+## A flat strip, x = side (-1 / 1), z = 0 at the head to 1 at the tail; the
+## tracer shader turns it to face the camera.
+static func _tracer_strip() -> ArrayMesh:
+	var arrays := []
+	arrays.resize(Mesh.ARRAY_MAX)
+	arrays[Mesh.ARRAY_VERTEX] = PackedVector3Array([Vector3(-1, 0, 0), Vector3(1, 0, 0), Vector3(-1, 0, 1), Vector3(1, 0, 1)])
+	arrays[Mesh.ARRAY_TEX_UV] = PackedVector2Array([Vector2(0, 0), Vector2(1, 0), Vector2(0, 1), Vector2(1, 1)])
+	arrays[Mesh.ARRAY_INDEX] = PackedInt32Array([0, 1, 2, 2, 1, 3])
+	var m := ArrayMesh.new()
+	m.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+	var mat := ShaderMaterial.new()
+	mat.shader = TRACER_SHADER
+	m.surface_set_material(0, mat)
+	return m
 
 
 func _on_hit(s: Shot, hit: Dictionary) -> void:

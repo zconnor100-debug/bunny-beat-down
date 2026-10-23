@@ -89,7 +89,7 @@ func _ready() -> void:
 	if not visual.build(self, def):
 		push_error("critter %s failed to build its visual" % display_name)
 	var h := visual.rig.world_head_top if visual.rig else 1.0
-	cap.radius = clampf(h * 0.3, 0.22, 0.38)
+	cap.radius = clampf(h * 0.3, 0.22, 0.46)   # stays under the navmesh agent radius (0.5)
 	cap.height = maxf(h * 0.98, cap.radius * 2.0 + 0.05)
 	shape.shape = cap
 	shape.position.y = cap.height * 0.5
@@ -114,6 +114,11 @@ func get_chest_position() -> Vector3:
 
 func current_weapon() -> WeaponInstance:
 	return inventory.weapons[current_slot]
+
+
+## 0 standing … 1 fully crouched.
+func crouch_amount() -> float:
+	return _crouch
 
 
 ## Whether a round sits in the gun (drives the visible rocket in the launcher).
@@ -618,6 +623,8 @@ func receive_shot(shooter: Node, data: WeaponData, dmg: float, pos: Vector3, dir
 func take_damage(info: DamageInfo) -> void:
 	if not alive or state == State.IN_DROPSHIP:
 		return
+	if is_player and info.attacker is Critter and info.attacker != self and not (info.attacker as Critter).is_player:
+		info.amount *= AIBrain.damage_to_player   # bots hit softer than they look (per difficulty)
 	var dmg := info.amount
 	if info.kind != DamageInfo.Kind.STORM and info.kind != DamageInfo.Kind.FALL and armor > 0.0:
 		var absorbed := minf(armor, dmg)

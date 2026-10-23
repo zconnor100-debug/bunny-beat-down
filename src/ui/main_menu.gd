@@ -100,9 +100,11 @@ func _build_diorama() -> void:
 func _process(delta: float) -> void:
 	_t += delta
 	if _cam and _bun:
+		# framed for a 1.33 m Bun; scaled to whoever is standing there
+		var k := (_bun.visual.rig.world_head_top if _bun.visual.rig else 1.33) / 1.33
 		var a := 0.55 + sin(_t * 0.15) * 0.2
-		_cam.global_position = Vector3(sin(a) * 3.6, 1.15, cos(a) * 3.6)
-		_cam.look_at(Vector3(-0.9, 0.62, 0), Vector3.UP)
+		_cam.global_position = Vector3(sin(a) * 3.6, 1.15, cos(a) * 3.6) * k
+		_cam.look_at(Vector3(-0.9, 0.62, 0) * k, Vector3.UP)
 		# Bun glances around, gun ready
 		_bun.look_yaw = PI * 0.85 + sin(_t * 0.6) * 0.35
 		_bun.look_pitch = sin(_t * 0.43) * 0.12
