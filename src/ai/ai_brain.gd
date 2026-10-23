@@ -403,6 +403,24 @@ func _act(delta: float) -> void:
 
 
 ## The match director wants this bot to go and flush the player out.
+## Rewind (see TimeKeeper): the last ten seconds haven't happened yet, so
+## whatever the bot learned in them goes too.
+func forget() -> void:
+	target = null
+	mode = Mode.ROAM
+	_path = PackedVector3Array()
+	_path_i = 0
+	_dest = Vector3.INF
+	_loot_goal = null
+	_awareness.clear()
+	_shots_seen.clear()
+	_heard_pos = Vector3.INF
+	_alert_pos = Vector3.INF
+	_bursting = false
+	_stuck_t = 0.0
+	_think_t = 0.0
+
+
 func hunt(pos: Vector3, seconds := 30.0) -> void:
 	_hunt_pos = pos
 	_hunt_until = _clock + seconds

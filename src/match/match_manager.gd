@@ -14,6 +14,7 @@ const CRITTER_DEFS := ["bandit_bunny", "squirrel", "fox", "raccoon", "frog", "be
 var phase := Phase.LOADING
 var island: Island
 var storm: Storm
+var time_keeper: TimeKeeper         ## rewinds (see TimeKeeper)
 var dropship: Dropship
 var player: Critter
 var critters: Array[Critter] = []
@@ -60,6 +61,10 @@ func setup(world_root_: Node3D, island_: Island, opponents: int, difficulty: int
 	storm = Storm.new()
 	storm.name = "Storm"
 	world_root.add_child(storm)
+	time_keeper = TimeKeeper.new()
+	time_keeper.name = "TimeKeeper"
+	time_keeper.match_manager = self
+	add_child(time_keeper)
 	Events.critter_died.connect(_on_critter_died)
 	var d := clampi(difficulty, 0, 2)
 	AIBrain.player_attack_slots = [1, 2, 3][d]

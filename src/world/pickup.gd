@@ -143,6 +143,7 @@ func _physics_process(delta: float) -> void:
 func try_collect(critter: Critter) -> bool:
 	match spec.get("type"):
 		"weapon":
+			_note_taken(critter, spec)
 			var dropped := critter.give_weapon(spec["weapon"])
 			Audio.play_at(&"pickup_weapon", global_position)
 			Events.item_picked_up.emit(critter, label())
@@ -156,6 +157,7 @@ func try_collect(critter: Critter) -> bool:
 			var left := critter.inventory.add_ammo(spec["ammo_type"], spec["amount"])
 			if left == spec["amount"]:
 				return false
+			_note_taken(critter, Pickup.ammo_spec(spec["ammo_type"], spec["amount"] - left))
 			Audio.play_at(&"pickup_ammo", global_position, -3.0)
 			Events.item_picked_up.emit(critter, label())
 			if left > 0:
@@ -167,6 +169,7 @@ func try_collect(critter: Critter) -> bool:
 			var left := critter.inventory.add_clovers(spec["amount"])
 			if left == spec["amount"]:
 				return false
+			_note_taken(critter, Pickup.clover_spec(spec["amount"] - left))
 			Audio.play_at(&"pickup_health", global_position, -3.0)
 			Events.item_picked_up.emit(critter, label())
 			if left > 0:
@@ -177,12 +180,20 @@ func try_collect(critter: Critter) -> bool:
 		"armor":
 			if critter.armor >= critter.max_armor:
 				return false
+			_note_taken(critter, spec)
 			critter.armor = minf(critter.max_armor, critter.armor + float(spec["amount"]))
 			Audio.play_at(&"pickup_armor", global_position, -3.0)
 			Events.item_picked_up.emit(critter, label())
 			queue_free()
 			return true
 	return false
+
+
+## Tell the rewind recorder (TimeKeeper) what was taken, so a rewind can
+## put it back on the floor.
+func _note_taken(critter: Critter, what: Dictionary) -> void:
+	if TimeKeeper.instance:
+		TimeKeeper.instance.note_taken(critter, what, global_position)
 
 
 func _make_model() -> Node3D:

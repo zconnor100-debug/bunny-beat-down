@@ -39,6 +39,8 @@ const BINDINGS := {
 	&"toggle_camera": [[KEY, KEY_V], [PAD_BUTTON, JOY_BUTTON_BACK]],
 	&"swap_shoulder": [[KEY, KEY_Q], [PAD_BUTTON, JOY_BUTTON_DPAD_RIGHT]],
 	&"map": [[KEY, KEY_M], [PAD_BUTTON, JOY_BUTTON_DPAD_UP]],
+	# rewind ten seconds (see TimeKeeper): T, or from the pause menu on a pad
+	&"rewind": [[KEY, KEY_T]],
 	&"pause": [[KEY, KEY_ESCAPE], [PAD_BUTTON, JOY_BUTTON_START]],
 	&"screenshot": [[KEY, KEY_F12]],
 }

@@ -23,6 +23,8 @@ var _ammo_label: Label
 var _weapon_name: Label
 var _slots: Array[PanelContainer] = []
 var _clover_label: Label
+var _rewind_label: Label
+var _rewind_tint: ColorRect
 var _feed: VBoxContainer
 var _minimap: Minimap
 var _bigmap: Minimap
@@ -136,6 +138,14 @@ func setup(player_: Critter, rig_: CameraRig, mm: MatchManager) -> void:
 	_clover_label.offset_left = 30
 	_clover_label.offset_top = -150
 	_root.add_child(_clover_label)
+	_rewind_label = UITheme.label("", 20, Color("9fe3ff"))
+	_rewind_label.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT)
+	_rewind_label.offset_left = 30
+	_rewind_label.offset_top = -184
+	_root.add_child(_rewind_label)
+	_rewind_tint = _tint(Color(0.55, 0.85, 1.0, 0.0))
+	if mm and mm.time_keeper:
+		mm.time_keeper.rewound.connect(_on_rewound)
 
 	# top-right: minimap + kill feed
 	_minimap = Minimap.new()
@@ -200,6 +210,18 @@ func attach_dropship(d: Dropship) -> void:
 	_bigmap.dropship = d
 
 
+func _on_rewound() -> void:
+	_rewind_tint.color.a = 0.55
+	for s in _splats:
+		s[1] = 0.0   # the blood on the lens hasn't happened yet either
+	_hit_flash = 0.0
+	_overlay._dirs.clear()
+	_overlay._numbers.clear()
+	var left := match_manager.time_keeper.charges
+	show_message("⟲ REWOUND %d SECONDS" % int(TimeKeeper.REWIND_SECONDS), "%d rewind%s left" % [left, "" if left == 1 else "s"] if left > 0 else "That was your last rewind", 2.5)
+	Audio.play(&"glider_open", -2.0, 0.0)
+
+
 func _tint(c: Color) -> ColorRect:
 	var r := ColorRect.new()
 	r.color = c
@@ -242,6 +264,13 @@ func _process(delta: float) -> void:
 		var sb := _slot_style(sw.rarity if sw else -1, i == player.current_slot)
 		_slots[i].add_theme_stylebox_override("panel", sb)
 	_clover_label.text = "Lucky clovers: %d   [%s] to heal" % [player.inventory.clovers, GameInput.prompt(&"heal")] if player.inventory.clovers > 0 else ""
+	var tk := match_manager.time_keeper if match_manager else null
+	if tk and match_manager.phase == MatchManager.Phase.PLAYING and player.alive:
+		var how := "pause menu" if GameInput.using_pad else "[%s]" % GameInput.prompt(&"rewind")
+		_rewind_label.text = "⟲ Rewinds: %d   %s" % [tk.charges, how] if tk.charges > 0 else "⟲ No rewinds left"
+	else:
+		_rewind_label.text = ""
+	_rewind_tint.color.a = maxf(0.0, _rewind_tint.color.a - delta * 0.9)
 
 	# Briar status
 	var storm := match_manager.storm if match_manager else null

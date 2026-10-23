@@ -697,6 +697,22 @@ func is_swinging() -> bool:
 	return _melee_t >= 0.0
 
 
+## Rewind (see TimeKeeper): drop whatever it was in the middle of doing.
+func reset_actions() -> void:
+	_fire_cooldown = 0.0
+	_equip_timer = 0.0
+	_reload_timer = -1.0
+	_trigger_held = false
+	_bloom = 0.0
+	_recoil = 0.0
+	_fall_speed = 0.0
+	_melee_t = -1.0
+	_melee_struck = false
+	want_fire = false
+	want_jump = false
+	want_melee = false
+
+
 func _melee_tick(delta: float) -> void:
 	if want_melee:
 		want_melee = false
@@ -818,6 +834,8 @@ func take_damage(info: DamageInfo) -> void:
 		health = 1.0
 		if is_player:
 			Events.announce.emit("SECOND WIND!", "Back on your paws with 1 HP. Run!")
+	if health <= 0.0 and is_player and TimeKeeper.instance and TimeKeeper.instance.hold_killing_blow(self, info):
+		return   # frozen: the player is choosing between a rewind and defeat
 	if health <= 0.0:
 		_die(info)
 

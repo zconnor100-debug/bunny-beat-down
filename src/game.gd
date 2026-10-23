@@ -41,6 +41,7 @@ var _load_bar: ProgressBar
 var _load_label: Label
 var _pause: CanvasLayer
 var _end: CanvasLayer
+var _offer: CanvasLayer     # "rewind, or accept defeat?" (see TimeKeeper)
 var _spectating := false
 var _seed := 0
 var _picker: CharacterSelect
@@ -112,6 +113,8 @@ func _build_world() -> void:
 	match_manager.setup(world, island, int(Settings.get_value(&"opponents")), int(Settings.get_value(&"difficulty")), _seed, 0.5 if GameSession.quick else 1.0)
 	match_manager.player_eliminated.connect(_on_player_eliminated)
 	match_manager.finished.connect(_on_match_finished)
+	if not Settings.is_test_run():   # (automated matches just let the blow land)
+		match_manager.time_keeper.offered.connect(_offer_rewind)
 
 
 func _spawn_player() -> void:
@@ -202,7 +205,15 @@ func _process(_delta: float) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event.is_action_pressed(&"pause"):
+	if _offer:
+		if event.is_action_pressed(&"rewind"):
+			get_viewport().set_input_as_handled()
+			_answer_offer(true)
+		elif event.is_action_pressed(&"pause"):
+			get_viewport().set_input_as_handled()
+		else:
+			UITheme.refocus_if_lost(event, get_viewport(), UITheme.first_focusable(_offer))
+	elif event.is_action_pressed(&"pause"):
 		if _end == null:
 			_toggle_pause()
 		get_viewport().set_input_as_handled()
@@ -214,6 +225,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		UITheme.refocus_if_lost(event, get_viewport(), UITheme.first_focusable(menu))
 	elif event.is_action_pressed(&"jump") and match_manager and match_manager.phase == MatchManager.Phase.DROPPING:
 		match_manager.player_jump()
+	elif event.is_action_pressed(&"rewind") and match_manager and match_manager.phase == MatchManager.Phase.PLAYING:
+		_rewind_now()
+		get_viewport().set_input_as_handled()
 	elif event is InputEventMouseButton and event.pressed and Input.mouse_mode != Input.MOUSE_MODE_CAPTURED and _pause == null and _end == null:
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
@@ -303,6 +317,11 @@ func _toggle_pause() -> void:
 	v.add_child(t)
 	var resume := UITheme.button("Resume", _toggle_pause)
 	v.add_child(resume)
+	var tk := match_manager.time_keeper if match_manager else null
+	if tk and tk.can_rewind():
+		v.add_child(UITheme.button("⟲ Rewind %d seconds (%d left)" % [int(TimeKeeper.REWIND_SECONDS), tk.charges], func():
+			_toggle_pause()
+			_rewind_now()))
 	v.add_child(UITheme.button("Settings", func():
 		var back_to := get_viewport().gui_get_focus_owner()   # this button, for the pad
 		var p := SettingsPanel.new()
@@ -320,9 +339,63 @@ func _toggle_pause() -> void:
 
 func _show_controls() -> void:
 	if GameInput.using_pad:
-		hud.show_message("Left stick move • Right stick aim • RT fire • LT aim • R3 club • L3+R3 first person", "A jump/glide/pick up • L3 sprint • B crouch/crawl • X reload • LB/RB switch • D-pad ↓ heal ← drop → shoulder ↑ map", 6.0)
+		hud.show_message("Left stick move • Right stick aim • RT fire • LT aim • R3 club • L3+R3 first person", "A jump/glide/pick up • L3 sprint • B crouch/crawl • X reload • LB/RB switch • D-pad ↓ heal ← drop → shoulder ↑ map • Start → Rewind", 6.0)
 	else:
-		hud.show_message("WASD move • Mouse aim • LMB fire • RMB aim • F club", "SPACE jump/glide • SHIFT sprint • CTRL crouch/crawl • R reload • E pick up • H heal • V camera • Q shoulder • M map", 6.0)
+		hud.show_message("WASD move • Mouse aim • LMB fire • RMB aim • F club", "SPACE jump/glide • SHIFT sprint • CTRL crouch/crawl • R reload • E pick up • H heal • V camera • Q shoulder • M map • T rewind", 6.0)
+
+
+# ---- rewind ----------------------------------------------------------------------------------------
+
+func _rewind_now() -> void:
+	var tk := match_manager.time_keeper
+	if not tk.rewind() and hud:
+		hud.show_message("No rewinds left" if tk.charges <= 0 else "Nothing to rewind yet", "", 1.5)
+
+
+## A killing blow is on hold (see TimeKeeper): rewind ten seconds, or accept defeat?
+func _offer_rewind(info: DamageInfo) -> void:
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	_offer = CanvasLayer.new()
+	_offer.layer = 15
+	add_child(_offer)
+	var dim := ColorRect.new()
+	dim.color = Color(0.08, 0.16, 0.24, 0.6)
+	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_offer.add_child(dim)
+	var c := CenterContainer.new()
+	c.set_anchors_preset(Control.PRESET_FULL_RECT)
+	c.theme = UITheme.theme()
+	_offer.add_child(c)
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override("separation", 16)
+	c.add_child(v)
+	var t := UITheme.label("About to be beaten down!", 64, UITheme.CARROT, true)
+	t.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	v.add_child(t)
+	var by := ""
+	if info.attacker is Critter and info.attacker != match_manager.player:
+		by = "by %s" % (info.attacker as Critter).display_name
+	elif info.kind == DamageInfo.Kind.STORM:
+		by = "by the Briar"
+	elif info.kind == DamageInfo.Kind.FALL:
+		by = "by the ground"
+	var left := match_manager.time_keeper.charges
+	var sub := UITheme.label(("%s   •   " % by if by else "") + "%d rewind%s left" % [left, "" if left == 1 else "s"], 26, UITheme.CREAM)
+	sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	v.add_child(sub)
+	var rw := UITheme.button("⟲ Rewind %d seconds" % int(TimeKeeper.REWIND_SECONDS), func(): _answer_offer(true))
+	v.add_child(rw)
+	v.add_child(UITheme.button("Accept defeat", func(): _answer_offer(false)))
+	rw.grab_focus.call_deferred()
+
+
+func _answer_offer(rewind_it: bool) -> void:
+	if _offer == null:
+		return
+	_offer.queue_free()
+	_offer = null
+	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+	match_manager.time_keeper.resolve(rewind_it)
 
 
 func _to_menu() -> void:

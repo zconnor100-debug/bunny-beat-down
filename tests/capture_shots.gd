@@ -1,6 +1,6 @@
 extends SceneTree
 ## Renders screenshots for visual review and the README (needs a GPU window).
-##   godot --path . -s tests/capture_shots.gd -- <out_dir> [menu|game|all]
+##   godot --path . -s tests/capture_shots.gd -- <out_dir> [menu|game|all|scope|incoming|rewind|ui]
 ## Drives the real game: menu → loading → balloon → landing → a staged fight.
 
 var out_dir := "user://shots"
@@ -215,6 +215,39 @@ func _run() -> void:
 		print("crossfire: %d shots fired in total, %d tracers on screen" % [fired[0], gi.find_child("Tracers", true, false).multimesh.visible_instance_count])
 		for c in shooters:
 			c.want_fire = false
+	if which in ["rewind"]:
+		# land, wait for the match proper, then a killing blow: the rewind prompt,
+		# and the rewind itself
+		settings.set_value(&"opponents", 4, false)
+		change_scene_to_file("res://scenes/game.tscn")
+		var gr: Node = null
+		while gr == null or gr.match_manager == null:
+			await process_frame
+			gr = current_scene
+		await _wait(1.0)
+		var mr = gr.match_manager
+		mr.player_jump()
+		var pr = mr.player
+		var t6 := Time.get_ticks_msec()
+		while (pr.state != 3 or mr.phase != 2) and Time.get_ticks_msec() - t6 < 90000:   # GROUND, PLAYING
+			pr.want_jump = pr.state == 1
+			await process_frame
+		pr.give_weapon(load("res://src/weapons/weapon_instance.gd").new(load("res://data/weapons/carrot_rifle.tres"), 2))
+		await _wait(3.0)
+		await _snap("21_rewind_hud")
+		mr.time_keeper.offered.connect(gr._offer_rewind)   # (automated runs don't ask by default)
+		var foe2 = null
+		for c in mr.critters:
+			if c != pr and c.alive:
+				foe2 = c
+				break
+		var info = load("res://src/core/damage_info.gd").make(500.0, 0, foe2)
+		pr.take_damage(info)
+		await _wait(0.6)
+		await _snap("22_rewind_offer")
+		gr._answer_offer(true)
+		await _wait(0.25)
+		await _snap("23_rewound")
 	if which in ["ui"]:
 		change_scene_to_file("res://scenes/main.tscn")
 		await _wait(3.0)

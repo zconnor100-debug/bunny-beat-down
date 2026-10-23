@@ -207,6 +207,18 @@ The third map follows the cage's pattern (`ToyBox extends Island`,
   `jump_scale`, `second_wind`); modifiers flip match-wide switches
   (`Critter.glass_cannon`, gravity, loot tier, `Storm.rush`). The end screen
   pays out `Burrow.reward()`.
+- **`TimeKeeper`** (a child of `MatchManager`) snapshots every standing
+  critter (transform, velocity, look, health, armor, guns, ammo, clovers),
+  the set of pickups and the Briar's state every 0.25 s, and keeps about
+  11 s of them. `Pickup` reports what each critter takes (`note_taken`). A
+  rewind restores the critters that are still alive, re-spawns what *they*
+  took since, removes the guns they swapped out since, clears
+  `Projectiles` (`clear_in_flight`), winds back the `Storm`, and makes each
+  bot's `AIBrain.forget()` what it learned. Dead critters stay dead, so a
+  rewind never has to un-ragdoll anything. When a blow would kill the
+  player, `Critter.take_damage` asks `hold_killing_blow`: if the game is
+  listening to `offered`, the tree pauses at 1 HP until `resolve()` either
+  rewinds or lets the blow land.
 
 ## Battle-royale loop
 

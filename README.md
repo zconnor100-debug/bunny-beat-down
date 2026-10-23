@@ -151,6 +151,15 @@ Built in **Godot 4.6** (GDScript, Jolt physics, Forward+).
   Wind (survive one killing blow), Light Step and Hawk Eye. Take two into
   each match. Run modifiers (Low Gravity, Glass Cannon, Golden Hour, Briar
   Rush) change a match and how much it pays.
+- **Rewind.** The game records the last ten seconds of the match, and you
+  get three rewinds a match: press **T** (or pick *Rewind* in the pause
+  menu), or take one when a killing blow lands, since the game freezes and
+  asks "rewind, or accept defeat?" instead of letting you drop. Everyone
+  still standing snaps back to where they were ten seconds ago, with the
+  health, shield, guns and ammo they had then; the loot they picked up since
+  goes back on the floor; carrots in flight vanish; and the Briar's clock
+  winds back. Critters beaten down in those ten seconds stay down. (It only
+  works because it's you against bots.)
 - **A Briar with moods.** Every match rolls one, announced as you drop:
   the *Hungry* Briar closes each circle in on you, the *Sticky* one slows
   you in its thorns, the *Bribable* one naps for 15 s if you munch a lucky
@@ -247,7 +256,7 @@ The full write-up is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
   `ToyProps`, `ToyRoom`), plus `ToyTrain`: `AnimatableBody3D` cars
   following a resampled loop, so riders are carried by the physics engine,
   and a bumper `Area3D` that bonks critters on the line.
-- **Tests that play the game.** A headless suite of 84 tests covers:
+- **Tests that play the game.** A headless suite of 86 tests covers:
   - the IK maths, hitboxes, ragdolls and dismemberment;
   - island navigation, the three biomes and the big buildings (a Bun walks
     in through the barn doors; every indoor loot spot is reachable on the
@@ -257,8 +266,9 @@ The full write-up is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
     whoever is on the track; the fishbowl is swimmable) and the game rules;
   - rivals (made, remembered across runs, back in the next match, hunting
     and taunting, revenge), the bots learning you (landings, fighting style,
-    camping, hot streaks), every Briar mood, and the Burrow (earning,
-    unlocking, equipping, every perk and modifier in a match);
+    camping, hot streaks), every Briar mood, the Burrow (earning,
+    unlocking, equipping, every perk and modifier in a match) and rewinds
+    (everyone and everything put back; the killing-blow offer);
   - the player's input loop through real keyboard and gamepad events (menus,
     crouch → crawl, the L3 + R3 chord, aim assist, one gun in first person)
     and licensing;
@@ -304,6 +314,7 @@ godot --headless --path . -s tests/check_scripts.gd     # compile every script
 | Swap shoulder | Q | D-pad → |
 | Map | M (hold) | D-pad ↑ |
 | Pause | Esc | Start |
+| Rewind 10 seconds (3 a match) | T | Start, then *Rewind* |
 | Menus: move / select / back | Arrows / Enter / Esc | D-pad / A / B |
 | Character picker: critter / skin / spin | ← → / ↑ ↓ / drag | D-pad ← → / D-pad ↑ ↓ / right stick |
 

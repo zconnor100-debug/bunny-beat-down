@@ -106,6 +106,14 @@ static func fire(shooter: Node, weapon: WeaponInstance, origin: Vector3, dir: Ve
 		instance._shots.append(s)
 
 
+## Rewind (see TimeKeeper): every carrot and rocket in flight vanishes.
+func clear_in_flight() -> void:
+	_shots.clear()
+	for c in get_children():
+		if c is Rocket:
+			c.queue_free()
+
+
 ## Random direction inside a cone, uniformly distributed over the cap.
 static func _spread_dir(dir: Vector3, spread_deg: float) -> Vector3:
 	if spread_deg <= 0.0:
