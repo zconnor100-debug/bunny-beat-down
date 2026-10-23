@@ -1,5 +1,7 @@
-// Island terrain: six PBR layers blended by a splat control map (R grass,
-// G dirt path, B rock, A moss; forest floor underneath, sand by height).
+// Island terrain: seven PBR layers blended by a splat control map (R grass,
+// G dirt path, B rock, A moss; forest floor underneath, sand by height) and a
+// biome map (R swamp, G grassland, B forest): swamp mud around the still
+// water, sun-warmed grass on the grasslands.
 // World-space UVs at critter scale, macro colour variation to hide tiling,
 // and tri-planar rock on steep slopes.
 shader_type spatial;
@@ -26,7 +28,13 @@ uniform sampler2D moss_rough : hint_roughness_g, filter_linear_mipmap_anisotropi
 uniform sampler2D sand_albedo : source_color, filter_linear_mipmap_anisotropic, repeat_enable;
 uniform sampler2D sand_normal : hint_normal, filter_linear_mipmap_anisotropic, repeat_enable;
 uniform sampler2D sand_rough : hint_roughness_g, filter_linear_mipmap_anisotropic, repeat_enable;
+uniform sampler2D mud_albedo : source_color, filter_linear_mipmap_anisotropic, repeat_enable;
+uniform sampler2D mud_normal : hint_normal, filter_linear_mipmap_anisotropic, repeat_enable;
+uniform sampler2D mud_rough : hint_roughness_g, filter_linear_mipmap_anisotropic, repeat_enable;
+uniform sampler2D biome_map : filter_linear, repeat_disable;
 uniform sampler2D macro_noise : filter_linear_mipmap, repeat_enable;
+uniform float swamp_level = 2.6;
+uniform float mud_tile = 5.0;
 
 // metres covered by one texture repeat (critter-scale ground looks "big")
 uniform float floor_tile = 7.0;
@@ -61,6 +69,7 @@ vec4 anti_tile(sampler2D tex, vec2 uv, float m) {
 void fragment() {
 	vec2 cuv = (world_pos.xz + terrain_size * 0.5) / terrain_size;
 	vec4 ctl = texture(control_map, cuv);
+	vec3 bio = texture(biome_map, cuv).rgb;
 	float macro = texture(macro_noise, world_pos.xz / 180.0).r;
 	float macro2 = texture(macro_noise, world_pos.xz / 37.0).r;
 
@@ -69,13 +78,14 @@ void fragment() {
 	vec3 nrm = anti_tile(floor_normal, p / floor_tile, macro2).rgb;
 	float rgh = anti_tile(floor_rough, p / floor_tile, macro2).g;
 
-	float w_sand = smoothstep(sand_height + 0.5, sand_height - 0.4, world_pos.y);
+	float w_sand = smoothstep(sand_height + 0.5, sand_height - 0.4, world_pos.y) * (1.0 - bio.r);
 	float w_grass = ctl.r * (1.0 - w_sand);
 	float w_moss = ctl.a * (1.0 - w_sand);
 	float w_dirt = ctl.g;
 	float w_rock = ctl.b;
 
 	vec3 g_alb = anti_tile(grass_albedo, p / grass_tile, macro2).rgb * grass_tint;
+	g_alb *= mix(vec3(1.0), vec3(1.1, 1.05, 0.82), bio.g);   // sunny meadow grass
 	alb = mix(alb, g_alb, w_grass);
 	nrm = mix(nrm, anti_tile(grass_normal, p / grass_tile, macro2).rgb, w_grass);
 	rgh = mix(rgh, texture(grass_rough, p / grass_tile).g, w_grass);
@@ -83,6 +93,12 @@ void fragment() {
 	alb = mix(alb, texture(moss_albedo, p / moss_tile).rgb, w_moss);
 	nrm = mix(nrm, texture(moss_normal, p / moss_tile).rgb, w_moss);
 	rgh = mix(rgh, texture(moss_rough, p / moss_tile).g, w_moss);
+
+	// swamp mud: on the low ground around (and under) the still water
+	float w_mud = bio.r * smoothstep(swamp_level + 1.6, swamp_level + 0.3, world_pos.y) * (1.0 - w_rock) * (1.0 - ctl.g);
+	alb = mix(alb, anti_tile(mud_albedo, p / mud_tile, macro2).rgb, w_mud);
+	nrm = mix(nrm, texture(mud_normal, p / mud_tile).rgb, w_mud);
+	rgh = mix(rgh, texture(mud_rough, p / mud_tile).g * 0.7, w_mud);
 
 	alb = mix(alb, texture(sand_albedo, p / sand_tile).rgb, w_sand);
 	nrm = mix(nrm, texture(sand_normal, p / sand_tile).rgb, w_sand);
@@ -110,8 +126,8 @@ void fragment() {
 
 	// large-scale colour drift so a meadow is never one flat tone
 	alb *= mix(0.82, 1.12, macro);
-	// wet darkening at the waterline
-	float wet = smoothstep(0.6, 0.0, world_pos.y);
+	// wet darkening at the waterline (the sea's, and the swamp's)
+	float wet = max(smoothstep(0.6, 0.0, world_pos.y), bio.r * smoothstep(swamp_level + 0.4, swamp_level - 0.1, world_pos.y));
 	alb *= mix(1.0, 0.62, wet);
 	rgh = mix(rgh, 0.25, wet);
 

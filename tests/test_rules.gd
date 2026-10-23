@@ -48,11 +48,12 @@ func test_storm_geometry() -> void:
 	island.seed_value = 5
 	var storm := Storm.new()
 	add_child(storm)
-	storm.start(island, 260.0, 1.0)
+	var r := island.terrain.island_radius
+	storm.start(island, r + 50.0, 1.0)   # as MatchManager does
 	check(storm.is_safe(Vector3.ZERO), "centre is safe at the start")
 	check(storm.next_radius < storm.radius, "first circle shrinks")
 	check(Vector2.ZERO.distance_to(storm.next_center) + storm.next_radius <= storm.radius + 0.01, "next circle fits inside the current one")
-	var outside := Vector3(400, 0, 0)
+	var outside := Vector3(r + 120.0, 0, 0)
 	check(not storm.is_safe(outside), "far out at sea is in the Briar")
 	check(storm.threat(outside) > 0.0, "AI feels the threat outside")
 	var sp := storm.safe_point(outside)

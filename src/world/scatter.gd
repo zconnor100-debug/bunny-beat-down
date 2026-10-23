@@ -8,7 +8,7 @@ extends Node3D
 const MANIFEST := "res://assets/env/manifest.json"
 const CHUNK := 64.0
 const FOLIAGE_SHADER := preload("res://src/world/shaders/foliage.gdshader")
-const BATCHED := ["grass", "flower", "bush"]
+const BATCHED := ["grass", "flower", "bush", "reed", "lily"]
 
 var entries: Array = []                 # manifest dictionaries
 var by_category: Dictionary = {}        # category -> Array of entries
@@ -18,11 +18,16 @@ var _foliage_shader_mats: Array[ShaderMaterial] = []
 var _batches: Dictionary = {}           # "id|cx|cz" -> Array[Transform3D]
 var _batch_entry: Dictionary = {}       # "id|cx|cz" -> entry
 var obstacles: Array = []               # [Vector2 pos, radius] of solid things, for spacing
+## Areas kept clear of other scatter (the big buildings) but not solid
+## themselves: loot can go inside. [Vector2 pos, radius].
+var reserved: Array = []
+const GRID := 16.0                       # spatial hash cell for the spacing checks
+var _grid: Dictionary = {}               # Vector2i -> Array of [pos, radius]
 
 ## Ground cover hides critters from bots the way it hides them from you.
 ## Optical depth per metre of sight line through each kind of cover:
 ## bushes and ferns hide you, grass hides legs, a dandelion barely anything.
-const COVER_DENSITY := {"bush": 1.3, "grass": 0.55, "flower": 0.25}
+const COVER_DENSITY := {"bush": 1.3, "reed": 1.0, "grass": 0.55, "flower": 0.25}
 const COVER_CELL := 6.0
 const COVER_MIN_HEIGHT := 0.6           ## clover and fallen leaves hide nothing
 const LOW_COVER_REACH := 10.0           ## grass and flowers only matter near the target
@@ -72,13 +77,45 @@ func pick(category: String, rng: RandomNumberGenerator) -> Dictionary:
 	return list.back()
 
 
-## True if a solid object of `radius` at `p` would overlap one already placed.
-func blocked(p: Vector2, radius: float) -> bool:
-	for o in obstacles:
-		var r: float = o[1] + radius
-		if p.distance_squared_to(o[0]) < r * r:
-			return true
+## True if a solid object of `radius` at `p` would overlap one already placed
+## (or a reserved building plot, unless `with_reserved` is off).
+func blocked(p: Vector2, radius: float, with_reserved := true) -> bool:
+	var lo := Vector2i(floori((p.x - radius) / GRID), floori((p.y - radius) / GRID))
+	var hi := Vector2i(floori((p.x + radius) / GRID), floori((p.y + radius) / GRID))
+	for cz in range(lo.y, hi.y + 1):
+		for cx in range(lo.x, hi.x + 1):
+			for o in _grid.get(Vector2i(cx, cz), []):
+				if not with_reserved and o.size() > 2:
+					continue
+				var r: float = o[1] + radius
+				if p.distance_squared_to(o[0]) < r * r:
+					return true
 	return false
+
+
+## Remember a solid footprint for the spacing checks.
+func add_obstacle(p: Vector2, radius: float) -> void:
+	var o := [p, radius]
+	obstacles.append(o)
+	_hash(o)
+
+
+## Keep other scatter out of a circle (a building plot) without making it solid.
+func reserve(p: Vector2, radius: float) -> void:
+	var o := [p, radius, true]
+	reserved.append(o)
+	_hash(o)
+
+
+func _hash(o: Array) -> void:
+	var p: Vector2 = o[0]
+	var r: float = o[1]
+	for cz in range(floori((p.y - r) / GRID), floori((p.y + r) / GRID) + 1):
+		for cx in range(floori((p.x - r) / GRID), floori((p.x + r) / GRID) + 1):
+			var k := Vector2i(cx, cz)
+			if not _grid.has(k):
+				_grid[k] = []
+			_grid[k].append(o)
 
 
 ## Place one model. `ground` is the terrain height at the spot.
@@ -107,7 +144,7 @@ func place(e: Dictionary, pos: Vector3, yaw: float, scale_: float, normal := Vec
 	var col: String = e.get("collision", "none")
 	if col != "none":
 		_add_collision(inst, e, scale_, col)
-		obstacles.append([Vector2(pos.x, pos.z), maxf(float(e.get("collision_radius_m", 0.5)), 0.3) * scale_])
+		add_obstacle(Vector2(pos.x, pos.z), maxf(float(e.get("collision_radius_m", 0.5)), 0.3) * scale_)
 	return inst
 
 
@@ -195,7 +232,7 @@ func _add_cover(e: Dictionary, xf: Transform3D) -> void:
 	var height := float(e.get("height_m", 0.0)) * sc
 	if not COVER_DENSITY.has(cat) or height < COVER_MIN_HEIGHT:
 		return
-	var grid := _cover_tall if cat == "bush" else _cover_low
+	var grid := _cover_tall if cat in ["bush", "reed"] else _cover_low
 	var cell := Vector2i(floori(xf.origin.x / COVER_CELL), floori(xf.origin.z / COVER_CELL))
 	if not grid.has(cell):
 		grid[cell] = PackedFloat32Array()
@@ -292,8 +329,8 @@ func flush_batches(quality: int) -> void:
 		var mmi := MultiMeshInstance3D.new()
 		mmi.multimesh = mm
 		var cat: String = e.get("category")
-		mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON if cat == "bush" and quality >= 2 else GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-		var reach := {"grass": 75.0, "flower": 110.0, "bush": 170.0}.get(cat, 100.0) as float
+		mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON if cat in ["bush", "reed"] and quality >= 2 else GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		var reach := {"grass": 75.0, "flower": 110.0, "bush": 170.0, "reed": 150.0, "lily": 90.0}.get(cat, 100.0) as float
 		reach *= [0.55, 0.8, 1.0, 1.35][clampi(quality, 0, 3)]
 		mmi.visibility_range_end = reach
 		mmi.visibility_range_end_margin = 12.0
@@ -307,6 +344,8 @@ func flush_batches(quality: int) -> void:
 ## with that surface's own textures (a bush's bark keeps its bark, its leaf
 ## cards keep their alpha cut-out). Cached per model.
 func _foliage_mesh(e: Dictionary) -> Mesh:
+	if e.has("_mesh"):
+		return e["_mesh"]   # built in code (SwampPlants), materials already set
 	var key: String = e["id"]
 	if _foliage_mats.has(key):
 		return _foliage_mats[key]

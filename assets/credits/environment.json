@@ -6,12 +6,13 @@
     "source_url": "https://sketchfab.com/3d-models/oak-trees-pack-17var-lods-seasons-gameready-a5e4e64f9f1d4089bdcc6170a9333393",
     "license": "CC BY 4.0",
     "license_url": "https://creativecommons.org/licenses/by/4.0/",
-    "changes": "tree_oak_a: kept sub-object(s) Large_oak_tree_001_LOD0_Bark_Mat_0, Large_oak_tree_001_LOD0_Cluster_Mat_0; rescaled x3.6206 to critter-world size, grounded and centred; pruned for critter scale: removed 0 root/low-branch parts below 6.5 m and 1 foliage cards below 7.5 m (or orphaned); re-centred on the trunk (+0.14, -0.11 m) and re-grounded (+0.00 m); material 'Bark_Mat' retextured with Poly Haven 'jolcham_oak_bark_01' (1024x2048, resampled to the original UV aspect); foliage materials converted to alpha-clip (cut-out) with bled RGBA albedo; textures re-encoded <= 2048px (JPEG colour/ORM, PNG normals) | tree_oak_b: kept sub-object(s) Big_oak_tree__004_LOD0_Bark_Mat_0, Big_oak_tree__004_LOD0_Cluster_Mat_0; rescaled x3.6319 to critter-world size, grounded and centred; pruned for critter scale: removed 1 root/low-branch parts below 6.5 m and 0 foliage cards below 7.5 m (or orphaned); re-centred on the trunk (-0.73, -0.04 m) and re-grounded (+0.00 m); material 'Bark_Mat' retextured with Poly Haven 'jolcham_oak_bark_01' (1024x2048, resampled to the original UV aspect); foliage materials converted to alpha-clip (cut-out) with bled RGBA albedo; textures re-encoded <= 2048px (JPEG colour/ORM, PNG normals) | tree_oak_young: kept sub-object(s) Medium_oak_tree__003_LOD0_Bark_Mat_0, Medium_oak_tree__003_LOD0_Cluster_Mat_0; rescaled x3.3106 to critter-world size, grounded and centred; pruned for critter scale: removed 0 root/low-branch parts below 6.5 m and 12 foliage cards below 7.5 m (or orphaned); re-centred on the trunk (-0.04, -0.21 m) and re-grounded (+0.00 m); material 'Bark_Mat' retextured with Poly Haven 'jolcham_oak_bark_01' (1024x2048, resampled to the original UV aspect); foliage materials converted to alpha-clip (cut-out) with bled RGBA albedo; textures re-encoded <= 2048px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
-    "used_for": "Environment scenery: giant oak tree (tree_oak_a), giant spreading oak tree (tree_oak_b), young oak tree (tree_oak_young)",
+    "changes": "tree_oak_a: kept sub-object(s) Large_oak_tree_001_LOD0_Bark_Mat_0, Large_oak_tree_001_LOD0_Cluster_Mat_0; rescaled x3.6206 to critter-world size, grounded and centred; pruned for critter scale: removed 0 root/low-branch parts below 6.5 m and 1 foliage cards below 7.5 m (or orphaned); re-centred on the trunk (+0.14, -0.11 m) and re-grounded (+0.00 m); material 'Bark_Mat' retextured with Poly Haven 'jolcham_oak_bark_01' (1024x2048, resampled to the original UV aspect); foliage materials converted to alpha-clip (cut-out) with bled RGBA albedo; textures re-encoded <= 2048px (JPEG colour/ORM, PNG normals) | tree_oak_b: kept sub-object(s) Big_oak_tree__004_LOD0_Bark_Mat_0, Big_oak_tree__004_LOD0_Cluster_Mat_0; rescaled x3.6319 to critter-world size, grounded and centred; pruned for critter scale: removed 1 root/low-branch parts below 6.5 m and 0 foliage cards below 7.5 m (or orphaned); re-centred on the trunk (-0.73, -0.04 m) and re-grounded (+0.00 m); material 'Bark_Mat' retextured with Poly Haven 'jolcham_oak_bark_01' (1024x2048, resampled to the original UV aspect); foliage materials converted to alpha-clip (cut-out) with bled RGBA albedo; textures re-encoded <= 2048px (JPEG colour/ORM, PNG normals) | tree_oak_young: kept sub-object(s) Medium_oak_tree__003_LOD0_Bark_Mat_0, Medium_oak_tree__003_LOD0_Cluster_Mat_0; rescaled x3.3106 to critter-world size, grounded and centred; pruned for critter scale: removed 0 root/low-branch parts below 6.5 m and 12 foliage cards below 7.5 m (or orphaned); re-centred on the trunk (-0.04, -0.21 m) and re-grounded (+0.00 m); material 'Bark_Mat' retextured with Poly Haven 'jolcham_oak_bark_01' (1024x2048, resampled to the original UV aspect); foliage materials converted to alpha-clip (cut-out) with bled RGBA albedo; textures re-encoded <= 2048px (JPEG colour/ORM, PNG normals) | tree_dead_oak: kept sub-object(s) Medium_oak_tree__003_LOD0_Bark_Mat_0, Medium_oak_tree__003_LOD0_Cluster_Mat_0; rescaled x2.8376 to critter-world size, grounded and centred; pruned for critter scale: removed 0 root/low-branch parts below 6.5 m and 670 foliage cards below 100000 m (or orphaned); re-centred on the trunk (-0.04, -0.19 m) and re-grounded (+0.00 m); material 'Bark_Mat' retextured with Poly Haven 'jolcham_oak_bark_01' (1024x2048, resampled to the original UV aspect); textures re-encoded <= 2048px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Environment scenery: giant oak tree (tree_oak_a), giant spreading oak tree (tree_oak_b), young oak tree (tree_oak_young), dead swamp oak (bare branches) (tree_dead_oak)",
     "files": [
       "assets/env/tree_oak_a/tree_oak_a.glb",
       "assets/env/tree_oak_b/tree_oak_b.glb",
-      "assets/env/tree_oak_young/tree_oak_young.glb"
+      "assets/env/tree_oak_young/tree_oak_young.glb",
+      "assets/env/tree_dead_oak/tree_dead_oak.glb"
     ]
   },
   {
@@ -21,12 +22,13 @@
     "source_url": "https://polyhaven.com/a/jolcham_oak_bark_01",
     "license": "CC0 1.0",
     "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
-    "changes": "Resampled to 1024x2048 (normal 1024x2048) to fit the model's bark UV layout; AO/roughness packed into one JPEG | Resampled to 1024x2048 (normal 1024x2048) to fit the model's bark UV layout; AO/roughness packed into one JPEG | Resampled to 1024x2048 (normal 1024x2048) to fit the model's bark UV layout; AO/roughness packed into one JPEG",
-    "used_for": "Bark material of giant oak tree (tree_oak_a); Bark material of giant spreading oak tree (tree_oak_b); Bark material of young oak tree (tree_oak_young)",
+    "changes": "Resampled to 1024x2048 (normal 1024x2048) to fit the model's bark UV layout; AO/roughness packed into one JPEG | Resampled to 1024x2048 (normal 1024x2048) to fit the model's bark UV layout; AO/roughness packed into one JPEG | Resampled to 1024x2048 (normal 1024x2048) to fit the model's bark UV layout; AO/roughness packed into one JPEG | Resampled to 1024x2048 (normal 1024x2048) to fit the model's bark UV layout; AO/roughness packed into one JPEG",
+    "used_for": "Bark material of giant oak tree (tree_oak_a); Bark material of giant spreading oak tree (tree_oak_b); Bark material of young oak tree (tree_oak_young); Bark material of dead swamp oak (bare branches) (tree_dead_oak)",
     "files": [
       "assets/env/tree_oak_a/tree_oak_a.glb",
       "assets/env/tree_oak_b/tree_oak_b.glb",
-      "assets/env/tree_oak_young/tree_oak_young.glb"
+      "assets/env/tree_oak_young/tree_oak_young.glb",
+      "assets/env/tree_dead_oak/tree_dead_oak.glb"
     ]
   },
   {
@@ -90,10 +92,11 @@
     "source_url": "https://sketchfab.com/3d-models/five-birch-trees-pack-lowpoly-lods-08fe5117138e4fdaa7ca440ef1201e07",
     "license": "CC BY 4.0",
     "license_url": "https://creativecommons.org/licenses/by/4.0/",
-    "changes": "tree_birch_a: kept sub-object(s) Birch_Birch_Atlas_0, Birch_Birch_bark_0; rescaled x5.2312 to critter-world size, grounded and centred; pruned for critter scale: removed 0 root/low-branch parts below 6.5 m and 3 foliage cards below 7.5 m (or orphaned); re-centred on the trunk (-0.04, +0.03 m) and re-grounded (+0.00 m); foliage materials converted to alpha-clip (cut-out) with bled RGBA albedo; textures re-encoded <= 1024px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
-    "used_for": "Environment scenery: silver birch (tree_birch_a)",
+    "changes": "tree_birch_a: kept sub-object(s) Birch_Birch_Atlas_0, Birch_Birch_bark_0; rescaled x5.2312 to critter-world size, grounded and centred; pruned for critter scale: removed 0 root/low-branch parts below 6.5 m and 3 foliage cards below 7.5 m (or orphaned); re-centred on the trunk (-0.04, +0.03 m) and re-grounded (+0.00 m); foliage materials converted to alpha-clip (cut-out) with bled RGBA albedo; textures re-encoded <= 1024px (JPEG colour/ORM, PNG normals) | tree_dead_birch: kept sub-object(s) Birch_Birch_Atlas_0, Birch_Birch_bark_0; rescaled x4.0499 to critter-world size, grounded and centred; pruned for critter scale: removed 0 root/low-branch parts below 6.5 m and 194 foliage cards below 100000 m (or orphaned); re-centred on the trunk (-0.06, +0.01 m) and re-grounded (+0.00 m); foliage materials converted to alpha-clip (cut-out) with bled RGBA albedo; textures re-encoded <= 1024px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Environment scenery: silver birch (tree_birch_a), dead swamp birch (bare branches) (tree_dead_birch)",
     "files": [
-      "assets/env/tree_birch_a/tree_birch_a.glb"
+      "assets/env/tree_birch_a/tree_birch_a.glb",
+      "assets/env/tree_dead_birch/tree_dead_birch.glb"
     ]
   },
   {
@@ -117,7 +120,7 @@
     "license": "CC0 1.0",
     "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
     "changes": "Re-encoded to 1024px (JPEG colour, PNG normal, packed AO/roughness JPEG) and embedded in the GLB | Downscaled to 1024px (AO/height 1024px), normal map converted to 8-bit PNG (OpenGL convention), greyscale maps re-encoded as JPEG",
-    "used_for": "Surface material of hollow fallen log you can walk through (log_hollow); Terrain texture layer 'bark' (generic tree bark for custom meshes/shaders)",
+    "used_for": "Surface material of hollow fallen log you can walk through (log_hollow); Texture 'bark' (generic tree bark for custom meshes/shaders)",
     "files": [
       "assets/env/log_hollow/log_hollow.glb",
       "assets/textures/bark/albedo.jpg",
@@ -213,7 +216,7 @@
     "license": "CC BY 4.0",
     "license_url": "https://creativecommons.org/licenses/by/4.0/",
     "changes": "stump_hollow: rescaled x5.056 to critter-world size, grounded and centred; unlit material 'material0000' rebuilt as lit PBR (roughness 0.9); unlit material 'material0001' rebuilt as lit PBR (roughness 0.9); unlit material 'material0002' rebuilt as lit PBR (roughness 0.9); unlit material 'material0003' rebuilt as lit PBR (roughness 0.9); unlit material 'material0004' rebuilt as lit PBR (roughness 0.9); unlit material 'material0005' rebuilt as lit PBR (roughness 0.9); decimated 284775 -> 39200 triangles (seams welded first, no cracks); textures re-encoded <= 1024px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
-    "used_for": "Environment scenery: hollow tree stump you can walk into (stump_hollow)",
+    "used_for": "Environment scenery: hollow tree stump landmark (solid collision so nothing gets trapped inside) (stump_hollow)",
     "files": [
       "assets/env/stump_hollow/stump_hollow.glb"
     ]
@@ -829,7 +832,7 @@
     "license": "CC0 1.0",
     "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
     "changes": "Downscaled to 2048px (AO/height 1024px), normal map converted to 8-bit PNG (OpenGL convention), greyscale maps re-encoded as JPEG",
-    "used_for": "Terrain texture layer 'forest_floor' (default forest ground: moss, grass and leaf litter)",
+    "used_for": "Texture 'forest_floor' (default forest ground: moss, grass and leaf litter)",
     "files": [
       "assets/textures/forest_floor/albedo.jpg",
       "assets/textures/forest_floor/ao.jpg",
@@ -846,7 +849,7 @@
     "license": "CC0 1.0",
     "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
     "changes": "Downscaled to 2048px (AO/height 1024px), normal map converted to 8-bit PNG (OpenGL convention), greyscale maps re-encoded as JPEG",
-    "used_for": "Terrain texture layer 'grass' (lush grass meadow)",
+    "used_for": "Texture 'grass' (lush grass meadow)",
     "files": [
       "assets/textures/grass/albedo.jpg",
       "assets/textures/grass/ao.jpg",
@@ -863,7 +866,7 @@
     "license": "CC0 1.0",
     "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
     "changes": "Downscaled to 2048px (AO/height 1024px), normal map converted to 8-bit PNG (OpenGL convention), greyscale maps re-encoded as JPEG",
-    "used_for": "Terrain texture layer 'dirt_path' (packed-earth paths)",
+    "used_for": "Texture 'dirt_path' (packed-earth paths)",
     "files": [
       "assets/textures/dirt_path/albedo.jpg",
       "assets/textures/dirt_path/ao.jpg",
@@ -880,7 +883,7 @@
     "license": "CC0 1.0",
     "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
     "changes": "Downscaled to 2048px (AO/height 1024px), normal map converted to 8-bit PNG (OpenGL convention), greyscale maps re-encoded as JPEG",
-    "used_for": "Terrain texture layer 'moss' (thick ground moss)",
+    "used_for": "Texture 'moss' (thick ground moss)",
     "files": [
       "assets/textures/moss/albedo.jpg",
       "assets/textures/moss/ao.jpg",
@@ -897,7 +900,7 @@
     "license": "CC0 1.0",
     "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
     "changes": "Downscaled to 2048px (AO/height 1024px), normal map converted to 8-bit PNG (OpenGL convention), greyscale maps re-encoded as JPEG",
-    "used_for": "Terrain texture layer 'rock' (steep slopes and cliffs)",
+    "used_for": "Texture 'rock' (steep slopes and cliffs)",
     "files": [
       "assets/textures/rock/albedo.jpg",
       "assets/textures/rock/ao.jpg",
@@ -914,7 +917,7 @@
     "license": "CC0 1.0",
     "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
     "changes": "Downscaled to 1024px (AO/height 1024px), normal map converted to 8-bit PNG (OpenGL convention), greyscale maps re-encoded as JPEG",
-    "used_for": "Terrain texture layer 'leaf_litter' (autumn leaf litter under trees)",
+    "used_for": "Texture 'leaf_litter' (autumn leaf litter under trees)",
     "files": [
       "assets/textures/leaf_litter/albedo.jpg",
       "assets/textures/leaf_litter/ao.jpg",
@@ -931,13 +934,115 @@
     "license": "CC0 1.0",
     "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
     "changes": "Downscaled to 1024px (AO/height 1024px), normal map converted to 8-bit PNG (OpenGL convention), greyscale maps re-encoded as JPEG",
-    "used_for": "Terrain texture layer 'sand' (island beach)",
+    "used_for": "Texture 'sand' (island beach)",
     "files": [
       "assets/textures/sand/albedo.jpg",
       "assets/textures/sand/ao.jpg",
       "assets/textures/sand/height.jpg",
       "assets/textures/sand/normal.png",
       "assets/textures/sand/roughness.jpg"
+    ]
+  },
+  {
+    "asset": "Brown Mud Leaves 01 (Poly Haven texture)",
+    "author": "Rob Tuytel",
+    "author_url": "https://polyhaven.com/all?a=Rob%20Tuytel",
+    "source_url": "https://polyhaven.com/a/brown_mud_leaves_01",
+    "license": "CC0 1.0",
+    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "changes": "Downscaled to 1024px (AO/height 1024px), normal map converted to 8-bit PNG (OpenGL convention), greyscale maps re-encoded as JPEG",
+    "used_for": "Texture 'mud' (swamp mud with fallen leaves (terrain))",
+    "files": [
+      "assets/textures/mud/albedo.jpg",
+      "assets/textures/mud/ao.jpg",
+      "assets/textures/mud/height.jpg",
+      "assets/textures/mud/normal.png",
+      "assets/textures/mud/roughness.jpg"
+    ]
+  },
+  {
+    "asset": "Planks Brown 10 (Poly Haven texture)",
+    "author": "Rob Tuytel",
+    "author_url": "https://polyhaven.com/all?a=Rob%20Tuytel",
+    "source_url": "https://polyhaven.com/a/planks_brown_10",
+    "license": "CC0 1.0",
+    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "changes": "Downscaled to 1024px (AO/height 1024px), normal map converted to 8-bit PNG (OpenGL convention), greyscale maps re-encoded as JPEG",
+    "used_for": "Texture 'planks' (plank walls of the big buildings)",
+    "files": [
+      "assets/textures/planks/albedo.jpg",
+      "assets/textures/planks/ao.jpg",
+      "assets/textures/planks/height.jpg",
+      "assets/textures/planks/normal.png",
+      "assets/textures/planks/roughness.jpg"
+    ]
+  },
+  {
+    "asset": "Old Wood Floor (Poly Haven texture)",
+    "author": "Guillaume Monsergent",
+    "author_url": "https://polyhaven.com/all?a=Guillaume%20Monsergent",
+    "source_url": "https://polyhaven.com/a/old_wood_floor",
+    "license": "CC0 1.0",
+    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "changes": "Downscaled to 1024px (AO/height 1024px), normal map converted to 8-bit PNG (OpenGL convention), greyscale maps re-encoded as JPEG",
+    "used_for": "Texture 'floorboards' (floors, porches and ramps of the big buildings)",
+    "files": [
+      "assets/textures/floorboards/albedo.jpg",
+      "assets/textures/floorboards/ao.jpg",
+      "assets/textures/floorboards/height.jpg",
+      "assets/textures/floorboards/normal.png",
+      "assets/textures/floorboards/roughness.jpg"
+    ]
+  },
+  {
+    "asset": "Reed Roof 04 (Poly Haven texture)",
+    "author": "Rob Tuytel",
+    "author_url": "https://polyhaven.com/all?a=Rob%20Tuytel",
+    "source_url": "https://polyhaven.com/a/reed_roof_04",
+    "license": "CC0 1.0",
+    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "changes": "Downscaled to 1024px (AO/height 1024px), normal map converted to 8-bit PNG (OpenGL convention), greyscale maps re-encoded as JPEG",
+    "used_for": "Texture 'thatch' (thatched roof of the woodcutter's lodge)",
+    "files": [
+      "assets/textures/thatch/albedo.jpg",
+      "assets/textures/thatch/ao.jpg",
+      "assets/textures/thatch/height.jpg",
+      "assets/textures/thatch/normal.png",
+      "assets/textures/thatch/roughness.jpg"
+    ]
+  },
+  {
+    "asset": "Roof Slates 02 (Poly Haven texture)",
+    "author": "Rob Tuytel",
+    "author_url": "https://polyhaven.com/all?a=Rob%20Tuytel",
+    "source_url": "https://polyhaven.com/a/roof_slates_02",
+    "license": "CC0 1.0",
+    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "changes": "Downscaled to 1024px (AO/height 1024px), normal map converted to 8-bit PNG (OpenGL convention), greyscale maps re-encoded as JPEG",
+    "used_for": "Texture 'slate_roof' (slate roof of the big red barn)",
+    "files": [
+      "assets/textures/slate_roof/albedo.jpg",
+      "assets/textures/slate_roof/ao.jpg",
+      "assets/textures/slate_roof/height.jpg",
+      "assets/textures/slate_roof/normal.png",
+      "assets/textures/slate_roof/roughness.jpg"
+    ]
+  },
+  {
+    "asset": "Rusty Corrugated Iron (Poly Haven texture)",
+    "author": "Charlotte Baglioni",
+    "author_url": "https://polyhaven.com/all?a=Charlotte%20Baglioni",
+    "source_url": "https://polyhaven.com/a/rusty_corrugated_iron",
+    "license": "CC0 1.0",
+    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "changes": "Downscaled to 1024px (AO/height 1024px), normal map converted to 8-bit PNG (OpenGL convention), greyscale maps re-encoded as JPEG",
+    "used_for": "Texture 'tin_roof' (rusty tin roof of the swamp shacks)",
+    "files": [
+      "assets/textures/tin_roof/albedo.jpg",
+      "assets/textures/tin_roof/ao.jpg",
+      "assets/textures/tin_roof/height.jpg",
+      "assets/textures/tin_roof/normal.png",
+      "assets/textures/tin_roof/roughness.jpg"
     ]
   },
   {

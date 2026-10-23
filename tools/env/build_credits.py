@@ -167,7 +167,7 @@ def texture_entries() -> list[dict]:
                        if p.suffix != ".import")
         e["changes"] = (f"Downscaled to {size}px (AO/height 1024px), normal map converted to 8-bit PNG "
                         "(OpenGL convention), greyscale maps re-encoded as JPEG")
-        e["used_for"] = f"Terrain texture layer '{layer}' ({desc})"
+        e["used_for"] = f"Texture '{layer}' ({desc})"
         e["files"] = files
         entries.append(e)
     for h in bt.HDRIS:

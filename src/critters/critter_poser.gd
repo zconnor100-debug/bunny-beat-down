@@ -213,7 +213,9 @@ func _process_modification_with_delta(delta: float) -> void:
 	var grip := Vector3.ZERO
 	# keep the gun upright in the world (also when the body is lying down)
 	var up_s := (to_skel * Vector3.UP).normalized()
-	var wbasis := Basis.looking_at(a, up_s if absf(a.dot(up_s)) < 0.98 else FWD)
+	if absf(a.dot(up_s)) > 0.98:   # (aiming straight up/down, or mid-flip)
+		up_s = UP if absf(a.dot(UP)) < 0.98 else RIGHT
+	var wbasis := Basis.looking_at(a, up_s)
 	var reload_k := 0.0
 	if reload_progress >= 0.0:
 		reload_k = sin(clampf(reload_progress, 0.0, 1.0) * PI)

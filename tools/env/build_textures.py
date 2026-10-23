@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Build terrain texture layers, the water normal map and copy the sky HDRIs.
 
-    python3 -I tools/env/build_textures.py
+    python3 -I tools/env/build_textures.py              # everything
+    python3 -I tools/env/build_textures.py mud planks   # just these layers
 
 Inputs come from the download cache (polyhaven_fetch.py / ambientcg_fetch.py);
 outputs follow docs/ASSET_PIPELINE.md:
@@ -24,6 +25,7 @@ import math
 import random
 import shutil
 import subprocess
+import sys
 from pathlib import Path
 
 from PIL import Image
@@ -44,6 +46,12 @@ LAYERS = {
     "leaf_litter":  ("ph_forest_floor", 1024, "autumn leaf litter under trees"),
     "sand":         ("ph_coast_sand_01", 1024, "island beach"),
     "bark":         ("ph_bark_brown_02", 1024, "generic tree bark for custom meshes/shaders"),
+    "mud":          ("ph_brown_mud_leaves_01", 1024, "swamp mud with fallen leaves (terrain)"),
+    "planks":       ("ph_planks_brown_10", 1024, "plank walls of the big buildings"),
+    "floorboards":  ("ph_old_wood_floor", 1024, "floors, porches and ramps of the big buildings"),
+    "thatch":       ("ph_reed_roof_04", 1024, "thatched roof of the woodcutter's lodge"),
+    "slate_roof":   ("ph_roof_slates_02", 1024, "slate roof of the big red barn"),
+    "tin_roof":     ("ph_rusty_corrugated_iron", 1024, "rusty tin roof of the swamp shacks"),
 }
 
 # Noise-like normal maps gain little from 2K but cost ~10 MB as PNG: cap them lower.
@@ -69,9 +77,11 @@ def source_maps(folder: Path) -> dict[str, Path]:
     return out
 
 
-def build_layers() -> list[dict]:
+def build_layers(only: list[str] | None = None) -> list[dict]:
     jobs = []
     for layer, (folder, size, _desc) in LAYERS.items():
+        if only and layer not in only:
+            continue
         maps = source_maps(CACHE / folder)
         dst = TEX / layer
         dst.mkdir(parents=True, exist_ok=True)
@@ -142,7 +152,13 @@ def copy_hdris() -> list[Path]:
 
 
 def main() -> None:
-    build_layers()
+    only = sys.argv[1:]
+    unknown = [o for o in only if o not in LAYERS]
+    if unknown:
+        raise SystemExit(f"unknown layers: {unknown}")
+    build_layers(only)
+    if only:
+        return
     (TEX / "water").mkdir(parents=True, exist_ok=True)
     water_normal().save(TEX / "water" / "normal.png", optimize=True)
     copied = copy_hdris()

@@ -23,7 +23,7 @@ func test_island_generates_and_navigates() -> void:
 	var map := get_world_3d().navigation_map
 	var from := NavigationServer3D.map_get_closest_point(map, Vector3(a.x, _island.terrain.height_at(a.x, a.y), a.y))
 	var to := NavigationServer3D.map_get_closest_point(map, Vector3(b.x, _island.terrain.height_at(b.x, b.y), b.y))
-	var path := NavigationServer3D.map_get_path(map, from, to, true)
+	var path := Island.find_path(map, from, to)
 	check(path.size() >= 2, "navmesh path between POIs (%d points)" % path.size())
 	if path.size() >= 2:
 		check(path[path.size() - 1].distance_to(to) < 3.0, "path reaches the destination (%.1f m short)" % path[path.size() - 1].distance_to(to))

@@ -112,6 +112,38 @@
     "tris": 9376
   },
   {
+    "id": "tree_dead_oak",
+    "file": "assets/env/tree_dead_oak/tree_dead_oak.glb",
+    "category": "deadtree",
+    "height_m": 31.72,
+    "footprint_radius_m": 9.97,
+    "collision": "cylinder",
+    "collision_radius_m": 0.56,
+    "scale_range": [
+      0.8,
+      1.25
+    ],
+    "density_weight": 1.0,
+    "sink_m": 0.4,
+    "tris": 2761
+  },
+  {
+    "id": "tree_dead_birch",
+    "file": "assets/env/tree_dead_birch/tree_dead_birch.glb",
+    "category": "deadtree",
+    "height_m": 47.5,
+    "footprint_radius_m": 14.0,
+    "collision": "cylinder",
+    "collision_radius_m": 1.03,
+    "scale_range": [
+      0.8,
+      1.2
+    ],
+    "density_weight": 0.8,
+    "sink_m": 0.5,
+    "tris": 3837
+  },
+  {
     "id": "log_hollow",
     "file": "assets/env/log_hollow/log_hollow.glb",
     "category": "log",

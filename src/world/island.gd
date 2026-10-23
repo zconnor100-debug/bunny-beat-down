@@ -1,7 +1,9 @@
 class_name Island
 extends Node3D
-## Builds a whole battle-royale island from a seed: terrain, points of
-## interest, paths, forest, ground cover, water, loot spots and a tiled
+## Builds a whole battle-royale island from a seed: terrain with three biomes
+## (a hilly forest, open grasslands and a swamp of still water), points of
+## interest including the big walk-in buildings of each biome, paths, trees,
+## ground cover, reeds and lily pads, water, loot spots and a tiled
 ## navigation mesh for the AI. Generation yields between steps so a loading
 ## screen can animate (`progress` signal).
 
@@ -9,21 +11,33 @@ signal progress(fraction: float, label: String)
 
 const TERRAIN_SHADER := preload("res://src/world/shaders/terrain.gdshader")
 const WATER_SHADER := preload("res://src/world/shaders/water.gdshader")
-const NAV_TILES := 6
+const NAV_TILES := 12
+const POI_SPACING := 125.0
+const ANY := -1
+const FOREST := Terrain.Biome.FOREST
+const SWAMP := Terrain.Biome.SWAMP
+const GRASS := Terrain.Biome.GRASS
 
-## Points of interest: name, radius, what to build there.
+## Points of interest: name, what to build there, radius, and the biome it
+## belongs in. The big buildings come first so they always find a spot.
 const POI_KINDS := [
-	{"name": "Carrot Patch", "kit": "carrot_patch", "radius": 30.0},
-	{"name": "Picnic Hill", "kit": "picnic", "radius": 26.0},
-	{"name": "Mushroom Ring", "kit": "mushroom_ring", "radius": 24.0},
-	{"name": "Hollow Stump", "kit": "hollow_stump", "radius": 26.0},
-	{"name": "Gnome Garden", "kit": "gnome_garden", "radius": 24.0},
-	{"name": "Boulder Bluff", "kit": "boulders", "radius": 28.0},
-	{"name": "Log Jam", "kit": "logs", "radius": 26.0},
-	{"name": "Duck Pond", "kit": "pond", "radius": 26.0},
-	{"name": "Cottage Hollow", "kit": "cottages", "radius": 30.0},
-	{"name": "Stump Village", "kit": "stumps", "radius": 28.0},
-	{"name": "Treasure Grove", "kit": "treasure", "radius": 22.0},
+	{"name": "Woodcutter's Lodge", "kit": "lodge", "radius": 28.0, "biome": FOREST},
+	{"name": "Ranger's Lodge", "kit": "lodge", "radius": 28.0, "biome": FOREST},
+	{"name": "Big Red Barn", "kit": "barn", "radius": 30.0, "biome": GRASS},
+	{"name": "Haystack Barn", "kit": "barn", "radius": 30.0, "biome": GRASS},
+	{"name": "Bayou Shacks", "kit": "shacks", "radius": 34.0, "biome": SWAMP},
+	{"name": "Croaker's Stilts", "kit": "shacks", "radius": 34.0, "biome": SWAMP},
+	{"name": "Carrot Patch", "kit": "carrot_patch", "radius": 30.0, "biome": GRASS},
+	{"name": "Picnic Hill", "kit": "picnic", "radius": 26.0, "biome": GRASS},
+	{"name": "Gnome Garden", "kit": "gnome_garden", "radius": 24.0, "biome": GRASS},
+	{"name": "Duck Pond", "kit": "pond", "radius": 26.0, "biome": GRASS},
+	{"name": "Mushroom Ring", "kit": "mushroom_ring", "radius": 24.0, "biome": FOREST},
+	{"name": "Cottage Hollow", "kit": "cottages", "radius": 30.0, "biome": FOREST},
+	{"name": "Hollow Stump", "kit": "hollow_stump", "radius": 26.0, "biome": SWAMP},
+	{"name": "Log Jam", "kit": "logs", "radius": 26.0, "biome": SWAMP},
+	{"name": "Stump Village", "kit": "stumps", "radius": 28.0, "biome": SWAMP},
+	{"name": "Boulder Bluff", "kit": "boulders", "radius": 28.0, "biome": ANY},
+	{"name": "Treasure Grove", "kit": "treasure", "radius": 22.0, "biome": ANY},
 ]
 
 var seed_value := 1
@@ -34,7 +48,10 @@ var pois: Array = []          # {name, center: Vector2, radius, height}
 var paths: Array = []         # PackedVector2Array polylines
 var loot_points: Array = []   # {pos: Vector3, crate: bool, poi: String}
 var nav_regions: Array[NavigationRegion3D] = []
+var buildings: Array[Building] = []
 var water: MeshInstance3D
+var swamp_water: MeshInstance3D
+var _swamp_cells := PackedByteArray()   # Terrain.BIOME_RES² cells with standing swamp water
 var ready_to_play := false
 var _foliage_materials: Array[ShaderMaterial] = []
 
@@ -66,6 +83,7 @@ func generate(seed_: int, quality := 2, bake_nav := true) -> void:
 	_choose_pois()
 	_shape_pois()
 	_plan_paths()
+	terrain.compute_normals()
 
 	progress.emit(0.25, "Painting the meadows")
 	await get_tree().process_frame
@@ -73,15 +91,19 @@ func generate(seed_: int, quality := 2, bake_nav := true) -> void:
 	terrain.build_meshes(_terrain_material())
 	terrain.build_collision()
 	_build_water()
+	_build_swamp_water()
 	_build_boundary()
 
-	progress.emit(0.4, "Planting giant trees")
+	progress.emit(0.4, "Raising barns and lodges")
 	await get_tree().process_frame
 	_build_pois()
+	progress.emit(0.45, "Planting giant trees")
+	await get_tree().process_frame
 	_scatter_forest()
 	progress.emit(0.55, "Scattering mushrooms and pebbles")
 	await get_tree().process_frame
 	_scatter_ground_cover(quality)
+	_scatter_swamp(quality)
 	scatter.flush_batches(quality)
 	_collect_foliage_materials()
 	_plan_loot()
@@ -97,25 +119,36 @@ func generate(seed_: int, quality := 2, bake_nav := true) -> void:
 # ---- POIs & paths -------------------------------------------------------------------------
 
 func _choose_pois() -> void:
-	var kinds := POI_KINDS.duplicate()
-	var tries := 0
-	while not kinds.is_empty() and tries < 4000:
-		tries += 1
-		var a := rng.randf() * TAU
-		var d := sqrt(rng.randf()) * terrain.island_radius * 0.72
-		var c := Vector2(cos(a), sin(a)) * d
-		var h := terrain.height_at(c.x, c.y)
-		if h < 3.0:
-			continue
-		var ok := true
-		for p in pois:
-			if c.distance_to(p.center) < 88.0:
-				ok = false
-				break
-		if not ok:
-			continue
-		var k: Dictionary = kinds.pop_front()
-		pois.append({"name": k.name, "kit": k.kit, "radius": k.radius, "center": c, "height": clampf(h, 3.0, 18.0)})
+	for k in POI_KINDS:
+		var biome: int = k.biome
+		for attempt in 800:
+			var a := rng.randf() * TAU
+			var d := sqrt(rng.randf()) * terrain.island_radius * 0.74
+			var c := Vector2(cos(a), sin(a)) * d
+			var h := terrain.height_at(c.x, c.y)
+			var w := terrain.biome_at(c.x, c.y)
+			if biome != ANY and [w.x, w.y, w.z][biome] < 0.6:
+				continue
+			if biome == SWAMP:
+				if h < Terrain.SWAMP_LEVEL - 1.2:
+					continue
+			elif h < 3.0 or w.y > 0.3:
+				continue
+			var ok := true
+			for p in pois:
+				if c.distance_to(p.center) < POI_SPACING:
+					ok = false
+					break
+			if not ok:
+				continue
+			var target := clampf(h, 3.0, 30.0)
+			if k.kit == "shacks":
+				target = Terrain.SWAMP_LEVEL - 0.6   # stilts standing in the water
+			elif biome == SWAMP:
+				target = maxf(h, Terrain.SWAMP_LEVEL + 0.7)   # a dry hummock in the swamp
+			pois.append({"name": k.name, "kit": k.kit, "radius": k.radius, "center": c, "height": target,
+				"biome": biome, "buildings": []})
+			break
 
 
 func _shape_pois() -> void:
@@ -123,6 +156,9 @@ func _shape_pois() -> void:
 		terrain.flatten(p.center, p.radius, p.height)
 		if p.kit == "pond":
 			terrain.flatten(p.center, p.radius * 0.55, p.height - 2.2)
+		elif p.kit in ["lodge", "barn"]:
+			# dead level under a building, so its floor sits just above the ground
+			terrain.flatten(p.center, p.radius * 0.75, p.height, 1.0, false)
 
 
 func _plan_paths() -> void:
@@ -234,11 +270,56 @@ func _build_pois() -> void:
 					_put_entry(scatter.pick("mushroom", rng), p.center + Vector2(cos(a4), sin(a4)) * 12.0, rng.randf() * TAU, rng.randf_range(1.0, 1.5))
 				for i in 3:
 					_put_entry(scatter.pick("rock", rng), p.center + Vector2(rng.randf_range(-9, 9), rng.randf_range(-9, 9)), rng.randf() * TAU, 0.8)
+			"lodge":
+				var yaw := _face_centre(p.center)
+				_place_building(p, Building.Style.LODGE, p.center, yaw)
+				var back := Vector2(sin(yaw), cos(yaw))
+				var side := Vector2(back.y, -back.x)
+				_put("cover_logpile", p.center + side * 15.0 + back * 4.0, yaw, 1.0)
+				_put("cover_logpile", p.center - side * 14.0 - back * 6.0, yaw + 0.4, 1.0)
+				for i in 4:
+					var a := rng.randf() * TAU
+					_put_entry(scatter.pick("stump", rng), p.center + Vector2(cos(a), sin(a)) * rng.randf_range(16.0, 22.0), rng.randf() * TAU, 1.0)
+			"barn":
+				var yaw := _face_centre(p.center)
+				_place_building(p, Building.Style.BARN, p.center, yaw)
+				var back := Vector2(sin(yaw), cos(yaw))
+				var side := Vector2(back.y, -back.x)
+				for i in 5:
+					_put("cover_haybale", p.center + side * (12.5 + (i % 2) * 2.2) + back * (-8.0 + i * 3.6), rng.randf() * TAU, 1.0)
+				_put("watering_can", p.center - side * 13.0 + back * 6.0, rng.randf() * TAU, 1.0)
+				_put("fence_picket", p.center - side * 18.0 - back * 4.0, yaw + PI / 2.0, 1.0)
+			"shacks":
+				# two shacks on stilts out in the pool, side by side, their ramps
+				# running down into the water the same way
+				var yaw := rng.randf() * TAU
+				var across := Vector2(cos(yaw), sin(yaw))
+				for k in [-1.0, 1.0]:
+					_place_building(p, Building.Style.SHACK, p.center + across * 12.0 * k, atan2(-across.y, across.x))
 			"pond":
 				_add_pond_water(c3, p)
 				_put("rubber_duck", p.center + Vector2(3, 2), rng.randf() * TAU, 1.0, true)
 				_put("old_tyre", p.center + Vector2(-16, 9), rng.randf() * TAU, 1.0)
 				_put("rubber_boot", p.center + Vector2(17, -6), rng.randf() * TAU, 1.0)
+
+
+## Yaw that turns a building's front door (+Z) toward `target` (default the
+## middle of the island, where the paths and the action are).
+func _face_centre(at: Vector2, target := Vector2.ZERO) -> float:
+	var to := target - at
+	return atan2(to.x, to.y)
+
+
+func _place_building(p: Dictionary, style: Building.Style, at: Vector2, yaw: float) -> Building:
+	var b := Building.make(style, rng)
+	b.name = "%s_%d" % [b.name, buildings.size()]
+	add_child(b)
+	b.global_position = Vector3(at.x, terrain.height_at(at.x, at.y), at.y)
+	b.rotation.y = yaw
+	scatter.reserve(at, b.footprint)
+	buildings.append(b)
+	(p.buildings as Array).append(b)
+	return b
 
 
 func _put(id: String, at: Vector2, yaw: float, scale_: float, float_on_pond := false) -> Node3D:
@@ -261,9 +342,23 @@ func _pond_level(at: Vector2) -> float:
 	return Terrain.WATER_LEVEL
 
 
-## Height of the water surface above a point (sea level, or a pond's surface).
+## Height of the water surface above a point (sea level, a pond's surface,
+## or the still water of the swamp).
 func water_level_at(pos: Vector3) -> float:
-	return _pond_level(Vector2(pos.x, pos.z))
+	var level := _pond_level(Vector2(pos.x, pos.z))
+	if _in_swamp_water(pos.x, pos.z):
+		level = maxf(level, Terrain.SWAMP_LEVEL)
+	return level
+
+
+func _in_swamp_water(x: float, z: float) -> bool:
+	if _swamp_cells.is_empty():
+		return false
+	var xi := int((x + Terrain.SIZE * 0.5) / Terrain.BIOME_CELL)
+	var zi := int((z + Terrain.SIZE * 0.5) / Terrain.BIOME_CELL)
+	if xi < 0 or zi < 0 or xi >= Terrain.BIOME_RES or zi >= Terrain.BIOME_RES:
+		return false
+	return _swamp_cells[zi * Terrain.BIOME_RES + xi] == 1
 
 
 func in_poi(p: Vector2, margin := 1.0) -> Dictionary:
@@ -287,10 +382,14 @@ func _scatter_forest() -> void:
 		while x < half:
 			var p := Vector2(x + rng.randf_range(-7, 7), z + rng.randf_range(-7, 7))
 			x += spacing
-			var dens := smoothstep(-0.25, 0.45, forest.get_noise_2d(p.x, p.y))
+			var w := terrain.biome_at(p.x, p.y)
+			# thick woods in the forest, the odd lone oak on the grassland, and
+			# bare dead trees standing in the swamp
+			var dens := smoothstep(-0.25, 0.45, forest.get_noise_2d(p.x, p.y)) * (w.x + w.z * 0.1) + w.y * 0.35
 			if rng.randf() > dens * 0.85 or not _solid_ok(p, 3.5):
 				continue
-			var e := scatter.pick("tree", rng)
+			var cat := "deadtree" if w.y > maxf(w.x, w.z) and scatter.by_category.has("deadtree") and rng.randf() < 0.85 else "tree"
+			var e := scatter.pick(cat, rng)
 			if e.is_empty():
 				continue
 			var sr: Array = e.get("scale_range", [0.85, 1.15])
@@ -299,12 +398,17 @@ func _scatter_forest() -> void:
 				continue
 			_put_entry(e, p, rng.randf() * TAU, s)
 		z += spacing
-	# rocks, logs, stumps and mushrooms (mushrooms like to grow near trees)
-	for spec in [["rock", 150], ["log", 45], ["stump", 70], ["mushroom", 110], ["prop", 90], ["cover", 60], ["cottage", 10]]:
+	# rocks, logs, stumps and mushrooms, each with the biomes it likes
+	# (forest, swamp, grassland): logs and stumps rot in the swamp, rocks crop
+	# out of the grassland, hay bales and stone walls belong on the farm
+	for spec in [["rock", 150, Vector3(0.7, 0.2, 1.0)], ["log", 45, Vector3(1.0, 1.0, 0.15)], ["stump", 70, Vector3(1.0, 1.0, 0.3)],
+			["mushroom", 110, Vector3(1.0, 0.7, 0.15)], ["prop", 90, Vector3(0.8, 0.5, 1.0)], ["cover", 60, Vector3(0.5, 0.2, 1.0)],
+			["cottage", 10, Vector3(1.0, 0.3, 0.8)]]:
 		var cat: String = spec[0]
+		var likes: Vector3 = spec[2]
 		for i in int(spec[1] * terrain.area_scale):
 			var p := _random_land(2.0)
-			if not _solid_ok(p, 1.5):
+			if not _solid_ok(p, 1.5) or rng.randf() > terrain.biome_at(p.x, p.y).dot(likes):
 				continue
 			var e := scatter.pick(cat, rng)
 			if e.is_empty():
@@ -321,7 +425,7 @@ func _scatter_forest() -> void:
 
 func _solid_ok(p: Vector2, poi_margin: float) -> bool:
 	var h := terrain.height_at(p.x, p.y)
-	if h < 2.0:
+	if h < 2.0 or h < water_level_at(Vector3(p.x, h, p.y)) - 0.6:
 		return false
 	if terrain.normal_at(p.x, p.y).y < 0.8:
 		return false
@@ -336,23 +440,58 @@ func _solid_ok(p: Vector2, poi_margin: float) -> bool:
 func _scatter_ground_cover(quality: int) -> void:
 	var density: float = [0.35, 0.6, 1.0, 1.4][clampi(quality, 0, 3)]
 	var area := PI * terrain.island_radius * terrain.island_radius
-	var counts := {"grass": int(area / 9.0 * density), "flower": int(area / 60.0 * density), "bush": int(area / 85.0 * density)}
+	var counts := {"grass": int(area / 8.0 * density), "flower": int(area / 50.0 * density), "bush": int(area / 85.0 * density)}
 	for cat in counts:
 		for i in counts[cat]:
 			var p := _random_land(1.3)
 			var ctl := terrain.control_at(p.x, p.y)
 			if ctl.g > 0.5 or ctl.b > 0.5:
 				continue   # no grass on paths and cliffs
-			if cat == "grass" and rng.randf() > 0.25 + ctl.r * 0.75:
+			var h := terrain.height_at(p.x, p.y)
+			if water_level_at(Vector3(p.x, h, p.y)) > h - 0.1:
+				continue   # the swamp water gets reeds and lily pads instead
+			var w := terrain.biome_at(p.x, p.y)
+			if cat == "grass" and rng.randf() > (0.25 + ctl.r * 0.75) * lerpf(0.75, 1.0, w.z):
 				continue   # thick in meadows, sparse on the forest floor
-			if cat == "bush" and rng.randf() < ctl.r * 0.6:
+			if cat == "flower" and rng.randf() > 0.35 + w.z * 0.65:
+				continue   # wildflowers are a grassland thing
+			if cat == "bush" and (rng.randf() < ctl.r * 0.6 or rng.randf() > w.x + w.y * 0.7 + w.z * 0.2):
 				continue   # ferns prefer the forest
 			var poi := in_poi(p, 0.6)
-			if not poi.is_empty() and cat != "flower":
+			if not poi.is_empty() and (cat != "flower" or not (poi.buildings as Array).is_empty()):
 				continue
 			var e := scatter.pick(cat, rng)
 			var sr: Array = e.get("scale_range", [0.8, 1.2])
 			_put_entry(e, p, rng.randf() * TAU, rng.randf_range(sr[0], sr[1]))
+
+
+## Reeds along the swamp's shallows and banks, lily pads out on its water.
+func _scatter_swamp(quality: int) -> void:
+	if _swamp_cells.is_empty():
+		return
+	var density: float = [0.35, 0.6, 1.0, 1.4][clampi(quality, 0, 3)]
+	var reed := SwampPlants.entry("reed")
+	var lilies := [SwampPlants.entry("pad"), SwampPlants.entry("pad"), SwampPlants.entry("flower")]
+	var clump := FastNoiseLite.new()
+	clump.seed = rng.randi()
+	clump.frequency = 0.03
+	var area := PI * terrain.island_radius * terrain.island_radius
+	for i in int(area / 30.0 * density):
+		var p := _random_land(-1.0)
+		if terrain.biome_at(p.x, p.y).y < 0.35:
+			continue
+		var h := terrain.height_at(p.x, p.y)
+		var depth := Terrain.SWAMP_LEVEL - h
+		if not in_poi(p, 0.9).is_empty():
+			continue
+		var c := clump.get_noise_2d(p.x, p.y)
+		if depth > 0.3 and _in_swamp_water(p.x, p.y):
+			if c > 0.1 and rng.randf() < 0.5:
+				var e: Dictionary = lilies.pick_random()
+				var sr: Array = e.scale_range
+				scatter.place(e, Vector3(p.x, Terrain.SWAMP_LEVEL + 0.03, p.y), rng.randf() * TAU, rng.randf_range(sr[0], sr[1]))
+		elif depth > -0.7 and c > -0.25:
+			scatter.place(reed, Vector3(p.x, h, p.y), rng.randf() * TAU, rng.randf_range(0.75, 1.25))
 
 
 func _random_land(min_h: float) -> Vector2:
@@ -382,9 +521,11 @@ func _terrain_material() -> ShaderMaterial:
 	m.shader = TERRAIN_SHADER
 	m.set_shader_parameter(&"control_map", terrain.control_texture())
 	m.set_shader_parameter(&"terrain_size", Terrain.SIZE)
-	var layers := {"floor": "forest_floor", "grass": "grass", "dirt": "dirt_path", "rock": "rock", "moss": "moss", "sand": "sand"}
+	m.set_shader_parameter(&"biome_map", terrain.biome_texture())
+	m.set_shader_parameter(&"swamp_level", Terrain.SWAMP_LEVEL)
+	var layers := {"floor": "forest_floor", "grass": "grass", "dirt": "dirt_path", "rock": "rock", "moss": "moss", "sand": "sand", "mud": "mud"}
 	var fallback := {"floor": Color(0.32, 0.26, 0.17), "grass": Color(0.3, 0.45, 0.16), "dirt": Color(0.42, 0.33, 0.22),
-		"rock": Color(0.45, 0.44, 0.42), "moss": Color(0.25, 0.38, 0.12), "sand": Color(0.76, 0.68, 0.5)}
+		"rock": Color(0.45, 0.44, 0.42), "moss": Color(0.25, 0.38, 0.12), "sand": Color(0.76, 0.68, 0.5), "mud": Color(0.25, 0.2, 0.13)}
 	for key in layers:
 		var dir := "res://assets/textures/%s/" % layers[key]
 		m.set_shader_parameter(key + "_albedo", _tex_or_color(dir + "albedo.jpg", fallback[key]))
@@ -416,9 +557,9 @@ func _build_water() -> void:
 	water = MeshInstance3D.new()
 	water.name = "Sea"
 	var plane := PlaneMesh.new()
-	plane.size = Vector2(2400, 2400)
-	plane.subdivide_width = 60
-	plane.subdivide_depth = 60
+	plane.size = Vector2(4400, 4400)
+	plane.subdivide_width = 110
+	plane.subdivide_depth = 110
 	water.mesh = plane
 	water.material_override = _water_material()
 	water.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
@@ -431,6 +572,56 @@ func _water_material() -> ShaderMaterial:
 	m.shader = WATER_SHADER
 	m.set_shader_parameter(&"normal_a", _tex_or_color("res://assets/textures/water/normal.png", Color(0.5, 0.5, 1.0)))
 	return m
+
+
+## The swamp's still water: one quad per biome-map cell where the swamp
+## floor dips under SWAMP_LEVEL (the levee hides the edges). The same cells
+## answer water_level_at().
+func _build_swamp_water() -> void:
+	var n := Terrain.BIOME_RES
+	var cell := Terrain.BIOME_CELL
+	var half := Terrain.SIZE * 0.5
+	_swamp_cells.resize(n * n)
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var any := false
+	for zi in n - 1:
+		for xi in n - 1:
+			var x := xi * cell - half
+			var z := zi * cell - half
+			var w := terrain.biome_at(x + cell * 0.5, z + cell * 0.5)
+			if w.y < 0.25:
+				continue
+			var low := INF
+			for k in 5:
+				var q := Vector2(x, z) + Vector2([0.0, cell, 0.0, cell, cell * 0.5][k], [0.0, 0.0, cell, cell, cell * 0.5][k])
+				low = minf(low, terrain.height_at(q.x, q.y))
+			if low > Terrain.SWAMP_LEVEL + 0.1:
+				continue
+			_swamp_cells[zi * n + xi] = 1
+			any = true
+			var y := Terrain.SWAMP_LEVEL
+			var a := Vector3(x - 0.3, y, z - 0.3)
+			var b := Vector3(x + cell + 0.3, y, z - 0.3)
+			var c := Vector3(x + cell + 0.3, y, z + cell + 0.3)
+			var d := Vector3(x - 0.3, y, z + cell + 0.3)
+			for v in [a, b, c, a, c, d]:
+				st.set_normal(Vector3.UP)
+				st.set_uv(Vector2(v.x, v.z))
+				st.add_vertex(v)
+	if not any:
+		_swamp_cells.clear()
+		return
+	swamp_water = MeshInstance3D.new()
+	swamp_water.name = "SwampWater"
+	swamp_water.mesh = st.commit()
+	var m := _water_material()
+	m.set_shader_parameter(&"shallow_color", Color(0.3, 0.34, 0.17))
+	m.set_shader_parameter(&"deep_color", Color(0.07, 0.11, 0.05))
+	m.set_shader_parameter(&"depth_fade", 1.1)
+	swamp_water.material_override = m
+	swamp_water.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(swamp_water)
 
 
 func _add_pond_water(c3: Vector3, p: Dictionary) -> void:
@@ -473,6 +664,21 @@ func _build_boundary() -> void:
 
 func _plan_loot() -> void:
 	for p in pois:
+		# the big buildings keep their loot indoors: crates, floor loot and
+		# (usually) a treasure chest, plus a little lying around outside
+		for b in p.buildings:
+			var spots := (b as Building).world_loot_spots()
+			for i in spots.size():
+				loot_points.append({"pos": spots[i], "crate": i < 2, "poi": p.name, "yaw": rng.randf() * TAU, "inside": true})
+			if (b as Building).chest_spot != Vector3.INF and rng.randf() < 0.75:
+				loot_points.append({"pos": (b as Building).global_transform * (b as Building).chest_spot, "crate": false, "chest": "treasure",
+					"poi": p.name, "yaw": (b as Building).rotation.y, "inside": true})
+		if not (p.buildings as Array).is_empty():
+			for i in 3:
+				var a := rng.randf() * TAU
+				var lp: Vector2 = p.center + Vector2(cos(a), sin(a)) * rng.randf_range(p.radius * 0.6, p.radius)
+				loot_points.append({"pos": Vector3(lp.x, terrain.height_at(lp.x, lp.y), lp.y), "crate": false, "poi": p.name})
+			continue
 		for i in rng.randi_range(3, 5):
 			var a := rng.randf() * TAU
 			var lp: Vector2 = p.center + Vector2(cos(a), sin(a)) * rng.randf_range(4.0, p.radius * 0.85)
@@ -490,8 +696,10 @@ func _plan_loot() -> void:
 	for i in int(40 * terrain.area_scale):
 		var lp := _random_land(2.0)
 		loot_points.append({"pos": Vector3(lp.x, terrain.height_at(lp.x, lp.y), lp.y), "crate": false, "poi": ""})
-	# never leave loot inside a rock, log or cottage (it would be unreachable)
-	loot_points = loot_points.filter(func(l): return not scatter.blocked(Vector2(l.pos.x, l.pos.z), 0.9))
+	# never leave loot inside a rock, log or cottage (it would be unreachable),
+	# or under the swamp water where nobody could see it
+	loot_points = loot_points.filter(func(l): return l.get("inside", false) or (
+		not scatter.blocked(Vector2(l.pos.x, l.pos.z), 0.9, false) and water_level_at(l.pos) < l.pos.y + 0.2))
 	_plan_treasure()
 
 
@@ -501,9 +709,13 @@ func _plan_loot() -> void:
 func _plan_treasure() -> void:
 	for p in pois:
 		var golden: bool = p.kit == "treasure"
+		if not (p.buildings as Array).is_empty():
+			continue   # (their chests are indoors)
 		if golden or rng.randf() < 0.45:
 			var a := rng.randf() * TAU
 			var at: Vector2 = p.center if golden else p.center + Vector2(cos(a), sin(a)) * p.radius * 0.6
+			if water_level_at(Vector3(at.x, terrain.height_at(at.x, at.y), at.y)) > terrain.height_at(at.x, at.y) - 0.2:
+				continue
 			loot_points.append({"pos": Vector3(at.x, terrain.height_at(at.x, at.y), at.y), "crate": false,
 				"chest": "golden" if golden else "treasure", "poi": p.name, "yaw": rng.randf() * TAU})
 	var hidden := int(10 * terrain.area_scale)
@@ -516,11 +728,34 @@ func _plan_treasure() -> void:
 		var o: Array = scatter.obstacles[rng.randi() % scatter.obstacles.size()]
 		var a := rng.randf() * TAU
 		var at: Vector2 = o[0] + Vector2(cos(a), sin(a)) * (float(o[1]) + 1.4)
-		if terrain.height_at(at.x, at.y) < 2.0 or terrain.normal_at(at.x, at.y).y < 0.85 or scatter.blocked(at, 0.7):
+		var ah := terrain.height_at(at.x, at.y)
+		if ah < 2.0 or terrain.normal_at(at.x, at.y).y < 0.85 or scatter.blocked(at, 0.7) or water_level_at(Vector3(at.x, ah, at.y)) > ah - 0.2:
 			continue
 		loot_points.append({"pos": Vector3(at.x, terrain.height_at(at.x, at.y), at.y), "crate": false,
 			"chest": "golden" if rng.randf() < 0.08 else "treasure", "poi": "", "yaw": a + PI})
 		placed += 1
+
+
+## A walkable path across the island's navmesh. Godot's default query gives
+## up after 4096 polygons, which on this island cuts long trips short (the
+## path then stops wherever it got closest), so this searches further.
+const PATH_SEARCH_POLYGONS := 40000
+static var _query: NavigationPathQueryParameters3D
+static var _result: NavigationPathQueryResult3D
+
+
+static func find_path(map: RID, from: Vector3, to: Vector3) -> PackedVector3Array:
+	if _query == null:
+		_query = NavigationPathQueryParameters3D.new()
+		_query.path_search_max_polygons = PATH_SEARCH_POLYGONS
+		_query.simplify_path = true
+		_query.simplify_epsilon = 0.4
+		_result = NavigationPathQueryResult3D.new()
+	_query.map = map
+	_query.start_position = from
+	_query.target_position = to
+	NavigationServer3D.query_path(_query, _result)
+	return _result.path
 
 
 ## A random reachable spot on land (for AI wandering and landing targets).
@@ -547,9 +782,22 @@ func _bake_navigation() -> void:
 	template.geometry_parsed_geometry_type = NavigationMesh.PARSED_GEOMETRY_STATIC_COLLIDERS
 	template.geometry_collision_mask = Layers.WORLD
 	var source := NavigationMeshSourceGeometryData3D.new()
+	# the parser ignores the terrain collider's grid scale (Terrain.CELL), so
+	# leave the terrain out of the collider scan and add the terrain surface
+	# from the render chunks' own vertex arrays instead (same surface, world space)
+	var ground: StaticBody3D = terrain.get_node("TerrainBody")
+	ground.collision_layer = 0
 	NavigationServer3D.parse_source_geometry_data(template, source, self)
+	ground.collision_layer = Layers.WORLD
+	for va in terrain.chunk_arrays:
+		var arrays := []
+		arrays.resize(Mesh.ARRAY_MAX)
+		arrays[Mesh.ARRAY_VERTEX] = va[0]
+		arrays[Mesh.ARRAY_INDEX] = va[1]
+		source.add_mesh_array(arrays, Transform3D.IDENTITY)
 	var tile := Terrain.SIZE / NAV_TILES
 	var pending := [0]
+	var baked: Array[NavigationMesh] = []
 	for tz in NAV_TILES:
 		for tx in NAV_TILES:
 			var x0 := -Terrain.SIZE * 0.5 + tx * tile
@@ -564,12 +812,20 @@ func _bake_navigation() -> void:
 			region.name = "Nav_%d_%d" % [tx, tz]
 			add_child(region)
 			nav_regions.append(region)
+			baked.append(nm)
 			pending[0] += 1
-			NavigationServer3D.bake_from_source_geometry_data_async(nm, source, func():
-				region.navigation_mesh = nm
-				pending[0] -= 1)
+			NavigationServer3D.bake_from_source_geometry_data_async(nm, source, func(): pending[0] -= 1)
 	while pending[0] > 0:
 		await get_tree().process_frame
+	# hand every tile to its region in one go: regions updated one by one while
+	# the map was rebuilding (tiles finishing at different frames) could be
+	# left out of the map
+	for i in nav_regions.size():
+		nav_regions[i].navigation_mesh = baked[i]
 	# let the server sync the new regions before anyone asks for a path
-	for i in 6:
+	var map := get_world_3d().navigation_map
+	var iteration := NavigationServer3D.map_get_iteration_id(map)
+	for i in 120:
 		await get_tree().physics_frame
+		if i >= 5 and NavigationServer3D.map_get_iteration_id(map) != iteration:
+			break

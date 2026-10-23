@@ -32,7 +32,7 @@ func _on_shot_fired(shooter: Node, _origin: Vector3, _weapon_id: StringName) -> 
 
 func build(island_: Island) -> void:
 	island = island_
-	var n := 256
+	var n := 384
 	var span := island.terrain.island_radius * 2.0 + 60.0
 	_world_size = span
 	var img := Image.create_empty(n, n, false, Image.FORMAT_RGB8)
@@ -44,6 +44,8 @@ func build(island_: Island) -> void:
 			var c: Color
 			if h < -0.2:
 				c = Color("2d6f8e").lerp(Color("153a52"), clampf(-h / 7.0, 0.0, 1.0))
+			elif island.water_level_at(Vector3(x, h, z)) > h + 0.05:
+				c = Color("4f5f3a").lerp(Color("2f3d27"), clampf((island.water_level_at(Vector3(x, h, z)) - h) / 1.5, 0.0, 1.0))   # swamp / pond water
 			elif h < 1.6:
 				c = Color("d9c79a")
 			else:

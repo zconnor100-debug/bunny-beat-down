@@ -119,11 +119,22 @@ Built in **Godot 4.6** (GDScript, Jolt physics, Forward+).
   - Only one to three bots (by difficulty) shoot at you at once, in bursts,
     and their hits on you are softened by difficulty.
   - They heal, flee the Briar, and path across a navmesh baked from tiles.
-- **Procedural island** from a seed:
-  - Eight named landmarks: Carrot Patch, Picnic Hill, Mushroom Ring,
-    Duck Pond, Gnome Garden, Hollow Stump, Boulder Bluff and Log Jam.
-  - Paths, a giant forest, ground cover that bends in the wind, PBR terrain
-    and water.
+- **Procedural island** from a seed, 1.3 km across, in three biomes:
+  - a hilly **forest** with ridges and valleys, giant oaks and ferns;
+  - open **grasslands** of rolling meadow, flat-topped mesas and wildflowers;
+  - a **swamp** of knee-deep still water (wading slows you down) with
+    cattail reeds you can hide in, lily pads and bare dead trees.
+  - Big walk-in buildings in each biome, with their crates, loot and
+    usually a treasure chest inside: the log **Woodcutter's Lodge** (thatched
+    roof, stone chimney, porch), the **Big Red Barn** (gambrel roof, swung-open
+    doors, stalls and hay bales, a carrot weathervane) and **stilt shacks**
+    with tin roofs and ramps out over the swamp water.
+  - Seventeen named landmarks in all, among them Carrot Patch, Picnic Hill,
+    Mushroom Ring, Duck Pond, Gnome Garden, Hollow Stump, Boulder Bluff,
+    Log Jam, Bayou Shacks and Haystack Barn.
+  - Paths, ground cover that bends in the wind, PBR terrain and water.
+
+  ![The barn, the lodge, the swamp and the stilt shacks](docs/screenshots/biomes.jpg)
 - **Full UI**: menus, settings, pause, loading screen, gamepad support, and a
   [credits page](CREDITS.md) generated from the asset metadata.
 
@@ -144,13 +155,20 @@ The full write-up is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
   This works on every model in the roster.
 - **One body, two brains.** Players and bots write the same intent struct, so
   bots get no aim or movement cheats.
-- **Deterministic island generation**: fBm terrain with a splat-map shader,
-  POI placement and flattening, a scatter system with cached collision and
-  MultiMesh ground cover, and a tiled async navmesh bake.
-- **Tests that play the game.** A headless suite of 24 tests covers:
+- **Deterministic island generation**: fBm, ridged and mesa terrain blended
+  by a noise-warped biome map, a splat-map shader (with a swamp-mud layer),
+  biome-aware POI placement and flattening, a scatter system with cached
+  collision, a spatial hash for spacing and MultiMesh ground cover, buildings
+  assembled in code from textured boxes and logs (every wall run is a
+  collider, so doorways are real gaps for the navmesh), and a tiled async
+  navmesh bake.
+- **Tests that play the game.** A headless suite of 61 tests covers:
   - the IK maths, hitboxes, ragdolls and dismemberment;
-  - island navigation and the game rules;
-  - the player's input loop and licensing;
+  - island navigation, the three biomes and the big buildings (a Bun walks
+    in through the barn doors; every indoor loot spot is reachable on the
+    navmesh) and the game rules;
+  - the player's input loop through real keyboard and gamepad events (menus,
+    crouch → crawl, the L3 + R3 chord, aim assist) and licensing;
   - **a complete 8-bot match** that must loot, fight and finish.
 
   CI runs it on every push.
@@ -171,7 +189,7 @@ the project through Godot.
 ```bash
 # or from a terminal
 godot --path .                                          # play
-godot --headless --path . -s tests/run_tests.gd         # all tests (~1 min)
+godot --headless --path . -s tests/run_tests.gd         # all tests (~3 min)
 godot --headless --path . -s tests/run_tests.gd -- ik   # one suite
 godot --headless --path . -s tests/check_scripts.gd     # compile every script
 ```

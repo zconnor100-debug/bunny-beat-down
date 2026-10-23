@@ -232,6 +232,11 @@ func _ground_move(delta: float) -> void:
 	if want_aim:
 		speed *= 0.85 if sprinting else 0.6
 	speed *= lerpf(1.0, 0.45, _crouch) * lerpf(1.0, PRONE_SPEED, _prone)
+	# wading through the swamp (or a pond's edge) slows you down
+	var wade := _water_level - global_position.y
+	if wade > 0.15:
+		var h := visual.rig.world_head_top if visual and visual.rig else 1.0
+		speed *= lerpf(1.0, 0.7, clampf(wade / (h * 0.5), 0.0, 1.0))
 	if w:
 		speed *= w.data.move_speed_scale
 	var basis := Basis(Vector3.UP, look_yaw)
@@ -494,6 +499,8 @@ const FOOTSTEP_RANGE := 34.0
 
 func _on_footstep(hop: bool) -> void:
 	var key := &"hop" if hop else &"footstep_grass"
+	if _water_level > global_position.y + 0.1:
+		FX.impact(Vector3(global_position.x, _water_level, global_position.z), Vector3.UP, &"water")
 	if is_player:
 		Audio.play_at(key, global_position, -20.0 if _crouch < 0.5 else -26.0, 0.12)
 		return

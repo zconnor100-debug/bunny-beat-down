@@ -604,7 +604,7 @@ func _set_dest(p: Vector3) -> void:
 	var map := me.get_world_3d().navigation_map
 	var from := NavigationServer3D.map_get_closest_point(map, me.global_position)
 	var to := NavigationServer3D.map_get_closest_point(map, p)
-	_path = NavigationServer3D.map_get_path(map, from, to, true)
+	_path = Island.find_path(map, from, to)
 	_path_i = 0
 	if _path.is_empty():
 		_path = PackedVector3Array([p])
