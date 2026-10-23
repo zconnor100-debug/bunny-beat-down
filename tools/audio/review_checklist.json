@@ -98,6 +98,9 @@
     "music/match_run_amok.mp3": {"title": "Run Amok", "expect": "Orchestral comedy chase with lots of energy.", "when": "In-match (random pick)."},
     "music/match_scheming_weasel.mp3": {"title": "Scheming Weasel (faster version)", "expect": "Sneaky, bouncy woodwinds and glockenspiel.", "when": "In-match (random pick)."},
     "music/match_bushwick_tarantella.mp3": {"title": "Bushwick Tarantella", "expect": "Frantic accordion and clarinet — final-circle panic.", "when": "In-match (random pick)."},
-    "music/victory_fiddles_mcginty.mp3": {"title": "Fiddles McGinty", "expect": "Driving Celtic folk-rock reel: pipes, recorder, guitar, rock backbeat.", "when": "Victory screen (fades in under the victory_fanfare sting)."}
+    "music/victory_fiddles_mcginty.mp3": {"title": "Fiddles McGinty", "expect": "Driving Celtic folk-rock reel: pipes, recorder, guitar, rock backbeat.", "when": "Victory screen (fades in under the victory_fanfare sting)."},
+    "music/cage_pixel_peeker_polka.mp3": {"title": "Pixel Peeker Polka (faster)", "expect": "Bouncy chiptune polka: an 8-bit toy box that never sits still.", "when": "Hamster Cage match (random pick)."},
+    "music/cage_itty_bitty_8_bit.mp3": {"title": "Itty Bitty 8 Bit", "expect": "Bright little square-wave tune, wind-up-toy cheerful.", "when": "Hamster Cage match (random pick)."},
+    "music/cage_voxel_revolution.mp3": {"title": "Voxel Revolution", "expect": "Grooving synth-pop chiptune with a driving beat.", "when": "Hamster Cage match (random pick)."}
   }
 }
