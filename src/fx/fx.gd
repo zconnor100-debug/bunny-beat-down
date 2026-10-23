@@ -83,6 +83,8 @@ static func stump_fountain(parent: Node3D, dir_local: Vector3) -> void:
 	if dir_local.length_squared() > 0.0001:
 		p.basis = Basis.looking_at(dir_local.normalized(), Vector3.UP if absf(dir_local.normalized().y) < 0.95 else Vector3.RIGHT)
 	p.emitting = true
+	if KillCam.recording and not KillCam.instance.playing:
+		KillCam.instance.note_node(p, "", false)
 	Despawner.after(p, randf_range(2.0, 3.5), func(n: Node):
 		(n as GPUParticles3D).emitting = false
 		Despawner.after(n, 1.0, func(m: Node): m.queue_free()))
@@ -137,16 +139,9 @@ static func explosion(pos: Vector3, radius: float) -> void:
 	# carrot shrapnel
 	instance._burst(pos, Vector3.UP, {"amount": int(24 * k), "lifetime": 1.3, "speed": Vector2(5.0, 13.0) * k, "spread": 100.0,
 		"gravity": 16.0, "size": 0.05, "scale": Vector2(0.6, 1.4), "color": Color(1.0, 0.45, 0.08), "fade": false})
-	var light := OmniLight3D.new()
-	light.light_color = Color(1.0, 0.7, 0.35)
-	light.light_energy = 12.0
-	light.omni_range = radius * 3.0
-	light.shadow_enabled = false
-	instance.add_child(light)
-	light.global_position = pos + Vector3.UP * 0.5
-	var tw := light.create_tween()
-	tw.tween_property(light, "light_energy", 0.0, 0.35)
-	tw.tween_callback(light.queue_free)
+	instance._flash(pos, radius)
+	if KillCam.recording and not KillCam.instance.playing:
+		KillCam.instance.note_flash(pos, radius)
 	instance._decal(pos, Vector3.UP, radius * 0.9, FXTextures.scorch())
 
 
@@ -165,7 +160,23 @@ static func smoke_trail(parent: Node3D) -> GPUParticles3D:
 
 # --- internals -----------------------------------------------------------------
 
-func _burst(pos: Vector3, dir: Vector3, cfg: Dictionary) -> void:
+## The explosion's flash of light.
+func _flash(pos: Vector3, radius: float) -> void:
+	var light := OmniLight3D.new()
+	light.light_color = Color(1.0, 0.7, 0.35)
+	light.light_energy = 12.0
+	light.omni_range = radius * 3.0
+	light.shadow_enabled = false
+	add_child(light)
+	light.global_position = pos + Vector3.UP * 0.5
+	var tw := light.create_tween()
+	tw.tween_property(light, "light_energy", 0.0, 0.35)
+	tw.tween_callback(light.queue_free)
+
+
+func _burst(pos: Vector3, dir: Vector3, cfg: Dictionary) -> GPUParticles3D:
+	if KillCam.recording and not KillCam.instance.playing:
+		KillCam.instance.note_fx(pos, dir, cfg)
 	var p := _make_particles(cfg, true)
 	add_child(p)
 	p.global_position = pos
@@ -173,6 +184,7 @@ func _burst(pos: Vector3, dir: Vector3, cfg: Dictionary) -> void:
 	p.global_basis = Basis.looking_at(d, Vector3.UP if absf(d.y) < 0.95 else Vector3.RIGHT)
 	p.emitting = true
 	p.finished.connect(p.queue_free)
+	return p
 
 
 func _make_particles(cfg: Dictionary, one_shot: bool) -> GPUParticles3D:
@@ -261,6 +273,7 @@ func _ground_splat(pos: Vector3, size: float) -> void:
 
 func _decal(pos: Vector3, normal: Vector3, size: float, tex: Texture2D) -> void:
 	var d: Decal
+	var was := [Transform3D(), false]   # (a recycled decal was somewhere else before)
 	if _decals.size() < MAX_DECALS:
 		d = Decal.new()
 		d.cull_mask = 1
@@ -271,6 +284,7 @@ func _decal(pos: Vector3, normal: Vector3, size: float, tex: Texture2D) -> void:
 	else:
 		d = _decals[_next_decal]
 		_next_decal = (_next_decal + 1) % MAX_DECALS
+		was = [d.global_transform, d.visible]
 	d.texture_albedo = tex
 	d.size = Vector3(size, 0.6, size)
 	d.modulate = Color(1, 1, 1, 0.92)
@@ -278,3 +292,5 @@ func _decal(pos: Vector3, normal: Vector3, size: float, tex: Texture2D) -> void:
 	var side := n.cross(Vector3.FORWARD if absf(n.z) < 0.9 else Vector3.RIGHT).normalized()
 	side = side.rotated(n, randf() * TAU)
 	d.global_transform = Transform3D(Basis(side, n, side.cross(n)), pos)
+	if KillCam.recording and not KillCam.instance.playing:
+		KillCam.instance.note_decal(d, was[0], was[1])

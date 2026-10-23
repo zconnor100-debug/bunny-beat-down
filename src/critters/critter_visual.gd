@@ -761,6 +761,8 @@ func pop_helmet(impulse: Vector3) -> void:
 	body.angular_velocity = Vector3(randf_range(-12, 12), randf_range(-6, 6), randf_range(-12, 12))
 	helmet = null
 	Despawner.schedule(body, 45.0)
+	if KillCam.recording and not KillCam.instance.playing:
+		KillCam.instance.note_node(body)
 
 
 ## Removes the limb starting at `role` from the corpse and launches it as a gib.

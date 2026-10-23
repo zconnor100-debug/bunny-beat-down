@@ -112,6 +112,8 @@ func play_at(key: StringName, pos: Vector3, volume_db := 0.0, pitch_jitter := 0.
 	var stream := _pick(key)
 	if stream == null:
 		return null
+	if KillCam.recording and KillCam.instance and not KillCam.instance.playing:
+		KillCam.instance.note_sound(key, pos, volume_db)
 	var p := _pool3d[_next3d]
 	_next3d = (_next3d + 1) % POOL_3D
 	p.stream = stream
@@ -154,6 +156,8 @@ func play(key: StringName, volume_db := 0.0, pitch_jitter := 0.05) -> AudioStrea
 	var stream := _pick(key)
 	if stream == null:
 		return null
+	if KillCam.recording and KillCam.instance and not KillCam.instance.playing:
+		KillCam.instance.note_sound(key, null, volume_db)
 	var p := _pool2d[_next2d]
 	_next2d = (_next2d + 1) % POOL_2D
 	p.stream = stream

@@ -48,6 +48,7 @@ var _picker: CharacterSelect
 var _map := "island"
 var _paid := false          # acorns for this match already added
 var _earned := 0
+var _after_replay: Callable  # the end screen held back for the final-shot replay
 
 
 func _ready() -> void:
@@ -208,6 +209,8 @@ func _process(_delta: float) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if match_manager and (match_manager.time_keeper.playing_back or match_manager.kill_cam.playing):
+		return   # (the rewind or the replay owns the screen for now)
 	if _offer:
 		if event.is_action_pressed(&"rewind"):
 			get_viewport().set_input_as_handled()
@@ -410,6 +413,14 @@ func _to_menu() -> void:
 
 func _on_player_eliminated(placement: int, killer: Critter) -> void:
 	rig.set_target(match_manager.player)
+	if _replay_due():
+		# you were the final shot: the end screen waits for the replay
+		_after_replay = _on_player_eliminated_screen.bind(placement, killer)
+		return
+	_on_player_eliminated_screen(placement, killer)
+
+
+func _on_player_eliminated_screen(placement: int, killer: Critter) -> void:
 	Audio.play(&"defeat_sting", -2.0)
 	var who := killer.display_name if killer and killer != match_manager.player else "the Briar"
 	var sub := "You placed #%d of %d — taken out by %s" % [placement, match_manager.total, who]
@@ -421,7 +432,30 @@ func _on_player_eliminated(placement: int, killer: Critter) -> void:
 	_show_end("BEAT DOWN", sub, false, killer)
 
 
+## The final shot gets a replay when it's yours (you won, or you were
+## beaten down by it) or you're spectating it. Automated runs skip it.
+func _replay_due() -> bool:
+	var kc := match_manager.kill_cam
+	if (Settings.is_test_run() and not GameSession.replays_in_tests) or kc == null or not kc.has_final():
+		return false
+	var p := match_manager.player
+	return kc.shooter == p or kc.victim == p or _spectating
+
+
 func _on_match_finished(winner: Critter, _placement: int) -> void:
+	if _replay_due():
+		hud.visible = false
+		if _end:
+			_end.visible = false
+		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+		await match_manager.kill_cam.play_final()
+		hud.visible = true
+		if _end:
+			_end.visible = true
+			Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	if _after_replay.is_valid():
+		_after_replay.call()
+		_after_replay = Callable()
 	if winner == match_manager.player:
 		GameSession.wins += 1
 		Audio.play_music("victory")

@@ -3,7 +3,8 @@ extends TestCase
 ## standing goes back where they were with what they carried, the loot they
 ## took returns to the floor, the guns they swapped out leave it, carrots in
 ## flight vanish, the Briar's clock winds back, and the beaten-down stay down.
-## A killing blow on the player freezes the match and offers a rewind.
+## A killing blow on the player freezes the match and offers a rewind. The
+## rewind plays out: the world runs backwards for a moment first.
 
 var _mm: MatchManager
 var _cage: HamsterCage
@@ -92,8 +93,8 @@ func test_rewind_puts_everyone_back() -> void:
 	Projectiles.fire(standing, WeaponInstance.new(WeaponDB.get_weapon(&"carrot_rifle")), standing.global_position + Vector3.UP, Vector3.FORWARD, 0.0, [])
 	check(not Projectiles.instance._shots.is_empty(), "a carrot is in the air")
 	check(_mm.storm.time_left < briar - 0.4, "the Briar's clock ran on (%.1f → %.1f)" % [briar, _mm.storm.time_left])
-	# rewind!
-	check(tk.rewind(), "rewound")
+	# rewind! (at once: the playback has its own test)
+	check(tk.rewind(false), "rewound")
 	check(tk.charges == TimeKeeper.CHARGES - 1, "used one of %d charges" % TimeKeeper.CHARGES)
 	check(player.global_position.distance_to(was) < 0.3, "the player is back where they were (%.2f m off)" % player.global_position.distance_to(was))
 	check(is_equal_approx(player.health, 80.0) and is_equal_approx(player.armor, 20.0), "with the health and shield they had (%.0f / %.0f)" % [player.health, player.armor])
@@ -109,9 +110,36 @@ func test_rewind_puts_everyone_back() -> void:
 	check(not is_instance_valid(swapped) or swapped.is_queued_for_deletion(), "the gun swapped out since is gone (you never dropped it)")
 	# three a match
 	await wait_physics(20)
-	check(tk.rewind() and tk.rewind(), "two more")
+	check(tk.rewind(false) and tk.rewind(false), "two more")
 	await wait_physics(20)
-	check(not tk.can_rewind() and not tk.rewind(), "and that's all of them")
+	check(not tk.can_rewind() and not tk.rewind(false), "and that's all of them")
+
+
+func test_the_world_runs_backwards() -> void:
+	var player := await _setup()
+	var tk := _mm.time_keeper
+	_mm.phase = MatchManager.Phase.PLAYING
+	await wait_physics(2)
+	var was := player.global_position
+	await wait_physics(40)
+	player.place_at(was + Vector3(25, 0, 0), 0.0)
+	await wait_physics(20)   # (a snapshot or two over here)
+	var rewound := [false]
+	tk.rewound.connect(func(): rewound[0] = true)
+	check(tk.rewind(), "rewinding")
+	check(tk.playing_back and get_tree().paused and not rewound[0], "the world runs backwards first, the match paused")
+	check(not tk.can_rewind(), "(no rewinding a rewind)")
+	var path: Array[float] = []
+	var t0 := Time.get_ticks_msec()
+	while tk.playing_back and Time.get_ticks_msec() - t0 < 3000:
+		path.append(player.global_position.distance_to(was))
+		await get_tree().process_frame
+	var between := path.filter(func(d): return d > 1.0 and d < 24.0)
+	check(between.size() >= 3, "the player glides back over several frames (%d in between)" % between.size())
+	check(rewound[0] and not tk.playing_back and not get_tree().paused, "then it lands and the match goes on")
+	check(player.global_position.distance_to(was) < 0.3, "right where the player was (%.2f m off)" % player.global_position.distance_to(was))
+	var took := (Time.get_ticks_msec() - t0) / 1000.0
+	check(took > TimeKeeper.PLAYBACK * 0.7 and took < TimeKeeper.PLAYBACK + 1.0, "in about %.1f s (%.2f s)" % [TimeKeeper.PLAYBACK, took])
 
 
 func test_a_killing_blow_offers_a_rewind() -> void:
@@ -128,6 +156,7 @@ func test_a_killing_blow_offers_a_rewind() -> void:
 	player.take_damage(DamageInfo.make(500.0, DamageInfo.Kind.BULLET, bot))
 	check(offers.size() == 1 and player.alive, "(another pellet of the same blast waits too)")
 	tk.resolve(true)
+	await tk.rewound
 	check(not get_tree().paused and player.alive and player.health > 90.0, "rewound: back on your paws (%.0f HP)" % player.health)
 	check(tk.charges == TimeKeeper.CHARGES - 1, "and it used a charge")
 	await wait_physics(10)

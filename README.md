@@ -169,12 +169,23 @@ sneaks up on you, you rewind, and this time you turn around.
 - **Rewind.** The game records the last ten seconds of the match, and you
   get three rewinds a match: press **T** (or pick *Rewind* in the pause
   menu), or take one when a killing blow lands, since the game freezes and
-  asks "rewind, or accept defeat?" instead of letting you drop. Everyone
-  still standing snaps back to where they were ten seconds ago, with the
+  asks "rewind, or accept defeat?" instead of letting you drop. For about a
+  second the world runs backwards like an old tape: everyone glides back the
+  way they came and the Briar grows back. Then everyone still standing lands
+  where they were ten seconds ago, with the
   health, shield, guns and ammo they had then; the loot they picked up since
   goes back on the floor; carrots in flight vanish; and the Briar's clock
   winds back. Critters beaten down in those ten seconds stay down. (It only
   works because it's you against bots.)
+- **The final shot, replayed.** When the last-but-one critter goes down,
+  time slows to a crawl. Then the world freezes and the shot plays again
+  from three angles: over the shooter's shoulder, riding the carrot in
+  bullet time, and circling the beat-down. Any button skips. It's a real
+  replay, not a re-enactment: once a few critters are left, the KillCam
+  records the fight (every bone of every fighter through a skeleton
+  modifier, plus carrots in flight, rockets, gibs, blood and sounds) and plays
+  the recording back with the match paused. You see it when it's your win,
+  your beat-down, or a fight you're spectating.
 - **A Briar with moods.** Every match rolls one, announced as you drop:
   the *Hungry* Briar closes each circle in on you, the *Sticky* one slows
   you in its thorns, the *Bribable* one naps for 15 s if you munch a lucky
@@ -277,7 +288,7 @@ The full write-up is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
   `ToyProps`, `ToyRoom`), plus `ToyTrain`: `AnimatableBody3D` cars
   following a resampled loop, so riders are carried by the physics engine,
   and a bumper `Area3D` that bonks critters on the line.
-- **Tests that play the game.** A headless suite of 89 tests covers:
+- **Tests that play the game.** A headless suite of 92 tests covers:
   - the IK maths, hitboxes, ragdolls and dismemberment;
   - island navigation, the three biomes and the big buildings (a Bun walks
     in through the barn doors; every indoor loot spot is reachable on the
@@ -292,8 +303,11 @@ The full write-up is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
   - rivals (made, remembered across runs, back in the next match, hunting
     and taunting, revenge), the bots learning you (landings, fighting style,
     camping, hot streaks), every Briar mood, the Burrow (earning,
-    unlocking, equipping, every perk and modifier in a match) and rewinds
-    (everyone and everything put back; the killing-blow offer);
+    unlocking, equipping, every perk and modifier in a match), rewinds
+    (everyone and everything put back; the world running backwards first;
+    the killing-blow offer) and the final-shot replay (recorded bone by bone
+    with the carrot that did it; slow motion, then the replay with the world
+    frozen; skipping; everything as it was afterwards);
   - the player's input loop through real keyboard and gamepad events (menus,
     crouch → crawl, the L3 + R3 chord, aim assist, one gun in first person)
     and licensing;
@@ -340,6 +354,7 @@ godot --headless --path . -s tests/check_scripts.gd     # compile every script
 | Map | M (hold) | D-pad ↑ |
 | Pause | Esc | Start |
 | Rewind 10 seconds (3 a match) | T | Start, then *Rewind* |
+| Skip the final-shot replay | any key | any button |
 | Menus: move / select / back | Arrows / Enter / Esc | D-pad / A / B |
 | Character picker: critter / skin / spin | ← → / ↑ ↓ / drag | D-pad ← → / D-pad ↑ ↓ / right stick |
 

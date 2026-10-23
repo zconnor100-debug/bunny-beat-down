@@ -94,6 +94,8 @@ static func fire(shooter: Node, weapon: WeaponInstance, origin: Vector3, dir: Ve
 			r.setup(shooter, weapon, d, exclude)
 			instance.add_child(r)
 			r.global_position = origin
+			if KillCam.recording and not KillCam.instance.playing:
+				KillCam.instance.note_node(r, Rocket.MODEL)
 			continue
 		var s := Shot.new()
 		s.pos = origin
@@ -104,6 +106,8 @@ static func fire(shooter: Node, weapon: WeaponInstance, origin: Vector3, dir: Ve
 		s.shooter = shooter
 		s.exclude = exclude
 		instance._shots.append(s)
+		if KillCam.recording and not KillCam.instance.playing:
+			KillCam.instance.note_shot(s)
 
 
 ## Rewind (see TimeKeeper): every carrot and rocket in flight vanishes.
@@ -180,6 +184,9 @@ func _physics_process(delta: float) -> void:
 		var hit := space.intersect_ray(q)
 		if hit:
 			s.travelled += s.pos.distance_to(hit.position)
+			s.pos = hit.position
+			if KillCam.recording:
+				KillCam.instance.end_shot(s)
 			_on_hit(s, hit)
 			_shots.remove_at(i)
 			continue
@@ -187,6 +194,8 @@ func _physics_process(delta: float) -> void:
 		s.pos = next
 		s.life += delta
 		if s.life > MAX_LIFE or s.pos.y < -50.0:
+			if KillCam.recording:
+				KillCam.instance.end_shot(s)
 			_shots.remove_at(i)
 			continue
 		i += 1
@@ -194,9 +203,18 @@ func _physics_process(delta: float) -> void:
 
 func _process(_delta: float) -> void:
 	# draw: extrapolate by the physics interpolation fraction for smooth motion
-	var frac := Engine.get_physics_interpolation_fraction() / float(Engine.physics_ticks_per_second)
+	draw_shots(_shots, Engine.get_physics_interpolation_fraction() / float(Engine.physics_ticks_per_second))
+
+
+## The carrots in flight right now (the KillCam's replay draws its own).
+func live_shots() -> Array[Shot]:
+	return _shots
+
+
+## Draw these carrots and their tracers, `frac` seconds ahead of where they are.
+func draw_shots(shots: Array[Shot], frac := 0.0) -> void:
 	var counts := {WeaponData.ProjectileKind.BOLT: 0, WeaponData.ProjectileKind.PELLET: 0}
-	for s in _shots:
+	for s in shots:
 		var kind := s.data.projectile
 		var mmi: MultiMeshInstance3D = _mm.get(kind)
 		if mmi == null:
@@ -211,15 +229,15 @@ func _process(_delta: float) -> void:
 		counts[kind] = n + 1
 	for kind in counts:
 		_mm[kind].multimesh.visible_instance_count = counts[kind]
-	_draw_tracers(frac)
+	_draw_tracers(shots, frac)
 
 
 ## One streak per carrot: from the carrot back along its path, never further
 ## back than the muzzle. Shotgun pellets get shorter, fainter streaks.
-func _draw_tracers(frac: float) -> void:
+func _draw_tracers(shots: Array[Shot], frac: float) -> void:
 	var tm := _tracers.multimesh
 	var n := 0
-	for s in _shots:
+	for s in shots:
 		if n >= tm.instance_count:
 			break
 		var speed := s.vel.length()
@@ -308,6 +326,8 @@ func _stick(pos: Vector3, dir: Vector3, target: Node3D, depth_frac: float) -> vo
 	basis = basis.rotated(dir, randf() * TAU)
 	mi.global_transform = Transform3D(basis, pos + dir * length * depth_frac)
 	_stuck.append(mi)
+	if KillCam.recording and not KillCam.instance.playing:
+		KillCam.instance.note_node(mi, "", false)
 
 
 static func _fallback_carrot(length: float, radius: float) -> Mesh:

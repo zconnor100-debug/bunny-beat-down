@@ -91,6 +91,8 @@ static func spawn_limb_gib(visual: CritterVisual, bone_idx: int, impulse: Vector
 	body.apply_central_impulse(impulse * body.mass * 0.8 + Vector3.UP * randf_range(1.0, 2.5) * body.mass)
 	body.angular_velocity = Vector3(randf_range(-14, 14), randf_range(-10, 10), randf_range(-14, 14))
 	Despawner.schedule(body, GIB_LIFETIME)
+	if KillCam.recording and not KillCam.instance.playing:
+		KillCam.instance.note_node(body)
 	return body
 
 
@@ -112,6 +114,8 @@ static func make_stump(visual: CritterVisual, bone_idx: int) -> void:
 	var holder := Node3D.new()
 	att.add_child(holder)
 	holder.global_position = pos_world
+	if KillCam.recording and not KillCam.instance.playing:
+		KillCam.instance.note_node(holder, "", false)
 	var limb_dir: Vector3 = src.global_basis * bone_g.basis.y
 	_add_cap(holder, radius * 0.95, att.global_basis.inverse() * limb_dir)
 	FX.stump_fountain(holder, att.global_basis.inverse() * limb_dir)

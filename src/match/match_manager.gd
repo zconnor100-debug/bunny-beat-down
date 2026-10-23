@@ -15,6 +15,7 @@ var phase := Phase.LOADING
 var island: Island
 var storm: Storm
 var time_keeper: TimeKeeper         ## rewinds (see TimeKeeper)
+var kill_cam: KillCam               ## the final shot, replayed (see KillCam)
 var dropship: Dropship
 var player: Critter
 var critters: Array[Critter] = []
@@ -65,6 +66,10 @@ func setup(world_root_: Node3D, island_: Island, opponents: int, difficulty: int
 	time_keeper.name = "TimeKeeper"
 	time_keeper.match_manager = self
 	add_child(time_keeper)
+	kill_cam = KillCam.new()
+	kill_cam.name = "KillCam"
+	kill_cam.match_manager = self
+	add_child(kill_cam)
 	Events.critter_died.connect(_on_critter_died)
 	var d := clampi(difficulty, 0, 2)
 	AIBrain.player_attack_slots = [1, 2, 3][d]
@@ -433,6 +438,8 @@ func _on_critter_died(victim: Node, info: DamageInfo) -> void:
 			Events.rival_news.emit("REVENGE!", "You beat down your rival %s — now %s" % [c.display_name, RivalBook.score(c.display_name)])
 		if c.display_name in _rival_names() or rng.randf() < 0.35:
 			taunt(c, "lose")
+	if alive.size() <= 1 and phase != Phase.ENDED and kill_cam:
+		kill_cam.note_final(c, info)   # (before anyone hears the match is over)
 	if c == player:
 		player_eliminated.emit(c.placement, info.attacker as Critter)
 	if alive.size() <= 1 and phase != Phase.ENDED:

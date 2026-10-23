@@ -218,7 +218,32 @@ The third map follows the cage's pattern (`ToyBox extends Island`,
   rewind never has to un-ragdoll anything. When a blow would kill the
   player, `Critter.take_damage` asks `hold_killing_blow`: if the game is
   listening to `offered`, the tree pauses at 1 HP until `resolve()` either
-  rewinds or lets the blow land.
+  rewinds or lets the blow land. A rewind plays out first: the tree pauses
+  and, for `PLAYBACK` seconds (wall-clock time, since the paused engine's
+  frame delta isn't reliable), the TimeKeeper (`PROCESS_MODE_ALWAYS`) moves
+  every critter that will be restored back through the snapshots, newest to
+  oldest, and the camera rig keeps following. The HUD shows a tape-rewind
+  shader for the duration (`rewinding` → `rewound`).
+- **`KillCam`** (also a child of `MatchManager`) records the final fight once
+  `RECORD_WHEN_ALIVE` critters are left. Each tracked critter gets a
+  **`ReplayPose`**, a `SkeletonModifier3D` added last in its skeleton's stack.
+  It sees the final pose after the poser, the ragdoll and the limb hider, and
+  records the body transform, the model and gun-holder transforms, every bone
+  pose and the chest position each frame. During a replay it writes a
+  recorded frame back instead. Everything else reports in through cheap
+  hooks guarded by `KillCam.recording`:
+  - `Projectiles` sends shot start and end (shots are re-derived
+    ballistically and drawn with `draw_shots`);
+  - rockets, gibs, helmets, spilled loot and stuck carrots are tracked as
+    nodes (a rocket that went off leaves a ghost model);
+  - `FX._burst`, decals and the explosion flash, and `Audio.play[_at]`,
+    are logged as timed events.
+
+  `MatchManager` calls `note_final()` *before* it announces the winner, so
+  `game.gd` can hold the end screen. `play_final()` slows time (physics
+  ticks raised to match), then pauses the tree, sets the tracked skeletons
+  and `FX` to `PROCESS_MODE_ALWAYS`, and plays three camera angles. At the
+  end, `_show(INF)` puts every node back to its live state.
 
 ## Battle-royale loop
 

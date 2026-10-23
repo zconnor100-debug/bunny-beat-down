@@ -10,13 +10,18 @@ extends Node
 ## (with what they were carrying then), puts the loot they took since back on
 ## the floor, and clears the carrots in flight. Critters beaten down in those
 ## ten seconds stay down (with their loot spilled), and opened crates stay open.
+## The rewind plays out: for PLAYBACK seconds the world runs backwards (the
+## match paused, everyone gliding back along where they went, the Briar
+## growing back) before everything snaps into place.
 
 signal offered(info: DamageInfo)        ## a killing blow is on hold: rewind or accept?
+signal rewinding                        ## the playback has started
 signal rewound
 
 const REWIND_SECONDS := 10.0
 const SNAP_EVERY := 0.25
 const CHARGES := 3
+const PLAYBACK := 0.9                   ## real seconds of the world running backwards
 
 static var instance: TimeKeeper
 
@@ -27,10 +32,17 @@ var _snaps: Array = []                  # [clock, snapshot], oldest first
 var _taken: Array = []                  # [clock, taker, packed spec, position]
 var _clock := 0.0
 var _since := SNAP_EVERY
+var playing_back := false               ## the world is running backwards right now
+var _pb_t := 0.0
+var _pb_frames: Array = []              # the snapshots to run back through, newest first
+var _pb_target := 0                     # index into _snaps of where it lands
+var _pb_camera: Node
+var _pb_clock := RealClock.new()
 
 
 func _enter_tree() -> void:
 	instance = self
+	process_mode = Node.PROCESS_MODE_ALWAYS   # (the playback runs with the match paused)
 
 
 func _exit_tree() -> void:
@@ -39,7 +51,8 @@ func _exit_tree() -> void:
 
 
 func _physics_process(delta: float) -> void:
-	if match_manager == null or match_manager.phase != MatchManager.Phase.PLAYING or pending != null:
+	if match_manager == null or match_manager.phase != MatchManager.Phase.PLAYING or pending != null \
+			or playing_back or get_tree().paused:
 		return
 	_clock += delta
 	_since += delta
@@ -54,7 +67,7 @@ func _physics_process(delta: float) -> void:
 
 
 func can_rewind() -> bool:
-	return charges > 0 and not _snaps.is_empty() and match_manager != null \
+	return charges > 0 and not _snaps.is_empty() and match_manager != null and not playing_back \
 		and match_manager.phase == MatchManager.Phase.PLAYING \
 		and match_manager.player != null and match_manager.player.alive
 
@@ -64,8 +77,10 @@ func depth() -> float:
 	return 0.0 if _snaps.is_empty() else minf(REWIND_SECONDS, _clock - float(_snaps[0][0]))
 
 
-## Go back (up to) ten seconds. Uses a charge.
-func rewind() -> bool:
+## Go back (up to) ten seconds. Uses a charge. With `smooth`, the world
+## runs backwards to get there (PLAYBACK seconds, the match paused) and
+## `rewound` comes at the end; otherwise it snaps there at once.
+func rewind(smooth := true) -> bool:
 	if not can_rewind():
 		return false
 	charges -= 1
@@ -74,13 +89,78 @@ func rewind() -> bool:
 	for i in _snaps.size():
 		if float(_snaps[i][0]) <= want:
 			idx = i
+	if not smooth or not is_inside_tree():
+		_land(idx)
+		return true
+	# run back through every snapshot from now to the target
+	_pb_frames = [[_clock, _snapshot()]]
+	for i in range(_snaps.size() - 1, idx - 1, -1):
+		_pb_frames.append(_snaps[i])
+	_pb_target = idx
+	_pb_t = 0.0
+	_pb_clock.start()
+	playing_back = true
+	if Projectiles.instance:
+		Projectiles.instance.clear_in_flight()
+	get_tree().paused = true
+	# the camera keeps following you back
+	var cam := get_viewport().get_camera_3d()
+	_pb_camera = cam.get_parent() if cam else null
+	while _pb_camera and not (_pb_camera is CameraRig):
+		_pb_camera = _pb_camera.get_parent()
+	if _pb_camera:
+		_pb_camera.process_mode = Node.PROCESS_MODE_ALWAYS
+	rewinding.emit()
+	return true
+
+
+func _process(delta: float) -> void:
+	if not playing_back:
+		return
+	_pb_t += _pb_clock.step(delta)   # (see RealClock: the match is paused)
+	var u := clampf(_pb_t / PLAYBACK, 0.0, 1.0)
+	u = u * u * (3.0 - 2.0 * u)                     # ease in and out
+	var pos := u * float(_pb_frames.size() - 1)     # how far back through the frames
+	var i := mini(int(pos), _pb_frames.size() - 2)
+	var k := pos - i
+	var a: Dictionary = _pb_frames[i][1]
+	var b: Dictionary = _pb_frames[i + 1][1]
+	var target: Dictionary = _snaps[_pb_target][1]
+	for c in target.critters:
+		if not is_instance_valid(c) or not (c as Critter).alive:
+			continue
+		var ra: Dictionary = a.critters.get(c, b.critters.get(c, {}))
+		var rb: Dictionary = b.critters.get(c, ra)
+		if ra.is_empty():
+			continue
+		var xf := (ra.xf as Transform3D).interpolate_with(rb.xf, k)
+		(c as Critter).global_transform = xf
+		(c as Critter).visual.global_transform = xf
+	var s := match_manager.storm
+	if s and s.active and not (a.storm as Dictionary).is_empty() and not (b.storm as Dictionary).is_empty():
+		s.center = (a.storm.center as Vector2).lerp(b.storm.center, k)
+		s.radius = lerpf(a.storm.radius, b.storm.radius, k)
+		s._update_wall()
+	if u >= 1.0:
+		_finish_playback()
+
+
+func _finish_playback() -> void:
+	playing_back = false
+	_pb_frames.clear()
+	if _pb_camera and is_instance_valid(_pb_camera):
+		_pb_camera.process_mode = Node.PROCESS_MODE_INHERIT
+	get_tree().paused = false
+	_land(_pb_target)
+
+
+func _land(idx: int) -> void:
 	var at := float(_snaps[idx][0])
 	_restore(_snaps[idx][1], at)
 	_clock = at
 	_snaps = _snaps.slice(0, idx + 1)
 	_since = 0.0
 	rewound.emit()
-	return true
 
 
 ## Pickup calls this when a critter takes something, so a rewind can put it back.

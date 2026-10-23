@@ -53,6 +53,8 @@ static func spawn(parent: Node, spec_: Dictionary, pos: Vector3, vel := Vector3.
 	parent.add_child(p)
 	p.global_position = pos
 	p.linear_velocity = vel
+	if KillCam.recording and not KillCam.instance.playing:
+		KillCam.instance.note_node(p)
 	return p
 
 

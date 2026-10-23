@@ -6,6 +6,7 @@ extends CanvasLayer
 
 const SPLAT_LIFE := 3.0        ## seconds a splat stays on screen (plus up to 1 s)
 const MAX_SPLATS := 12
+const REWIND_SHADER := preload("res://src/ui/rewind_fx.gdshader")
 
 var player: Critter
 var rig: CameraRig
@@ -26,6 +27,7 @@ var _clover_label: Label
 var _rewind_label: Label
 var _news_frame := -1          # the frame a rival's news (REVENGE!...) was shown
 var _rewind_tint: ColorRect
+var _rewind_fx: CanvasLayer        ## the tape-rewinding look while the world runs back
 var _feed: VBoxContainer
 var _minimap: Minimap
 var _bigmap: Minimap
@@ -147,6 +149,7 @@ func setup(player_: Critter, rig_: CameraRig, mm: MatchManager) -> void:
 	_rewind_tint = _tint(Color(0.55, 0.85, 1.0, 0.0))
 	if mm and mm.time_keeper:
 		mm.time_keeper.rewound.connect(_on_rewound)
+		mm.time_keeper.rewinding.connect(_on_rewinding)
 
 	# top-right: minimap + kill feed
 	_minimap = Minimap.new()
@@ -213,7 +216,48 @@ func attach_dropship(d: Dropship) -> void:
 	_bigmap.dropship = d
 
 
+## The world is running backwards (the match is paused, so this layer runs
+## regardless): an old tape rewinding, a countdown of the seconds going
+## back, and a high whirr.
+func _on_rewinding() -> void:
+	if _rewind_fx:
+		_rewind_fx.queue_free()
+	_rewind_fx = CanvasLayer.new()
+	_rewind_fx.layer = 13
+	_rewind_fx.process_mode = Node.PROCESS_MODE_ALWAYS
+	add_child(_rewind_fx)
+	var screen := ColorRect.new()
+	screen.set_anchors_preset(Control.PRESET_FULL_RECT)
+	screen.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var m := ShaderMaterial.new()
+	m.shader = REWIND_SHADER
+	screen.material = m
+	_rewind_fx.add_child(screen)
+	var title := UITheme.label("◀◀  REWIND", 56, Color("9fe3ff"), true)
+	title.position = Vector2(52, 44)
+	_rewind_fx.add_child(title)
+	var count := UITheme.label("", 30, Color("9fe3ff"))
+	count.position = Vector2(58, 116)
+	_rewind_fx.add_child(count)
+	var tw := _rewind_fx.create_tween()
+	tw.tween_method(func(v: float): count.text = "−%.1f s" % v, 0.0, match_manager.time_keeper.depth(), TimeKeeper.PLAYBACK)
+	var whirr := Audio.make_loop(&"wind_loop", _rewind_fx, false) as AudioStreamPlayer
+	if whirr:
+		whirr.pitch_scale = 2.6
+		whirr.volume_db = -4.0
+		whirr.play()
+	Audio.play(&"glider_open", -4.0, 0.0)
+
+
 func _on_rewound() -> void:
+	if _rewind_fx:
+		# the tape catches: the effect fades out over the flash
+		var fx := _rewind_fx
+		_rewind_fx = null
+		var screen := fx.get_child(0) as ColorRect
+		var tw := fx.create_tween()
+		tw.tween_method(func(v: float): (screen.material as ShaderMaterial).set_shader_parameter(&"amount", v), 1.0, 0.0, 0.25)
+		tw.tween_callback(fx.queue_free)
 	_rewind_tint.color.a = 0.55
 	for s in _splats:
 		s[1] = 0.0   # the blood on the lens hasn't happened yet either
