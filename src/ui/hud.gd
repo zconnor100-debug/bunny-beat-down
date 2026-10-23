@@ -24,6 +24,7 @@ var _weapon_name: Label
 var _slots: Array[PanelContainer] = []
 var _clover_label: Label
 var _rewind_label: Label
+var _news_frame := -1          # the frame a rival's news (REVENGE!...) was shown
 var _rewind_tint: ColorRect
 var _feed: VBoxContainer
 var _minimap: Minimap
@@ -184,7 +185,9 @@ func setup(player_: Critter, rig_: CameraRig, mm: MatchManager) -> void:
 
 	Events.critter_died.connect(_on_critter_died)
 	Events.taunt.connect(_on_taunt)
-	Events.rival_news.connect(func(t, sub): show_message(t, sub, 4.0))
+	Events.rival_news.connect(func(t, sub):
+		_news_frame = Engine.get_process_frames()
+		show_message(t, sub, 4.0))
 	Events.announce.connect(func(t, sub): show_message(t, sub, 5.0))
 	Events.alive_count_changed.connect(func(a, _t): _alive_label.text = "%d CRITTER%s LEFT" % [a, "" if a == 1 else "S"])
 	Events.player_hit_confirmed.connect(_overlay.on_hit_confirmed)
@@ -358,7 +361,8 @@ func _on_critter_died(victim: Node, info: DamageInfo) -> void:
 		tw.tween_callback(n.queue_free))
 	if killer == player and v != player:
 		Audio.play(&"kill_confirm", -2.0)
-		show_message("BEAT DOWN!", "%s is out%s" % [v.display_name, " — headshot!" if info.headshot else ""], 2.2)
+		if _news_frame != Engine.get_process_frames():   # (a REVENGE! banner wins over this one)
+			show_message("BEAT DOWN!", "%s is out%s" % [v.display_name, " — headshot!" if info.headshot else ""], 2.2)
 
 
 const SPEECH := Color(0.88, 0.72, 1.0)

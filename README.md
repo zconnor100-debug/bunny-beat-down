@@ -4,8 +4,10 @@
 ![Godot 4.6](https://img.shields.io/badge/Godot-4.6-478cbf?logo=godotengine&logoColor=white)
 ![License: MIT](https://img.shields.io/badge/code-MIT-green)
 
-**A whimsical third-person battle royale.** One bunny, one acorn helmet, 23
-woodland critters, and a lot of carrots. Drop from a picnic-basket hot-air
+**A whimsical third-person survival roguelike.** One bunny in an acorn helmet
+against up to 49 bots who remember you: rivals with grudges, a Briar in a
+different mood every match, perks that carry over between runs, and three
+rewinds to undo your worst ten seconds. Drop from a picnic-basket hot-air
 balloon onto a procedurally generated forest island (or from a wind-up toy
 plane into a giant hamster cage, or a paper airplane over a kid's bedroom
 floor) and loot carrot guns. Then outlast the
@@ -13,6 +15,11 @@ closing Briar and be the last critter standing. Ragdolls, real limb-popping
 gore, and floppy physics ears are included.
 
 Built in **Godot 4.6** (GDScript, Jolt physics, Forward+).
+
+▶ **[Watch the 30-second trailer](docs/trailer.mp4)** (with sound): a rival
+sneaks up on you, you rewind, and this time you turn around.
+
+![Trailer: a rival fox creeps up on Bun, a rewind, and revenge](docs/screenshots/trailer.gif)
 
 ![Gameplay: a golden carrot shotgun, a ragdolled fox, and a rocket carrot](docs/screenshots/gameplay.gif)
 
@@ -57,7 +64,7 @@ Built in **Godot 4.6** (GDScript, Jolt physics, Forward+).
 
   ![Choosing a critter on the loading screen](docs/screenshots/picker.jpg)
   ![All 40 critter skins](docs/screenshots/skins.jpg)
-- **Battle royale for 1 player and up to 49 bots** on three maps (pick one
+- **Last critter standing: 1 player against up to 49 bots** on three maps (pick one
   under *New match*): Wildwood Island, the Hamster Cage and Toy Box Bash:
   - a balloon (or toy-plane, or paper-airplane) drop, freefall, and a giant
     leaf, flower or dandelion umbrella to glide down on;
@@ -353,6 +360,15 @@ loop with a human reviewer:
 - **Game Notes** (`tools/notes/notes.py`): write down changes you want, one per
   note. Once nothing has been added for 10 minutes, Claude claims the new notes,
   makes the changes, and answers each note on the page (done, or a question).
+
+The trailer is directed: the shots and the two critters' inputs are scripted
+(`tests/trailer_stage.gd`), but everything on screen is the running game (the
+island, the rival's name tag and taunts, the killing-blow prompt, the rewind,
+the REVENGE banner). Godot's Movie Maker records it frame by frame with the
+game's own sound, and `tools/make_trailer.py` cuts the MP4 and the GIF. Music
+in the trailer: "Scheming Weasel (faster version)" by Kevin MacLeod
+([incompetech.com](https://incompetech.com)), licensed under
+[CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
 
 ## License
 
