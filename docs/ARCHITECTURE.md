@@ -102,10 +102,10 @@ one `MultiMesh` per kind, extrapolated between ticks for smooth motion. A
 carrot that hits something **stays stuck in it**. It is parented to the hit
 bone's attachment, so carrots ride along on a ragdoll.
 
-Rockets are real nodes with smoke trails. A rocket that hits a critter's
-hitbox deals the launcher's huge direct damage first; then `Explosion` applies
-falloff damage (out to 10 m) with a cover check, shoves every ragdoll, gib and
-prop in range, and blows limbs off nearby corpses.
+Rockets are real nodes with smoke trails. `Explosion` gives a critter the
+rocket hit square on the full blast damage (120), and everyone else falloff
+damage by their distance from it (out to 10 m) with a cover check; it shoves
+every ragdoll, gib and prop in range, and blows limbs off nearby corpses.
 
 Weapons are `.tres` resources (`data/weapons/`). Balancing happens in the
 inspector, and loot **rarity** (Baby → Garden → Prize → Heirloom → Golden)

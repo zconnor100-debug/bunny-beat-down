@@ -1,12 +1,14 @@
 class_name Explosion
 ## Rocket-carrot detonation: falloff damage with cover, a physical shove for
-## every ragdoll and loose object nearby, and fireworks.
+## every ragdoll and loose object nearby, and fireworks. A critter the rocket
+## hit square on (`direct`) takes the full splash damage; everyone else takes
+## less the further their chest is from the blast, down to none at the edge.
 
 const SELF_DAMAGE_SCALE := 0.5
 const COVER_SCALE := 0.3
 
 
-static func detonate(tree: SceneTree, pos: Vector3, weapon: WeaponInstance, shooter: Node) -> void:
+static func detonate(tree: SceneTree, pos: Vector3, weapon: WeaponInstance, shooter: Node, direct: Critter = null) -> void:
 	var data := weapon.data
 	var radius := data.splash_radius
 	FX.explosion(pos, radius)
@@ -21,12 +23,12 @@ static func detonate(tree: SceneTree, pos: Vector3, weapon: WeaponInstance, shoo
 			continue
 		var target := critter.get_chest_position()
 		var d := pos.distance_to(target)
-		if d > radius:
+		if d > radius and critter != direct:
 			continue
-		var t := 1.0 - d / radius
+		var t := 1.0 if critter == direct else 1.0 - d / radius
 		var dmg := data.splash_damage * pow(t, 0.8) * weapon.damage_scale()
 		var q := PhysicsRayQueryParameters3D.create(pos + Vector3.UP * 0.2, target, Layers.SIGHT_MASK)
-		if space.intersect_ray(q):
+		if critter != direct and space.intersect_ray(q):
 			dmg *= COVER_SCALE
 		if critter == shooter:
 			dmg *= SELF_DAMAGE_SCALE

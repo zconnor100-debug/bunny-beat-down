@@ -1,8 +1,8 @@
 class_name Rocket
 extends Node3D
 ## A rocket carrot: fast, trails smoke, and detonates on contact or after a
-## few seconds. A direct hit on a critter hurts it far more than the blast,
-## which still catches everyone within the splash radius.
+## few seconds. A critter hit square on takes the blast's full damage; everyone
+## else within the splash radius takes less the further they are from it.
 
 const MODEL := "res://assets/weapons/carrot_rocket.glb"
 const LIFETIME := 4.0
@@ -54,8 +54,7 @@ func _physics_process(delta: float) -> void:
 	var hit := get_world_3d().direct_space_state.intersect_ray(q)
 	if hit:
 		global_position = hit.position - velocity.normalized() * 0.15
-		_direct_hit(hit)
-		_detonate()
+		_detonate(_critter_hit(hit))
 		return
 	global_position = to
 	_face()
@@ -69,27 +68,19 @@ func _face() -> void:
 		global_basis = Basis.looking_at(f, Vector3.UP if absf(f.y) < 0.98 else Vector3.RIGHT)
 
 
-## Square on a critter's hitbox: the weapon's (huge) direct damage, before
-## the blast adds its share.
-func _direct_hit(hit: Dictionary) -> void:
+## The critter whose hitbox the rocket struck, if any.
+func _critter_hit(hit: Dictionary) -> Critter:
 	var col: Object = hit.collider
-	if not (col is Area3D and (col as Node).has_meta(&"critter")):
-		return
-	var critter := (col as Node).get_meta(&"critter") as Critter
-	if critter == null or not is_instance_valid(critter) or not critter.alive:
-		return
-	var info := DamageInfo.make(weapon.data.damage * weapon.damage_scale(), DamageInfo.Kind.EXPLOSION, shooter, weapon.data.id)
-	info.position = hit.position
-	info.direction = velocity.normalized()
-	info.bone_role = (col as Node).get_meta(&"role", &"chest")
-	info.impulse = weapon.data.impulse
-	info.dismember_power = weapon.data.dismember_power
-	critter.take_damage(info)
+	if col is Area3D and (col as Node).has_meta(&"critter"):
+		var critter := (col as Node).get_meta(&"critter") as Critter
+		if critter and is_instance_valid(critter):
+			return critter
+	return null
 
 
-func _detonate() -> void:
+func _detonate(direct: Critter = null) -> void:
 	_done = true
-	Explosion.detonate(get_tree(), global_position, weapon, shooter)
+	Explosion.detonate(get_tree(), global_position, weapon, shooter, direct)
 	# let the smoke trail finish drifting instead of popping out of existence
 	if _trail:
 		_trail.emitting = false

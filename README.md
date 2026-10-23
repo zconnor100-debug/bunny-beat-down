@@ -34,7 +34,7 @@ Built in **Godot 4.6** (GDScript, Jolt physics, Forward+).
   | Carrot Assault Rifle | the all-rounder, banana-carrot magazine |
   | Carrot LMG | a pan of baby carrots and no off switch |
   | The Long Carrot | bolt-action sniper with a real scope view; 800 m/s, so little leading |
-  | Carrot Rocket Launcher | one very large, very angry carrot: a direct hit is lethal, and the blast reaches 10 m |
+  | Carrot Rocket Launcher | one very large, very angry carrot: 120 on a direct hit, less the further from the blast (out to 10 m) |
 
   Five loot rarities run from Baby to **Golden**, and Golden guns shimmer.
   Projectiles are real carrots that fly with drop and **stay stuck** in

@@ -67,6 +67,7 @@ func test_rockets_fly_fast_and_hit_hard() -> void:
 	check(rocket.splash_radius >= 10.0, "the blast reaches 10 m")
 	check(WeaponDB.get_weapon(&"carrot_sniper").projectile_speed >= 700.0, "sniper carrots arrive almost at once (little leading)")
 	var target := spawn_critter(TEST_DEF, Vector3(0, 0.1, 0))
+	var mid := spawn_critter(TEST_DEF, Vector3(4, 0.1, 0))
 	var near := spawn_critter(TEST_DEF, Vector3(8, 0.1, 0))
 	var far := spawn_critter(TEST_DEF, Vector3(0, 0.1, 14))
 	await wait_physics(5)
@@ -74,8 +75,11 @@ func test_rockets_fly_fast_and_hit_hard() -> void:
 	var origin := target.get_chest_position() + Vector3(0, 0, -20)
 	Projectiles.fire(null, WeaponInstance.new(rocket), origin, Vector3(0, 0, 1), 0.0, [])
 	await wait_physics(20)   # 20 m at 120 m/s: well under a third of a second
-	check(not target.alive, "a direct hit kills, even through full armor")
-	check(near.health < near.max_health, "8 m away, the blast still hurts (%.0f hp)" % near.health)
+	var lost := func(c: Critter) -> float: return (c.max_health - c.health) + (c.max_armor - c.armor if c == target else 0.0)
+	check_near(lost.call(target), 120.0, 1.0, "a direct hit deals 120 (%.0f)" % lost.call(target))
+	check(target.alive, "which full armor survives")
+	check(lost.call(mid) < lost.call(target) and lost.call(near) < lost.call(mid) and lost.call(near) > 0.0,
+		"the blast hurts less the further out: 4 m %.0f, 8 m %.0f" % [lost.call(mid), lost.call(near)])
 	check(is_equal_approx(far.health, far.max_health), "14 m away is out of the blast")
 
 
