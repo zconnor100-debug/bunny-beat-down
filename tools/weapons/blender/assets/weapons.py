@@ -1,5 +1,15 @@
 """Carrot guns: pistol, shotgun, LMG, rocket launcher, SMG, assault rifle, sniper.
 
+Styled as garden contraptions, not firearms: each gun is enamelled in its own
+garden colour (ENAMEL; chips show brass underneath), bare metal is
+watering-can copper, and each has a signature piece from the woods or the
+potting shed: an acorn hammer and an acorn-cap drum (pistol), a bell-flower
+mouth (shotgun), a wicker hopper of carrots (LMG), a hollow bark log with a
+toadstool exhaust (rocket launcher), a twig stock (SMG), a bark-wrapped
+handguard (rifle), a bamboo scope (sniper); watering-can roses on the
+muzzles. The markers, grips and sizes are what the game was built around,
+so they don't move.
+
 Each builder works in a convenient *layout* frame (bore axis at z = 0 or the
 frame bottom at z = 0, +Y forward) and finally shifts everything so the main
 (trigger) grip sits at the origin, as docs/ASSET_PIPELINE.md requires:
@@ -24,8 +34,23 @@ from bbd.util import place
 # --------------------------------------------------------------------------- shared materials
 
 
-def M():
-    """Material palette shared by all guns (created lazily per Blender session)."""
+# each gun's enamel: (colour, material tag)
+ENAMEL = {
+    "carrot_pistol": ("#b8473a", "barn_red"),
+    "carrot_shotgun": ("#4f86a8", "cornflower"),
+    "carrot_lmg": ("#5d7a46", "sage"),
+    "carrot_smg": ("#d6a23a", "mustard"),
+    "carrot_rifle": ("#3f7f78", "teal"),
+    "carrot_sniper": ("#7b4a8a", "plum"),
+    "carrot_rocket_launcher": ("#5d7a46", "sage"),
+}
+
+
+def M(gun="carrot_lmg"):
+    """Material palette shared by all guns (created lazily per Blender session).
+    "blued" (the gun steel of old) is now the gun's garden enamel, chipped to
+    brass; "steel" and "iron" are watering-can copper."""
+    enamel, tag = ENAMEL[gun]
     return {
         "walnut": mats.wood("walnut", "dark_wood", coords="src", tint="#d9b9a0", rough=0.42, wear=0.4),
         "walnut_grip": mats.wood("walnut_grip", "dark_wood", coords="src", rot=(0, 0, 90), tint="#d9b9a0",
@@ -33,15 +58,98 @@ def M():
         "walnut_box": mats.wood("walnut_box", "dark_wood", coords="box", tint="#d9b9a0", rough=0.45),
         "pine": mats.wood("pine", "coated_pine", coords="src", tint="#e8c9a0", rough=0.5),
         "pine_grip": mats.wood("pine_grip", "coated_pine", coords="src", rot=(0, 0, 90), tint="#e8c9a0", rough=0.5),
-        "blued": mats.metal("blued", "blued"),
-        "steel": mats.metal("steel", "steel"),
+        "blued": mats.paint(f"enamel_{tag}", enamel, under="brass", chip=0.55, rough=0.36),
+        "steel": mats.metal("copper", "copper", wear=0.6),
         "brass": mats.metal("brass", "brass", wear=0.6),
-        "iron": mats.metal("iron", "iron"),
+        "iron": mats.metal("copper_dark", "copper", tint="#9a6040", wear=0.3),
         "leather": mats.leather("leather"),
         "sage": mats.paint("paint_sage", "#5d7a46", under="galv", chip=0.65),
         "galv": mats.metal("galv", "galv"),
         "burlap": mats.burlap("burlap"),
+        "bark": mats.bark("bark"),
+        "twig": mats.bark("twig", tint="#d6b89a", density=7.0),
+        "wicker": mats.wicker("wicker_hopper", stake=1 / 40, weaver=0.0055, tint="#c9a06a", stake_hex="#a07848"),
+        "toadstool": mats.plain("toadstool", "#d23a2c", rough=0.4, coat=0.4, noise_amt=0.1),
+        "spots": mats.plain("toadstool_spots", "#f4eedc", rough=0.6),
+        "bamboo": mats.plain("bamboo", "#aab14c", rough=0.32, coat=0.35, noise_amt=0.12),
+        "bamboo_node": mats.plain("bamboo_node", "#76802f", rough=0.4),
+        "pore": mats.plain("rose_pore", "#24170f", rough=0.8, bump=0.0),
+        "stalk": mats.plain("acorn_stalk", "#6b4a2a", rough=0.7),
     }
+
+
+# --------------------------------------------------------------------------- woodland pieces
+
+def acorn(name, pos, size, axis=(0, 0, 1), m=None, segs=12):
+    """An acorn, `size` long: glossy nut, scaly cap and a stalk toward +axis."""
+    L, R = size, size * 0.36
+    nut = geo.lathe(name + "_nut", [(0.0, 0.0), (L * 0.05, R * 0.5), (L * 0.22, R * 0.88), (L * 0.45, R),
+                                   (L * 0.66, R * 0.96)], segs=segs, mat=mats.acorn("acorn_nut", part="shell"),
+                    cap0=False, cap1=True, v_norm=True, sharp_angle=70)
+    cap = geo.lathe(name + "_cap", [(L * 0.58, R * 1.02), (L * 0.66, R * 1.14), (L * 0.8, R * 1.08),
+                                   (L * 0.92, R * 0.66), (L * 0.97, 0.0)], segs=segs,
+                    mat=mats.acorn("acorn_cap", part="cap"), cap0=False, cap1=False, v_norm=True, sharp_angle=70)
+    stalk = geo.lathe(name + "_stalk", [(L * 0.95, R * 0.13), (L * 1.12, R * 0.1), (L * 1.13, 0.0)], segs=6,
+                      mat=(m or {}).get("stalk") or mats.plain("acorn_stalk", "#6b4a2a", rough=0.7), cap0=False)
+    for o in (nut, cap, stalk):
+        o["bbd_uv"] = "src"
+        parts.orient(o, axis, pos)
+    return [nut, cap, stalk]
+
+
+def flower_bell(name, pos, r0, r1, length, axis=(0, 1, 0), mat=None, petals=5, thick=0.0022):
+    """A flared bell flower (a blunderbuss mouth): neck r0 opening to r1 over
+    `length`, its rim scalloped into `petals` and rolled outward."""
+    prof = [(0.0, r0), (length * 0.35, r0 * 1.05), (length * 0.7, r0 + (r1 - r0) * 0.42), (length * 0.92, r1 * 0.94),
+            (length, r1), (length + thick * 0.6, r1 - thick * 0.5), (length * 0.92, r1 * 0.94 - thick),
+            (length * 0.7, r0 + (r1 - r0) * 0.42 - thick), (length * 0.35, r0 * 1.05 - thick), (0.0, r0 - thick)]
+    rim = (3, 4, 5, 6)
+
+    def petal(i, j, a, t, r):
+        if i not in rim:
+            return r
+        return r * (1.0 + 0.09 * math.cos(petals * a)) + (0.004 if i in (4, 5) else 0.0) * max(0.0, math.cos(petals * a))
+    bell = geo.lathe(name, prof, segs=10 * petals, mat=mat, cap0=False, cap1=False, radius_fn=petal, sharp_angle=55)
+    return parts.orient(bell, axis, pos)
+
+
+def rose(name, pos, r_neck, r_face, length, axis=(0, 1, 0), m=None, rings=(0.45, 0.82), counts=(5, 9), segs=16):
+    """A watering-can rose on the muzzle: a copper cone opening onto a domed
+    face pricked with pores (the bore comes out through the middle)."""
+    prof = [(0.0, r_neck), (length * 0.45, r_neck * 1.05), (length * 0.85, r_face), (length * 0.95, r_face * 1.02),
+            (length, r_face * 0.8), (length * 1.02, r_face * 0.45), (length * 1.02, r_neck * 0.55)]
+    body = geo.lathe(name, prof, segs=segs, mat=m["steel"], cap0=False, cap1=False, sharp_angle=40)
+    out = [parts.orient(body, axis, pos)]
+    ax = Vector(axis).normalized()
+    side = ax.cross(Vector((0, 0, 1))) if abs(ax.z) < 0.9 else ax.cross(Vector((1, 0, 0)))
+    side.normalize()
+    up = side.cross(ax)
+    face = Vector(pos) + ax * (length * 1.012)
+    k = 0
+    for ring_r, n in zip(rings, counts):
+        for q in range(n):
+            a = 2 * math.pi * (q + 0.5 * (n % 2)) / n
+            c = face + (side * math.cos(a) + up * math.sin(a)) * (r_face * ring_r) - ax * (r_face * 0.06 * ring_r)
+            pr = r_face * 0.075     # a dark lens set into the face (12 triangles, not a full bead)
+            pore = geo.lathe(f"{name}_pore{k}", [(-pr * 0.3, 0.0), (0.0, pr), (pr * 0.3, 0.0)], segs=6, mat=m["pore"])
+            out.append(parts.orient(pore, ax, c))
+            k += 1
+    return out
+
+
+def twig(name, pts, r, mat, nubs=((0.4, 1.0), (0.7, -1.0))):
+    """A bent twig (bark), thinning toward its end, with a couple of snapped-off side nubs."""
+    pts = [Vector(p) for p in pts]
+    n = len(pts)
+    out = [geo.sweep(name, pts, [r * (1.0 - 0.3 * i / max(n - 1, 1)) for i in range(n)], segs=7, mat=mat)]
+    for k, (t, side) in enumerate(nubs):
+        i = min(int(t * (n - 1)), n - 2)
+        base = pts[i].lerp(pts[i + 1], t * (n - 1) - i)
+        d = (pts[i + 1] - pts[i]).normalized()
+        perp = d.cross(Vector((1, 0, 0))) if abs(d.x) < 0.9 else d.cross(Vector((0, 0, 1)))
+        tip = base + (perp.normalized() * side * 0.8 + d * 0.5).normalized() * r * 3.2
+        out.append(geo.sweep(f"{name}_nub{k}", [base, tip], [r * 0.6, r * 0.35], segs=6, mat=mat))
+    return out
 
 
 def shift(objs, markers, grip):
@@ -89,8 +197,9 @@ def grip_outline(top_front, top_back, bottom_front, bottom_back, belly=0.004, pa
 # --------------------------------------------------------------------------- pistol
 
 def build_carrot_pistol():
-    """Six-shot carrot revolver: brass drum loaded with baby carrots, carrot barrel shroud."""
-    m = M()
+    """Six-shot carrot revolver in barn-red enamel: an acorn-cap drum loaded with baby carrots, an acorn
+    for a hammer, carrot barrel shroud."""
+    m = M("carrot_pistol")
     objs = []
     DZ = 0.022            # drum axis (frame bottom = 0)
     CH = 0.0125           # chamber offset from the drum axis
@@ -114,7 +223,9 @@ def build_carrot_pistol():
 
     prof = [(-0.0005, 0.017), (0.0, 0.0205), (0.002, 0.0218), (0.010, 0.0218), (0.020, 0.0218), (0.030, 0.0218),
             (0.0385, 0.0218), (0.0405, 0.0205), (0.041, 0.017)]
-    drum = geo.lathe("drum", prof, segs=36, mat=m["brass"], radius_fn=flute, sharp_angle=45)
+    drum = geo.lathe("drum", prof, segs=36, mat=mats.acorn("acorn_cap_drum", part="cap", tint="#ffc98a"), radius_fn=flute,
+                     sharp_angle=45, v_norm=True)
+    drum["bbd_uv"] = "src"
     drum.location = (0, -0.0025, DZ)
     objs.append(drum)
     for k in range(6):
@@ -144,12 +255,11 @@ def build_carrot_pistol():
     objs.append(parts.greens("plume", (-0.006, 0.058, BZ + 0.012), length=0.055, direction=(-0.55, -0.55, 0.65),
                              stems=3, seed=4, pairs=3, lobes=2, spread=22, droop=0.25))
 
-    # hammer
-    hammer_o = [(0.0, 0.0), (0.006, 0.0), (0.004, 0.012), (-0.006, 0.020), (-0.016, 0.021), (-0.018, 0.017),
-                (-0.008, 0.013), (-0.004, 0.006)]
-    h = geo.extrude_outline("hammer", geo.chaikin(hammer_o, 2, sharp=(0, 1)), 0.007, m["blued"], bevel=0.0012)
-    h.location = (0, -0.046, 0.040)
-    objs.append(h)
+    # hammer: an acorn on a short copper spur, cocked back
+    spur = geo.sweep("hammer_spur", [Vector((0, -0.044, 0.040)), Vector((0, -0.050, 0.050))], 0.0032, segs=6,
+                     mat=m["steel"])
+    objs.append(spur)
+    objs += acorn("hammer", (0, -0.051, 0.049), 0.024, axis=(0, -0.55, 1.0), m=m, segs=10)
     # trigger + guard
     objs.append(parts.trigger("trigger", (0, 0.016, 0.001), scale=0.95))
     objs.append(parts.trigger_guard("guard", (0.038, 0.001), (-0.006, -0.020), 0.012))
@@ -187,8 +297,9 @@ def build_carrot_pistol():
 # --------------------------------------------------------------------------- shotgun
 
 def build_carrot_shotgun():
-    """Side-by-side coach gun: twin blued barrels, carrot fore-end lashed underneath."""
-    m = M()
+    """Bell-flower blunderbuss: twin cornflower-blue barrels opening into one copper bell flower,
+    acorn hammers, carrot fore-end lashed underneath."""
+    m = M("carrot_shotgun")
     objs = []
     BL = 0.375                      # barrel length
     BX, BR, BI = 0.0145, 0.0138, 0.0102
@@ -199,11 +310,10 @@ def build_carrot_shotgun():
     # top rib + bottom filler rib between the barrels
     objs.append(geo.box("rib", (0.009, BL - 0.01, 0.004), (0, BL / 2, 0.0125), m["blued"], bevel=0.0012))
     objs.append(geo.box("rib_low", (0.010, BL - 0.03, 0.006), (0, BL / 2 - 0.01, -0.0105), m["blued"], bevel=0.0015))
-    # brass muzzle band around both barrels (stadium-shaped loop)
-    band = geo.sweep("muzzle_band", hull_loop([(BX, 0, BR), (-BX, 0, BR)], BL - 0.012, 0.0022, 24), 0.0035,
-                     segs=6, mat=m["brass"], closed=True, flatten=0.45)
-    objs.append(band)
-    objs.append(parts.bead("bead", (0, BL - 0.010, 0.0165), 0.0028))
+    # the mouth: a copper bell flower round both barrels (its petals roll out past the muzzle)
+    objs.append(flower_bell("bell", (0, BL - 0.055, 0), BX + BR + 0.001, 0.047, 0.06, mat=m["steel"], petals=6))
+    objs.append(parts.band("bell_band", (0, BL - 0.056, 0), (0, 1, 0), BX + BR + 0.002, 0.008, m["brass"]))
+    objs.append(parts.bead("bead", (0, BL - 0.066, 0.0165), 0.0028))
 
     # action (receiver): blued block with brass side plates and fences over the breech
     act_o = [(0.004, 0.017), (0.0, 0.020), (-0.020, 0.021), (-0.088, 0.016), (-0.094, 0.008), (-0.094, -0.020),
@@ -218,13 +328,11 @@ def build_carrot_shotgun():
         objs.append(p)
         objs.append(parts.screw(f"hinge_pin{sx}", (sx * 0.0278, -0.012, -0.022), (sx, 0, 0), 0.0042, m["steel"]))
         objs.append(parts.screw(f"lock_screw{sx}", (sx * 0.0278, -0.062, -0.006), (sx, 0, 0), 0.0030, m["steel"]))
-        # external hammers
-        ho = [(0.0, 0.0), (0.007, 0.0), (0.006, 0.014), (-0.004, 0.026), (-0.016, 0.029), (-0.019, 0.025),
-              (-0.008, 0.018), (-0.003, 0.008)]
-        hm = geo.extrude_outline(f"hammer{sx}", geo.chaikin(ho, 1, sharp=(0, 1)), 0.0065, m["blued"],
-                                 bevel=0.0012, bevel_segs=1)
-        hm.location = (sx * 0.0175, -0.078, 0.012)
-        objs.append(hm)
+        # external hammers: an acorn each, on a copper spur
+        objs.append(geo.sweep(f"hammer_spur{sx}", [Vector((sx * 0.0175, -0.076, 0.012)),
+                                                   Vector((sx * 0.0175, -0.082, 0.024))], 0.0028, segs=6,
+                              mat=m["steel"]))
+        objs += acorn(f"hammer{sx}", (sx * 0.0175, -0.083, 0.023), 0.020, axis=(0, -0.6, 1.0), m=m, segs=10)
     # top lever
     lv_o = [(0.0, 0.0), (0.004, 0.001), (0.006, 0.005), (-0.030, 0.009), (-0.034, 0.005), (-0.028, 0.002)]
     lever = geo.extrude_outline("top_lever", geo.chaikin(lv_o, 1), 0.010, m["blued"], plane="XY", bevel=0.0015,
@@ -284,8 +392,9 @@ def build_carrot_shotgun():
 # --------------------------------------------------------------------------- LMG
 
 def build_carrot_lmg():
-    """Lewis-style LMG: giant carrot barrel shroud, pan magazine of radial baby carrots."""
-    m = M()
+    """Harvest hopper LMG in sage enamel: giant carrot barrel shroud, a wicker hopper of radial baby
+    carrots under twine straps with an acorn on the hub, a watering-can rose, twig bipod."""
+    m = M("carrot_lmg")
     objs = []
     # receiver (blued) + brass side plates with rivets
     rc_o = [(0.062, 0.026), (0.058, 0.032), (-0.110, 0.032), (-0.124, 0.024), (-0.126, -0.020), (-0.116, -0.034),
@@ -317,9 +426,7 @@ def build_carrot_lmg():
     # muzzle brake: slotted-looking stack of rings
     mb = [(0.0, 0.0072), (0.0, 0.0150), (0.004, 0.0158), (0.013, 0.0158), (0.014, 0.0118), (0.024, 0.0118),
           (0.025, 0.0158), (0.036, 0.0158), (0.038, 0.0140), (0.038, 0.0080)]
-    brake = geo.lathe("brake", mb, segs=14, mat=m["steel"], cap0=False, cap1=True, sharp_angle=40)
-    brake.location = (0, cut_y + 0.085, 0)
-    objs.append(brake)
+    objs += rose("rose", (0, cut_y + 0.085, 0), 0.0105, 0.0215, 0.038, m=m, rings=(0.68,), counts=(9,), segs=14)
     muzzle_y = cut_y + 0.085 + 0.038
     objs.append(parts.twine_sleeve("shroud_twine", (0, 0.30, 0), (0, 1, 0), 0.032, 0.020, rings=2))
     objs += parts.knot("shroud_knot", (0.0, 0.30, -0.0345), 0.006, seed=8)
@@ -328,14 +435,15 @@ def build_carrot_lmg():
     PY, PZ, PR = -0.034, 0.036, 0.086
     pan_prof = [(0.0, 0.0), (0.0, PR - 0.006), (0.002, PR), (0.026, PR), (0.030, PR - 0.004), (0.030, PR - 0.008),
                 (0.024, PR - 0.008), (0.006, PR - 0.010)]
-    pan = geo.lathe("pan", pan_prof, segs=32, mat=m["brass"], cap0=True, cap1=False, axis="Z", sharp_angle=40)
+    pan = geo.lathe("pan", pan_prof, segs=28, mat=m["wicker"], cap0=True, cap1=False, axis="Z", sharp_angle=40)
+    pan["bbd_uv"] = "src"
     pan.location = (0, PY, PZ)
     objs.append(pan)
     floor = geo.cylinder("pan_floor", PR - 0.009, 0.004, 24, m["blued"], axis="Z", center=False)
     floor.location = (0, PY, PZ + 0.004)
     objs.append(floor)
     hub_p = [(0.0, 0.019), (0.022, 0.019), (0.026, 0.016), (0.030, 0.012), (0.034, 0.010), (0.036, 0.0)]
-    hub = geo.lathe("hub", hub_p, segs=14, mat=m["steel"], cap0=True, axis="Z", sharp_angle=40)
+    hub = geo.lathe("hub", hub_p, segs=12, mat=m["steel"], cap0=True, axis="Z", sharp_angle=40)
     hub.location = (0, PY, PZ + 0.004)
     objs.append(hub)
     n_car = 13
@@ -351,9 +459,10 @@ def build_carrot_lmg():
         d = Vector((math.cos(a), math.sin(a), 0))
         strap = geo.sweep(f"pan_strap{k}", [Vector((0, PY, PZ + 0.029)) + d * 0.02, Vector((0, PY, PZ + 0.030)) + d * 0.05,
                                             Vector((0, PY, PZ + 0.029)) + d * 0.081],
-                          0.0045, segs=6, mat=m["blued"], flatten=0.35, up=(0, 0, 1))
+                          0.0045, segs=6, mat=mats.fibre("twine"), flatten=0.6, up=(0, 0, 1))
+        strap["bbd_uv"] = "src"
         objs.append(strap)
-    objs.append(parts.rivet("hub_cap", (0, PY, PZ + 0.040), (0, 0, 1), 0.012, m["brass"]))
+    objs += acorn("hub_acorn", (0, PY, PZ + 0.034), 0.034, axis=(0, 0, 1), m=m, segs=10)
 
     # sights: tall rear leaf behind the pan, tall front post with a leafy flag
     SZ = 0.086
@@ -384,10 +493,9 @@ def build_carrot_lmg():
 
     # folded bipod legs along the shroud underside
     for sx in (1, -1):
-        leg = [(sx * 0.010, 0.395, -0.020), (sx * 0.020, 0.33, -0.036), (sx * 0.026, 0.27, -0.045)]
-        objs.append(geo.sweep(f"bipod{sx}", leg, 0.0035, segs=6, mat=m["blued"]))
-        foot = parts.rivet(f"bipod_foot{sx}", (sx * 0.027, 0.265, -0.046), (0, -1, 0), 0.0055, m["iron"])
-        objs.append(foot)
+        leg = [(sx * 0.010, 0.395, -0.020), (sx * 0.016, 0.36, -0.030), (sx * 0.020, 0.33, -0.036),
+               (sx * 0.026, 0.27, -0.045)]
+        objs += twig(f"bipod{sx}", leg, 0.0042, m["twig"], nubs=())
     objs.append(parts.band("bipod_clamp", (0, 0.40, 0), (0, 1, 0), 0.0215, 0.012, m["blued"]))
 
     # pistol grip, trigger, guard
@@ -421,20 +529,20 @@ def build_carrot_lmg():
 # --------------------------------------------------------------------------- rocket launcher
 
 def build_carrot_rocket_launcher():
-    """Watering-can-green tube launcher with a rocket carrot loaded (separate `Rocket` node)."""
+    """Hollow-log launcher: a bark log tied with twine, a toadstool exhaust bell, a rocket carrot
+    loaded (separate `Rocket` node)."""
     from assets.projectiles import carrot_rocket_parts
-    m = M()
+    m = M("carrot_rocket_launcher")
     objs = []
     T0, T1, TR, TI = -0.355, 0.395, 0.057, 0.0515
     # tube body (painted), rolled front lip, flared exhaust bell (galvanised)
     # tube paint carries a sprayed cream carrot stencil on both flanks (node space = final, grip-relative coords)
-    from bbd import textures
-    tube_paint = mats.paint("paint_sage_stencil", "#5d7a46", under="galv", chip=0.65,
-                            stencil=textures.stencil_carrot(), st_center=(0.168, 0.110), st_size=0.105)
-    tube = geo.lathe("tube", [(T0 + 0.002, TR), (T1 - 0.004, TR)], segs=40, mat=tube_paint, cap0=False, cap1=False,
-                     sharp_angle=None)
+    def gnarl(i, j, a, t, r):     # (a log isn't a perfect cylinder)
+        return r * (1.0 + 0.035 * math.sin(3 * a + t * 9.0) + 0.02 * math.sin(7 * a - t * 23.0))
+    tube = geo.lathe("tube", [(T0 + 0.002, TR), ((T0 + T1) / 2, TR), (T1 - 0.004, TR)], segs=40, mat=m["bark"],
+                     cap0=False, cap1=False, sharp_angle=None, radius_fn=gnarl)
     objs.append(tube)
-    inner = geo.lathe("tube_in", [(T1 - 0.004, TI), (T0 + 0.004, TI)], segs=32, mat=m["galv"], cap0=False,
+    inner = geo.lathe("tube_in", [(T1 - 0.004, TI), (T0 + 0.004, TI)], segs=32, mat=m["walnut"], cap0=False,
                       cap1=False, sharp_angle=None)
     objs.append(inner)
     lip = [(T1 - 0.006, TR - 0.0005), (T1 - 0.004, TR + 0.003), (T1, TR + 0.0035), (T1 + 0.004, TR + 0.001),
@@ -443,12 +551,22 @@ def build_carrot_rocket_launcher():
     bell = [(T0 + 0.006, TI), (T0 + 0.006, TR + 0.0015), (T0, TR + 0.004), (T0 - 0.03, TR + 0.008),
             (T0 - 0.058, TR + 0.020), (T0 - 0.064, TR + 0.022), (T0 - 0.066, TR + 0.019), (T0 - 0.060, TR + 0.014),
             (T0 - 0.03, TI + 0.003), (T0 + 0.006, TI)]
-    objs.append(geo.lathe("bell", bell, segs=32, mat=m["galv"], cap0=False, cap1=False, sharp_angle=45))
+    # (the profile runs backwards along the axis, which turned the faces inward: reversed, they face out)
+    objs.append(geo.lathe("bell", list(reversed(bell)), segs=32, mat=m["toadstool"], cap0=False, cap1=False,
+                          sharp_angle=45))
+    # the toadstool's white spots round the flare
+    for k in range(9):
+        a = 2 * math.pi * k / 9 + 0.3
+        tt = T0 - (0.018 if k % 2 else 0.040)
+        rr = TR + (0.0075 if k % 2 else 0.0135)
+        objs.append(parts.bead(f"spot{k}", (math.cos(a) * rr, tt, math.sin(a) * rr), 0.0042 if k % 2 else 0.0055,
+                               m["spots"]))
+    # tied together with twine, and a knot in the bark
     for k, yy in enumerate((-0.27, -0.03, 0.30)):
-        objs.append(parts.band(f"tube_band{k}", (0, yy, 0), (0, 1, 0), TR, 0.016, m["brass"]))
-        for a in (0.0, math.pi):
-            objs.append(parts.rivet(f"band_rivet{k}{a}", (math.cos(a) * (TR + 0.0015), yy, math.sin(a) * 0.0),
-                                    (math.cos(a), 0, 0), 0.0028))
+        objs.append(parts.twine_sleeve(f"tube_twine{k}", (0, yy, 0), (0, 1, 0), TR * 1.03, 0.014, rings=3))
+    knot = geo.lathe("bark_knot", [(0.0, 0.010), (0.004, 0.011), (0.009, 0.006), (0.010, 0.0)], segs=10,
+                     mat=m["walnut_box"])
+    objs.append(parts.orient(knot, (0.4, 0.0, -0.92), (0.4 * TR * 0.95, 0.12, -0.92 * TR * 0.95)))
 
     # loaded rocket carrot (separate node so the game can hide it after firing)
     rparts, rlen = carrot_rocket_parts(scale=1.0, in_tube=True)
@@ -544,8 +662,9 @@ def peep(name, center, r=0.0055, mat=None, post=0.008):
 # --------------------------------------------------------------------------- SMG
 
 def build_carrot_smg():
-    """Scrappy Sten-style SMG: tube receiver, side magazine of baby carrots, wire stock."""
-    m = M()
+    """Sprout sprayer SMG in mustard enamel: tube receiver, side magazine of baby carrots, a bent-twig
+    stock, a watering-can rose on the muzzle."""
+    m = M("carrot_smg")
     objs = []
     # tube receiver with a barrel nut, ejection port and cocking knob
     rec = geo.lathe("receiver", [(-0.094, 0.0), (-0.094, 0.0165), (-0.090, 0.0205), (0.056, 0.0205),
@@ -590,9 +709,7 @@ def build_carrot_smg():
     objs.append(parts.twine_sleeve("shroud_twine", (0, 0.115, 0), (0, 1, 0), 0.0168, 0.014, rings=2))
     comp = [(0.0, 0.0048), (0.0, 0.0105), (0.003, 0.0112), (0.010, 0.0112), (0.011, 0.0085), (0.015, 0.0085),
             (0.016, 0.0112), (0.024, 0.0112), (0.026, 0.0095), (0.026, 0.0048)]
-    c = geo.lathe("compensator", comp, segs=12, mat=m["steel"], cap0=False, cap1=True, sharp_angle=40)
-    c.location = (0, BL - 0.026, 0)
-    objs.append(c)
+    objs += rose("compensator", (0, BL - 0.026, 0), 0.0075, 0.0135, 0.026, m=m, rings=(0.5, 0.85))
     # sights: brass peep at the back, post on the compensator (co-witnessed at SZ)
     SZ = 0.0345
     objs += peep("rear_peep", (0, -0.078, SZ), 0.0058, m["brass"], post=SZ - 0.0205 - 0.0058 + 0.001)
@@ -611,11 +728,11 @@ def build_carrot_smg():
     objs.append(hinge)
     top = [Vector((0, -0.094, 0.010)), Vector((0, -0.17, 0.004)), Vector((0, -0.238, -0.001))]
     bot = [Vector((0, -0.094, -0.016)), Vector((0, -0.17, -0.042)), Vector((0, -0.238, -0.068))]
-    objs.append(geo.sweep("stock_top", top, 0.0036, segs=6, mat=m["steel"]))
-    objs.append(geo.sweep("stock_bot", bot, 0.0036, segs=6, mat=m["steel"]))
+    objs += twig("stock_top", top, 0.0048, m["twig"], nubs=((0.55, 1.0),))
+    objs += twig("stock_bot", bot, 0.0048, m["twig"], nubs=((0.45, -1.0),))
     loop = geo.chaikin([(-0.014, 0.004), (0.014, 0.004), (0.014, -0.074), (-0.014, -0.074)], 2)
-    objs.append(geo.sweep("stock_butt", [Vector((x, -0.243, z)) for x, z in loop], 0.0038, segs=6,
-                          mat=m["steel"], closed=True))
+    objs.append(geo.sweep("stock_butt", [Vector((x, -0.243, z)) for x, z in loop], 0.0050, segs=7,
+                          mat=m["twig"], closed=True))
     objs.append(parts.twine_sleeve("cheek_wrap", top[1].lerp(top[2], 0.3), (top[2] - top[1]), 0.0036, 0.05,
                                    rings=3, thick=0.0034))
     objs.append(parts.greens("charm", (0.004, -0.205, -0.056), length=0.04, direction=(0.5, -0.4, 0.75), stems=2,
@@ -639,8 +756,9 @@ def build_carrot_smg():
 # --------------------------------------------------------------------------- assault rifle
 
 def build_carrot_rifle():
-    """AK-style rifle: walnut furniture, bent-carrot banana magazine, greens front-sight tuft, reflex sight."""
-    m = M()
+    """Root rifle in teal enamel: walnut furniture with a bark-wrapped handguard, bent-carrot banana
+    magazine, greens front-sight tuft, reflex sight, a watering-can rose."""
+    m = M("carrot_rifle")
     objs = []
     rc = [(-0.100, 0.016), (0.092, 0.016), (0.100, 0.010), (0.100, -0.024), (0.084, -0.030), (-0.088, -0.030),
           (-0.100, -0.020)]
@@ -662,9 +780,7 @@ def build_carrot_rifle():
     objs[-1].location = (0, 0.095, 0)
     brake = [(0.0, 0.0052), (0.0, 0.0115), (0.004, 0.0122), (0.026, 0.0122), (0.030, 0.0105), (0.032, 0.0062),
              (0.032, 0.0052)]
-    b = geo.lathe("brake", brake, segs=14, mat=m["steel"], cap0=False, cap1=False, sharp_angle=40)
-    b.location = (0, 0.418, 0)
-    objs.append(b)
+    objs += rose("brake", (0, 0.418, 0), 0.0085, 0.0165, 0.032, m=m)
     MUZ = 0.45
     # gas block + tube, walnut handguards with a twine wrap
     objs.append(geo.box("gas_block", (0.020, 0.024, 0.028), (0, 0.285, 0.010), m["blued"], bevel=0.003))
@@ -675,7 +791,7 @@ def build_carrot_rifle():
                                     bevel=0.006, bevel_segs=2))
     lo = [(0.10, 0.006), (0.255, 0.006), (0.262, -0.010), (0.255, -0.034), (0.22, -0.038), (0.19, -0.034),
           (0.16, -0.038), (0.13, -0.034), (0.10, -0.036)]
-    objs.append(geo.extrude_outline("lower_guard", geo.chaikin(lo, 1, sharp=(0,)), 0.044, m["walnut"],
+    objs.append(geo.extrude_outline("lower_guard", geo.chaikin(lo, 1, sharp=(0,)), 0.044, m["bark"],
                                     bevel=0.010, bevel_segs=2))
     objs.append(parts.band("guard_cap", (0, 0.258, -0.006), (0, 1, 0), 0.0215, 0.010, m["blued"]))
     objs.append(parts.twine_sleeve("guard_twine", (0, 0.205, 0.002), (0, 1, 0), 0.0135, 0.016, rings=2))
@@ -751,8 +867,9 @@ def build_carrot_rifle():
 # --------------------------------------------------------------------------- sniper
 
 def build_carrot_sniper():
-    """"The Long Carrot": bolt-action sniper, long slim carrot barrel, brass scope, carrot-slice lens cap."""
-    m = M()
+    """"The Long Carrot": bolt-action sniper in plum enamel, long slim carrot barrel, a bamboo scope,
+    carrot-slice lens cap, a watering-can rose, twig bipod."""
+    m = M("carrot_sniper")
     objs = []
     rec = geo.lathe("receiver", [(-0.082, 0.0), (-0.082, 0.010), (-0.076, 0.0165), (0.115, 0.0165),
                                  (0.122, 0.0135), (0.124, 0.0)], segs=18, mat=m["blued"], sharp_angle=40)
@@ -780,9 +897,7 @@ def build_carrot_sniper():
     objs.append(parts.band("carrot_ferrule", (0, cut_y + 0.004, 0), (0, 1, 0), 0.0102, 0.012, m["brass"]))
     brake = [(0.0, 0.0042), (0.0, 0.0105), (0.003, 0.0110), (0.012, 0.0110), (0.013, 0.0080), (0.017, 0.0080),
              (0.018, 0.0110), (0.027, 0.0110), (0.029, 0.0090), (0.029, 0.0042)]
-    b = geo.lathe("brake", brake, segs=12, mat=m["steel"], cap0=False, cap1=True, sharp_angle=40)
-    b.location = (0, 0.772, 0)
-    objs.append(b)
+    objs += rose("brake", (0, 0.772, 0), 0.0066, 0.0125, 0.029, m=m, rings=(0.5, 0.85))
     MUZ = 0.801
     objs.append(parts.greens("wind_flag", (0, 0.735, 0.009), length=0.055, direction=(-0.35, -0.5, 0.8), stems=3,
                              seed=43, pairs=2, lobes=2, spread=18, droop=0.35))
@@ -806,9 +921,11 @@ def build_carrot_sniper():
     SZ = 0.064
     tube = geo.lathe("scope", [(-0.112, 0.0195), (-0.098, 0.0195), (-0.088, 0.0155), (0.168, 0.0155),
                                (0.192, 0.0235), (0.246, 0.0245), (0.250, 0.0228), (0.250, 0.0205), (0.244, 0.0205)],
-                     segs=24, mat=m["brass"], cap0=False, cap1=False, sharp_angle=40)
+                     segs=24, mat=m["bamboo"], cap0=False, cap1=False, sharp_angle=40)
     tube.location = (0, 0, SZ)
     objs.append(tube)
+    for k, y in enumerate((-0.07, 0.02, 0.135)):   # bamboo nodes
+        objs.append(parts.band(f"node{k}", (0, y, SZ), (0, 1, 0), 0.0162, 0.006, m["bamboo_node"], segs=24))
     cup = geo.lathe("eyecup", [(-0.150, 0.0175), (-0.150, 0.0215), (-0.144, 0.0225), (-0.112, 0.0205),
                                (-0.110, 0.0185)], segs=20, mat=m["leather"], cap0=False, cap1=False, sharp_angle=40)
     cup.location = (0, 0, SZ)
@@ -838,9 +955,9 @@ def build_carrot_sniper():
     # folded bipod under the fore-end + slack leather sling
     objs.append(parts.band("bipod_clamp", (0, 0.36, -0.016), (0, 1, 0), 0.020, 0.012, m["blued"]))
     for sx in (1, -1):
-        leg = [Vector((sx * 0.010, 0.358, -0.034)), Vector((sx * 0.014, 0.28, -0.044)),
+        leg = [Vector((sx * 0.010, 0.358, -0.034)), Vector((sx * 0.012, 0.32, -0.040)), Vector((sx * 0.014, 0.28, -0.044)),
                Vector((sx * 0.016, 0.20, -0.047))]
-        objs.append(geo.sweep(f"bipod{sx}", leg, 0.0042, segs=6, mat=m["blued"]))
+        objs += twig(f"bipod{sx}", leg, 0.0048, m["twig"], nubs=((0.5, sx),))
         objs.append(parts.rivet(f"bipod_foot{sx}", (sx * 0.016, 0.196, -0.048), (0, -1, 0), 0.0065, m["brass"]))
     for y, z in ((0.33, -0.037), (-0.26, -0.096)):
         objs.append(geo.sweep(f"swivel{y}", geo.arc_points((0, y, z - 0.006), 0.006, 0, 360, 9, "YZ")[:-1], 0.0014,

@@ -22,7 +22,7 @@
     ],
     "origin": "main (trigger) grip",
     "orientation": "barrel along -Z, +Y up",
-    "tris": 6390,
+    "tris": 6204,
     "texture_px": 1024,
     "markers": {
       "Muzzle": [
@@ -55,24 +55,24 @@
     "kind": "weapon",
     "use": "Shotgun: side-by-side coach gun firing carrot_shell_pellet spreads",
     "size_m": [
-      0.094,
+      0.117,
       0.189,
-      0.751
+      0.758
     ],
-    "max_extent_m": 0.751,
+    "max_extent_m": 0.758,
     "aabb_min": [
       -0.0615,
       -0.0927,
-      -0.515
+      -0.5213
     ],
     "aabb_max": [
-      0.0321,
+      0.0552,
       0.096,
       0.2363
     ],
     "origin": "main (trigger) grip",
     "orientation": "barrel along -Z, +Y up",
-    "tris": 6630,
+    "tris": 7706,
     "texture_px": 1024,
     "markers": {
       "Muzzle": [
@@ -107,22 +107,22 @@
     "size_m": [
       0.172,
       0.232,
-      0.905
+      0.906
     ],
-    "max_extent_m": 0.905,
+    "max_extent_m": 0.906,
     "aabb_min": [
       -0.086,
       -0.0459,
-      -0.6468
+      -0.6476
     ],
     "aabb_max": [
       0.086,
-      0.186,
+      0.1864,
       0.258
     ],
     "origin": "main (trigger) grip",
     "orientation": "barrel along -Z, +Y up",
-    "tris": 7980,
+    "tris": 7988,
     "texture_px": 1024,
     "markers": {
       "Muzzle": [
@@ -172,7 +172,7 @@
     ],
     "origin": "main (trigger) grip",
     "orientation": "barrel along -Z, +Y up",
-    "tris": 7160,
+    "tris": 7754,
     "texture_px": 1024,
     "markers": {
       "Muzzle": [
@@ -213,22 +213,22 @@
     "size_m": [
       0.21,
       0.144,
-      0.451
+      0.453
     ],
-    "max_extent_m": 0.451,
+    "max_extent_m": 0.453,
     "aabb_min": [
       -0.1733,
       -0.044,
-      -0.241
+      -0.2415
     ],
     "aabb_max": [
       0.0363,
       0.0997,
-      0.2103
+      0.2119
     ],
     "origin": "main (trigger) grip",
     "orientation": "barrel along -Z, +Y up",
-    "tris": 5074,
+    "tris": 5292,
     "texture_px": 1024,
     "markers": {
       "Muzzle": [
@@ -269,7 +269,7 @@
     "aabb_min": [
       -0.0314,
       -0.1293,
-      -0.527
+      -0.5276
     ],
     "aabb_max": [
       0.023,
@@ -278,7 +278,7 @@
     ],
     "origin": "main (trigger) grip",
     "orientation": "barrel along -Z, +Y up",
-    "tris": 4882,
+    "tris": 5074,
     "texture_px": 1024,
     "markers": {
       "Muzzle": [
@@ -328,7 +328,7 @@
     ],
     "origin": "main (trigger) grip",
     "orientation": "barrel along -Z, +Y up",
-    "tris": 5530,
+    "tris": 6464,
     "texture_px": 1024,
     "markers": {
       "Muzzle": [

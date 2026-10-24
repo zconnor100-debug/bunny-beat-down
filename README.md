@@ -44,15 +44,19 @@ and the final shot replayed from three angles. There's a
   shake; a first-person viewmodel with sway, bob and procedural reloads.
 - **Seven carrot guns**, each with its own feel:
 
-  | Gun | Role |
-  |---|---|
-  | Carrot Pistol | snappy sidearm, big headshot bonus |
-  | Carrot SMG | 900 rpm stick-mag of baby carrots, great up close |
-  | Carrot Shotgun | nine julienned pellets, pump action |
-  | Carrot Assault Rifle | the all-rounder, banana-carrot magazine |
-  | Carrot LMG | a pan of baby carrots and no off switch |
-  | The Long Carrot | bolt-action sniper with a real scope view; 800 m/s, so little leading |
-  | Carrot Rocket Launcher | one very large, very angry carrot: 120 on a direct hit, less the further from the blast (out to 10 m) |
+  | Gun | Role | Look |
+  |---|---|---|
+  | Carrot Pistol | snappy sidearm, big headshot bonus | barn-red enamel, an acorn-cap drum, an acorn for a hammer |
+  | Carrot SMG | 900 rpm stick-mag of baby carrots, great up close | mustard, a bent-twig stock, a watering-can rose |
+  | Carrot Shotgun | nine julienned pellets, pump action | cornflower blue, a copper bell-flower mouth, acorn hammers |
+  | Carrot Assault Rifle | the all-rounder, banana-carrot magazine | teal, a bark-wrapped handguard |
+  | Carrot LMG | a pan of baby carrots and no off switch | sage, a wicker hopper with an acorn on the hub, twig bipod |
+  | The Long Carrot | bolt-action sniper with a real scope view; 800 m/s, so little leading | plum, a bamboo scope |
+  | Carrot Rocket Launcher | one very large, very angry carrot: 120 on a direct hit, less the further from the blast (out to 10 m) | a hollow bark log tied with twine, a toadstool exhaust |
+
+  They're garden contraptions rather than firearms: each in its own garden
+  enamel (chipped to brass), with watering-can copper for bare metal, carrot
+  barrels and leafy sights (`tools/weapons/blender/assets/weapons.py`).
 
   Five loot rarities run from Baby to **Golden**, and Golden guns shimmer.
   Projectiles are real carrots that take time to arrive (lead a moving

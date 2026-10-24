@@ -12,6 +12,7 @@
       "assets/weapons/carrot_lmg.glb",
       "assets/weapons/carrot_pistol.glb",
       "assets/weapons/carrot_rifle.glb",
+      "assets/weapons/carrot_rocket_launcher.glb",
       "assets/weapons/carrot_shotgun.glb",
       "assets/weapons/carrot_sniper.glb"
     ]
@@ -94,7 +95,13 @@
     "files": [
       "assets/props/ammo_heavy.glb",
       "assets/props/supply_drop.glb",
-      "assets/weapons/carrot_rocket_launcher.glb"
+      "assets/weapons/carrot_lmg.glb",
+      "assets/weapons/carrot_pistol.glb",
+      "assets/weapons/carrot_rifle.glb",
+      "assets/weapons/carrot_rocket_launcher.glb",
+      "assets/weapons/carrot_shotgun.glb",
+      "assets/weapons/carrot_smg.glb",
+      "assets/weapons/carrot_sniper.glb"
     ]
   },
   {
@@ -168,6 +175,11 @@
     "used_for": "Bark armour plates (pickup_armor)",
     "files": [
       "assets/props/pickup_armor.glb",
+      "assets/weapons/carrot_lmg.glb",
+      "assets/weapons/carrot_rifle.glb",
+      "assets/weapons/carrot_rocket_launcher.glb",
+      "assets/weapons/carrot_smg.glb",
+      "assets/weapons/carrot_sniper.glb",
       "assets/weapons/melee_acorn_knocker.glb",
       "assets/weapons/melee_trout_stick.glb"
     ]
@@ -334,6 +346,9 @@
     "files": [
       "assets/props/acorn_helmet.glb",
       "assets/props/pickup_armor.glb",
+      "assets/weapons/carrot_lmg.glb",
+      "assets/weapons/carrot_pistol.glb",
+      "assets/weapons/carrot_shotgun.glb",
       "assets/weapons/melee_acorn_knocker.glb"
     ]
   },
