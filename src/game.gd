@@ -501,7 +501,8 @@ func _show_end(title: String, sub: String, won: bool, killer: Critter) -> void:
 	var p := match_manager.player
 	if not _paid:
 		_paid = true
-		_earned = Burrow.reward(1 if won else p.placement, match_manager.total, p.kills, match_manager.revenges)
+		_earned = Burrow.reward(1 if won else p.placement, match_manager.total, p.kills, match_manager.revenges) \
+			+ (match_manager.bounty if match_manager.bounty_paid else 0)
 		Burrow.add_acorns(_earned)
 	var stats := UITheme.label("Beat downs: %d   •   Damage: %d   •   %s #%d   •   +%d 🌰 (%d in the Burrow)" % [p.kills, roundi(p.damage_dealt), island.map_title, _seed, _earned, Burrow.acorns()], 20, Color(UITheme.CREAM, 0.8))
 	stats.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER

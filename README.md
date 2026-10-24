@@ -161,14 +161,35 @@ and the final shot replayed from three angles. There's a
     softer and most scraps end with the loser running off
     (`tests/diag_brawl.gd` counts fights, bots that saw each other and did
     nothing, and the death toll over a 49-bot match).
-- **Bots are characters, not targets.** The 63 bots each have a name and a
-  personality for life (Hothead, Sneak, Show-off, Grudge-holder,
-  Scaredy-cat, Prankster), and the game remembers the score between each of
-  them and you, across runs. A bot that has beaten you down twice becomes
-  your **rival**: it is always in your next matches (with a purple
-  "⚔ RIVAL" name tag), it hunts you, and it taunts you in its own voice,
-  in speech bubbles and the kill feed ("Didn't see me, did you? 3–1.").
-  Beat it and the game calls it **revenge**.
+- **Bots are characters, not targets: the same 49 every run.** Each has a
+  name, a species, a voice (Hothead, Sneak, Show-off, Grudge-holder,
+  Scaredy-cat, Prankster, Noble, Calm one), one of 14 fighting styles (Rusher,
+  Sharpshooter, Ambusher, Brawler, Vulture, Duelist, Survivor, Hunter...) and
+  a favourite carrot gun; no two share a style and a gun, so each fights a
+  little differently (`Cast`: the AI reads its style as numbers: range,
+  aggression, nerve, how it hears gunfire, whom it picks on). The game
+  remembers the score between each of them and you, across runs:
+  - A bot that has beaten you down twice becomes your **rival**: it's always
+    in your next matches (with a purple "⚔ RIVAL" name tag), it hunts you,
+    and it taunts you in its own voice, in speech bubbles and the kill feed
+    ("Didn't see me, did you? 3–1."). Beat it and the game calls it
+    **revenge**.
+  - Beat the same bot down again and again and it **turns radical**: Sore,
+    Vengeful, Unhinged, then your Nemesis. Its name tag says so; it picks
+    fights from further off and stops running away, comes looking for you,
+    drops in with its favourite gun (then armour too), stops waiting its turn
+    to shoot at you, and always jumps when you do. The most radical one in a
+    lobby has a **bounty** on it, paid in acorns.
+  - Bots hold **grudges against each other**: the one that beat another down
+    is a marked critter next match, hunted from twice as far away. Paying one
+    back makes the feed ("Croaker got even with Vex.").
+  - And **against the director**: the Briar catching them, and the pacing
+    softening their hits, count against it. A bot that's had enough defies
+    it (its hits are never softened) and curses it when the Briar moves.
+  - The drop opens with the lobby's news: who you've made radical, who's
+    feuding, who's furious with the director, and the bounty. The
+    **Rogues' Gallery** (main menu) has a card for each of the 49: who they
+    are, how they fight, the score with you, their wins and grudges.
 - **The bots learn you.** They remember where you like to land (and more of
   them head there), and which guns you win with (they fight you at the
   range those guns are worst at). Sit still too long and the nearest bots
@@ -348,7 +369,7 @@ The full write-up is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
   the same views: 31% fewer triangles on the island, 31% on the Hamster
   Cage, 79% on Toy Box Bash, and a third to two thirds fewer shadow
   triangles.
-- **Tests that play the game.** A headless suite of 98 tests covers:
+- **Tests that play the game.** A headless suite of 103 tests covers:
   - the IK maths, hitboxes, ragdolls and dismemberment;
   - island navigation, the three biomes and the big buildings (a Bun walks
     in through the barn doors; every indoor loot spot is reachable on the
@@ -360,8 +381,12 @@ The full write-up is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
     generated inside another and no loot inside a solid, and the game rules;
   - how carrots fly (on the crosshair within range, bursts that bloom and
     settle, the shotgun's pattern);
-  - rivals (made, remembered across runs, back in the next match, hunting
-    and taunting, revenge), the bots learning you (landings, fighting style,
+  - the cast (49 characters, each fighting its own way; a full lobby with
+    no "Fox 3"), rivals (made, remembered across runs, back in the next
+    match, hunting and taunting, revenge), radical bots (each step, their
+    loadout and name tag, the bounty), grudges between bots and against the
+    director (paid back, remembered, a defiant bot's hits), the lobby news
+    and the Rogues' Gallery, the bots learning you (landings, fighting style,
     camping, hot streaks), every Briar mood, the Burrow (earning,
     unlocking, equipping, every perk and modifier in a match), rewinds
     (everyone and everything put back; the world running backwards first;

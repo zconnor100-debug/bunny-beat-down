@@ -30,9 +30,8 @@ func test_a_bot_becomes_your_rival_and_is_remembered() -> void:
 	for p in RivalBook.PERSONALITIES:
 		names[p] = true
 	var seen := {}
-	for d in ["bandit_bunny", "squirrel", "fox", "raccoon", "frog", "beaver", "hamster"]:
-		for n in (load("res://data/critters/%s.tres" % d) as CritterDef).names:
-			seen[RivalBook.personality_of(n)] = true
+	for n in Cast.names():
+		seen[RivalBook.personality_of(n)] = true
 	check(seen.size() >= 5, "the bots have a spread of personalities (%d of %d)" % [seen.size(), names.size()])
 
 

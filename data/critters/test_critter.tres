@@ -10,5 +10,3 @@ model_path = "res://assets/test/test_critter.glb"
 rig_path = "res://assets/test/test_critter.rig.json"
 fur_color = Color(0.75, 0.68, 0.6, 1)
 gait = 0
-spawn_weight = 0.0
-names = PackedStringArray("Testy")

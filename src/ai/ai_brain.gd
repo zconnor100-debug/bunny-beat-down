@@ -68,6 +68,14 @@ var drop_spot := Vector3.ZERO
 var drop_progress := 0.5          ## when along the balloon route to jump
 var personality := ""             ## see RivalBook.PERSONALITIES
 var rival := false                ## this bot has your number: it hunts you
+## How this bot fights (Cast.traits_for: its style, pushed further the more
+## radical you've made it). A missing key means the default bot's way.
+var traits: Dictionary = {}
+## The bots it holds a grudge against (RivalBook.grudges): it goes after them
+## first, from further off, even while it's still settling in.
+var grudges: Dictionary = {}
+const GRUDGE_FIGHT_RANGE := 2.0   ## x its fight range, for a bot it has a grudge against
+var _next_sense := 0.0            # (a radical bot's next "where are you?")
 ## How the player likes to fight, learned over past matches (PlayerProfile):
 ## "close" → bots keep their distance from you, "far" → they rush you.
 static var player_style := ""
@@ -178,21 +186,26 @@ func _perceive() -> void:
 		var ahead := lerpf(0.4, 1.0, smoothstep(FOV_DOT, 0.8, facing))
 		var moving := 0.5 + 0.5 * clampf(Vector2(other.velocity.x, other.velocity.z).length() / 3.0, 0.0, 1.0)
 		var flash := 3.0 if _clock - float(_shots_seen.get(other, -100.0)) < 1.0 else 1.0
-		var rate := SPOT_RATE * lerpf(0.6, 1.4, skill) * near * ahead * moving * flash * vis * (player_stealth if other.is_player else 1.0)
+		var rate := SPOT_RATE * lerpf(0.6, 1.4, skill) * near * ahead * moving * flash * vis * (player_stealth if other.is_player else 1.0) * _t("spot", 1.0)
 		var aware := minf(1.5, float(_awareness.get(other, 0.0)) + rate * dt)
 		_awareness[other] = aware
 		# a target is someone we're sure of (or still tracking)
 		if aware < (0.5 if other == target else 1.0):
 			continue
 		# the other bot is far off, or we just landed and it isn't right here:
-		# leave it be, unless it started it
-		if not other.is_player and (d > BOT_FIGHT_RANGE or (settling() and d > SETTLE_FIGHT_RANGE)) \
+		# leave it be, unless it started it (or we've a score to settle)
+		var grudge := not other.is_player and grudges.has(other.display_name)
+		var reach := _t("fight_range", BOT_FIGHT_RANGE) * (GRUDGE_FIGHT_RANGE if grudge else 1.0)
+		if not other.is_player and (d > reach or (settling() and d > SETTLE_FIGHT_RANGE and not grudge)) \
 				and _clock - float(_provoked.get(other, -100.0)) > 8.0:
 			continue
 		if not other.is_player and _clock < float(_avoid.get(other, -1.0)):
 			continue   # (one of us broke off from the other)
-		# prefer close, weak, and whoever is already our target (a rival: you)
-		var score := d * (0.6 + other.health / 200.0) * (0.6 if other == target else 1.0) * (0.35 if rival and other.is_player else 1.0)
+		# prefer close, weak (a vulture more so), whoever is already our target
+		# (a duelist more so), a bot we hold a grudge against, and (a rival,
+		# a radical) you
+		var score := d * (0.6 + other.health / 200.0 * _t("weak", 1.0)) * (_t("sticky", 0.6) if other == target else 1.0) \
+			* (0.35 if rival and other.is_player else 1.0) * (_t("player_focus", 1.0) if other.is_player else 1.0) * (0.4 if grudge else 1.0)
 		if score < best_score:
 			best_score = score
 			best = other
@@ -205,15 +218,17 @@ func _perceive() -> void:
 	if best:
 		if best != target or _clock - _last_seen_t > 1.0:
 			_spotted_t = _clock
-			if best.is_player and match_manager and match_manager.has_method("taunt") and (rival or randf() < 0.1):
+			if best.is_player and match_manager and match_manager.has_method("taunt") and (rival or traits.get("hunts_you", false) or randf() < 0.1):
 				match_manager.taunt(me, "spot")
+			elif not best.is_player and grudges.has(best.display_name) and match_manager and match_manager.has_method("feud"):
+				match_manager.feud(me, best)
 			# half-hidden targets are harder to aim at
 			_aim_err = _random_aim_error(eye.distance_to(best.get_chest_position())) * (1.0 + (1.0 - best_vis) * 1.5)
 		target = best
 		_target_vis = best_vis
 		_last_seen_pos = best.get_chest_position()
 		_last_seen_t = _clock
-	elif target and (not target.alive or _clock - _last_seen_t > MEMORY):
+	elif target and (not target.alive or _clock - _last_seen_t > MEMORY * _t("memory", 1.0)):
 		target = null
 
 
@@ -250,7 +265,7 @@ func _on_shot_heard(shooter: Node, origin: Vector3, _id: StringName) -> void:
 	if shooter == me or me == null or not me.alive:
 		return
 	_shots_seen[shooter] = _clock
-	if origin.distance_to(me.global_position) < HEARING_RANGE:
+	if origin.distance_to(me.global_position) < HEARING_RANGE * _t("gunfire", 1.0):
 		_heard_pos = origin
 		_heard_t = _clock
 
@@ -271,9 +286,14 @@ func _on_damaged(victim: Node, info: DamageInfo) -> void:
 	_think_t = minf(_think_t, 0.05)
 
 
+## A trait number (see `traits`), or the default bot's.
+func _t(key: String, default: float) -> float:
+	return float(traits.get(key, default))
+
+
 ## Still settling in after the drop (see SETTLE_SECONDS).
 func settling() -> bool:
-	return _landed_at >= 0.0 and _clock - _landed_at < SETTLE_SECONDS
+	return _landed_at >= 0.0 and _clock - _landed_at < SETTLE_SECONDS * _t("settle", 1.0)
 
 
 ## Recently shot: keep looking toward where it came from.
@@ -296,7 +316,7 @@ func _choose_mode() -> void:
 		if target == null or not armed or me.health < 40.0:
 			mode = Mode.FLEE_STORM
 			return
-	if target and not target.is_player and me.health < BREAK_OFF_HEALTH and me.health < target.health:
+	if target and not target.is_player and me.health < _t("break_off", BREAK_OFF_HEALTH) and me.health < target.health:
 		# losing to another bot: break off, run, patch up (two beaten-up bots
 		# still have it out: running from everyone, they'd wander about together)
 		_avoid[target] = _clock + BREAK_OFF_SECONDS
@@ -313,9 +333,15 @@ func _choose_mode() -> void:
 		# bare paws: club them if they're right here, else go find a gun
 		mode = Mode.FIGHT if target.global_position.distance_to(me.global_position) < BRAWL_RANGE else Mode.LOOT
 		return
-	if me.health < 60.0 and me.inventory.clovers > 0:
+	if me.health < _t("heal_at", 60.0) and me.inventory.clovers > 0:
 		mode = Mode.HEAL
 		return
+	if traits.get("hunts_you", false) and armed and _clock >= _next_sense and match_manager and match_manager.player \
+			and match_manager.player.alive and match_manager.player.state == Critter.State.GROUND and not settling():
+		# radical: it goes looking for you (roughly where you are)
+		_next_sense = _clock + (25.0 if traits.get("no_slot", false) else 45.0)
+		var you: Vector3 = match_manager.player.global_position
+		hunt(you + Vector3(randf_range(-15, 15), 0, randf_range(-15, 15)), 20.0)
 	if _hunt_pos != Vector3.INF and _clock < _hunt_until and armed:
 		_set_dest(_hunt_pos)   # (roaming toward where the player is hiding)
 		mode = Mode.ROAM
@@ -323,7 +349,7 @@ func _choose_mode() -> void:
 	if _wants_loot():
 		mode = Mode.LOOT
 		return
-	if _heard_pos != Vector3.INF and _clock - _heard_t < 6.0 and armed and skill > 0.35:
+	if _heard_pos != Vector3.INF and _clock - _heard_t < 6.0 and armed and skill * _t("gunfire", 1.0) > 0.35:
 		_set_dest(_heard_pos)
 		_heard_pos = Vector3.INF
 	mode = Mode.ROAM
@@ -361,8 +387,11 @@ func _find_loot() -> Node3D:
 			continue
 		match p.spec.get("type"):
 			"weapon":
-				if weapons_full and Inventory.weapon_score(p.spec["weapon"]) <= worst * 1.1:
+				var fav: bool = p.spec["weapon"] is WeaponInstance and String((p.spec["weapon"] as WeaponInstance).data.id) == traits.get("favorite", "")
+				if weapons_full and not fav and Inventory.weapon_score(p.spec["weapon"]) <= worst * 1.1:
 					continue
+				if fav:
+					d *= 0.5   # (its favourite gun: worth a longer walk)
 			"ammo":
 				if not _owns_ammo_type(p.spec["ammo_type"]) or me.inventory.ammo[p.spec["ammo_type"]] > 60:
 					continue
@@ -567,14 +596,14 @@ func _fight(delta: float) -> void:
 	var dist := eye.distance_to(tpos)
 
 	# --- positioning
-	var pref := w.data.ai_preferred_range * lerpf(1.2, 0.9, skill)
+	var pref := w.data.ai_preferred_range * lerpf(1.2, 0.9, skill) * _t("range", 1.0)
 	if target.is_player and player_style != "":
 		pref *= 1.6 if player_style == "close" else 0.5   # fight you where your guns are weakest
 	_strafe_t -= delta
 	if _strafe_t <= 0.0:
 		_strafe = -_strafe if randf() < 0.7 else _strafe
-		_strafe_t = randf_range(0.6, 1.8)
-		if randf() < 0.25 * skill and me.is_on_floor():
+		_strafe_t = randf_range(0.6, 1.8) / _t("strafe", 1.0)
+		if randf() < 0.25 * skill * _t("jump", 1.0) and me.is_on_floor():
 			me.want_jump = true
 	var forward := 0.0
 	if not visible or dist > w.data.ai_max_range * 0.8:
@@ -588,14 +617,14 @@ func _fight(delta: float) -> void:
 		elif dist < pref * 0.6 and w.data.id != &"carrot_shotgun":
 			forward = -1.0
 		me.move_input = Vector2(_strafe * lerpf(0.5, 1.0, skill), forward * 0.8)
-		me.want_crouch = skill > 0.7 and dist > 30.0 and randf() < 0.02
+		me.want_crouch = (skill > 0.7 and dist > 30.0 and randf() < 0.02) or (_t("crouch", 0.0) >= 1.0 and forward == 0.0 and dist > 12.0)
 
 	# --- aiming (turn-rate limited, error decays while tracking)
 	var aim := tpos
 	if visible:
 		var lead := target.velocity * (dist / maxf(w.data.projectile_speed, 1.0)) * skill
 		aim += lead
-		if w.data.projectile == WeaponData.ProjectileKind.ROCKET:
+		if w.data.projectile == WeaponData.ProjectileKind.ROCKET or (_t("feet", 0.0) > 0.0 and target.is_on_floor()):
 			aim = target.global_position + Vector3.UP * 0.15 + lead
 		elif randf() < skill * 0.3:
 			aim = target.get_eye_position() + lead
@@ -613,7 +642,7 @@ func _fight(delta: float) -> void:
 
 	# --- point-blank: sometimes a bash with the club beats a shot
 	var flat := Vector2(target.global_position.x - me.global_position.x, target.global_position.z - me.global_position.z).length()
-	if visible and flat < me.melee_reach() * 1.1 and not me.is_swinging() and randf() < 0.05 * skill \
+	if visible and flat < me.melee_reach() * 1.1 and not me.is_swinging() and randf() < 0.05 * skill * _t("melee", 1.0) \
 			and (not target.is_player or _may_shoot_player()):
 		me.want_melee = true
 		return
@@ -631,7 +660,7 @@ func _fight(delta: float) -> void:
 			_burst_t -= delta
 			if _burst_t <= 0.0:
 				_bursting = not _bursting
-				_burst_t = randf_range(0.3, 0.8) * lerpf(0.8, 1.4, skill) if _bursting else randf_range(0.25, 0.6) * lerpf(1.3, 0.8, skill)
+				_burst_t = randf_range(0.3, 0.8) * lerpf(0.8, 1.4, skill) * _t("burst", 1.0) if _bursting else randf_range(0.25, 0.6) * lerpf(1.3, 0.8, skill)
 			me.want_fire = _bursting
 		else:
 			# tap the trigger: press on one tick, release on the next
@@ -657,8 +686,8 @@ func _brawl() -> void:
 ## Only `player_attack_slots` bots shoot at the player at once; a slot is held
 ## while firing and freed 1.5 s after the bot stops.
 func _may_shoot_player() -> bool:
-	if rival:
-		return true   # a rival doesn't wait its turn
+	if rival or traits.get("no_slot", false):
+		return true   # a rival (or a bot you've driven round the bend) doesn't wait its turn
 	var now := Time.get_ticks_msec()
 	var id := get_instance_id()
 	for k in _player_attackers.keys():
@@ -682,7 +711,8 @@ func _pick_weapon_for_range() -> void:
 			continue
 		if dist < w.data.ai_min_range:
 			continue
-		var fit := absf(dist - w.data.ai_preferred_range) / w.data.ai_preferred_range - w.damage_scale() * 0.2
+		var fit := absf(dist - w.data.ai_preferred_range) / w.data.ai_preferred_range - w.damage_scale() * 0.2 \
+			- (0.35 if String(w.data.id) == traits.get("favorite", "") else 0.0)
 		if fit < best_fit:
 			best_fit = fit
 			best = i

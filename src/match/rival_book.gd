@@ -1,12 +1,14 @@
 class_name RivalBook
 extends RefCounted
-## The bots remember you. Every bot is a character with a name and a
-## personality, and this book (saved between runs) keeps the score between
-## each of them and you: how often it has beaten you down, how often you've
-## beaten it, how often you've met. A bot that has beaten you twice (and more
-## often than you've beaten it) becomes your RIVAL: it's always in your next
-## matches, it hunts you, and it taunts you, in its own voice. Beat it and
-## the game tells you about your revenge.
+## The bots remember you. Every bot is a character (Cast: a name, a voice, a
+## way of fighting), and this book (saved between runs) keeps the score
+## between each of them and you: how often it has beaten you down, how often
+## you've beaten it (which radicalises it: Cast.heat), how often you've met.
+## A bot that has beaten you twice (and more often than you've beaten it)
+## becomes your RIVAL: it's always in your next matches, it hunts you, and it
+## taunts you, in its own voice. Beat it and the game tells you about your
+## revenge. Bots also keep grudges against the bots that beat them down, and
+## against the director (the Briar, the pacing), and count their wins.
 ##
 ## Automated test runs use their own file, like Settings.
 
@@ -40,6 +42,14 @@ const PERSONALITIES := {
 		"spot": ["Peekaboo, {you}!", "Knock knock, {you}!", "Tag, you're it!"],
 		"kill": ["Gotcha! {k}–{w}!", "Hehe. Classic {you}.", "Boop! That's {k}."],
 		"lose": ["Ow! Good one!", "Okay, you got me back.", "Rematch? For the laughs?"]},
+	"noble": {"label": "Noble", "skill": 0.05, "aggression": 1.0,
+		"spot": ["Ah, {you}. We meet again.", "Have at thee, {you}!", "I say, {you}, how common of you."],
+		"kill": ["Jolly good show. {k}–{w}.", "Do send my regards to the Burrow, {you}.", "Most unsporting of you to lose."],
+		"lose": ["How frightfully rude.", "I demand satisfaction, {you}!", "Bad form, {you}. Bad form."]},
+	"zen": {"label": "Calm one", "skill": 0.04, "aggression": 0.9,
+		"spot": ["Hello, {you}. Let's begin.", "The carrot finds its mark, {you}.", "Be still, {you}."],
+		"kill": ["It was always going to end this way. {k}–{w}.", "Breathe, {you}. Try again.", "Balance. {k}–{w}."],
+		"lose": ["A good lesson.", "Even the river loses to the rock, sometimes.", "Well struck, {you}."]},
 }
 
 static var _cfg: ConfigFile
@@ -67,8 +77,12 @@ static func reset_for_tests() -> void:
 	save()
 
 
-## The bot's personality: fixed for each name (the same character every run).
+## The bot's voice: its Cast voice (a name from an old save gets one from
+## its name, the same every run).
 static func personality_of(bot: String) -> String:
+	var voice := Cast.voice_of(bot)
+	if voice != "":
+		return voice
 	var ids := PERSONALITIES.keys()
 	return ids[absi(hash(bot)) % ids.size()]
 
@@ -124,6 +138,58 @@ static func note_you_beat(bot: String, species: String) -> bool:
 	_book().set_value(bot, "your_kills", your_kills(bot) + 1)
 	save()
 	return was
+
+
+## Grudges this bot holds against other bots: {name: beat-downs not yet paid back}.
+static func grudges(bot: String) -> Dictionary:
+	return (_book().get_value(bot, "grudges", {}) as Dictionary).duplicate()
+
+
+static func grudge_total(bot: String) -> int:
+	var n := 0
+	for v in grudges(bot).values():
+		n += int(v)
+	return n
+
+
+## A bot beat down another one: the loser holds it against the winner, and
+## if the winner held a grudge against the loser, that's one paid back.
+## Returns true if it was paying one back. (Saved with the match: save().)
+static func note_bot_beat(winner: String, loser: String) -> bool:
+	var theirs := grudges(loser)
+	theirs[winner] = int(theirs.get(winner, 0)) + 1
+	_book().set_value(loser, "grudges", theirs)
+	_book().set_value(winner, "bot_kills", bot_kills(winner) + 1)
+	var mine := grudges(winner)
+	if int(mine.get(loser, 0)) <= 0:
+		return false
+	mine[loser] = int(mine[loser]) - 1
+	if int(mine[loser]) <= 0:
+		mine.erase(loser)
+	_book().set_value(winner, "grudges", mine)
+	return true
+
+
+static func bot_kills(bot: String) -> int:
+	return int(_book().get_value(bot, "bot_kills", 0))
+
+
+## How sore the bot is at the director (the Briar caught it, the pacing
+## softened its hits): see Cast.DEFIANT_AT.
+static func director_grudge(bot: String) -> int:
+	return int(_book().get_value(bot, "director", 0))
+
+
+static func note_director(bot: String, points: int) -> void:
+	_book().set_value(bot, "director", director_grudge(bot) + points)
+
+
+static func wins(bot: String) -> int:
+	return int(_book().get_value(bot, "wins", 0))
+
+
+static func note_win(bot: String) -> void:
+	_book().set_value(bot, "wins", wins(bot) + 1)
 
 
 ## A line in the bot's own voice for an event: "spot", "kill" or "lose".

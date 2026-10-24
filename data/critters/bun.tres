@@ -21,5 +21,3 @@ voice_pitch = 1.15
 wears_acorn_helmet = true
 melee_name = "Barbed-Wire Carrot"
 melee_model = "res://assets/weapons/melee_barbed_carrot.glb"
-spawn_weight = 0.0
-names = PackedStringArray("Bun")

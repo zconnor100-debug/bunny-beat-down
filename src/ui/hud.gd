@@ -188,6 +188,7 @@ func setup(player_: Critter, rig_: CameraRig, mm: MatchManager) -> void:
 
 	Events.critter_died.connect(_on_critter_died)
 	Events.taunt.connect(_on_taunt)
+	Events.headline.connect(_on_headline)
 	Events.rival_news.connect(func(t, sub):
 		_news_frame = Engine.get_process_frames()
 		show_message(t, sub, 4.0))
@@ -417,6 +418,23 @@ func _on_critter_died(victim: Node, info: DamageInfo) -> void:
 
 
 const SPEECH := Color(0.88, 0.72, 1.0)
+const NEWS := Color(1.0, 0.84, 0.42)
+
+
+## Lobby news (MatchManager.headlines, a bot turning radical, a grudge paid back).
+func _on_headline(text: String) -> void:
+	var l := UITheme.label("📣 %s" % text, 19, NEWS)
+	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_feed.add_child(l)
+	while _feed.get_child_count() > 6:
+		var oldest := _feed.get_child(0)
+		_feed.remove_child(oldest)
+		oldest.queue_free()
+	Despawner.after(l, 9.0, func(n: Node):
+		var tw := n.create_tween()
+		tw.tween_property(n, "modulate:a", 0.0, 0.6)
+		tw.tween_callback(n.queue_free))
 
 
 func _on_taunt(c: Node, text: String) -> void:

@@ -21,5 +21,3 @@ voice_pitch = 1.25
 wears_acorn_helmet = false
 melee_name = "Fly Swatter"
 melee_model = "res://assets/weapons/melee_fly_swatter.glb"
-spawn_weight = 0.8
-names = PackedStringArray("Croaker", "Lily Pad Lou", "Hopscotch", "Ribbit", "Sir Toadsworth", "Puddles", "Gulp", "Bog Boss", "Toady McToad")

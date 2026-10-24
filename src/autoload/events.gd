@@ -17,4 +17,5 @@ signal player_hit_confirmed(victim: Node, damage: float, headshot: bool, killed:
 signal taunt(critter: Node, text: String)          ## a bot says something (see RivalBook)
 signal rival_news(text: String, sub: String)        ## a rival turned up, or you got revenge
 signal announce(text: String, sub: String)          ## a big centre-screen message (the Briar's rules...)
+signal headline(text: String)                       ## lobby news in the feed (feuds, bounties, a bot turning radical)
 signal clover_eaten(critter: Node)

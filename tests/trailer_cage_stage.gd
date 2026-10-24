@@ -26,8 +26,8 @@ func _run() -> void:
 	PlayerProfile.reset_for_tests()
 	var fox: CritterDef = load("res://data/critters/fox.tres")
 	var rival_name := ""
-	for n in fox.names:
-		if RivalBook.personality_of(n) == "sneak":
+	for n in Cast.names():
+		if Cast.member(n).species == "fox" and Cast.voice_of(n) == "sneak":
 			rival_name = n
 			break
 	for i in 3:

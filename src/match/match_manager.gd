@@ -26,6 +26,15 @@ var world_root: Node3D
 var _alive_cache := 0
 ## Your rivals (see RivalBook) who made it into this match.
 var rivals_here: Array[Critter] = []
+## The bot with a price on its head this match (the most radical one you've
+## made, or a rival) and the acorns you get for beating it down.
+var bounty_name := ""
+var bounty := 0
+var bounty_paid := false
+var _feuded: Dictionary = {}        # "a|b" -> true (a feud line once per pair a match)
+var _feud_t := -100.0
+var _director_said: Dictionary = {}   # bot -> true (it cursed the director this match)
+var _was_shrinking := false
 ## The director: bots that learn you (see PlayerProfile). Camping draws
 ## hunters, a hot streak makes the bots sharpen up for a while.
 const CAMP_RADIUS := 14.0
@@ -75,26 +84,18 @@ func setup(world_root_: Node3D, island_: Island, opponents: int, difficulty: int
 	AIBrain.player_attack_slots = [1, 2, 3][d]
 	AIBrain.damage_to_player = [0.45, 0.65, 0.85][d]
 	_spawn_loot()
-	var defs := _available_defs()
-	var used_names := {}
-	# your rivals always come back for more (up to three of them)
-	var roster := []
-	for r in RivalBook.rivals():
-		if roster.size() >= mini(3, opponents):
-			break
-		for rd in defs:
-			if String(rd.id) == r[1] and Array(rd.names).has(r[0]):
-				roster.append([rd, r[0]])
-				used_names[r[0]] = true
-	while roster.size() < opponents:
-		var def: CritterDef = _pick_def(defs)
-		roster.append([def, _unique_name(def, used_names)])
-	for entry in roster:
-		var def: CritterDef = entry[0]
-		var n: String = entry[1]
+	var defs := {}
+	for cd in _available_defs():
+		defs[String(cd.id)] = cd
+	# the cast (Cast): your rivals and the bots you've made radical always
+	# come back for more, then the ones with grudges, then anyone
+	for n in Cast.lineup(opponents, rng):
+		var def: CritterDef = defs.get(Cast.member(n).species)
+		if def == null:
+			continue
 		var c := _spawn_critter(def, n)
 		var rival := RivalBook.is_rival(n)
-		c.visual.set_enemy_highlight(n, rival)
+		c.visual.set_enemy_highlight(Cast.title(n), rival, Cast.heat(n))
 		if rival:
 			rivals_here.append(c)
 		RivalBook.note_meeting(n, String(def.id))
@@ -107,9 +108,15 @@ func setup(world_root_: Node3D, island_: Island, opponents: int, difficulty: int
 		AIBrain.player_style = PlayerProfile.fighting_style()
 		brain.personality = RivalBook.personality_of(n)
 		brain.rival = rival
+		brain.traits = Cast.traits_for(n)
+		brain.grudges = RivalBook.grudges(n)
+		var heat := Cast.heat(n)
 		var p: Dictionary = RivalBook.PERSONALITIES[brain.personality]
-		brain.skill = clampf(_skill_for(difficulty) + rng.randf_range(-0.12, 0.12) + float(p.skill) + (0.06 if rival else 0.0), 0.05, 0.98)
+		brain.skill = clampf(_skill_for(difficulty) + rng.randf_range(-0.12, 0.12) + float(p.skill) + (0.06 if rival else 0.0) + 0.04 * heat, 0.05, 0.98)
+		c.defies_director = brain.traits.get("defiant", false)
 		c.add_child(brain)
+		_heat_loadout(c, n, heat)
+	_choose_bounty()
 	RivalBook.save()
 	total = critters.size() + 1   # + the player, who joins after picking a critter
 	_alive_cache = total
@@ -152,6 +159,71 @@ func _apply_perks(p: Critter) -> void:
 		p.inventory.add_ammo(w.data.ammo_type, Inventory.AMMO_PICKUP[w.data.ammo_type] * 2)
 
 
+## A bot you've radicalised comes prepared: from Vengeful on it drops in with
+## its favourite gun (better the angrier it is), from Unhinged in armour.
+func _heat_loadout(c: Critter, n: String, heat: int) -> void:
+	if heat >= 2:
+		var data := WeaponDB.get_weapon(StringName(Cast.member(n).weapon))
+		if data:
+			var tier: int = [Rarity.Tier.GARDEN, Rarity.Tier.PRIZE, Rarity.Tier.HEIRLOOM][clampi(heat - 2, 0, 2)]
+			c.give_weapon(WeaponInstance.new(data, tier))
+			c.inventory.add_ammo(data.ammo_type, Inventory.AMMO_PICKUP[data.ammo_type] * 2)
+	if heat >= 3:
+		c.armor = 50.0 if heat == 3 else 100.0
+
+
+## The bounty: the most radical bot you've made (Vengeful or worse), else
+## your worst rival, is worth acorns this match.
+func _choose_bounty() -> void:
+	var best := -1.0
+	for c in critters:
+		var n := c.display_name
+		var worth := Cast.heat(n) * 10.0 + (8.0 if RivalBook.is_rival(n) else 0.0) + RivalBook.kills_on_you(n)
+		if (Cast.heat(n) >= 2 or RivalBook.is_rival(n)) and worth > best:
+			best = worth
+			bounty_name = n
+	if bounty_name != "":
+		bounty = 15 + 10 * Cast.heat(bounty_name) + (10 if RivalBook.is_rival(bounty_name) else 0)
+
+
+## The lobby's news, for the feed as the drop starts: who you've made
+## radical, who's feuding with whom, who's furious with the director, and
+## the bounty.
+func headlines() -> Array:
+	var out := []
+	var here := critters.filter(func(c): return is_instance_valid(c) and c != player).map(func(c): return c.display_name)
+	var hot := here.filter(func(n): return Cast.heat(n) >= 2)
+	hot.sort_custom(func(a, b): return Cast.heat(a) > Cast.heat(b))
+	for n in hot.slice(0, 2):
+		out.append("%s is here. You've beaten them down %d times." % [Cast.title(n), RivalBook.your_kills(n)])
+	var feuds := []
+	for n in here:
+		var g := RivalBook.grudges(n)
+		for other in g:
+			if other in here:
+				feuds.append([int(g[other]), n, other])
+	feuds.sort_custom(func(a, b): return a[0] > b[0])
+	for f in feuds.slice(0, 2):
+		out.append("%s has a score to settle with %s." % [f[1], f[2]])
+	var angry := here.filter(func(n): return RivalBook.director_grudge(n) >= Cast.DEFIANT_AT)
+	if not angry.is_empty():
+		out.append("%s is furious with the director, and won't play by its rules." % angry[0])
+	if bounty_name != "":
+		out.append("BOUNTY: %s. Beat them down for %d acorns." % [Cast.title(bounty_name), bounty])
+	return out
+
+
+## A bot spots one it holds a grudge against: it says so (once per pair a
+## match, and not too often across the lobby).
+func feud(c: Critter, other: Critter) -> void:
+	var key := "%s|%s" % [c.display_name, other.display_name]
+	if _feuded.has(key) or _clock - _feud_t < 6.0 or player == null:
+		return
+	_feuded[key] = true
+	_feud_t = _clock
+	Events.taunt.emit(c, Cast.pick(Cast.FEUD_LINES, rng, {"them": other.display_name}))
+
+
 func _available_defs() -> Array[CritterDef]:
 	var out: Array[CritterDef] = []
 	for id in CRITTER_DEFS:
@@ -159,34 +231,6 @@ func _available_defs() -> Array[CritterDef]:
 		if d:
 			out.append(d)
 	return out
-
-
-func _pick_def(defs: Array[CritterDef]) -> CritterDef:
-	var total_w := 0.0
-	for d in defs:
-		total_w += d.spawn_weight
-	var r := rng.randf() * total_w
-	for d in defs:
-		r -= d.spawn_weight
-		if r <= 0.0:
-			return d
-	return defs.back()
-
-
-func _unique_name(def: CritterDef, used: Dictionary) -> String:
-	var options: Array = Array(def.names) if not def.names.is_empty() else [def.display_name]
-	options.shuffle()
-	for n in options:
-		if not used.has(n):
-			used[n] = true
-			return n
-	var base: String = options[0]
-	var k := 2
-	while used.has("%s %d" % [base, k]):
-		k += 1
-	var n2 := "%s %d" % [base, k]
-	used[n2] = true
-	return n2
 
 
 static func _skill_for(difficulty: int) -> float:
@@ -291,15 +335,34 @@ func begin_drop() -> void:
 			brain.drop_progress = clampf(dropship.progress_nearest(spot) + rng.randf_range(-0.06, 0.03), 0.02, 0.98)
 	dropship.launch()
 	_set_phase(Phase.DROPPING)
+	# the lobby's news, a line at a time once everyone's aboard
+	var news := headlines()
+	for i in news.size():
+		get_tree().create_timer(4.0 + i * 2.5).timeout.connect(func(): Events.headline.emit(news[i]))
 
 
 func _exit_tree() -> void:
 	AIBrain.kills_held = false   # (a static: no holding back outside a match)
+	RivalBook.save()             # (the bots' grudges and wins from this match)
+
+
+## The Briar closes in: a bot sore at the director lets it know (once a match).
+func _on_briar_moves(shrinking: bool) -> void:
+	if shrinking and player:
+		var sore := alive_critters().filter(func(c): return c != player and not _director_said.has(c.display_name) \
+			and RivalBook.director_grudge(c.display_name) >= 2)
+		if not sore.is_empty():
+			var c: Critter = sore[rng.randi() % sore.size()]
+			_director_said[c.display_name] = true
+			Events.taunt.emit(c, Cast.pick(Cast.DIRECTOR_LINES, rng))
+	_was_shrinking = shrinking
 
 
 func _process(delta: float) -> void:
 	_clock += delta
 	AIBrain.kills_held = not bots_may_kill()
+	if storm and storm.shrinking != _was_shrinking:
+		_on_briar_moves(storm.shrinking)
 	if phase == Phase.PLAYING:
 		_direct(delta)
 		_supply_t += delta
@@ -419,8 +482,11 @@ func _jump_buddies() -> void:
 	var aboard := critters.filter(func(c): return c != player and c.state == Critter.State.IN_DROPSHIP and c.has_node("AIBrain"))
 	if aboard.is_empty():
 		return
-	# the ones who meant to jump around here anyway go first
-	aboard.sort_custom(func(a, b): return absf(a.get_node("AIBrain").drop_progress - dropship.progress) < absf(b.get_node("AIBrain").drop_progress - dropship.progress))
+	# bots you've made radical jump after you; then the ones who meant to
+	# jump around here anyway
+	var order := func(c: Critter) -> float:
+		return absf(c.get_node("AIBrain").drop_progress - dropship.progress) - (10.0 if c.get_node("AIBrain").traits.get("hunts_you", false) else 0.0)
+	aboard.sort_custom(func(a, b): return order.call(a) < order.call(b))
 	var under := dropship.global_position
 	var fwd := (dropship.finish - dropship.start).normalized()
 	for i in mini(rng.randi_range(JUMP_BUDDIES.x, JUMP_BUDDIES.y), aboard.size()):
@@ -450,11 +516,25 @@ func _on_critter_died(victim: Node, info: DamageInfo) -> void:
 		taunt(killer, "kill")
 	elif killer == player and c != player:
 		_note_player_kill(info)
+		var heat_was := Cast.heat(c.display_name)
 		if RivalBook.note_you_beat(c.display_name, String(c.def.id)):
 			revenges += 1
 			Events.rival_news.emit("REVENGE!", "You beat down your rival %s — now %s" % [c.display_name, RivalBook.score(c.display_name)])
-		if c.display_name in _rival_names() or rng.randf() < 0.35:
+		elif c.display_name == bounty_name and not bounty_paid:
+			bounty_paid = true
+			Events.rival_news.emit("BOUNTY!", "You beat down %s: +%d acorns" % [c.display_name, bounty])
+		var heat_now := Cast.heat(c.display_name)
+		if heat_now > heat_was:
+			Events.headline.emit("%s won't forget this. They're %s now." % [c.display_name, Cast.HEAT_LABELS[heat_now]])
+		if c.display_name in _rival_names() or heat_now >= 2 or rng.randf() < 0.35:
 			taunt(c, "lose")
+	elif killer and killer != c and c != player:
+		# bots keep score among themselves too
+		if RivalBook.note_bot_beat(killer.display_name, c.display_name):
+			Events.headline.emit("%s got even with %s." % [killer.display_name, c.display_name])
+	if c != player and info.kind == DamageInfo.Kind.STORM:
+		RivalBook.note_director(c.display_name, 2)   # (the Briar took it: the director's fault)
+
 	if alive.size() <= 1 and phase != Phase.ENDED and kill_cam:
 		kill_cam.note_final(c, info)   # (before anyone hears the match is over)
 	if c == player:
@@ -463,6 +543,8 @@ func _on_critter_died(victim: Node, info: DamageInfo) -> void:
 		var winner: Critter = alive[0] if alive.size() == 1 else null
 		if winner:
 			winner.placement = 1
+			if winner != player:
+				RivalBook.note_win(winner.display_name)
 		_set_phase(Phase.ENDED)
 		storm.active = false
 		finished.emit(winner, player.placement if not player.alive else 1)
@@ -480,7 +562,14 @@ func taunt(c: Critter, event: String) -> void:
 	if event == "spot" and _taunted.has(key):
 		return
 	_taunted[key] = true
-	Events.taunt.emit(c, RivalBook.line(c.display_name, event, String(player.def.display_name), rng))
+	var you := String(player.def.display_name)
+	# a radical bot sounds it; otherwise its own voice, or now and then its own line
+	var said := Cast.heat_line(c.display_name, event, you, rng) if rng.randf() < 0.75 else ""
+	if said == "" and event == "spot" and rng.randf() < 0.4:
+		said = Cast.member(c.display_name).get("says", "")
+	if said == "":
+		said = RivalBook.line(c.display_name, event, you, rng)
+	Events.taunt.emit(c, said)
 
 
 func alive_critters() -> Array[Critter]:

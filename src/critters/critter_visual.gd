@@ -295,7 +295,8 @@ var _reveal_tween: Tween
 
 ## Warm rim light + a name tag above the head (only within NAME_TAG_RANGE, and
 ## hidden behind cover by the depth test) so opponents are easy to pick out.
-func set_enemy_highlight(display_name: String, rival := false) -> void:
+## `heat`: how radical you've made this bot (Cast.heat): its tag turns hotter.
+func set_enemy_highlight(display_name: String, rival := false, heat := 0) -> void:
 	if _enemy_rim == null:
 		_enemy_rim = ShaderMaterial.new()
 		_enemy_rim.shader = ENEMY_RIM_SHADER
@@ -317,6 +318,9 @@ func set_enemy_highlight(display_name: String, rival := false) -> void:
 		name_tag.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		add_child(name_tag)
 	name_tag.text = ("⚔ RIVAL %s" if rival else "▼ %s") % display_name
+	name_tag.modulate = Cast.HEAT_COLORS[clampi(heat, 0, Cast.HEAT_COLORS.size() - 1)]
+	if heat >= 3:
+		name_tag.font_size = 34
 	if rival:
 		name_tag.modulate = Color(0.85, 0.45, 1.0)
 	name_tag.position = Vector3(0, (rig.world_head_top if rig else 1.2) + 0.35, 0)

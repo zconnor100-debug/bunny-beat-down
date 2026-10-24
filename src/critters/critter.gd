@@ -87,6 +87,9 @@ var slow_factor := 1.0              ## the Sticky Briar's thorns set this (1 = n
 var jump_scale := 1.0
 var reload_scale := 1.0
 var second_wind := false
+## A bot sore enough at the director (Cast.DEFIANT_AT) that its hits on
+## other bots aren't softened by the director's pacing.
+var defies_director := false
 ## Glass Cannon: the player deals and takes half as much again.
 static var glass_cannon := false
 var _water_level := -INF
@@ -831,8 +834,12 @@ func take_damage(info: DamageInfo) -> void:
 		info.amount *= AIBrain.damage_to_player   # bots hit softer than they look (per difficulty)
 	elif not is_player and info.attacker is Critter and info.attacker != self and not (info.attacker as Critter).is_player:
 		info.amount *= AIBrain.DAMAGE_BETWEEN_BOTS   # (their scraps last, so there's a lobby left to meet)
-		if AIBrain.kills_held:
+		var hitter := info.attacker as Critter
+		if AIBrain.kills_held and not hitter.defies_director:
 			info.amount *= AIBrain.HELD_DAMAGE   # (the director: the lobby's thinning too fast)
+			if not hitter.has_meta(&"softened"):
+				hitter.set_meta(&"softened", true)   # (and the bot holds it against the director)
+				RivalBook.note_director(hitter.display_name, 1)
 	if glass_cannon and (is_player or (info.attacker is Critter and (info.attacker as Critter).is_player and info.attacker != self)):
 		info.amount *= 1.5
 	var dmg := info.amount

@@ -35,9 +35,6 @@ enum JumpStyle {
 ## The species' own club, pulled out to fight with bare paws.
 @export var melee_name := "Club"
 @export_file("*.glb") var melee_model := ""
-@export var spawn_weight := 1.0
-## Names the AI critters of this species pick from.
-@export var names: PackedStringArray = []
 
 const FALLBACK_MODEL := "res://assets/test/test_critter.glb"
 const FALLBACK_RIG := "res://assets/test/test_critter.rig.json"
