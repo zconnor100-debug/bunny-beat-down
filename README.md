@@ -19,14 +19,14 @@ Built in **Godot 4.6** (GDScript, Jolt physics, Forward+).
 ▶ **[Watch the 30-second trailer](docs/trailer.mp4)** (with sound): a rival
 sneaks up on you, you rewind, and this time you turn around.
 
-▶ **[The Hamster Cage cut](https://github.com/zconnor100-debug/bunny-beat-down/releases/download/v0.4.0/trailer_hamster_cage.mp4)**: up the Hamster
+▶ **[The Hamster Cage cut](https://github.com/zconnor100-debug/bunny-beat-down/releases/download/v0.5.0/trailer_hamster_cage.mp4)**: up the Hamster
 Gym's see-through tubes, a rewind you can watch, and the final shot slowed
-down and replayed. There's also a **[vertical phone cut](https://github.com/zconnor100-debug/bunny-beat-down/releases/download/v0.4.0/trailer_hamster_cage_vertical.mp4)**.
+down and replayed. There's also a **[vertical phone cut](https://github.com/zconnor100-debug/bunny-beat-down/releases/download/v0.5.0/trailer_hamster_cage_vertical.mp4)**.
 
-▶ **[The Toy Box Bash cut](https://github.com/zconnor100-debug/bunny-beat-down/releases/download/v0.4.0/trailer_toybox.mp4)**: a paper-airplane
+▶ **[The Toy Box Bash cut](https://github.com/zconnor100-debug/bunny-beat-down/releases/download/v0.5.0/trailer_toybox.mp4)**: a paper-airplane
 drop, a ride on the toy train, the rewind running the whole train backwards,
 and the final shot replayed from three angles. There's a
-**[vertical phone cut](https://github.com/zconnor100-debug/bunny-beat-down/releases/download/v0.4.0/trailer_toybox_vertical.mp4)** of it too.
+**[vertical phone cut](https://github.com/zconnor100-debug/bunny-beat-down/releases/download/v0.5.0/trailer_toybox_vertical.mp4)** of it too.
 
 ![Trailer: a rival fox creeps up on Bun, a rewind, and revenge](docs/screenshots/trailer.gif)
 
