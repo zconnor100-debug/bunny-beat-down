@@ -140,8 +140,6 @@ func test_train_riders_shoot_and_rewind() -> void:
 	train.running = false
 	await wait_physics(2)
 	var car := train.cars[3]
-	for c in [me, bot]:
-		(c as Critter)._set_state(Critter.State.GROUND)
 	me.place_at(car.global_position + Vector3.UP * (ToyTrain.DECK + 0.6), 0.0)
 	bot.place_at(train.cars[4].global_position + Vector3.UP * (ToyTrain.DECK + 0.6), 0.0)
 	await wait_physics(40)
@@ -205,6 +203,31 @@ func test_train_riders_shoot_and_rewind() -> void:
 		await wait_physics(30)
 		var after := me.global_position.distance_to(car.global_position)
 		check(after < 7.0 and car.sync_to_physics, "after the replay, the train runs on with Bun aboard (%.1f m)" % after)
+
+
+## A real match waits on the critter picker before anyone boards. The bots
+## mustn't come to harm meanwhile: the Toy Box floor is 4 m up, and bots left
+## standing at the origin fell out of the world while you picked, so the
+## match was over (1 critter left) before you dropped in.
+func test_bots_wait_safely_while_you_pick() -> void:
+	await _make_toybox(false)
+	add_child(FX.new())
+	add_child(Projectiles.new())
+	PlayerProfile.reset_for_tests()
+	RivalBook.reset_for_tests()
+	var mm := MatchManager.new()
+	add_child(mm)
+	mm.setup(self, toy, 6, 1, 4242)
+	var ended := []
+	mm.finished.connect(func(_w, p): ended.append(p))
+	await wait_physics(240)
+	var alive := mm.alive_critters().size()
+	check(alive == 6, "every bot is still there after four seconds on the picker (%d of 6)" % alive)
+	check(ended.is_empty() and mm.phase != MatchManager.Phase.ENDED, "and the match hasn't ended without you")
+	mm.spawn_player(load(BUN), "default")
+	mm.begin_drop()
+	await wait_physics(2)
+	check(mm.dropship.passengers.size() == 7, "all seven board the drop vehicle (%d)" % mm.dropship.passengers.size())
 
 
 func test_fishbowl_swim() -> void:

@@ -20,6 +20,9 @@ const GLIDE_SPEED := 11.0
 const FREEFALL_STEER := 14.0
 const AUTO_GLIDE_HEIGHT := 28.0
 const CORPSE_LIFETIME := 75.0
+## Where a critter waits to board the drop vehicle: far below every map, so
+## it can't fall out of the world or get in anyone's way meanwhile.
+const PARKED := Vector3(0.0, -1000.0, 0.0)
 # melee: each species swings its own club (a gun in the paws is stowed for it)
 const MELEE_TIME := 0.55          ## one swing: wind-up, strike, recover
 const MELEE_HIT_AT := 0.29        ## fraction of the swing when the club connects (level with the chest)
@@ -549,10 +552,15 @@ func board_dropship() -> void:
 	_set_state(State.IN_DROPSHIP)
 	visible = false
 	velocity = Vector3.ZERO
+	global_position = PARKED
 
 
-## Teleport without interpolation smear.
+## Teleport without interpolation smear. A critter still waiting to board
+## (see MatchManager) is put down on its feet there.
 func place_at(pos: Vector3, yaw := 0.0) -> void:
+	if state == State.IN_DROPSHIP:
+		_set_state(State.GROUND)
+		visible = true
 	global_position = pos
 	rotation.y = yaw
 	look_yaw = yaw

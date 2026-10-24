@@ -203,6 +203,10 @@ func _spawn_critter(def: CritterDef, display: String) -> Critter:
 	c.name = "Critter_%s" % display.replace(" ", "_")
 	world_root.add_child(c)
 	critters.append(c)
+	# everyone waits, parked out of harm's way, until the drop vehicle takes
+	# them (while you pick your critter: left standing at the origin, bots fell
+	# out of any map with no floor there, the Toy Box's being 4 m up)
+	c.board_dropship()
 	return c
 
 
@@ -432,6 +436,8 @@ func _on_critter_died(victim: Node, info: DamageInfo) -> void:
 	c.placement = alive.size() + 1
 	_alive_cache = alive.size()
 	Events.alive_count_changed.emit(alive.size(), total)
+	if player == null:
+		return   # (no match ends before you've joined it)
 	var killer := info.attacker as Critter
 	if c == player and killer and killer != player:
 		if RivalBook.note_you_died_to(killer.display_name, String(killer.def.id)):
