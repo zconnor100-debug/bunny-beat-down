@@ -22,6 +22,20 @@ static func soft_blob() -> Texture2D:
 	return _cache["blob"]
 
 
+## A soft streak for wind ribbons (particle trails): it fades across its
+## width and toward both ends (u across the ribbon, v along it).
+static func streak() -> Texture2D:
+	if not _cache.has("streak"):
+		var img := Image.create(16, 64, false, Image.FORMAT_RGBA8)
+		for y in 64:
+			var along := sin(PI * (y + 0.5) / 64.0)
+			for x in 16:
+				var across := 1.0 - pow(absf((x + 0.5) / 8.0 - 1.0), 2.0)
+				img.set_pixel(x, y, Color(1, 1, 1, along * along * across))
+		_cache["streak"] = ImageTexture.create_from_image(img)
+	return _cache["streak"]
+
+
 ## Irregular splat: a core blob, satellite droplets and a few streaks.
 ## `variant` seeds the shape so a handful of variants can be cached.
 static func splat(variant: int, color: Color) -> Texture2D:

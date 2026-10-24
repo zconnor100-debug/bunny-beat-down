@@ -48,6 +48,23 @@ func _run() -> void:
 		if only == "fridge":
 			get_tree().quit()
 			return
+	if only == "winter":
+		# the cold corner: the open fridge from critter height, the wind and
+		# snow over the drifts, the icicles from below, and the whole corner
+		_look(Vector3(300, 30, -200), Vector3(440, 120, -500), 70.0)
+		await _wait(2.0)
+		await _snap("55a_winter_fridge")
+		_look(Vector3(260, 14, -120), Vector3(420, 40, -330), 70.0)
+		await _wait(0.6)
+		await _snap("55b_winter_snow")
+		_look(Vector3(470, 20, -250), Vector3(540, 130, -395), 65.0)
+		await _wait(0.6)
+		await _snap("55c_winter_icicles")
+		_look(Vector3(60, 260, 120), Vector3(420, 60, -320), 60.0)
+		await _wait(0.6)
+		await _snap("55d_winter_wide")
+		get_tree().quit()
+		return
 	if only == "":
 		_look(Vector3(0, 1300, 1), Vector3.ZERO, 60.0)
 		await _wait(1.5)

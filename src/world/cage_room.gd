@@ -3,10 +3,11 @@ extends RefCounted
 ## Everything around the hamster cage's floor: the glass TANK (four panes,
 ## solid, with black plastic trim top and bottom), the human ROOM it stands
 ## in (a wooden floor, cream walls, a sunny window with curtains, a couch, a
-## ceiling lamp) and the giant FRIDGE behind the north wall, left open: its
-## lit shelves full of enormous food, cold light and mist spilling over the
-## glass into the winter corner, icicles and falling snow. Only the glass is
-## solid; the room is scenery (nobody can get out to it).
+## ceiling lamp) and the giant FRIDGE behind the north wall, its door swung
+## wide open: lit shelves full of enormous food, cold light, frosty wind and
+## mist pouring over the glass into the winter corner, big icicles, and snow
+## falling in that corner only. Only the glass is solid; the room is scenery
+## (nobody can get out to it).
 
 const GLASS_TOP := 150.0
 const ROOM_FLOOR := -12.0
@@ -20,6 +21,10 @@ const FRIDGE_DEPTH := 340.0
 const FRIDGE_TOP := 748.0
 const ROOM := Rect2(-1500.0, -840.0, 2900.0, 2340.0)   ## x, z extents of the room
 const CEILING := 1400.0
+## The icicles grow this much longer and thicker than their rng draws (kept
+## as they were, so the map's layout from a seed doesn't change).
+const ICICLE_LENGTH := 2.4
+const ICICLE_GIRTH := 1.8
 
 
 static func build_tank(parent: Node3D, rng: RandomNumberGenerator) -> void:
@@ -241,10 +246,13 @@ static func build_fridge(parent: Node3D, rng: RandomNumberGenerator) -> void:
 	for i in 5:
 		var at := Vector3(cr - 45.0 + (i % 3) * 45.0, floor_y, zc + 60.0 - int(i / 3) * 55.0 - (i % 2) * 15.0)
 		_food(food, "food_apple" if i % 2 == 0 else "food_orange", at, i * 1.3, 0.95)
-	# the door: hinged on the east edge and swung wide open, away from the tank
+	# the door: hinged on the east edge and swung open into the room, square
+	# to the fridge, standing just east of the tank (any further round, it
+	# would go through the glass) with its bins of sauces facing the winter
+	# corner through the east pane
 	var hinge := Vector3(xb, 0.0, zf)
-	var open := deg_to_rad(105.0)
-	var door := Basis(Vector3.UP, -open)
+	var open := deg_to_rad(90.0)
+	var door := Basis(Vector3.UP, open)
 	var dh := split - base - 8.0
 	var dcen := hinge + door * Vector3(-w * 0.5, 0, 14.0) + Vector3.UP * (base + dh * 0.5)
 	k._box(&"enamel", dcen, Vector3(w, dh, 28.0), door, false)
@@ -258,10 +266,11 @@ static func build_fridge(parent: Node3D, rng: RandomNumberGenerator) -> void:
 			var bx := -w * 0.5 + (j - 1) * 90.0
 			var bottle: String = ["food_sauce_chili", "food_sauce_mustard", "food_sauce_mayo"][(i + j) % 3]
 			var bp := hinge + door * Vector3(bx, 0, -40.0) + Vector3.UP * (y - 16.0)
-			_food(food, bottle, bp, -open + (j - 1) * 0.4, 0.85 + j * 0.08)
+			_food(food, bottle, bp, -open + (j - 1) * 0.4, 0.85 + j * 0.08)   # (labels out, toward the tank)
 	parent.add_child(k.made_as("cage/fridge").finish())
-	# the cold: a bluish light from inside, mist rolling out over the glass,
-	# and snow falling in the winter corner
+	# the cold: a bluish light from inside, frosty wind and mist pouring out
+	# over the glass and down into the winter corner, gusts curling over the
+	# drifts, and snow falling in that corner only
 	var light := OmniLight3D.new()
 	light.name = "FridgeLight"
 	light.light_color = Color(0.82, 0.92, 1.0)
@@ -272,7 +281,13 @@ static func build_fridge(parent: Node3D, rng: RandomNumberGenerator) -> void:
 	parent.add_child(light)
 	light.position = Vector3(xc, (iy0 + iy1) * 0.5, zf - 60.0)
 	_mist(parent, Vector3(xc - 40.0, 175.0, zf + 6.0), Vector3(150.0, 30.0, 4.0))
-	_snowfall(parent, Vector3(CageFloor.WINTER_AT.x - 20.0, 140.0, CageFloor.WINTER_AT.y + 60.0), Vector3(210.0, 4.0, 150.0))
+	# (and spilling down the inside of the north pane, a cold-air waterfall)
+	_mist(parent, Vector3(xc, 128.0, -CageFloor.HZ + 12.0), Vector3(140.0, 18.0, 6.0), Vector3(0, -1, 0.35), 2.5, 90)
+	var wa := CageFloor.WINTER_AT
+	_wind(parent, "FridgeWind", Vector3(xc, 235.0, zf - 8.0), Vector3(160.0, 70.0, 6.0), Vector3(0, 0.1, 1), Vector2(38.0, 55.0), 22.0, 5.0, 56, 5.0, 0.62)
+	_wind(parent, "WinterGusts", Vector3(wa.x - 20.0, 7.0, wa.y - 30.0), Vector3(150.0, 5.0, 80.0), Vector3(-0.45, 0.03, 1), Vector2(28.0, 42.0), 0.0, 3.6, 80, 3.6, 0.8)
+	_snowfall(parent, Vector3(wa.x - 20.0, 140.0, wa.y + 60.0), Vector3(210.0, 4.0, 150.0))
+	parent.add_child(NearSnow.make(wa, CageFloor.WINTER_R * 0.85, 0.0, Vector3(-0.6, 0, 1.2)))
 
 
 ## One of the fridge's foods (an env model), standing at `at`.
@@ -296,34 +311,34 @@ static func build_icicles(parent: Node3D, rng: RandomNumberGenerator) -> void:
 	while x < hx:
 		var len := rng.randf_range(4.0, 22.0) * smoothstep(80.0, 300.0, x)
 		if len > 1.5:
-			var at := Vector3(x, y, -hz + 1.2)
-			k._cone(&"ice", at, at + Vector3(rng.randf_range(-0.5, 0.5), -len, 0.5), rng.randf_range(0.8, 1.8))
+			var at := Vector3(x, y, -hz + 1.2 * ICICLE_GIRTH)
+			k._cone(&"ice", at, at + Vector3(rng.randf_range(-0.5, 0.5), -len * ICICLE_LENGTH, 0.5), rng.randf_range(0.8, 1.8) * ICICLE_GIRTH)
 		x += rng.randf_range(4.0, 11.0)
 	var z := -hz
 	while z < 40.0:
 		var len := rng.randf_range(4.0, 22.0) * smoothstep(60.0, -200.0, z)
 		if len > 1.5:
-			var at := Vector3(hx - 1.2, y, z)
-			k._cone(&"ice", at, at + Vector3(-0.5, -len, rng.randf_range(-0.5, 0.5)), rng.randf_range(0.8, 1.8))
+			var at := Vector3(hx - 1.2 * ICICLE_GIRTH, y, z)
+			k._cone(&"ice", at, at + Vector3(-0.5, -len * ICICLE_LENGTH, rng.randf_range(-0.5, 0.5)), rng.randf_range(0.8, 1.8) * ICICLE_GIRTH)
 		z += rng.randf_range(4.0, 11.0)
 	parent.add_child(k.made_as("cage/icicles").finish())
 
 
-static func _mist(parent: Node3D, at: Vector3, extents: Vector3) -> void:
+static func _mist(parent: Node3D, at: Vector3, extents: Vector3, dir := Vector3(0, -0.15, 1), fall := 1.2, amount := 160) -> void:
 	var p := GPUParticles3D.new()
 	p.name = "FridgeMist"
-	p.amount = 140
+	p.amount = amount
 	p.lifetime = 26.0
 	p.preprocess = 26.0
 	p.visibility_aabb = AABB(Vector3(-700, -400, -200), Vector3(1400, 800, 900))
 	var pm := ParticleProcessMaterial.new()
 	pm.emission_shape = ParticleProcessMaterial.EMISSION_SHAPE_BOX
 	pm.emission_box_extents = extents
-	pm.direction = Vector3(0, -0.15, 1)
+	pm.direction = dir
 	pm.spread = 18.0
 	pm.initial_velocity_min = 7.0
 	pm.initial_velocity_max = 12.0
-	pm.gravity = Vector3(0, -1.2, 0)
+	pm.gravity = Vector3(0, -fall, 0)
 	pm.damping_min = 0.15
 	pm.damping_max = 0.3
 	pm.scale_min = 0.6
@@ -341,7 +356,7 @@ static func _mist(parent: Node3D, at: Vector3, extents: Vector3) -> void:
 	quad.size = Vector2(70.0, 45.0)
 	var m := StandardMaterial3D.new()
 	m.albedo_texture = FXTextures.soft_blob()
-	m.albedo_color = Color(0.92, 0.97, 1.0, 0.13)
+	m.albedo_color = Color(0.92, 0.97, 1.0, 0.17)
 	m.vertex_color_use_as_albedo = true
 	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
@@ -354,10 +369,62 @@ static func _mist(parent: Node3D, at: Vector3, extents: Vector3) -> void:
 	p.position = at
 
 
+## Wind you can see: soft, pale icy-blue ribbons (particle trails, so they
+## show against the snow) blown along `dir` from a box at `at` in smooth arcs;
+## `fall` bends them down (cold air sinks), and each fades in and out over
+## its `life`. (No turbulence: it kinks the trails into zigzags.)
+static func _wind(parent: Node3D, name_: String, at: Vector3, extents: Vector3, dir: Vector3, speed: Vector2, fall: float,
+		life: float, amount: int, width: float, alpha := 0.6) -> void:
+	var p := GPUParticles3D.new()
+	p.name = name_
+	p.amount = amount
+	p.lifetime = life
+	p.preprocess = life
+	p.trail_enabled = true
+	p.trail_lifetime = 1.0
+	p.visibility_aabb = AABB(Vector3(-500, -300, -150), Vector3(1000, 450, 650))
+	var pm := ParticleProcessMaterial.new()
+	pm.emission_shape = ParticleProcessMaterial.EMISSION_SHAPE_BOX
+	pm.emission_box_extents = extents
+	pm.direction = dir.normalized()
+	pm.spread = 9.0
+	pm.initial_velocity_min = speed.x
+	pm.initial_velocity_max = speed.y
+	pm.gravity = Vector3(0, -fall, 0)
+	var fade := Gradient.new()
+	fade.set_color(0, Color(1, 1, 1, 0.0))
+	fade.set_color(1, Color(1, 1, 1, 0.0))
+	fade.add_point(0.15, Color(1, 1, 1, 1.0))
+	fade.add_point(0.7, Color(1, 1, 1, 0.8))
+	var ramp := GradientTexture1D.new()
+	ramp.gradient = fade
+	pm.color_ramp = ramp
+	p.process_material = pm
+	var ribbon := RibbonTrailMesh.new()
+	ribbon.shape = RibbonTrailMesh.SHAPE_CROSS
+	ribbon.size = width
+	ribbon.sections = 10
+	ribbon.section_segments = 2
+	var m := StandardMaterial3D.new()
+	m.use_particle_trails = true
+	m.albedo_texture = FXTextures.streak()
+	m.albedo_color = Color(0.64, 0.8, 1.0, alpha)
+	m.vertex_color_use_as_albedo = true
+	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	m.cull_mode = BaseMaterial3D.CULL_DISABLED
+	m.depth_draw_mode = BaseMaterial3D.DEPTH_DRAW_DISABLED
+	ribbon.material = m
+	p.draw_pass_1 = ribbon
+	p.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	parent.add_child(p)
+	p.position = at
+
+
 static func _snowfall(parent: Node3D, at: Vector3, extents: Vector3) -> void:
 	var p := GPUParticles3D.new()
 	p.name = "Snowfall"
-	p.amount = 2600
+	p.amount = 4000
 	p.lifetime = 34.0
 	p.preprocess = 34.0
 	p.visibility_aabb = AABB(Vector3(-300, -160, -260), Vector3(600, 200, 520))
@@ -376,7 +443,7 @@ static func _snowfall(parent: Node3D, at: Vector3, extents: Vector3) -> void:
 	pm.scale_max = 1.3
 	p.process_material = pm
 	var quad := QuadMesh.new()
-	quad.size = Vector2(0.45, 0.45)
+	quad.size = Vector2(0.7, 0.7)
 	var m := StandardMaterial3D.new()
 	m.albedo_texture = FXTextures.soft_blob()
 	m.albedo_color = Color(1, 1, 1, 0.9)
