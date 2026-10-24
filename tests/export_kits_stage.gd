@@ -34,6 +34,16 @@ static func _tower_seed(courses: int) -> int:
 	return 0
 
 
+## A room's kit, built (with everything else in the room) into a throwaway parent.
+static func _room_kit(build: Callable, kit_name: String) -> Node:
+	var p := Node3D.new()
+	build.call(p)
+	var k := p.find_child(kit_name, true, false)
+	k.get_parent().remove_child(k)
+	p.free()
+	return k
+
+
 static func _toy_box() -> ToyBox:
 	var tb := ToyBox.new()
 	tb.rng = _rng(1)
@@ -74,6 +84,14 @@ func specs() -> Array:
 		["toy/fishbowl", func(): return ToyProps.fishbowl(_rng(1), ToyBox.BOWL_RIM)],
 		["toy/baseplate", func(): return ToyProps.baseplate(_rng(1))],
 		["toy/station", func(): return _toy_box()._station()],
+		["cage/room", func(): return _room_kit(func(p): CageRoom.build_room(p, _rng(1)), "Room")],
+		["cage/tank_trim", func(): return _room_kit(func(p): CageRoom.build_tank(p, _rng(1)), "TankTrim")],
+		["cage/fridge", func(): return _room_kit(func(p): CageRoom.build_fridge(p, _rng(1)), "Fridge")],
+		["cage/icicles", func(): return _room_kit(func(p): CageRoom.build_icicles(p, _rng(1)), "Icicles")],
+		["cage/plane_body", func(): return _room_kit(func(p): p.add_child(CageProps.toy_plane(_rng(1))), "Body")],
+		["cage/plane_propeller", func(): return _room_kit(func(p): p.add_child(CageProps.toy_plane(_rng(1))), "Propeller")],
+		["toy/bedroom", func(): return _room_kit(func(p): ToyRoom.build(p, _rng(1)), "Bedroom")],
+		["toy/mobile", func(): return _room_kit(func(p): ToyRoom._mobile(p, _rng(1)), "MobileParts")],
 		["toy/locomotive", func(): return ToyTrain.new()._locomotive(_rng(1), 0)],
 		["toy/tender", func(): return ToyTrain.new()._tender(_rng(1), 1)],
 		["toy/open_car", func(): return ToyTrain.new()._open_car(_rng(1), 2)],

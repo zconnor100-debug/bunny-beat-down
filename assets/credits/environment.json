@@ -1227,6 +1227,58 @@
     ]
   },
   {
+    "asset": "Stylized Low-Poly Couch",
+    "author": "TepidGames",
+    "author_url": "https://sketchfab.com/TepidGames",
+    "source_url": "https://sketchfab.com/3d-models/stylized-low-poly-couch-4eca4d3ab05d448eb6c933edcff6ae81",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "room_couch: rescaled x198.536 to critter-world size, grounded and centred; textures re-encoded <= 0px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Environment scenery: stylised couch (the Hamster Cage's living room) (room_couch)",
+    "files": [
+      "assets/env/room_couch/room_couch.glb"
+    ]
+  },
+  {
+    "asset": "Stylized Bed.",
+    "author": "Sam",
+    "author_url": "https://sketchfab.com/rawpuwnzl",
+    "source_url": "https://sketchfab.com/3d-models/stylized-bed-88f46b19c7a144b991dc28a3c85cdd9b",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "room_bed: rescaled x4129.86 to critter-world size, grounded and centred; textures re-encoded <= 1024px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Environment scenery: kid's bed with a starry blanket (Toy Box Bash's bedroom) (room_bed)",
+    "files": [
+      "assets/env/room_bed/room_bed.glb"
+    ]
+  },
+  {
+    "asset": "Kid's Dresser/ Chest of Drawers",
+    "author": "ellieharrodine",
+    "author_url": "https://sketchfab.com/ellieharrodine",
+    "source_url": "https://sketchfab.com/3d-models/kids-dresser-chest-of-drawers-fcfa67321b5641d6a65dd0ff4c8f523c",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "room_dresser: rescaled x177.815 to critter-world size, grounded and centred; textures re-encoded <= 1024px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Environment scenery: white kid's dresser (room_dresser)",
+    "files": [
+      "assets/env/room_dresser/room_dresser.glb"
+    ]
+  },
+  {
+    "asset": "Everdesk kids study table",
+    "author": "sahilrathod4113",
+    "author_url": "https://sketchfab.com/sahilrathod41135",
+    "source_url": "https://sketchfab.com/3d-models/everdesk-kids-study-table-df7cfd4b8b43405f9e708663f3858eb9",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "room_desk: rescaled x72.5371 to critter-world size, grounded and centred; textures re-encoded <= 1024px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Environment scenery: kid's study desk and chair (room_desk)",
+    "files": [
+      "assets/env/room_desk/room_desk.glb"
+    ]
+  },
+  {
     "asset": "Forest Leaves 02 (Poly Haven texture)",
     "author": "Rob Tuytel",
     "author_url": "https://polyhaven.com/all?a=Rob%20Tuytel",

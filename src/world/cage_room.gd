@@ -84,7 +84,7 @@ static func build_tank(parent: Node3D, rng: RandomNumberGenerator) -> void:
 			trim._box(&"plastic_black", Vector3(xs * (hx + GLASS), (ROOM_FLOOR + GLASS_TOP) * 0.5, zs * (hz + GLASS)), Vector3(4.0, h + 2.0, 4.0), Basis(), false)
 	# the glass bottom's edge, seen through the panes: a dark slab under the bedding
 	trim._box(&"plastic_black", Vector3(0, ROOM_FLOOR + 1.0, 0), Vector3(hx * 2.0 + 10.0, 2.0, hz * 2.0 + 10.0), Basis(), false)
-	parent.add_child(trim.finish())
+	parent.add_child(trim.made_as("cage/tank_trim").finish())
 
 
 static func build_room(parent: Node3D, rng: RandomNumberGenerator) -> void:
@@ -132,15 +132,20 @@ static func build_room(parent: Node3D, rng: RandomNumberGenerator) -> void:
 		k._box(&"plastic_white", Vector3(xs + (12.0 if xs == x0 else -12.0), y0 + 25.0, cz), Vector3(6.0, 50.0, z1 - z0), Basis(), false)
 	for zs in [z0, z1]:
 		k._box(&"plastic_white", Vector3(cx, y0 + 25.0, zs + (3.0 if zs == z0 else -3.0)), Vector3(x1 - x0, 50.0, 6.0), Basis(), false)
-	# a couch along the south wall
+	# a couch along the south wall, facing the tank (a model when there is one)
 	var cz2 := z1 - 210.0
-	k._box(&"couch", Vector3(-300.0, y0 + 110.0, cz2), Vector3(1100.0, 180.0, 340.0), Basis(), false)
-	k._box(&"couch", Vector3(-300.0, y0 + 330.0, cz2 + 140.0), Vector3(1100.0, 300.0, 120.0), Basis(), false)
-	for xs in [-1.0, 1.0]:
-		k._box(&"couch", Vector3(-300.0 + xs * 600.0, y0 + 200.0, cz2), Vector3(120.0, 280.0, 360.0), Basis(), false)
-	for i in 2:
-		k._box(&"cushion", Vector3(-560.0 + i * 520.0, y0 + 230.0, cz2 - 10.0), Vector3(480.0, 60.0, 300.0), Basis(), false)
-	parent.add_child(k.finish())
+	var couch := CageProps.env("room_couch")
+	if ResourceLoader.exists(couch):
+		if not CageKit.exporting:
+			k.dress(couch, Transform3D(Basis(Vector3.UP, PI), Vector3(-300.0, y0, cz2 + 10.0)))
+	else:
+		k._box(&"couch", Vector3(-300.0, y0 + 110.0, cz2), Vector3(1100.0, 180.0, 340.0), Basis(), false)
+		k._box(&"couch", Vector3(-300.0, y0 + 330.0, cz2 + 140.0), Vector3(1100.0, 300.0, 120.0), Basis(), false)
+		for xs in [-1.0, 1.0]:
+			k._box(&"couch", Vector3(-300.0 + xs * 600.0, y0 + 200.0, cz2), Vector3(120.0, 280.0, 360.0), Basis(), false)
+		for i in 2:
+			k._box(&"cushion", Vector3(-560.0 + i * 520.0, y0 + 230.0, cz2 - 10.0), Vector3(480.0, 60.0, 300.0), Basis(), false)
+	parent.add_child(k.made_as("cage/room").finish())
 	for gi in ModelUtil.find_all(k, "GeometryInstance3D"):
 		(gi as GeometryInstance3D).cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 
@@ -254,7 +259,7 @@ static func build_fridge(parent: Node3D, rng: RandomNumberGenerator) -> void:
 			var bottle: String = ["food_sauce_chili", "food_sauce_mustard", "food_sauce_mayo"][(i + j) % 3]
 			var bp := hinge + door * Vector3(bx, 0, -40.0) + Vector3.UP * (y - 16.0)
 			_food(food, bottle, bp, -open + (j - 1) * 0.4, 0.85 + j * 0.08)
-	parent.add_child(k.finish())
+	parent.add_child(k.made_as("cage/fridge").finish())
 	# the cold: a bluish light from inside, mist rolling out over the glass,
 	# and snow falling in the winter corner
 	var light := OmniLight3D.new()
@@ -301,7 +306,7 @@ static func build_icicles(parent: Node3D, rng: RandomNumberGenerator) -> void:
 			var at := Vector3(hx - 1.2, y, z)
 			k._cone(&"ice", at, at + Vector3(-0.5, -len, rng.randf_range(-0.5, 0.5)), rng.randf_range(0.8, 1.8))
 		z += rng.randf_range(4.0, 11.0)
-	parent.add_child(k.finish())
+	parent.add_child(k.made_as("cage/icicles").finish())
 
 
 static func _mist(parent: Node3D, at: Vector3, extents: Vector3) -> void:

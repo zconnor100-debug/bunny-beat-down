@@ -52,20 +52,26 @@ static func build(parent: Node3D, rng: RandomNumberGenerator) -> void:
 	# east: the bed (headboard to the north) with a frilly skirt, then a cubby shelf
 	var bed := Rect2(hx + 2.0, -hz, 320.0, 330.0)
 	var top := y0 + 95.0
-	k._box(&"wood_honey", Vector3(bed.get_center().x, y0 + 45.0, bed.get_center().y), Vector3(bed.size.x, 30.0, bed.size.y), Basis(), false)
-	k._box(&"paper", Vector3(bed.get_center().x, top - 15.0, bed.get_center().y), Vector3(bed.size.x, 30.0, bed.size.y), Basis(), false)
-	k._box(&"gingham", Vector3(bed.get_center().x, top + 2.0, bed.get_center().y + 40.0), Vector3(bed.size.x + 8.0, 6.0, bed.size.y - 70.0), Basis(), false)
-	k._box(&"gingham", Vector3(bed.position.x - 1.0, top - 25.0, bed.get_center().y + 40.0), Vector3(4.0, 50.0, bed.size.y - 70.0), Basis(), false)
-	for i in int(bed.size.y / 12.0):
-		var z := bed.position.y + 6.0 + i * 12.0
-		k._box(&"curtain", Vector3(bed.position.x - 2.0 - (i % 2) * 1.5, y0 + 26.0, z), Vector3(3.0, 52.0, 12.5), Basis(), false)
-	for xs in [-1.0, 1.0]:
-		k._ellipsoid(&"pillow_white", Vector3(bed.get_center().x + xs * 75.0, top + 22.0, bed.position.y + 45.0), Vector3(65.0, 20.0, 34.0), Basis(), false)
-	k._box(&"wood_honey", Vector3(bed.get_center().x, y0 + 90.0, bed.position.y - 6.0), Vector3(bed.size.x + 20.0, 180.0, 12.0), Basis(), false)
-	k._ellipsoid(&"fur_light", Vector3(bed.get_center().x - 40.0, top + 40.0, bed.position.y + 110.0), Vector3(28.0, 40.0, 24.0), Basis(), false)
-	k._ellipsoid(&"fur_light", Vector3(bed.get_center().x - 40.0, top + 92.0, bed.position.y + 110.0), Vector3(20.0, 18.0, 18.0), Basis(), false)
-	for xs in [-1.0, 1.0]:
-		k._ellipsoid(&"fur_light", Vector3(bed.get_center().x - 40.0 + xs * 9.0, top + 130.0, bed.position.y + 110.0), Vector3(5.0, 26.0, 3.0), Basis(), false)
+	if ResourceLoader.exists(CageProps.env("room_bed")):
+		# the bed and its teddy are models
+		if not CageKit.exporting:
+			k.dress(CageProps.env("room_bed"), Transform3D(Basis(), Vector3(bed.get_center().x, y0, bed.get_center().y)))
+			k.dress(CageProps.env("toy_teddy"), Transform3D(Basis(Vector3.UP, 0.3) * Basis.from_scale(Vector3.ONE * 3.0), Vector3(bed.get_center().x - 40.0, y0 + 66.0, bed.position.y + 110.0)))
+	else:
+		k._box(&"wood_honey", Vector3(bed.get_center().x, y0 + 45.0, bed.get_center().y), Vector3(bed.size.x, 30.0, bed.size.y), Basis(), false)
+		k._box(&"paper", Vector3(bed.get_center().x, top - 15.0, bed.get_center().y), Vector3(bed.size.x, 30.0, bed.size.y), Basis(), false)
+		k._box(&"gingham", Vector3(bed.get_center().x, top + 2.0, bed.get_center().y + 40.0), Vector3(bed.size.x + 8.0, 6.0, bed.size.y - 70.0), Basis(), false)
+		k._box(&"gingham", Vector3(bed.position.x - 1.0, top - 25.0, bed.get_center().y + 40.0), Vector3(4.0, 50.0, bed.size.y - 70.0), Basis(), false)
+		for i in int(bed.size.y / 12.0):
+			var z := bed.position.y + 6.0 + i * 12.0
+			k._box(&"curtain", Vector3(bed.position.x - 2.0 - (i % 2) * 1.5, y0 + 26.0, z), Vector3(3.0, 52.0, 12.5), Basis(), false)
+		for xs in [-1.0, 1.0]:
+			k._ellipsoid(&"pillow_white", Vector3(bed.get_center().x + xs * 75.0, top + 22.0, bed.position.y + 45.0), Vector3(65.0, 20.0, 34.0), Basis(), false)
+		k._box(&"wood_honey", Vector3(bed.get_center().x, y0 + 90.0, bed.position.y - 6.0), Vector3(bed.size.x + 20.0, 180.0, 12.0), Basis(), false)
+		k._ellipsoid(&"fur_light", Vector3(bed.get_center().x - 40.0, top + 40.0, bed.position.y + 110.0), Vector3(28.0, 40.0, 24.0), Basis(), false)
+		k._ellipsoid(&"fur_light", Vector3(bed.get_center().x - 40.0, top + 92.0, bed.position.y + 110.0), Vector3(20.0, 18.0, 18.0), Basis(), false)
+		for xs in [-1.0, 1.0]:
+			k._ellipsoid(&"fur_light", Vector3(bed.get_center().x - 40.0 + xs * 9.0, top + 130.0, bed.position.y + 110.0), Vector3(5.0, 26.0, 3.0), Basis(), false)
 	var cub := Rect2(hx + 2.0, bed.end.y, 90.0, hz - bed.end.y)
 	k._box(&"paint_white", Vector3(cub.get_center().x, y0 + 65.0, cub.get_center().y), Vector3(cub.size.x, 130.0, cub.size.y), Basis(), false)
 	for row in 2:
@@ -83,15 +89,20 @@ static func build(parent: Node3D, rng: RandomNumberGenerator) -> void:
 			var bh := rng.randf_range(50.0, 72.0)
 			k._box(StringName("paint_" + String(ToyProps.CREW[rng.randi() % 8])), Vector3(x + bw * 0.5, y + bh * 0.5, south - 1.0), Vector3(bw - 1.0, bh, 3.0), Basis(), false)
 			x += bw
-	k._box(&"paint_white", Vector3(30.0, y0 + 80.0, south + 40.0), Vector3(320.0, 160.0, 80.0), Basis(), false)
-	for row in 3:
-		for col in 2:
-			var c := Vector3(-55.0 + col * 170.0, y0 + 25.0 + row * 50.0, south - 1.5)
-			k._box(&"paint_teal", c, Vector3(150.0, 42.0, 3.0), Basis(), false)
-			k._ellipsoid(&"coin", c + Vector3(0, 0, -2.5), Vector3(5.0, 5.0, 2.0), Basis(), false)
-	k._box(&"wood_light", Vector3((260.0 + hx) * 0.5, y0 + 108.0, south + 40.0), Vector3(hx - 260.0, 8.0, 80.0), Basis(), false)
-	for x in [270.0, hx - 10.0]:
-		k._box(&"wood_light", Vector3(x, y0 + 52.0, south + 40.0), Vector3(8.0, 104.0, 74.0), Basis(), false)
+	if ResourceLoader.exists(CageProps.env("room_dresser")) and ResourceLoader.exists(CageProps.env("room_desk")):
+		if not CageKit.exporting:
+			k.dress(CageProps.env("room_dresser"), Transform3D(Basis(Vector3.UP, PI), Vector3(30.0, y0, south + 55.0)))
+			k.dress(CageProps.env("room_desk"), Transform3D(Basis(), Vector3((260.0 + hx) * 0.5, y0, south + 52.0)))
+	else:
+		k._box(&"paint_white", Vector3(30.0, y0 + 80.0, south + 40.0), Vector3(320.0, 160.0, 80.0), Basis(), false)
+		for row in 3:
+			for col in 2:
+				var c := Vector3(-55.0 + col * 170.0, y0 + 25.0 + row * 50.0, south - 1.5)
+				k._box(&"paint_teal", c, Vector3(150.0, 42.0, 3.0), Basis(), false)
+				k._ellipsoid(&"coin", c + Vector3(0, 0, -2.5), Vector3(5.0, 5.0, 2.0), Basis(), false)
+		k._box(&"wood_light", Vector3((260.0 + hx) * 0.5, y0 + 108.0, south + 40.0), Vector3(hx - 260.0, 8.0, 80.0), Basis(), false)
+		for x in [270.0, hx - 10.0]:
+			k._box(&"wood_light", Vector3(x, y0 + 52.0, south + 40.0), Vector3(8.0, 104.0, 74.0), Basis(), false)
 	# ceiling: glow stars and the planet mobile
 	k._box(&"ceiling", Vector3(0, CEILING + 5.0, 0), Vector3(hx * 2.0 + 900.0, 10.0, hz * 2.0 + 900.0), Basis(), false)
 	for i in 30:
@@ -100,7 +111,7 @@ static func build(parent: Node3D, rng: RandomNumberGenerator) -> void:
 	# (well under the play floor: level with it, the two fought for every pixel
 	# and the whole floor flickered, and it hid the spill where the boards sag)
 	k._box(&"oak", Vector3(0, y0 - 5.0, 0), Vector3(hx * 2.0 + 900.0, 6.0, hz * 2.0 + 900.0), Basis(), false)
-	parent.add_child(k.finish())
+	parent.add_child(k.made_as("toy/bedroom").finish())
 	for gi in ModelUtil.find_all(k, "GeometryInstance3D"):
 		(gi as GeometryInstance3D).cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	_mobile(parent, rng)
@@ -126,4 +137,4 @@ static func _mobile(parent: Node3D, rng: RandomNumberGenerator) -> void:
 		k._ellipsoid(p[2], at + Vector3(0, 300.0 - drop - float(p[1]), 0), Vector3.ONE * float(p[1]), Basis(), false, 10, 18)
 	k._lathe(&"plastic_yellow", [Vector2(30.0, 239.0), Vector2(30.0, 241.0), Vector2(22.0, 241.0), Vector2(22.0, 239.0)], 24,
 		Vector3(80, 0, 0), false)
-	spin.add_child(k.finish())
+	spin.add_child(k.made_as("toy/mobile").finish())

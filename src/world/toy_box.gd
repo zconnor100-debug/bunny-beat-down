@@ -241,6 +241,7 @@ func _build_fishbowl(p: Dictionary) -> void:
 		fish._ellipsoid(&"plastic_orange", Vector3(r, 0, 0), Vector3(1.2, 1.5, 2.6), Basis(), false, 6, 12)
 		fish._ellipsoid(&"plastic_orange", Vector3(r, 0, 3.0), Vector3(0.3, 1.5, 1.3), Basis(), false, 4, 8)
 		fish._ellipsoid(&"button_eye", Vector3(r + 0.9, 0.4, -1.6), Vector3(0.3, 0.3, 0.3), Basis(), false, 3, 6)
+		fish.dress(ToyProps.made("toy/goldfish"), Transform3D(Basis(), Vector3(r, 0, 0)))
 		var pivot := Node3D.new()
 		pivot.rotation.y = i * 1.6
 		school.add_child(pivot)

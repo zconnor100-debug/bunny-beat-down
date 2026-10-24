@@ -40,7 +40,7 @@ SWATCH = {
     "cardboard_in": (0.55, 0.4, 0.25), "accent": (0.9, 0.3, 0.3), "domino": (0.08, 0.08, 0.09),
     "plastic_red": (0.92, 0.22, 0.2), "plastic_blue": (0.26, 0.54, 0.98), "plastic_yellow": (1.0, 0.84, 0.22),
     "bowl_glass": (0.86, 0.95, 1.0), "paper_fluff": (0.97, 0.95, 0.9), "rail_wood": (0.8, 0.65, 0.45),
-    "rail_groove": (0.35, 0.25, 0.15),
+    "rail_groove": (0.35, 0.25, 0.15), "plastic_orange": (1.0, 0.55, 0.16), "button_eye": (0.04, 0.03, 0.03),
 }
 
 
@@ -572,6 +572,41 @@ def toy_track():
             uv.data[li].uv = (uu, vv)
     smooth(track, 30)
     return [track]
+
+
+@model("toy/goldfish")
+def toy_goldfish():
+    """A goldfish about 7 m long (the fishbowl's are), centred on its origin,
+    swimming toward -Z in the game: a plump body, a fanned tail, fins, eyes."""
+    body = sphere(1.0, (0, 0, 0), "plastic_orange", 48, 24, (1.2, 2.6, 1.5))
+    smooth(body, 80)
+    parts = [body]
+    # the tail: a fan of two lobes behind (Blender -Y = the game's +Z)
+    verts = [Vector((0, -2.3, 0))]
+    for i in range(9):
+        a = -0.9 + 1.8 * i / 8
+        verts.append(Vector((0, -2.3 - 2.0 * math.cos(a) * (1.0 + 0.25 * math.cos(a * 4)), 2.0 * math.sin(a))))
+    faces = [(0, i, i + 1) for i in range(1, 9)]
+    tail = mesh_object("tail", verts, faces, "plastic_orange")
+    sol = tail.modifiers.new("Solid", "SOLIDIFY")
+    sol.thickness = 0.12
+    apply_mods(tail)
+    subsurf(tail, 1)
+    smooth(tail, 60)
+    parts.append(tail)
+    for xs in (-1, 1):
+        fin = sphere(0.5, (xs * 1.1, 0.4, -0.5), "plastic_orange", 16, 8, (0.15, 1.0, 0.6))
+        fin.rotation_euler = (0.5, xs * 0.6, 0)
+        activate(fin)
+        bpy.ops.object.transform_apply(rotation=True)
+        smooth(fin, 80)
+        eye = sphere(0.32, (xs * 0.95, 1.7, 0.45), "button_eye", 16, 8)
+        smooth(eye, 80)
+        parts += [fin, eye]
+    dorsal = sphere(0.8, (0, 0.2, 1.4), "plastic_orange", 16, 8, (0.12, 1.3, 0.6))
+    smooth(dorsal, 80)
+    parts.append(dorsal)
+    return parts
 
 # ---------------------------------------------------------------- main
 

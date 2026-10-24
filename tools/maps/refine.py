@@ -31,7 +31,9 @@ RAW = ROOT / "tools" / "_cache" / "maps" / "raw"
 # bevel width (m) per model; edges sharper than BEVEL_ANGLE get it
 BEVEL = {"default": 0.07, "cage/chew_sticks": 0.05, "cage/bridge": 0.06, "cage/water_bottle": 0.04,
          "cage/castle": 0.12, "cage/hut": 0.06, "cage/gym": 0.06,
-         "toy/letter_block": 0.05, "toy/track": 0.03, "toy/baseplate": 0.02, "toy/dollhouse": 0.08}
+         "toy/letter_block": 0.05, "toy/track": 0.03, "toy/baseplate": 0.02, "toy/dollhouse": 0.08,
+         "cage/room": 3.0, "cage/fridge": 2.5, "cage/tank_trim": 0.5, "cage/icicles": 0.06,
+         "toy/bedroom": 1.0, "toy/mobile": 0.4, "cage/plane_body": 0.05, "cage/plane_propeller": 0.04}
 
 
 def bevel_width(rel: str) -> float:

@@ -24,6 +24,17 @@ func _run() -> void:
 	var tb := island as ToyBox
 	print("toybox in %d ms: %d POIs, %d buildings, %d loot spots, track %.0f m" % [Time.get_ticks_msec() - t0, island.pois.size(),
 		island.buildings.size(), island.loot_points.size(), tb.train.total])
+	if only == "" or only == "room":
+		# the bedroom's furniture: the bed (and its teddy), the dresser and the desk
+		_look(Vector3(330, 190, -120), Vector3(742, 60, -255), 60.0)
+		await _wait(1.0)
+		await _snap("69a_bed")
+		_look(Vector3(160, 140, 230), Vector3(260, 70, 470), 62.0)
+		await _wait(0.6)
+		await _snap("69b_dresser_desk")
+		if only == "room":
+			get_tree().quit()
+			return
 	if only == "":
 		_look(Vector3(-540, 360, 400), Vector3(120, 0, -160), 75.0)
 		await _wait(1.5)

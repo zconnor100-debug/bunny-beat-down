@@ -468,7 +468,7 @@ static func toy_plane(rng: RandomNumberGenerator) -> Node3D:
 	k._rod(&"metal", Vector3(4.0, 0.8, 5.0), Vector3(6.4, 0.8, 5.0), 0.3, false)
 	for ys in [-1.0, 1.0]:
 		k._ellipsoid(&"metal", Vector3(6.6, 0.8 + ys * 1.5, 5.0), Vector3(0.3, 1.4, 1.1), Basis(), false, 6, 10)
-	root.add_child(k.finish())
+	root.add_child(k.made_as("cage/plane_body").finish())
 	var prop := CageKit.blank("Propeller", rng, &"wood")
 	prop.collision_layer = 0
 	for sgn in [-1.0, 1.0]:
@@ -476,7 +476,7 @@ static func toy_plane(rng: RandomNumberGenerator) -> Node3D:
 		prop._box(&"plastic_red", Vector3(0, sgn * 6.9, 0), Vector3(1.22, 0.7, 0.3), Basis(Vector3.UP, sgn * 0.3), false)
 	prop._ellipsoid(&"plastic_red", Vector3(0, 0, -0.4), Vector3(1.1, 1.1, 1.6), Basis(), false, 6, 10)
 	prop.position = Vector3(0, 0, -14.6)
-	root.add_child(prop.finish())
+	root.add_child(prop.made_as("cage/plane_propeller").finish())
 	return root
 
 

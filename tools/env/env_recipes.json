@@ -130,6 +130,10 @@
     {"id": "toy_crayon_yellow", "source": "sf:22153c3ad0374aaf89ceced9a904283b", "objects": ["^CrayonYellow"], "height_m": 16.0, "tex": 256, "category": "toy", "collision": "none", "desc": "yellow wax crayon"},
     {"id": "toy_crayon_green", "source": "sf:22153c3ad0374aaf89ceced9a904283b", "objects": ["^CrayonGreen"], "height_m": 16.0, "tex": 256, "category": "toy", "collision": "none", "desc": "green wax crayon"},
     {"id": "toy_crayon_violet", "source": "sf:22153c3ad0374aaf89ceced9a904283b", "objects": ["^CrayonViolet"], "height_m": 16.0, "tex": 256, "category": "toy", "collision": "none", "desc": "violet wax crayon"},
-    {"id": "toy_crayon_orange", "source": "sf:22153c3ad0374aaf89ceced9a904283b", "objects": ["^CrayonOrange"], "height_m": 16.0, "tex": 256, "category": "toy", "collision": "none", "desc": "orange wax crayon"}
+    {"id": "toy_crayon_orange", "source": "sf:22153c3ad0374aaf89ceced9a904283b", "objects": ["^CrayonOrange"], "height_m": 16.0, "tex": 256, "category": "toy", "collision": "none", "desc": "orange wax crayon"},
+    {"id": "room_couch", "source": "sf:4eca4d3ab05d448eb6c933edcff6ae81", "height_m": 380.0, "category": "room", "collision": "none", "desc": "stylised couch (the Hamster Cage's living room)"},
+    {"id": "room_bed", "source": "sf:88f46b19c7a144b991dc28a3c85cdd9b", "height_m": 125.0, "category": "room", "collision": "none", "desc": "kid's bed with a starry blanket (Toy Box Bash's bedroom)"},
+    {"id": "room_dresser", "source": "sf:fcfa67321b5641d6a65dd0ff4c8f523c", "height_m": 160.0, "category": "room", "collision": "none", "desc": "white kid's dresser"},
+    {"id": "room_desk", "source": "sf:df7cfd4b8b43405f9e708663f3858eb9", "exclude": ["^Object_4$"], "height_m": 196.0, "category": "room", "collision": "none", "desc": "kid's study desk and chair"}
   ]
 }

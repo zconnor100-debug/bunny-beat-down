@@ -1742,5 +1742,69 @@
     "density_weight": 1.0,
     "sink_m": 0.0,
     "tris": 92
+  },
+  {
+    "id": "room_couch",
+    "file": "assets/env/room_couch/room_couch.glb",
+    "category": "room",
+    "height_m": 380.0,
+    "footprint_radius_m": 587.0,
+    "collision": "none",
+    "collision_radius_m": 0.0,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 1.0,
+    "sink_m": 0.0,
+    "tris": 2232
+  },
+  {
+    "id": "room_bed",
+    "file": "assets/env/room_bed/room_bed.glb",
+    "category": "room",
+    "height_m": 125.0,
+    "footprint_radius_m": 225.21,
+    "collision": "none",
+    "collision_radius_m": 0.0,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 1.0,
+    "sink_m": 0.0,
+    "tris": 10646
+  },
+  {
+    "id": "room_dresser",
+    "file": "assets/env/room_dresser/room_dresser.glb",
+    "category": "room",
+    "height_m": 160.0,
+    "footprint_radius_m": 122.66,
+    "collision": "none",
+    "collision_radius_m": 0.0,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 1.0,
+    "sink_m": 0.0,
+    "tris": 591
+  },
+  {
+    "id": "room_desk",
+    "file": "assets/env/room_desk/room_desk.glb",
+    "category": "room",
+    "height_m": 196.0,
+    "footprint_radius_m": 130.92,
+    "collision": "none",
+    "collision_radius_m": 0.0,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 1.0,
+    "sink_m": 0.0,
+    "tris": 4498
   }
 ]

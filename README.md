@@ -300,6 +300,20 @@ The full write-up is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
   `ToyProps`, `ToyRoom`), plus `ToyTrain`: `AnimatableBody3D` cars
   following a resampled loop, so riders are carried by the physics engine,
   and a bumper `Area3D` that bonks critters on the line.
+- **Both indoor maps are drawn as models; the code keeps the gameplay.**
+  Every kit still builds its colliders, footprint, floors and loot spots
+  from its primitives, then `CageKit.dress()` swaps what you see for a
+  model. Food, toys and furniture are CC-BY models from Sketchfab, through
+  the same vetted pipeline as the island (`tools/env`). Things no model
+  exists for are made in Blender from code (`tools/maps/models.py`: plastic
+  plants, chew blocks, dominoes with real pip layouts, marbles, the train
+  track swept round its loop...). The walk-in structures are rebuilt from
+  the kits' own geometry: `tests/export_kits.gd` writes each kit out, and
+  `tools/maps/refine.py` welds it, bevels every hard edge and rounds off
+  curved parts in Blender. So a pod's doorways in the model are exactly the
+  collider's. Model materials named `cage:<key>` take the game's own
+  materials, and `accent` slots take a colour per instance, so one model
+  covers every coloured variant.
 - **Tests that play the game.** A headless suite of 92 tests covers:
   - the IK maths, hitboxes, ragdolls and dismemberment;
   - island navigation, the three biomes and the big buildings (a Bun walks
@@ -393,7 +407,8 @@ are generated from the same `assets/credits/*.json`. A test fails the build if
 any asset file lacks a credit. The pipelines that fetched, vetted and
 normalised the assets (Sketchfab / Poly Haven / ambientCG / Kenney /
 incompetech) live in `tools/`. The carrot guns, helmet and pickups were
-modelled from code in Blender (`tools/weapons/`).
+modelled from code in Blender (`tools/weapons/`), and so were the Hamster
+Cage's and Toy Box Bash's original models (`tools/maps/`).
 
 ## Development notes
 
