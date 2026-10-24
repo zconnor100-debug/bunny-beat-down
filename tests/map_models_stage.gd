@@ -19,7 +19,8 @@ func _run() -> void:
 	var light := WorldLighting.new()
 	add_child(light)
 	light.build(2)
-	light.make_indoor()
+	if not ids.any(func(i): return String(i).begins_with("island/")):
+		light.make_indoor()   # (the island's buildings stand outdoors)
 	var ground := MeshInstance3D.new()
 	var plane := PlaneMesh.new()
 	plane.size = Vector2(400, 400)
@@ -44,7 +45,7 @@ func _run() -> void:
 		# "<id>@front": seen from straight in front (+Z), to check which way a model faces
 		var id: String = spec.get_slice("@", 0)
 		var front: bool = spec.ends_with("@front")
-		var m := CageKit.model(path_of(id), {"accent": "paint_red"})
+		var m := Building.island_model(path_of(id)) if id.begins_with("island/") else CageKit.model(path_of(id), {"accent": "paint_red"})
 		if m == null:
 			print("missing ", id)
 			continue

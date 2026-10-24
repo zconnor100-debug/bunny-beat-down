@@ -148,11 +148,11 @@ notices are available in-game under Credits → Engine licenses.
 | [Qwantani Late Afternoon (Pure Sky) (Poly Haven HDRI)](https://polyhaven.com/a/qwantani_late_afternoon_puresky) | [Greg Zaal, Jarod Guest](https://polyhaven.com/all?a=Greg%20Zaal) | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) | Sky / image-based lighting (soft afternoon sky) | None (original 2K .hdr files) |
 | [Water ripple normal map](tools/env/build_textures.py) | Bunny Beat Down project | [MIT (project)](https://opensource.org/licenses/MIT) | Pond / sea surface normal map | Original work, generated procedurally (sum of tileable ripples) |
 
-## The Hamster Cage & Toy Box (made in Blender)
+## Map models (made in Blender)
 
 | Asset | Author | License | Used for | Changes |
 |---|---|---|---|---|
-| Hamster Cage and Toy Box Bash models | Bunny Beat Down project | [MIT (project)](https://opensource.org/license/mit) | The Hamster Cage and Toy Box Bash: props, toys and landmarks | Original models made in Blender by tools/maps/models.py |
+| Map models: the Hamster Cage, Toy Box Bash and Wildwood Island's buildings | Bunny Beat Down project | [MIT (project)](https://opensource.org/license/mit) | The Hamster Cage and Toy Box Bash props, toys and landmarks; the island's lodge, barn and stilt shack | Original models made in Blender by tools/maps (models.py, refine.py, island.py) |
 
 ## Carrot Guns & Props
 

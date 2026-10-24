@@ -17,7 +17,7 @@ OUT = ROOT / "CREDITS.md"
 SECTIONS = {
     "characters": "Critters",
     "environment": "Scenery: the island, the cage and the fridge",
-    "maps": "The Hamster Cage & Toy Box (made in Blender)",
+    "maps": "Map models (made in Blender)",
     "weapons_props": "Carrot Guns & Props",
     "audio": "Sound & Music",
     "fonts": "Fonts",

@@ -9,6 +9,11 @@ extends StaticBody3D
 ## through). Doors are 4.6 m+ wide and 5 m+ tall: a 2.9 m frog fits.
 ## `loot_spots` (local, on the floor inside) are where crates, floor loot and
 ## a treasure chest go. Faces +Z; the front door is on that side.
+##
+## What you see is a model when there is one (assets/maps/island/<style>.glb,
+## made in Blender by tools/maps/island.py from these same pieces: separate
+## boards, stacked stones, layered thatch, framed windows), drawn with the
+## materials below; the pieces here still make every collider.
 
 enum Style { LODGE, BARN, SHACK }
 
@@ -16,6 +21,8 @@ const TEXTURES := "res://assets/textures/%s/%s"
 const SOFT_SHADER := preload("res://src/world/shaders/soft_pbr.gdshader")
 const DOOR_W := 4.8
 const DOOR_H := 5.4
+const MODEL := "res://assets/maps/island/%s.glb"
+const END_GRAIN_SHADER := preload("res://src/world/shaders/end_grain.gdshader")
 
 var style := Style.LODGE
 ## Floor points inside, in local space: where crates and loot go.
@@ -27,9 +34,17 @@ var footprint := 12.0
 ## Height of the floor inside above the building's origin.
 var floor_y := 0.0
 
+## Building for tools/maps/island.py (tests/export_kits.gd): every piece and
+## wall run is kept in `parts` and `walls`, as plain data, and no model is
+## used, so the model is built to the same pieces as the colliders.
+static var recording := false
+var parts: Array = []
+var walls: Array = []
+
 static var _materials: Dictionary = {}
 var _surfaces: Dictionary = {}      # material key -> SurfaceTool
 var _rng: RandomNumberGenerator
+var _wall := -1                     # (recording) the wall run being built
 
 
 static func make(style_: Style, rng: RandomNumberGenerator) -> Building:
@@ -179,15 +194,17 @@ func _build_shack() -> void:
 		for zs in [-1.0, 1.0]:
 			_log(&"bark", Vector3(xs * (w * 0.5 - 0.2), -2.0, zs * (d * 0.5 - 0.2)), Vector3(xs * (w * 0.5 - 0.2), floor_y - 0.3, zs * (d * 0.5 - 0.2)), 0.32, true)
 	_plank_wall(&"planks", Vector3(-w * 0.5, floor_y, d * 0.5), Vector3(w * 0.5, floor_y, d * 0.5), wall_h, t, [[0.0, DOOR_W, 0.0, DOOR_H], [-4.6, 2.2, 2.0, 3.8]])
-	_plank_wall(&"planks", Vector3(-w * 0.5, floor_y, -d * 0.5), Vector3(w * 0.5, floor_y, -d * 0.5), wall_h - 1.2, t, [[3.0, DOOR_W, 0.0, DOOR_H - 0.8]])
+	# (the back and side walls stop under the lean-to roof's low edge: they
+	# used to stand up through the tin at the back)
+	_plank_wall(&"planks", Vector3(-w * 0.5, floor_y, -d * 0.5), Vector3(w * 0.5, floor_y, -d * 0.5), wall_h - 1.8, t, [[3.0, DOOR_W, 0.0, DOOR_H - 1.6]])
 	for xs in [1.0, -1.0]:
-		_plank_wall(&"planks", Vector3(xs * w * 0.5, floor_y, -d * 0.5), Vector3(xs * w * 0.5, floor_y, d * 0.5), wall_h - 0.6, t, [[0.0, 2.6, 2.0, 3.8]])
+		_plank_wall(&"planks", Vector3(xs * w * 0.5, floor_y, -d * 0.5), Vector3(xs * w * 0.5, floor_y, d * 0.5), wall_h - 1.8, t, [[0.0, 2.6, 2.0, 3.8]])
 	# lean-to tin roof, sloping from the front down to the back
 	var front_h := floor_y + wall_h + 0.4
 	var back_h := floor_y + wall_h - 1.6
 	_roof_strip(&"tin_roof", Vector2(d * 0.5 + 1.2, front_h + 0.3), Vector2(-d * 0.5 - 1.2, back_h - 0.3), w + 1.6, 0.2, true)
 	for xs in [1.0, -1.0]:
-		_prism(&"planks", [Vector2(d * 0.5, floor_y + wall_h - 0.6), Vector2(d * 0.5, front_h), Vector2(-d * 0.5, back_h), Vector2(-d * 0.5, floor_y + wall_h - 1.8)],
+		_prism(&"planks", [Vector2(d * 0.5, floor_y + wall_h - 1.8), Vector2(d * 0.5, front_h), Vector2(-d * 0.5, back_h), Vector2(-d * 0.5, floor_y + wall_h - 1.8)],
 			xs * (w * 0.5 - 0.05), t, true)
 	# porch and ramp
 	_box(&"floorboards", Vector3(0, floor_y - 0.2, d * 0.5 + 1.7), Vector3(7.0, 0.4, 3.4))
@@ -251,6 +268,7 @@ func _wall_pieces(length: float, height: float, openings: Array) -> Array:
 
 
 func _plank_wall(mat: StringName, a: Vector3, b: Vector3, height: float, thick: float, openings: Array) -> void:
+	_begin_wall("plank", mat, a, b, height, thick, openings)
 	var along := (b - a)
 	var length := along.length()
 	var dir := along / length
@@ -259,12 +277,14 @@ func _plank_wall(mat: StringName, a: Vector3, b: Vector3, height: float, thick: 
 	for p in _wall_pieces(length, height, openings):
 		var c: Vector3 = mid + dir * (p[0] + p[1]) * 0.5 + Vector3.UP * (p[2] + p[3]) * 0.5
 		_box(mat, c, Vector3(p[1] - p[0], p[3] - p[2], thick), basis)
+	_wall = -1
 
 
 ## A wall of stacked logs: one collision box per solid piece, logs cut at the
 ## openings and running past the corners (`offset` staggers the courses of
 ## adjacent walls by half a log, like notched corners).
 func _log_wall(a: Vector3, b: Vector3, height: float, r: float, openings: Array, offset: float) -> void:
+	_begin_wall("log", &"bark", a, b, height, r * 2.0, openings)
 	var along := (b - a)
 	var length := along.length()
 	var dir := along / length
@@ -294,6 +314,14 @@ func _log_wall(a: Vector3, b: Vector3, height: float, r: float, openings: Array,
 		for s in spans:
 			if s[1] - s[0] > 0.2:
 				_log(&"bark", mid + dir * s[0] + Vector3.UP * y, mid + dir * s[1] + Vector3.UP * y, r * (0.92 + _rng.randf() * 0.12), false)
+	_wall = -1
+
+
+## (recording) A wall run starts: its pieces are tagged with it.
+func _begin_wall(kind: String, mat: StringName, a: Vector3, b: Vector3, height: float, thick: float, openings: Array) -> void:
+	if recording:
+		_wall = walls.size()
+		walls.append({"kind": kind, "mat": String(mat), "a": _v(a), "b": _v(b), "height": height, "thick": thick, "openings": openings.duplicate(true)})
 
 
 ## A sloped roof strip between two (across, height) points of the profile,
@@ -333,6 +361,8 @@ func _gable_end(mat: StringName, width: float, base_y: float, top_y: float, x: f
 
 ## A box that is drawn and (by default) solid.
 func _box(mat: StringName, c: Vector3, size: Vector3, basis := Basis(), solid := true) -> void:
+	if recording:
+		_record({"kind": "box", "mat": String(mat), "c": _v(c), "size": _v(size), "basis": [_v(basis.x), _v(basis.y), _v(basis.z)], "solid": solid})
 	var h := size * 0.5
 	var axes := [basis.x, basis.y, basis.z]
 	var st := _st(mat)
@@ -383,6 +413,8 @@ func _collide(c: Vector3, size: Vector3, basis := Basis()) -> void:
 
 ## A round log from a to b.
 func _log(mat: StringName, a: Vector3, b: Vector3, r: float, solid := true) -> void:
+	if recording:
+		_record({"kind": "log", "mat": String(mat), "a": _v(a), "b": _v(b), "r": r, "solid": solid})
 	var axis := b - a
 	var length := axis.length()
 	var dir := axis / length
@@ -425,6 +457,8 @@ func _log(mat: StringName, a: Vector3, b: Vector3, r: float, solid := true) -> v
 
 ## A cone (carrot!) from base a to tip b.
 func _cone(mat: StringName, a: Vector3, b: Vector3, r: float) -> void:
+	if recording:
+		_record({"kind": "cone", "mat": String(mat), "a": _v(a), "b": _v(b), "r": r})
 	var dir := (b - a).normalized()
 	var side := dir.cross(Vector3.UP if absf(dir.y) < 0.9 else Vector3.RIGHT).normalized()
 	var up := side.cross(dir)
@@ -441,6 +475,8 @@ func _cone(mat: StringName, a: Vector3, b: Vector3, r: float) -> void:
 ## A flat prism: polygon `pts` (x, y) extruded `thick` along Z, centred on z.
 ## Solid via a convex shape.
 func _prism(mat: StringName, pts: Array, z: float, thick: float, along_z_profile := false) -> void:
+	if recording:
+		_record({"kind": "prism", "mat": String(mat), "pts": pts.map(func(p: Vector2): return [p.x, p.y]), "z": z, "thick": thick, "along_z": along_z_profile})
 	var st := _st(mat)
 	var verts3 := []
 	for half in [thick * 0.5, -thick * 0.5]:
@@ -512,6 +548,11 @@ func _st(mat: StringName) -> SurfaceTool:
 
 
 func _commit() -> void:
+	var m := island_model(MODEL % String(Style.keys()[style]).to_lower()) if not recording else null
+	if m:
+		_surfaces.clear()
+		add_child(m)
+		return
 	var mesh := ArrayMesh.new()
 	for key in _surfaces:
 		var st: SurfaceTool = _surfaces[key]
@@ -525,6 +566,35 @@ func _commit() -> void:
 	_surfaces.clear()
 
 
+## A building's model (or null without one), its "bld:<key>" materials drawn
+## with Building's own.
+static func island_model(path: String) -> Node3D:
+	if not ResourceLoader.exists(path):
+		return null
+	var root := ModelUtil.instantiate(path)
+	if root == null:
+		return null
+	root.name = "Model"
+	for mi in ModelUtil.find_all(root, "MeshInstance3D"):
+		var mesh: Mesh = (mi as MeshInstance3D).mesh
+		for i in mesh.get_surface_count():
+			var sm := mesh.surface_get_material(i)
+			var n := sm.resource_name if sm else ""
+			if n.begins_with("bld:"):
+				(mi as MeshInstance3D).set_surface_override_material(i, material(StringName(n.trim_prefix("bld:"))))
+	return root
+
+
+## (recording) One piece, as plain data.
+func _record(part: Dictionary) -> void:
+	part["wall"] = _wall
+	parts.append(part)
+
+
+static func _v(v: Vector3) -> Array:
+	return [v.x, v.y, v.z]
+
+
 ## Shared materials (texture tiles are in metres: UVs are in metres). The
 ## textured ones use the soft PBR shader (photo detail toned down).
 static func material(key: StringName) -> Material:
@@ -536,11 +606,17 @@ static func material(key: StringName) -> Material:
 		&"barn_red": ["planks", 2.4, Color(1.35, 0.36, 0.28), true],
 		&"barn_white": ["planks", 2.4, Color(0.9, 0.88, 0.82), false],
 		&"floorboards": ["floorboards", 2.2, Color(1, 1, 1), true],
-		&"thatch": ["thatch", 4.5, Color(1, 1, 1), true],
+		&"thatch": ["thatch", 4.5, Color(0.9, 0.82, 0.66), true],
 		&"slate_roof": ["slate_roof", 2.6, Color(1, 1, 1), true],
 		&"tin_roof": ["tin_roof", 2.2, Color(1, 1, 1), true],
 		&"bark": ["bark", 2.4, Color(1, 1, 1), true],
 		&"rock": ["rock", 3.0, Color(1, 1, 1), true],
+		# the models' extra detail: single stones, mortar, a rug
+		&"stone": ["rock", 1.6, Color(1.1, 1.05, 1.0), true],
+		&"stone_warm": ["rock", 1.6, Color(1.25, 1.08, 0.9), true],
+		&"stone_cool": ["rock", 1.6, Color(0.95, 1.0, 1.08), true],
+		&"mortar": ["rock", 3.0, Color(0.62, 0.6, 0.56), false],
+		&"plaid": ["plaid", 1.6, Color(1.0, 0.66, 0.56), true],
 	}.get(key, [])
 	if not spec.is_empty():
 		var sm := ShaderMaterial.new()
@@ -559,8 +635,30 @@ static func material(key: StringName) -> Material:
 		sm.set_shader_parameter(&"metres_per_repeat", float(spec[1]))
 		_materials[key] = sm
 		return sm
+	if key == &"end_grain":
+		var eg := ShaderMaterial.new()
+		eg.shader = END_GRAIN_SHADER
+		_materials[key] = eg
+		return eg
 	var m := StandardMaterial3D.new()
 	match key:
+		&"chinking":
+			m.albedo_color = Color(0.62, 0.58, 0.5)
+		&"iron":
+			m.albedo_color = Color(0.17, 0.17, 0.19)
+			m.metallic = 0.6
+		&"soot":
+			m.albedo_color = Color(0.07, 0.06, 0.06)
+		&"soil":
+			m.albedo_color = Color(0.25, 0.17, 0.11)
+		&"petal_red":
+			m.albedo_color = Color(0.95, 0.27, 0.32)
+		&"petal_yellow":
+			m.albedo_color = Color(1.0, 0.83, 0.22)
+		&"petal_white":
+			m.albedo_color = Color(0.97, 0.95, 0.92)
+		&"petal_purple":
+			m.albedo_color = Color(0.64, 0.42, 0.92)
 		&"carrot":
 			m.albedo_color = Color(0.95, 0.45, 0.1)
 		&"leaf":

@@ -613,14 +613,14 @@ def toy_goldfish():
 def write_credits(names: list[str] | None = None) -> None:
     files = sorted(str(p.relative_to(ROOT)) for p in OUT.rglob("*.glb"))
     entry = {
-        "asset": "Hamster Cage and Toy Box Bash models",
+        "asset": "Map models: the Hamster Cage, Toy Box Bash and Wildwood Island's buildings",
         "author": "Bunny Beat Down project",
         "author_url": "",
         "source_url": "",
         "license": "MIT (project)",
         "license_url": "https://opensource.org/license/mit",
-        "changes": "Original models made in Blender by tools/maps/models.py",
-        "used_for": "The Hamster Cage and Toy Box Bash: props, toys and landmarks",
+        "changes": "Original models made in Blender by tools/maps (models.py, refine.py, island.py)",
+        "used_for": "The Hamster Cage and Toy Box Bash props, toys and landmarks; the island's lodge, barn and stilt shack",
         "files": files,
     }
     CREDITS.write_text(json.dumps([entry], indent=1) + "\n")

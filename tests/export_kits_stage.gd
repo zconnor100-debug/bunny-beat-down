@@ -146,5 +146,21 @@ func _run() -> void:
 		f.store_string(JSON.stringify({"width": ToyTrain.TRACK_WIDTH, "points": flat}))
 		f.close()
 		print("raw toy/track_points.json: %d points" % pts.size())
+	# Wildwood Island's buildings, piece by piece, for tools/maps/island.py
+	if only.is_empty() or only.has("island"):
+		Building.recording = true
+		for style in Building.Style.values():
+			var id := String(Building.Style.keys()[style]).to_lower()
+			var b := Building.make(style, _rng(1))
+			var data := {"style": id, "floor_y": b.floor_y, "footprint": b.footprint, "parts": b.parts, "walls": b.walls,
+				"loot": b.loot_spots.map(func(q: Vector3): return [q.x, q.y, q.z]), "chest": [b.chest_spot.x, b.chest_spot.y, b.chest_spot.z]}
+			var path := dir.path_join("island/%s.json" % id)
+			DirAccess.make_dir_recursive_absolute(path.get_base_dir())
+			var f := FileAccess.open(path, FileAccess.WRITE)
+			f.store_string(JSON.stringify(data))
+			f.close()
+			print("raw island/%s.json: %d parts, %d walls" % [id, b.parts.size(), b.walls.size()])
+			b.free()
+		Building.recording = false
 	CageKit.exporting = false
 	get_tree().quit()

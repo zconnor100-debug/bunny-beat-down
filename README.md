@@ -314,6 +314,17 @@ The full write-up is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
   collider's. Model materials named `cage:<key>` take the game's own
   materials, and `accent` slots take a colour per instance, so one model
   covers every coloured variant.
+- **The island's lodge, barn and stilt shack are models too.** `Building`
+  records every box, log and prism it builds (and its wall runs, with their
+  doors and windows) when `tests/export_kits.gd` asks, and
+  `tools/maps/island.py` builds each piece again in Blender, to the same
+  size and place, with real detail: separate boards (board-and-batten on the
+  barn, lapped siding on the shack), stacked logs with chinking and end
+  grain, layered thatch with a ridge roll, slate courses, corrugated tin,
+  chimneys and plinths of single stones, framed windows with shutters and
+  flower boxes. UVs are in metres, so the models use the buildings' own
+  textures (each board shows one plank of the texture), and the colliders
+  still come from the code.
 - **Tests that play the game.** A headless suite of 92 tests covers:
   - the IK maths, hitboxes, ragdolls and dismemberment;
   - island navigation, the three biomes and the big buildings (a Bun walks
