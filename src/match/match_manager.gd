@@ -86,6 +86,7 @@ func setup(world_root_: Node3D, island_: Island, opponents: int, difficulty: int
 	kill_cam.match_manager = self
 	add_child(kill_cam)
 	Events.critter_died.connect(_on_critter_died)
+	Events.critter_damaged.connect(_on_critter_damaged)
 	var d := clampi(difficulty, 0, 2)
 	AIBrain.player_attack_slots = [1, 2, 3][d]
 	AIBrain.damage_to_player = [0.45, 0.65, 0.85][d]
@@ -136,6 +137,7 @@ func spawn_player(def: CritterDef, skin_id: String) -> Critter:
 	var display := "Bun" if def.id == &"bun" else "You (%s)" % def.display_name
 	player = _spawn_critter(def, display)
 	player.visual.apply_skin(skin_id)
+	StatBook.begin_match(def.id)
 	_apply_perks(player)
 	var pc := PlayerController.new()
 	pc.name = "PlayerController"
@@ -564,6 +566,7 @@ func _on_critter_died(victim: Node, info: DamageInfo) -> void:
 		taunt(killer, "kill")
 	elif killer == player and c != player:
 		_note_player_kill(info)
+		StatBook.note_kill(info.weapon_id, player.global_position.distance_to(c.global_position))
 		var heat_was := Cast.heat(c.display_name)
 		if RivalBook.note_you_beat(c.display_name, String(c.def.id)):
 			revenges += 1
@@ -591,6 +594,7 @@ func _on_critter_died(victim: Node, info: DamageInfo) -> void:
 	if alive.size() <= 1 and phase != Phase.ENDED and kill_cam:
 		kill_cam.note_final(c, info)   # (before anyone hears the match is over)
 	if c == player:
+		StatBook.end_match(c.placement, total, true)
 		player_eliminated.emit(c.placement, info.attacker as Critter)
 	if alive.size() <= 1 and phase != Phase.ENDED:
 		var winner: Critter = alive[0] if alive.size() == 1 else null
@@ -598,9 +602,17 @@ func _on_critter_died(victim: Node, info: DamageInfo) -> void:
 			winner.placement = 1
 			if winner != player:
 				RivalBook.note_win(winner.display_name)
+			else:
+				StatBook.end_match(1, total, false)
 		_set_phase(Phase.ENDED)
 		storm.active = false
 		finished.emit(winner, player.placement if not player.alive else 1)
+
+
+## Your hits, for the trackers (StatBook).
+func _on_critter_damaged(victim: Node, info: DamageInfo) -> void:
+	if player and info.attacker == player and victim != player and victim is Critter:
+		StatBook.note_hit(info.weapon_id, info.amount, info.headshot, info.kind == DamageInfo.Kind.EXPLOSION)
 
 
 func _rival_names() -> Array:

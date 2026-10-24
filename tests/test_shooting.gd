@@ -33,9 +33,10 @@ func test_shots_land_on_the_crosshair_in_range() -> void:
 		var dir := Projectiles.zeroed(origin, (target - origin).normalized(), dist, data)
 		var hit := _fly(origin, dir, data, dist)
 		check(absf(hit.y - target.y) < 0.15, "%s: %.0f m out the carrot lands on the crosshair (%.2f m off)" % [id, dist, hit.y - target.y])
-		# unzeroed, it would have dropped well below
+		# unzeroed, it would have dropped below (less now the carrots are fast: still, zeroing does better)
 		var plain := _fly(origin, (target - origin).normalized(), data, dist)
-		check(target.y - plain.y > 0.1 or data.projectile_gravity == 0.0, "%s: (without zeroing it drops %.2f m)" % [id, target.y - plain.y])
+		check(target.y - plain.y > 0.02 and absf(hit.y - target.y) < target.y - plain.y or data.projectile_gravity == 0.0,
+			"%s: (without zeroing it drops %.2f m)" % [id, target.y - plain.y])
 
 
 func test_bursts_bloom_and_settle() -> void:

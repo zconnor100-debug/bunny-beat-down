@@ -655,6 +655,8 @@ func _fire(w: WeaponInstance) -> void:
 		origin = chest
 	var carried := get_platform_velocity() if is_on_floor() else Vector3.ZERO   # (riding the toy train)
 	Projectiles.fire(self, w, origin, dir, current_spread_deg(), visual.hitbox_rids, carried)
+	if is_player:
+		StatBook.note_shot(w.data.id, w.data.pellets)
 	_burst += 1.0
 	_since_shot = 0.0
 	_recoil = 1.0
@@ -786,6 +788,8 @@ func _melee_tick(delta: float) -> void:
 			_reload_timer = -1.0
 			visual.set_club(true)
 			Audio.play_at(&"melee_swing", global_position, -3.0, 0.12)
+			if is_player:
+				StatBook.note_shot(&"melee")
 	if _melee_t >= 0.0:
 		_melee_t += delta
 		if not _melee_struck and _melee_t >= MELEE_TIME * MELEE_HIT_AT:

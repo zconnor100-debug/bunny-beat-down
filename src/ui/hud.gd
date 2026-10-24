@@ -29,6 +29,9 @@ var _news_frame := -1          # the frame a rival's news (REVENGE!...) was show
 var _rewind_tint: ColorRect
 var _rewind_fx: CanvasLayer        ## the tape-rewinding look while the world runs back
 var _feed: VBoxContainer
+## Lifetime beat-downs with each gun (StatBook), shown by its name like a
+## kill counter; refreshed whenever you beat someone down.
+var _tracked: Dictionary = {}
 ## The crosshair's Workshop look (read once a match).
 var reticle_style := "cross"
 var reticle_color := Color(1, 1, 1, 0.92)
@@ -190,6 +193,7 @@ func setup(player_: Critter, rig_: CameraRig, mm: MatchManager) -> void:
 	_root.add_child(_fps)
 
 	Events.critter_died.connect(_on_critter_died)
+	Events.critter_died.connect(func(_v, _i): _tracked.clear())   # (the counters move on)
 	Events.taunt.connect(_on_taunt)
 	Events.headline.connect(_on_headline)
 	reticle_style = Workshop.look("reticle")
@@ -309,7 +313,9 @@ func _process(delta: float) -> void:
 	_kills_label.text = "BEAT DOWNS: %d" % player.kills
 	var w := player.current_weapon()
 	if w:
-		_weapon_name.text = w.display_name()
+		if not _tracked.has(w.data.id):
+			_tracked[w.data.id] = int(StatBook.gun(w.data.id).kills)
+		_weapon_name.text = "%s   ⚔ %d" % [w.display_name(), _tracked[w.data.id]]
 		_weapon_name.add_theme_color_override("font_color", Rarity.COLORS[w.rarity])
 		var reserve: int = player.inventory.ammo[w.data.ammo_type]
 		_ammo_label.text = "RELOADING…" if player.is_reloading() else "%d  |  %d" % [w.ammo_in_mag, reserve]

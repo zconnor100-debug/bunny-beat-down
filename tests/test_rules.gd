@@ -60,6 +60,25 @@ func test_storm_geometry() -> void:
 	check(Vector2(sp.x, sp.z).distance_to(storm.next_center) < storm.next_radius, "safe point lies inside the next circle")
 
 
+## Carrots arrive fast enough that you barely lead a running critter at the
+## range each gun is made for (the rocket is slow on purpose: its blast makes
+## up for it), and faster guns stay faster, the sniper fastest of all.
+func test_little_leading_at_each_guns_range() -> void:
+	var run := 8.3                     # a critter's run (m/s)
+	var order := []
+	for w in WeaponDB.all():
+		if w.projectile == WeaponData.ProjectileKind.ROCKET:
+			continue
+		var at := w.ai_preferred_range   # (where it's meant to be used: bots fight from there)
+		var lead := run * at / w.projectile_speed
+		check(lead <= 0.6, "%s: %.2f m of lead on a runner at %.0f m (%.0f m/s)" % [w.id, lead, at, w.projectile_speed])
+		order.append([w.projectile_speed, w.id])
+	order.sort()
+	check(order.back()[1] == &"carrot_sniper", "the sniper's carrots are the fastest (%s)" % [order])
+	check(WeaponDB.get_weapon(&"carrot_shotgun").projectile_speed < WeaponDB.get_weapon(&"carrot_rifle").projectile_speed,
+		"pellets are slower than rifle carrots")
+
+
 func test_rockets_fly_fast_and_hit_hard() -> void:
 	make_arena(80.0)
 	var rocket := WeaponDB.get_weapon(&"carrot_rocket_launcher")

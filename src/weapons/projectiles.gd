@@ -14,6 +14,7 @@ const BOLT_MODEL := "res://assets/weapons/carrot_bolt.glb"
 const PELLET_MODEL := "res://assets/weapons/carrot_shell_pellet.glb"
 const TRACER_SHADER := preload("res://src/fx/tracer.gdshader")
 const TRACER_SECONDS := 0.06         ## a tracer is as long as this much flight
+const TRACER_MAX := 12.0             ## ... but never longer than this (metres)
 const TRACER_ENEMY := Color(1.0, 0.3, 0.04, 1.0)     ## shots at you: hot orange
 const TRACER_OWN := Color(1.0, 0.85, 0.5, 0.5)       ## your own: fainter, out of your way
 ## Your own tracers' colour this match (the Workshop's "Your tracers" look).
@@ -246,7 +247,7 @@ func _draw_tracers(shots: Array[Shot], frac: float) -> void:
 		if n >= tm.instance_count:
 			break
 		var speed := s.vel.length()
-		var length := minf(speed * TRACER_SECONDS, s.travelled + speed * frac)
+		var length := minf(minf(speed * TRACER_SECONDS, TRACER_MAX), s.travelled + speed * frac)
 		if length < 0.05:
 			continue
 		var back := -s.vel / speed

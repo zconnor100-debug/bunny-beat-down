@@ -511,6 +511,10 @@ func _show_end(title: String, sub: String, won: bool, killer: Critter) -> void:
 	stats.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	stats.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	v.add_child(stats)
+	var tracker := UITheme.label(StatBook.match_line(), 20, Color(UITheme.CREAM, 0.8))
+	tracker.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	tracker.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	v.add_child(tracker)
 	var row := HBoxContainer.new()
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	row.add_theme_constant_override("separation", 18)

@@ -224,6 +224,10 @@ func _show() -> void:
 	_blurb.text = "Jump trick: %s.%s" % [d.jump_blurb(), helmet]
 	_stats.text = "Speed %s   •   Jump %s   •   Size %.2f m" % [_bar(d.move_speed / 7.2), _bar(d.jump_height / 2.6),
 		_preview.visual.rig.world_head_top if _preview.visual.rig else 1.0]
+	var mine := StatBook.critter(d.id)
+	if mine.matches > 0.0:
+		_stats.text += "\nAs the %s: %d matches, %d won, %d beat-downs, accuracy %s" % [d.display_name, int(mine.matches),
+			int(mine.wins), int(mine.kills), StatBook.percent(mine)]
 	Settings.set_value(&"player_character", String(d.id))
 	_next_trick = 1.5
 	_spin = 0.0

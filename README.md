@@ -58,6 +58,17 @@ and the final shot replayed from three angles. There's a
   enamel (chipped to brass), with watering-can copper for bare metal, carrot
   barrels and leafy sights (`tools/weapons/blender/assets/weapons.py`).
 
+  Carrots fly fast enough that you barely lead a running critter at the
+  range each gun is made for: 260 m/s for shotgun pellets up to 480 for the
+  rifle (the sniper's 800 is the ceiling; the rocket stays a slow 120 and
+  makes up for it with its blast).
+
+  **Trackers**: every gun keeps its own count (beat-downs, carrots fired,
+  hits, accuracy, headshots, damage, the longest beat-down), shown by its
+  name in the HUD (⚔ 37), and every critter you play keeps its matches,
+  wins, best placing, beat-downs per defeat and accuracy. The end screen
+  sums up the match; the **Trophy Room** (main menu) has the lot.
+
   Five loot rarities run from Baby to **Golden**, and Golden guns shimmer.
   Projectiles are real carrots that take time to arrive (lead a moving
   target) and **stay stuck** in whatever they hit. Shooting is meant to be
@@ -392,7 +403,7 @@ The full write-up is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
   the same views: 31% fewer triangles on the island, 31% on the Hamster
   Cage, 79% on Toy Box Bash, and a third to two thirds fewer shadow
   triangles.
-- **Tests that play the game.** A headless suite of 107 tests covers:
+- **Tests that play the game.** A headless suite of 110 tests covers:
   - the IK maths, hitboxes, ragdolls and dismemberment;
   - island navigation, the three biomes and the big buildings (a Bun walks
     in through the barn doors; every indoor loot spot is reachable on the
@@ -402,8 +413,10 @@ The full write-up is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
     of the dollhouse is reachable; the train runs, carries a rider and bonks
     whoever is on the track; the fishbowl is swimmable), that no prop is
     generated inside another and no loot inside a solid, and the game rules;
-  - how carrots fly (on the crosshair within range, bursts that bloom and
-    settle, the shotgun's pattern);
+  - how carrots fly (on the crosshair within range, little leading at each
+    gun's range, bursts that bloom and settle, the shotgun's pattern) and
+    the trackers (shots, pellets, blasts, headshots and beat-downs counted
+    per gun and per critter, the HUD counter, the Trophy Room);
   - the cast (49 characters, each fighting its own way; a full lobby with
     no "Fox 3"), rivals (made, remembered across runs, back in the next
     match, hunting and taunting, revenge), radical bots (each step, their
