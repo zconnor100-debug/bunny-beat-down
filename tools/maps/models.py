@@ -255,14 +255,17 @@ def cage_plant():
 
 @model("cage/snowball")
 def cage_snowball():
-    """A clump of four soft snowballs (~1.6 m), lumpy but smooth."""
+    """A clump of four soft snowballs (~1.6 m), lumpy but smooth. Hundreds
+    are scattered over the winter corner, so each ball is a 320-face ico
+    sphere: smooth shading rounds it off, and a finer one cost 4x the
+    triangles for no visible difference."""
     rnd = random.Random(3)
     parts = []
     for i in range(4):
         a = math.tau * i / 4 + rnd.random()
         d = rnd.uniform(0.1, 0.85)
         r = rnd.uniform(0.75, 1.05)
-        b = ico(r, (math.cos(a) * d, math.sin(a) * d, r * rnd.uniform(0.45, 0.65)), "snow", 4)
+        b = ico(r, (math.cos(a) * d, math.sin(a) * d, r * rnd.uniform(0.45, 0.65)), "snow", 3)
         b.scale = (1.0, 1.0, rnd.uniform(0.62, 0.8))
         activate(b)
         bpy.ops.object.transform_apply(scale=True)

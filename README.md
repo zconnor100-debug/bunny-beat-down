@@ -331,7 +331,24 @@ The full write-up is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
   flower boxes. UVs are in metres, so the models use the buildings' own
   textures (each board shows one plank of the texture), and the colliders
   still come from the code.
-- **Tests that play the game.** A headless suite of 92 tests covers:
+- **Levels of detail, measured.** `tests/perf_bench.gd` renders each map from
+  fixed views (the drop, every landmark) and reports GPU and CPU time,
+  triangles and draw calls, with the shadow passes apart; with `breakdown`
+  it hides each kind of thing in turn to show what the triangles are. That
+  found the real costs (not the models I expected): terrain with no LOD,
+  ferns casting shadows 170 m out, and 5,000-triangle snowballs. Now each
+  terrain chunk carries coarser grids on the same vertices, each tagged with
+  its exact height error, so Godot picks one by its size on screen, with
+  shallow skirts so neighbours at different detail never crack (deep ones
+  cost more GPU time in the shadow cascades than the LODs saved, so grids
+  too rough to ever be picked aren't built). Cover keeps its models' LODs
+  and casts shadows only near you (a shadow-only twin of each batch); island
+  buildings hand over to the code-built building their model was made from
+  past 140 m; lower quality settings allow a few pixels of LOD error. On
+  the same views: 31% fewer triangles on the island, 31% on the Hamster
+  Cage, 79% on Toy Box Bash, and a third to two thirds fewer shadow
+  triangles.
+- **Tests that play the game.** A headless suite of 98 tests covers:
   - the IK maths, hitboxes, ragdolls and dismemberment;
   - island navigation, the three biomes and the big buildings (a Bun walks
     in through the barn doors; every indoor loot spot is reachable on the
@@ -381,6 +398,7 @@ godot --path .                                          # play
 godot --headless --path . -s tests/run_tests.gd         # all tests (~3 min)
 godot --headless --path . -s tests/run_tests.gd -- ik   # one suite
 godot --headless --path . -s tests/check_scripts.gd     # compile every script
+godot --path . -s tests/perf_bench.gd -- perf.json      # frame cost per map (GPU window)
 # before exporting a release: GPU-compress the textures extracted from the models
 python3 tools/compress_textures.py && godot --headless --import
 ```

@@ -41,6 +41,13 @@ static var recording := false
 var parts: Array = []
 var walls: Array = []
 
+## A building's model is its near look. Past this many metres the code-built
+## building the model was made from stands in: the same walls, openings and
+## textures in a few hundred triangles instead of tens of thousands (the
+## model's boards, thatch courses and bevels are under a pixel out there).
+const FAR_LOD := 140.0
+const FAR_LOD_MARGIN := 4.0
+
 static var _materials: Dictionary = {}
 var _surfaces: Dictionary = {}      # material key -> SurfaceTool
 var _rng: RandomNumberGenerator
@@ -548,11 +555,6 @@ func _st(mat: StringName) -> SurfaceTool:
 
 
 func _commit() -> void:
-	var m := island_model(MODEL % String(Style.keys()[style]).to_lower()) if not recording else null
-	if m:
-		_surfaces.clear()
-		add_child(m)
-		return
 	var mesh := ArrayMesh.new()
 	for key in _surfaces:
 		var st: SurfaceTool = _surfaces[key]
@@ -564,6 +566,18 @@ func _commit() -> void:
 	mi.mesh = mesh
 	add_child(mi)
 	_surfaces.clear()
+	var m := island_model(MODEL % String(Style.keys()[style]).to_lower()) if not recording else null
+	if m == null:
+		return
+	# the model up close; past FAR_LOD the code-built building it was made
+	# from takes over. A straight swap: Godot's fade blends both see-through
+	# (grey ghosts of each other); the margin only stops it flickering back
+	add_child(m)
+	for gi in ModelUtil.find_all(m, "GeometryInstance3D"):
+		(gi as GeometryInstance3D).visibility_range_end = FAR_LOD
+		(gi as GeometryInstance3D).visibility_range_end_margin = FAR_LOD_MARGIN
+	mi.visibility_range_begin = FAR_LOD
+	mi.visibility_range_begin_margin = FAR_LOD_MARGIN
 
 
 ## A building's model (or null without one), its "bld:<key>" materials drawn

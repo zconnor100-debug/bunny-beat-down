@@ -20,6 +20,15 @@ const SEA_FLOOR := -7.0
 const SWAMP_LEVEL := 2.6       ## the swamp's still water (above the sea)
 const BIOME_CELL := 6.0        ## metres per biome-map texel
 const BIOME_RES := 257
+## Terrain LODs: how many metres of height error count as one metre for
+## Godot's pixel threshold (the terrain shader's own detail hides a little).
+const LOD_ERROR_SCALE := 1.0
+## Coarser grids than this (metres of height error) aren't built: they'd only
+## be picked past the far plane, and the skirts would have to hang that deep
+## (rasterised under the ground into every shadow cascade: deep skirts cost
+## more GPU time than the LODs saved).
+const MAX_LOD_ERROR := 3.0
+const SKIRT_MARGIN := 0.3     ## metres a skirt reaches past the worst crack
 
 var island_radius := 660.0
 ## Area relative to the original 215 m island; content counts scale with it.
@@ -304,24 +313,78 @@ func build_meshes(material: ShaderMaterial) -> void:
 	if normals.size() != RES * RES:
 		compute_normals()
 	var cells_per := (RES - 1) / CHUNKS
+	# every chunk's LOD errors first (the grids worth building): a skirt must
+	# reach past its neighbour's coarsest one too
+	var errors := []
 	for cz in CHUNKS:
 		for cx in CHUNKS:
+			var errs := _lod_errors(cx * cells_per, cz * cells_per, cells_per)
+			var used := 0
+			while used < errs.size() and errs[used] <= MAX_LOD_ERROR:
+				used += 1
+			errors.append(errs.slice(0, used))
+	for cz in CHUNKS:
+		for cx in CHUNKS:
+			var own := _worst(errors[cz * CHUNKS + cx])
+			# skirt depth on each side (-x, +x, -z, +z); 0 on the map's own edge
+			var skirts := PackedFloat32Array()
+			for side in [Vector2i(-1, 0), Vector2i(1, 0), Vector2i(0, -1), Vector2i(0, 1)]:
+				var nx: int = cx + side.x
+				var nz: int = cz + side.y
+				var inside := nx >= 0 and nx < CHUNKS and nz >= 0 and nz < CHUNKS
+				skirts.append(own + _worst(errors[nz * CHUNKS + nx]) + SKIRT_MARGIN if inside else 0.0)
 			var mi := MeshInstance3D.new()
 			mi.name = "TerrainChunk_%d_%d" % [cx, cz]
-			mi.mesh = _chunk_mesh(cx * cells_per, cz * cells_per, cells_per)
+			mi.mesh = _chunk_mesh(cx * cells_per, cz * cells_per, cells_per, errors[cz * CHUNKS + cx], skirts)
 			mi.material_override = material
 			mi.set_meta(&"surface", &"dirt")
 			add_child(mi)
 
 
-func _chunk_mesh(x0: int, z0: int, n: int) -> ArrayMesh:
+static func _worst(errors: PackedFloat32Array) -> float:
+	return errors[-1] if not errors.is_empty() else 0.0
+
+
+## How far (metres) each coarser grid of a chunk (steps 2, 4, 8 ... cells)
+## strays from the full one. Each vertex the step-s grid drops from the
+## step-s/2 one sits at the middle of a step-s triangle's edge, so its height
+## against that edge's midpoint is what the level adds; the levels add up.
+func _lod_errors(x0: int, z0: int, n: int) -> PackedFloat32Array:
+	var out := PackedFloat32Array()
+	var err := 0.0
+	var s := 2
+	while s <= n:
+		var h := s / 2
+		var worst := 0.0
+		for zi in range(0, n + 1, h):
+			var oz := (zi / h) % 2
+			var row := (z0 + zi) * RES + x0
+			for xi in range(0, n + 1, h):
+				var ox := (xi / h) % 2
+				if ox == 0 and oz == 0:
+					continue
+				var g := row + xi
+				var mid: float
+				if oz == 0:     # on a row: between its left and right neighbours
+					mid = (heights[g - h] + heights[g + h]) * 0.5
+				elif ox == 0:   # on a column: between the ones above and below
+					mid = (heights[g - h * RES] + heights[g + h * RES]) * 0.5
+				else:           # a cell centre, on the diagonal (top right to bottom left)
+					mid = (heights[g + h - h * RES] + heights[g - h + h * RES]) * 0.5
+				worst = maxf(worst, absf(heights[g] - mid))
+		err += worst
+		out.append(err)
+		s *= 2
+	return out
+
+
+func _chunk_mesh(x0: int, z0: int, n: int, errors := PackedFloat32Array(), skirts := PackedFloat32Array()) -> ArrayMesh:
 	var half := SIZE * 0.5
 	var count := n + 1
 	var verts := PackedVector3Array()
 	var nrms := PackedVector3Array()
 	var uvs := PackedVector2Array()
 	var tangents := PackedFloat32Array()
-	var indices := PackedInt32Array()
 	verts.resize(count * count)
 	nrms.resize(count * count)
 	uvs.resize(count * count)
@@ -342,20 +405,39 @@ func _chunk_mesh(x0: int, z0: int, n: int) -> ArrayMesh:
 			tangents[i * 4 + 1] = t.y
 			tangents[i * 4 + 2] = t.z
 			tangents[i * 4 + 3] = 1.0
-	indices.resize(n * n * 6)
-	var k := 0
-	for zi in n:
-		for xi in n:
-			var a := zi * count + xi
-			var c := a + count
-			indices[k] = a
-			indices[k + 1] = a + 1
-			indices[k + 2] = c
-			indices[k + 3] = a + 1
-			indices[k + 4] = c + 1
-			indices[k + 5] = c
-			k += 6
-	chunk_arrays.append([verts, indices])
+	var indices := _grid_indices(n, 1)
+	chunk_arrays.append([verts.duplicate(), indices.duplicate()])
+	# skirts: a strip hanging under each inner edge, so a coarser neighbour's
+	# straight edge never opens a crack against this one's (and back)
+	var sides := []   # [top vertex indices along the side, outward direction, depth]
+	if not skirts.is_empty():
+		var dirs := [Vector3.LEFT, Vector3.RIGHT, Vector3.FORWARD, Vector3.BACK]
+		for side in 4:
+			if skirts[side] <= 0.0:
+				continue
+			var tops := PackedInt32Array()
+			for k in count:
+				tops.append([k * count, k * count + n, k, n * count + k][side])
+			var bottoms := PackedInt32Array()
+			for t in tops:
+				bottoms.append(verts.size())
+				verts.append(verts[t] - Vector3(0.0, skirts[side], 0.0))
+				nrms.append(nrms[t])
+				uvs.append(uvs[t])
+				tangents.append_array(tangents.slice(t * 4, t * 4 + 4))
+			sides.append([tops, bottoms, dirs[side]])
+	_add_skirts(indices, verts, sides, 1)
+	# coarser grids on the same vertices, each used once its error is under
+	# a pixel or so on screen (Godot reads a LOD's key as its error in metres)
+	var lods := {}
+	var key := 0.0
+	var s := 2
+	for err in errors:
+		var lod := _grid_indices(n, s)
+		_add_skirts(lod, verts, sides, s)
+		key = maxf(err * LOD_ERROR_SCALE, key + 0.0001)
+		lods[key] = lod
+		s *= 2
 	var arrays := []
 	arrays.resize(Mesh.ARRAY_MAX)
 	arrays[Mesh.ARRAY_VERTEX] = verts
@@ -364,8 +446,48 @@ func _chunk_mesh(x0: int, z0: int, n: int) -> ArrayMesh:
 	arrays[Mesh.ARRAY_TANGENT] = tangents
 	arrays[Mesh.ARRAY_INDEX] = indices
 	var mesh := ArrayMesh.new()
-	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays, [], lods)
 	return mesh
+
+
+## Two triangles per cell of an n-cell grid taken every `s` vertices.
+static func _grid_indices(n: int, s: int) -> PackedInt32Array:
+	var count := n + 1
+	var m := n / s
+	var out := PackedInt32Array()
+	out.resize(m * m * 6)
+	var k := 0
+	for zi in m:
+		for xi in m:
+			var a := zi * s * count + xi * s
+			var b := a + s
+			var c := a + s * count
+			out[k] = a
+			out[k + 1] = b
+			out[k + 2] = c
+			out[k + 3] = b
+			out[k + 4] = c + s
+			out[k + 5] = c
+			k += 6
+	return out
+
+
+## The skirts' quads at grid step `s`, facing out of the chunk (front faces
+## are clockwise: the visible side's normal is (c - a) x (b - a)).
+static func _add_skirts(out: PackedInt32Array, verts: PackedVector3Array, sides: Array, s: int) -> void:
+	for side in sides:
+		var tops: PackedInt32Array = side[0]
+		var bottoms: PackedInt32Array = side[1]
+		var dir: Vector3 = side[2]
+		for k in range(0, tops.size() - 1, s):
+			var t0 := tops[k]
+			var t1 := tops[k + s]
+			var b0 := bottoms[k]
+			var b1 := bottoms[k + s]
+			if (verts[b0] - verts[t0]).cross(verts[t1] - verts[t0]).dot(dir) > 0.0:
+				out.append_array([t0, t1, b0, t1, b1, b0])
+			else:
+				out.append_array([t0, b0, t1, t1, b0, b1])
 
 
 func build_collision() -> StaticBody3D:

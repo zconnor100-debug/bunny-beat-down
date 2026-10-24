@@ -9,6 +9,8 @@ const MANIFEST := "res://assets/env/manifest.json"
 const CHUNK := 64.0
 const FOLIAGE_SHADER := preload("res://src/world/shaders/foliage.gdshader")
 const BATCHED := ["grass", "flower", "bush", "reed", "lily"]
+## How far (metres, at High quality) batched cover still casts shadows.
+const SHADOW_REACH := {"bush": 70.0, "reed": 60.0}
 
 var entries: Array = []                 # manifest dictionaries
 var by_category: Dictionary = {}        # category -> Array of entries
@@ -349,15 +351,27 @@ func flush_batches(quality: int) -> void:
 		for i in xfs.size():
 			mm.set_instance_transform(i, xfs[i])
 		var mmi := MultiMeshInstance3D.new()
+		mmi.name = String(key).replace("|", "_")     # model id, chunk x, chunk z
 		mmi.multimesh = mm
 		var cat: String = e.get("category")
-		mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON if cat in ["bush", "reed"] and quality >= 2 else GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		var reach := {"grass": 75.0, "flower": 110.0, "bush": 170.0, "reed": 150.0, "lily": 90.0}.get(cat, 100.0) as float
-		reach *= [0.55, 0.8, 1.0, 1.35][clampi(quality, 0, 3)]
-		mmi.visibility_range_end = reach
+		var scale_ := [0.55, 0.8, 1.0, 1.35][clampi(quality, 0, 3)] as float
+		mmi.visibility_range_end = reach * scale_
 		mmi.visibility_range_end_margin = 12.0
 		mmi.visibility_range_fade_mode = GeometryInstance3D.VISIBILITY_RANGE_FADE_SELF
 		add_child(mmi)
+		if cat in SHADOW_REACH and quality >= 2:
+			# bushes and reeds cast shadows near you only: a shadow-only twin on
+			# the same instances (far off, their shadows are a few pixels that
+			# cost as much to draw as the plants themselves)
+			var twin := MultiMeshInstance3D.new()
+			twin.name = mmi.name + "_shadow"
+			twin.multimesh = mm
+			twin.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_SHADOWS_ONLY
+			twin.visibility_range_end = float(SHADOW_REACH[cat]) * scale_
+			twin.visibility_range_end_margin = 8.0
+			add_child(twin)
 	_batches.clear()
 	_batch_entry.clear()
 
@@ -376,9 +390,11 @@ func _foliage_mesh(e: Dictionary) -> Mesh:
 		return null
 	var height := float(e.get("height_m", 1.0))
 	var cat: String = e.get("category", "grass")
-	var out := ArrayMesh.new()
-	for i in src.get_surface_count():
-		out.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, src.surface_get_arrays(i))
+	# a copy keeps the model's LODs (far chunks draw the simpler ones); its
+	# position-only shadow mesh can't sway in the wind, so that goes
+	var out := src.duplicate() as ArrayMesh
+	out.shadow_mesh = null
+	for i in out.get_surface_count():
 		out.surface_set_material(i, _foliage_material(src.surface_get_material(i) as BaseMaterial3D, height, cat))
 	_foliage_mats[key] = out
 	return out

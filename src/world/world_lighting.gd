@@ -91,4 +91,7 @@ func build(quality: int) -> void:
 		# bumpy ground, thin twigs and leaf-card edges (the "grainy" look)
 		vp.screen_space_aa = Viewport.SCREEN_SPACE_AA_FXAA if quality == 0 else Viewport.SCREEN_SPACE_AA_SMAA
 		vp.use_taa = false
+		# how many pixels a mesh's simpler LOD may be off by before the finer
+		# one is drawn: lower qualities trade a little distant detail for speed
+		vp.mesh_lod_threshold = [4.0, 2.0, 1.0, 1.0][clampi(quality, 0, 3)]
 		RenderingServer.directional_shadow_atlas_set_size([2048, 4096, 4096, 8192][clampi(quality, 0, 3)], true)
