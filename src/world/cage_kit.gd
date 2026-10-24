@@ -26,6 +26,9 @@ const CERAMIC := {
 }
 
 static var _cage_materials: Dictionary = {}
+const TOY_SURFACE := preload("res://src/world/shaders/toy_surface.gdshader")
+static var _toy_noise: NoiseTexture2D
+static var _toy_bump: NoiseTexture2D
 
 var _concave := PackedVector3Array()   # triangles of solid lathes (one concave shape)
 
@@ -380,7 +383,7 @@ static func mat(key: StringName) -> Material:
 	var m: Material
 	if s.begins_with("plastic_"):
 		var c: Color = PLASTIC.get(StringName(s.substr(8)), Color.WHITE) if s != "plastic_brown" else Color(0.45, 0.26, 0.14)
-		m = _gloss(c, 0.32, 0.35)
+		m = _toy(c, 0.32, 0.35, 1.0, 1.6)
 	elif s.begins_with("ceramic_"):
 		m = _gloss(CERAMIC.get(StringName(s.substr(8)), Color.WHITE), 0.12, 1.0)
 	elif s.begins_with("tube_"):
@@ -392,7 +395,7 @@ static func mat(key: StringName) -> Material:
 		tm.emission = tc * 0.25
 		m = tm
 	elif s.begins_with("crayon_"):
-		m = _flat(PLASTIC.get(StringName(s.substr(7)), Color.WHITE) * 0.92, 0.75)
+		m = _toy(PLASTIC.get(StringName(s.substr(7)), Color.WHITE) * 0.92, 0.75, 0.0, 1.6, 0.9)   # (waxy)
 	elif s.begins_with("pillow_"):
 		m = _soft("plaid", 7.0, PLASTIC.get(StringName(s.substr(7)), Color.WHITE).lerp(Color.WHITE, 0.45), 0.6, 1.0)
 	elif s.begins_with("paint_"):
@@ -411,7 +414,7 @@ static func mat(key: StringName) -> Material:
 			&"snow":
 				m = _soft("snow", 6.0, Color(1.12, 1.16, 1.22), 0.6, 1.0)
 			&"cardboard":
-				m = _flat(Color(0.76, 0.58, 0.38), 0.9)
+				m = _toy(Color(0.76, 0.58, 0.38), 0.9, 0.0, 1.8, 2.4, 0.1)   # (fibrous)
 			&"coconut":
 				m = _soft("bark", 3.0, Color(0.62, 0.42, 0.27), 0.75, 1.0)
 			&"coconut_in":
@@ -466,10 +469,10 @@ static func mat(key: StringName) -> Material:
 			# the room and the fridge
 			&"laminate":
 				m = _soft("laminate", 90.0, Color(1.05, 1.0, 0.95), 0.8)
-			&"wall_paint":
-				m = _flat(Color(0.94, 0.87, 0.74), 0.92)
+			&"wall_paint":   # (rolled-on emulsion over plaster: a faint stipple and patchiness)
+				m = _toy(Color(0.94, 0.86, 0.72), 0.92, 0.0, 0.7, 0.9, 0.09, 0.3)
 			&"ceiling":
-				m = _flat(Color(0.97, 0.96, 0.93), 0.95)
+				m = _toy(Color(0.97, 0.96, 0.93), 0.95, 0.0, 0.5, 0.9, 0.05, 0.0)
 			&"rug":
 				m = _flat(Color(0.42, 0.62, 0.7), 1.0)
 			&"rug_border":
@@ -536,7 +539,7 @@ static func mat(key: StringName) -> Material:
 			&"bowl_glass":
 				m = _clear(Color(0.86, 0.95, 1.0, 0.16), 0.03)
 			&"paper":
-				m = _flat(Color(0.97, 0.97, 0.94), 0.85)
+				m = _toy(Color(0.97, 0.97, 0.94), 0.85, 0.0, 0.8, 3.0, 0.03, 0.4)
 			&"domino":
 				m = _gloss(Color(0.08, 0.08, 0.09), 0.25, 0.8)
 			&"coin":
@@ -576,6 +579,44 @@ static func mat(key: StringName) -> Material:
 				return Building.material(key)
 	_cage_materials[key] = m
 	return m
+
+
+## A toy's surface (see toy_surface.gdshader): moulded plastic, crayon wax,
+## cardboard or paper with a fine bump, mottling and a few scuffs.
+static func _toy(c: Color, rough: float, coat: float, grain: float, grain_scale: float, mottle := 0.06, wear := 1.0) -> ShaderMaterial:
+	if _toy_noise == null:
+		var fn := FastNoiseLite.new()
+		fn.frequency = 0.02
+		fn.fractal_octaves = 4
+		_toy_noise = NoiseTexture2D.new()
+		_toy_noise.width = 256
+		_toy_noise.height = 256
+		_toy_noise.seamless = true
+		_toy_noise.generate_mipmaps = true
+		_toy_noise.noise = fn
+		var bn := FastNoiseLite.new()
+		bn.frequency = 0.08
+		bn.fractal_octaves = 3
+		_toy_bump = NoiseTexture2D.new()
+		_toy_bump.width = 256
+		_toy_bump.height = 256
+		_toy_bump.seamless = true
+		_toy_bump.as_normal_map = true
+		_toy_bump.bump_strength = 6.0
+		_toy_bump.generate_mipmaps = true
+		_toy_bump.noise = bn
+	var sm := ShaderMaterial.new()
+	sm.shader = TOY_SURFACE
+	sm.set_shader_parameter(&"albedo", c)
+	sm.set_shader_parameter(&"roughness", rough)
+	sm.set_shader_parameter(&"clearcoat", coat)
+	sm.set_shader_parameter(&"grain", grain)
+	sm.set_shader_parameter(&"grain_scale", grain_scale)
+	sm.set_shader_parameter(&"mottle", mottle)
+	sm.set_shader_parameter(&"wear", wear)
+	sm.set_shader_parameter(&"noise_tex", _toy_noise)
+	sm.set_shader_parameter(&"bump_tex", _toy_bump)
+	return sm
 
 
 static func _gloss(c: Color, rough: float, coat: float) -> StandardMaterial3D:

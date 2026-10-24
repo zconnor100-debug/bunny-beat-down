@@ -240,7 +240,8 @@ down and replayed. There's also a **[vertical phone cut](https://github.com/zcon
   ![The Hamster Cage: the tank, Tube Town, the aquarium castle and the fridge](docs/screenshots/hamster_cage.jpg)
 - **Toy Box Bash**, the third map: a kid's bedroom floor, hemmed in by the
   bed, a cubby shelf, a bookshelf, a dresser and a desk, under a ceiling of
-  glow-in-the-dark stars and a planet mobile, to a toy marching-band soundtrack.
+  glow-in-the-dark stars and a planet mobile, to a toy-box soundtrack (music-box
+  bells, a peppy vibraphone and a tin-soldier march).
   - **The toy train** loops the whole room on a wooden track. Hop on an open
     car and ride it (moving cover with a view), but don't stand on the track:
     the engine bonks you for real damage and knocks you flying.
@@ -355,7 +356,7 @@ python3 tools/compress_textures.py && godot --headless --import
 | Jump (with species trick) · glide · leave the balloon | Space | A |
 | Sprint (works while aiming) | Shift (hold) | L3 (click: on until you stop) |
 | Crouch → crawl → stand (each press) | Ctrl or C | B (with a gun out) |
-| Reload / pick up | R / E | X / A (with a gun or crate in front of you) or Y |
+| Pick up / open (with a gun or crate in front of you), else reload | E / R | X |
 | Club swing (any time) | F, or LMB with empty paws | R3, or B / RT with empty paws |
 | Switch weapon / drop it | 1-3, mouse wheel / G | LB / RB / D-pad ← |
 | Heal (lucky clover) | H | D-pad ↓ |

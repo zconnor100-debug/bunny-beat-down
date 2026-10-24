@@ -3,6 +3,7 @@ extends Node
 
 var out_dir := "/tmp/bbd_drop"
 var map := "cage"
+var opponents := 23
 var game: Node
 
 
@@ -16,7 +17,10 @@ func _ready() -> void:
 	var settings: Node = get_node("/root/Settings")
 	settings.set_value(&"seed", 777, false)
 	settings.set_value(&"map", map, false)
-	settings.set_value(&"opponents", 23, false)
+	settings.set_value(&"opponents", opponents, false)
+	if opponents > 23:   # (the owner's settings: a full lobby, top quality, a wide lens)
+		settings.set_value(&"quality", 3, false)
+		settings.set_value(&"fov", 100.0, false)
 	game = load("res://scenes/game.tscn").instantiate()
 	get_tree().root.add_child.call_deferred(game)
 	while game.get("match_manager") == null or game.match_manager.dropship == null:
@@ -26,11 +30,30 @@ func _ready() -> void:
 	await _snap("70_ride_start")
 	await _wait(5.0)
 	await _snap("71_ride_later")
+	if opponents > 23:
+		# from the plane, everyone else on the way down (wide lens, far away)
+		for i in 3:
+			await _wait(3.0)
+			game.rig.pitch = -0.75
+			game.rig.yaw += 0.9
+			await _wait(0.4)
+			await _snap("71_falling_bots_%d" % i)
 	mm.player_jump()
 	await _wait(1.6)
 	await _snap("72_jumped")
 	await _wait(1.8)
 	await _snap("73_falling")
+	if opponents > 23:
+		# look round at everyone else coming down, then up from the ground
+		for i in 4:
+			game.rig.yaw += PI * 0.5
+			game.rig.pitch = -0.6
+			await _wait(1.5)
+			await _snap("74_around_%d" % i)
+		await _wait(12.0)
+		game.rig.pitch = 0.5
+		await _wait(0.5)
+		await _snap("75_sky_from_ground")
 	var p = mm.player
 	var near := 0
 	for c in mm.critters:

@@ -32,9 +32,23 @@ const BODY_POINTS := [[0.9, 0.3], [0.6, 0.45], [0.3, 0.25]]
 static var player_attack_slots := 2
 ## Damage bots deal to the player is multiplied by this (per difficulty).
 static var damage_to_player := 0.65
+## Bots fighting each other hit softer too: at full damage a 50-critter lobby
+## was mostly gone in a minute and a half, before the player met anyone.
+const DAMAGE_BETWEEN_BOTS := 0.35
 static var _player_attackers: Dictionary = {}   # brain instance id -> msec its slot expires
 const ATTACK_SLOT_HOLD_MS := 1500
 const BRAWL_RANGE := 7.0          ## unarmed bots club anyone this close instead of fleeing
+## Fresh off the drop, bots loot before they pick fights with each other (they
+## still fight back, and still come for you): without it half the lobby beat
+## each other down in the first minute and the player met nobody.
+const SETTLE_SECONDS := 30.0
+## Bots start fights with each other only up close (they come for you from as
+## far as they can see you): this is the player's battle royale.
+const BOT_FIGHT_RANGE := 30.0
+## Losing a scrap with another bot (this low), a bot breaks off for a while to
+## heal or hide instead of fighting to the last carrot.
+const BREAK_OFF_HEALTH := 45.0
+const BREAK_OFF_SECONDS := 12.0
 
 var me: Critter
 var island: Island
@@ -82,6 +96,9 @@ var _burst_t := 0.0
 ## Loot we couldn't reach (behind rocks, on a roof…): ignored for a while.
 var _unreachable: Dictionary = {}   # node -> clock time it can be tried again
 var _goal_since := 0.0
+var _landed_at := -1.0             # (see SETTLE_SECONDS)
+var _provoked: Dictionary = {}     # Critter -> clock it last hurt us
+var _avoid: Dictionary = {}        # Critter -> clock until which we leave it alone
 var _goal_best := INF
 var _goal_tracked: Node3D   # patience is per loot node: re-picking the same one doesn't reset it
 const GOAL_PATIENCE := 8.0
@@ -98,6 +115,8 @@ func _physics_process(delta: float) -> void:
 	if me == null or not me.alive or me.state == Critter.State.IN_DROPSHIP:
 		return
 	_clock += delta
+	if _landed_at < 0.0 and me.state == Critter.State.GROUND:
+		_landed_at = _clock
 	_think_t -= delta
 	if _think_t <= 0.0:
 		_think_t = THINK_INTERVAL * randf_range(0.8, 1.2)
@@ -157,6 +176,14 @@ func _perceive() -> void:
 		# a target is someone we're sure of (or still tracking)
 		if aware < (0.5 if other == target else 1.0):
 			continue
+		# just landed, or the other bot is far off: leave it be, unless it started it
+		if not other.is_player and (settling() or d > BOT_FIGHT_RANGE) and _clock - float(_provoked.get(other, -100.0)) > 8.0:
+			continue
+		if not other.is_player and _clock < float(_avoid.get(other, -1.0)):
+			continue   # (we broke off from this one)
+		if not other.is_player and other != target and _clock - float(_provoked.get(other, -100.0)) > 8.0 \
+				and match_manager and match_manager.has_method("bots_may_brawl") and not match_manager.bots_may_brawl():
+			continue   # (the director: not yet, see MatchManager.bots_may_brawl)
 		# prefer close, weak, and whoever is already our target (a rival: you)
 		var score := d * (0.6 + other.health / 200.0) * (0.6 if other == target else 1.0) * (0.35 if rival and other.is_player else 1.0)
 		if score < best_score:
@@ -227,6 +254,7 @@ func _on_damaged(victim: Node, info: DamageInfo) -> void:
 	# getting shot says roughly where it came from: turn that way and go and
 	# look (the bot still has to spot the shooter before it fires back)
 	var attacker := info.attacker as Critter
+	_provoked[attacker] = _clock
 	var err := me.global_position.distance_to(attacker.global_position) * 0.15
 	_alert_pos = attacker.global_position + Vector3(randf_range(-err, err), 0.0, randf_range(-err, err))
 	_alert_t = _clock
@@ -234,6 +262,11 @@ func _on_damaged(victim: Node, info: DamageInfo) -> void:
 	_heard_t = _clock
 	_awareness[attacker] = maxf(float(_awareness.get(attacker, 0.0)), 0.6)
 	_think_t = minf(_think_t, 0.05)
+
+
+## Still settling in after the drop (see SETTLE_SECONDS).
+func settling() -> bool:
+	return _landed_at >= 0.0 and _clock - _landed_at < SETTLE_SECONDS
 
 
 ## Recently shot: keep looking toward where it came from.
@@ -256,6 +289,15 @@ func _choose_mode() -> void:
 		if target == null or not armed or me.health < 40.0:
 			mode = Mode.FLEE_STORM
 			return
+	if target and not target.is_player and me.health < BREAK_OFF_HEALTH:
+		# losing to another bot: break off, run, patch up
+		_avoid[target] = _clock + BREAK_OFF_SECONDS
+		var away := me.global_position - target.global_position
+		away.y = 0.0
+		_set_dest(me.global_position + away.normalized() * 30.0)
+		target = null
+		mode = Mode.HEAL if me.inventory.clovers > 0 else Mode.ROAM
+		return
 	if target and armed:
 		mode = Mode.FIGHT
 		return
@@ -419,6 +461,8 @@ func forget() -> void:
 	_bursting = false
 	_stuck_t = 0.0
 	_think_t = 0.0
+	_provoked.clear()
+	_avoid.clear()
 
 
 func hunt(pos: Vector3, seconds := 30.0) -> void:

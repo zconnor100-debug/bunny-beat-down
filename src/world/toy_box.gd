@@ -503,9 +503,9 @@ func _build_spill_water() -> void:
 	swamp_water.name = "SpillWater"
 	swamp_water.mesh = st.commit()
 	var m := _water_material()
-	m.set_shader_parameter(&"shallow_color", Color(0.55, 0.75, 0.85))
-	m.set_shader_parameter(&"deep_color", Color(0.3, 0.5, 0.65))
-	m.set_shader_parameter(&"depth_fade", 0.8)
+	m.set_shader_parameter(&"shallow_color", Color(0.42, 0.7, 0.92))
+	m.set_shader_parameter(&"deep_color", Color(0.2, 0.47, 0.78))
+	m.set_shader_parameter(&"depth_fade", 0.5)   # (ankle-deep: it should still read as water)
 	swamp_water.material_override = m
 	swamp_water.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(swamp_water)
@@ -565,3 +565,4 @@ func tune_lighting(lighting: WorldLighting) -> void:
 	lighting.env.fog_light_color = Color(0.95, 0.9, 0.82)
 	lighting.env.fog_aerial_perspective = 0.1
 	lighting.env.ambient_light_energy = 1.0
+	lighting.make_indoor()

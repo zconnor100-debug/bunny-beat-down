@@ -23,8 +23,10 @@ const BINDINGS := {
 	&"crouch": [[KEY, KEY_CTRL], [KEY, KEY_C], [PAD_BUTTON, JOY_BUTTON_B]],
 	&"fire": [[MOUSE, MOUSE_BUTTON_LEFT], [PAD_AXIS, JOY_AXIS_TRIGGER_RIGHT, 1.0]],
 	&"aim": [[MOUSE, MOUSE_BUTTON_RIGHT], [PAD_AXIS, JOY_AXIS_TRIGGER_LEFT, 1.0]],
+	# on a pad X does both: picks up / opens what's right in front of you,
+	# reloads otherwise (A is only jump: you kept grabbing guns by accident)
 	&"reload": [[KEY, KEY_R], [PAD_BUTTON, JOY_BUTTON_X]],
-	&"interact": [[KEY, KEY_E], [PAD_BUTTON, JOY_BUTTON_Y]],
+	&"interact": [[KEY, KEY_E], [PAD_BUTTON, JOY_BUTTON_X], [PAD_BUTTON, JOY_BUTTON_Y]],
 	&"heal": [[KEY, KEY_H], [PAD_BUTTON, JOY_BUTTON_DPAD_DOWN]],
 	&"weapon_1": [[KEY, KEY_1]],
 	&"weapon_2": [[KEY, KEY_2]],

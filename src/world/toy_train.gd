@@ -105,6 +105,13 @@ func frame_at(s: float) -> Transform3D:
 	return Transform3D(Basis.looking_at(fwd, Vector3.UP), p)
 
 
+## Put the train at `d` metres round its loop (a rewind puts it back).
+func set_distance(d: float) -> void:
+	distance = fposmod(d, total)
+	if not cars.is_empty():
+		_place_cars()
+
+
 func _physics_process(delta: float) -> void:
 	if not running or cars.is_empty():
 		return

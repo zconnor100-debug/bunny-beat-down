@@ -192,7 +192,10 @@ func setup(player_: Critter, rig_: CameraRig, mm: MatchManager) -> void:
 		_news_frame = Engine.get_process_frames()
 		show_message(t, sub, 4.0))
 	Events.announce.connect(func(t, sub): show_message(t, sub, 5.0))
-	Events.alive_count_changed.connect(func(a, _t): _alive_label.text = "%d CRITTER%s LEFT" % [a, "" if a == 1 else "S"])
+	Events.alive_count_changed.connect(_show_alive)
+	# (the match announced its head count before this HUD existed: start from it)
+	if match_manager:
+		_show_alive(match_manager.alive_critters().size(), match_manager.total)
 	Events.player_hit_confirmed.connect(_overlay.on_hit_confirmed)
 	Events.critter_damaged.connect(_on_damaged)
 	Events.item_picked_up.connect(_on_picked_up)
@@ -209,6 +212,10 @@ func attach_island(island: Island, storm: Storm) -> void:
 		m.build(island)
 		m.storm = storm
 		m.player = player
+
+
+func _show_alive(a: int, _total: int) -> void:
+	_alive_label.text = "%d CRITTER%s LEFT" % [a, "" if a == 1 else "S"]
 
 
 func attach_dropship(d: Dropship) -> void:

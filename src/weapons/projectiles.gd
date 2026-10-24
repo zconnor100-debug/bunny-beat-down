@@ -83,7 +83,9 @@ func _ready() -> void:
 
 
 ## Fire one trigger pull: spawns `pellets` projectiles inside the spread cone.
-static func fire(shooter: Node, weapon: WeaponInstance, origin: Vector3, dir: Vector3, spread_deg: float, exclude: Array[RID]) -> void:
+## `carried`: the velocity of whatever the shooter stands on (a moving toy
+## train car), which the carrots keep, so riders can hit each other.
+static func fire(shooter: Node, weapon: WeaponInstance, origin: Vector3, dir: Vector3, spread_deg: float, exclude: Array[RID], carried := Vector3.ZERO) -> void:
 	if instance == null:
 		return
 	var data := weapon.data
@@ -92,6 +94,7 @@ static func fire(shooter: Node, weapon: WeaponInstance, origin: Vector3, dir: Ve
 		if data.projectile == WeaponData.ProjectileKind.ROCKET:
 			var r := Rocket.new()
 			r.setup(shooter, weapon, d, exclude)
+			r.velocity += carried
 			instance.add_child(r)
 			r.global_position = origin
 			if KillCam.recording and not KillCam.instance.playing:
@@ -99,7 +102,7 @@ static func fire(shooter: Node, weapon: WeaponInstance, origin: Vector3, dir: Ve
 			continue
 		var s := Shot.new()
 		s.pos = origin
-		s.vel = d * data.projectile_speed
+		s.vel = d * data.projectile_speed + carried
 		s.gravity = data.projectile_gravity * ProjectSettings.get_setting("physics/3d/default_gravity", 16.0)
 		s.data = data
 		s.damage_scale = weapon.damage_scale()

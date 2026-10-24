@@ -685,3 +685,4 @@ func tune_lighting(lighting: WorldLighting) -> void:
 	lighting.env.fog_light_color = Color(0.93, 0.89, 0.82)
 	lighting.env.fog_aerial_perspective = 0.1
 	lighting.env.ambient_light_energy = 1.0
+	lighting.make_indoor()

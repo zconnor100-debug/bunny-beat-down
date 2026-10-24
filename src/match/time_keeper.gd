@@ -8,7 +8,8 @@ extends Node
 ## menu), or when a killing blow lands the game freezes and offers one.
 ## A rewind puts everyone still standing back where they were ten seconds ago
 ## (with what they were carrying then), puts the loot they took since back on
-## the floor, and clears the carrots in flight. Critters beaten down in those
+## the floor, clears the carrots in flight, and puts the toy train (Toy Box
+## Bash) back where it was, so its riders land on it. Critters beaten down in those
 ## ten seconds stay down (with their loot spilled), and opened crates stay open.
 ## The rewind plays out: for PLAYBACK seconds the world runs backwards (the
 ## match paused, everyone gliding back along where they went, the Briar
@@ -118,6 +119,9 @@ func _process(delta: float) -> void:
 	if not playing_back:
 		return
 	_pb_t += _pb_clock.step(delta)   # (see RealClock: the match is paused)
+	if _pb_frames.size() < 2 or _pb_t > PLAYBACK + 2.0:
+		_finish_playback()   # (never leave the match stuck paused)
+		return
 	var u := clampf(_pb_t / PLAYBACK, 0.0, 1.0)
 	u = u * u * (3.0 - 2.0 * u)                     # ease in and out
 	var pos := u * float(_pb_frames.size() - 1)     # how far back through the frames
@@ -136,6 +140,11 @@ func _process(delta: float) -> void:
 		var xf := (ra.xf as Transform3D).interpolate_with(rb.xf, k)
 		(c as Critter).global_transform = xf
 		(c as Critter).visual.global_transform = xf
+	var train := _train()
+	if train and float(a.get("train", -1.0)) >= 0.0 and float(b.get("train", -1.0)) >= 0.0:
+		# back along the loop (the shorter way round), riders and all
+		var back := fposmod(float(b.train) - float(a.train) + train.total * 0.5, train.total) - train.total * 0.5
+		train.set_distance(float(a.train) + back * k)
 	var s := match_manager.storm
 	if s and s.active and not (a.storm as Dictionary).is_empty() and not (b.storm as Dictionary).is_empty():
 		s.center = (a.storm.center as Vector2).lerp(b.storm.center, k)
@@ -220,7 +229,13 @@ func _snapshot() -> Dictionary:
 		storm = {"stage": s.stage, "center": s.center, "radius": s.radius, "next_center": s.next_center,
 			"next_radius": s.next_radius, "time_left": s.time_left, "shrinking": s.shrinking, "dps": s.dps,
 			"nap_left": s.nap_left, "from_center": s._from_center, "from_radius": s._from_radius}
-	return {"critters": critters, "loot": loot, "storm": storm}
+	var train := _train()
+	return {"critters": critters, "loot": loot, "storm": storm, "train": train.distance if train else -1.0}
+
+
+func _train() -> ToyTrain:
+	var island := match_manager.island if match_manager else null
+	return island.get("train") as ToyTrain if island and "train" in island else null
 
 
 func _restore(snap: Dictionary, at: float) -> void:
@@ -257,6 +272,9 @@ func _restore(snap: Dictionary, at: float) -> void:
 		s._from_center = st.from_center
 		s._from_radius = st.from_radius
 		s._update_wall()
+	var train := _train()
+	if train and float(snap.get("train", -1.0)) >= 0.0:
+		train.set_distance(snap.train)
 
 
 func _restore_critter(c: Critter, r: Dictionary) -> void:

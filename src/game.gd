@@ -220,8 +220,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		else:
 			UITheme.refocus_if_lost(event, get_viewport(), UITheme.first_focusable(_offer))
 	elif event.is_action_pressed(&"pause"):
-		if _end == null:
-			_toggle_pause()
+		_toggle_pause()   # (over the end screen too: Quit is always there)
 		get_viewport().set_input_as_handled()
 	elif _pause and event.is_action_pressed(&"ui_cancel"):   # B backs out of the pause menu
 		_toggle_pause()
@@ -300,7 +299,8 @@ func _toggle_pause() -> void:
 		_pause.queue_free()
 		_pause = null
 		get_tree().paused = false
-		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+		# (back to the end screen's buttons, or to playing / spectating)
+		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE if _end and not _spectating else Input.MOUSE_MODE_CAPTURED
 		return
 	get_tree().paused = true
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
@@ -345,7 +345,7 @@ func _toggle_pause() -> void:
 
 func _show_controls() -> void:
 	if GameInput.using_pad:
-		hud.show_message("Left stick move • Right stick aim • RT fire • LT aim • R3 club • L3+R3 first person", "A jump/glide/pick up • L3 sprint • B crouch/crawl • X reload • LB/RB switch • D-pad ↓ heal ← drop → shoulder ↑ map • Start → Rewind", 6.0)
+		hud.show_message("Left stick move • Right stick aim • RT fire • LT aim • R3 club • L3+R3 first person", "A jump/glide • X pick up/open, or reload • L3 sprint • B crouch/crawl • LB/RB switch • D-pad ↓ heal ← drop → shoulder ↑ map • Start → Rewind", 6.0)
 	else:
 		hud.show_message("WASD move • Mouse aim • LMB fire • RMB aim • F club", "SPACE jump/glide • SHIFT sprint • CTRL crouch/crawl • R reload • E pick up • H heal • V camera • Q shoulder • M map • T rewind", 6.0)
 
@@ -405,6 +405,7 @@ func _answer_offer(rewind_it: bool) -> void:
 
 
 func _to_menu() -> void:
+	KillCam.reset_time()   # (in case we leave mid slow-motion)
 	get_tree().paused = false
 	get_tree().change_scene_to_file(MENU_SCENE)
 

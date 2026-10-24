@@ -121,6 +121,59 @@ func test_toy_train_rides_and_bonks() -> void:
 	check(near > ToyTrain.TRACK_WIDTH * 0.5, "and knocked off the track (%.1f m from it)" % near)
 
 
+## Riding the train in a match: your carrots keep the train's speed (so you
+## can hit the critter on the next car), and a rewind puts the train back
+## too, with you still aboard.
+func test_train_riders_shoot_and_rewind() -> void:
+	await _make_toybox(false)
+	add_child(FX.new())
+	add_child(Projectiles.new())
+	PlayerProfile.reset_for_tests()
+	RivalBook.reset_for_tests()
+	var mm := MatchManager.new()
+	add_child(mm)
+	mm.setup(self, toy, 1, 1, 4242)
+	var me := mm.spawn_player(load(BUN), "default")
+	var bot: Critter = mm.critters.filter(func(c): return c != me)[0]
+	bot.get_node("AIBrain").process_mode = Node.PROCESS_MODE_DISABLED
+	var train := toy.train
+	train.running = false
+	await wait_physics(2)
+	var car := train.cars[3]
+	for c in [me, bot]:
+		(c as Critter)._set_state(Critter.State.GROUND)
+	me.place_at(car.global_position + Vector3.UP * (ToyTrain.DECK + 0.6), 0.0)
+	bot.place_at(train.cars[4].global_position + Vector3.UP * (ToyTrain.DECK + 0.6), 0.0)
+	await wait_physics(40)
+	check(me.is_on_floor(), "aboard an open car")
+	train.running = true
+	mm.phase = MatchManager.Phase.PLAYING
+	await wait_physics(30)
+	# a carrot fired sideways off the moving car keeps the car's speed
+	var along := -car.global_basis.z
+	me.give_weapon(WeaponInstance.new(WeaponDB.get_weapon(&"carrot_rifle")))
+	await wait_physics(30)
+	var side := along.cross(Vector3.UP).normalized()
+	me.aim_point = me.get_eye_position() + side * 30.0
+	me.look_yaw = atan2(-side.x, -side.z)
+	var before := Projectiles.instance._shots.size()
+	me.want_fire = true
+	await wait_physics(2)
+	me.want_fire = false
+	check(Projectiles.instance._shots.size() > before, "fired a carrot from the train")
+	if Projectiles.instance._shots.size() > before:
+		var v: Vector3 = Projectiles.instance._shots[Projectiles.instance._shots.size() - 1].vel
+		# (fired sideways: without the train's speed it would move ~0 m/s along the track)
+		check(v.dot(along) > ToyTrain.SPEED * 0.7, "it keeps the train's speed (%.1f m/s along the track)" % v.dot(along))
+	# the rewind takes the train back as well, rider and all
+	var tk := mm.time_keeper
+	await wait_physics(90)
+	check(tk.rewind(false), "rewound")
+	await wait_physics(30)
+	var aboard := me.global_position.distance_to(car.global_position)
+	check(aboard < 7.0 and me.global_position.y > ToyFloor.FLOOR + ToyTrain.DECK - 0.5, "still aboard the same car after the rewind (%.1f m from its middle)" % aboard)
+
+
 func test_fishbowl_swim() -> void:
 	await _make_toybox(false)
 	add_child(FX.new())

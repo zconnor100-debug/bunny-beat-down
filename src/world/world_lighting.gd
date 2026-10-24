@@ -11,6 +11,20 @@ var sun: DirectionalLight3D
 var env: Environment
 
 
+## Indoors (the hamster tank, the bedroom): pale toys under a room's light
+## washed out with the island's settings, so a warmer key light, a little less
+## ambient fill, deeper contact shadows and a touch more colour and contrast.
+func make_indoor() -> void:
+	sun.light_color = Color(1.0, 0.9, 0.76)
+	sun.light_energy *= 1.12
+	env.ambient_light_energy *= 0.8
+	env.ssao_intensity = 1.8
+	env.ssao_radius = 1.6
+	env.adjustment_saturation = 1.2
+	env.adjustment_contrast = 1.1
+	env.fog_density *= 0.6
+
+
 func build(quality: int) -> void:
 	var we := WorldEnvironment.new()
 	env = Environment.new()

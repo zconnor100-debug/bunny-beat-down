@@ -97,7 +97,9 @@ static func build(parent: Node3D, rng: RandomNumberGenerator) -> void:
 	for i in 30:
 		var at := Vector3(rng.randf_range(-hx, hx), CEILING - 0.5, rng.randf_range(-hz, hz))
 		k._ellipsoid(&"glow_star", at, Vector3(4.0, 0.3, 4.0), Basis(Vector3.UP, rng.randf() * TAU), false, 2, 5)
-	k._box(&"oak", Vector3(0, y0 - 3.0, 0), Vector3(hx * 2.0 + 900.0, 6.0, hz * 2.0 + 900.0), Basis(), false)
+	# (well under the play floor: level with it, the two fought for every pixel
+	# and the whole floor flickered, and it hid the spill where the boards sag)
+	k._box(&"oak", Vector3(0, y0 - 5.0, 0), Vector3(hx * 2.0 + 900.0, 6.0, hz * 2.0 + 900.0), Basis(), false)
 	parent.add_child(k.finish())
 	for gi in ModelUtil.find_all(k, "GeometryInstance3D"):
 		(gi as GeometryInstance3D).cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF

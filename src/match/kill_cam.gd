@@ -55,6 +55,11 @@ func _exit_tree() -> void:
 	if instance == self:
 		instance = null
 		recording = false
+	reset_time()
+
+
+## Normal time again (slow motion off), whatever was going on.
+static func reset_time() -> void:
 	Engine.time_scale = 1.0
 	Engine.physics_ticks_per_second = 60
 	AudioServer.playback_speed_scale = 1.0
@@ -95,6 +100,11 @@ func start_recording() -> void:
 	recording = true
 	for c in match_manager.alive_critters():
 		track(c)
+	# the toy train moves: in the replay its riders must ride it again
+	var train: ToyTrain = match_manager.island.get("train") if match_manager.island and "train" in match_manager.island else null
+	if train:
+		for car in train.cars:
+			note_node(car)
 
 
 ## Keep a critter's body and bones in the recording.
@@ -269,7 +279,8 @@ func _play_angle(i: int, shot: Dictionary) -> void:
 	var first := true
 	var clock := RealClock.new()
 	clock.start()
-	while t <= t1 and not _skip:
+	var started := Time.get_ticks_msec()
+	while t <= t1 and not _skip and Time.get_ticks_msec() - started < 15000:
 		_show(t)
 		_aim_camera(i, t, shot, first)
 		first = false

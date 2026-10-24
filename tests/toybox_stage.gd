@@ -57,6 +57,18 @@ func _run() -> void:
 		await _wait(0.6)
 		await _snap("64_poi_%02d_%s" % [i, String(p.name).to_snake_case()])
 		i += 1
+	if only == "spill" or only == "floor":
+		# the spilled water, from above and wading in; the floorboards up close
+		_look(Vector3(-350, 160, 420), Vector3(-350, 0, 225), 60.0)
+		await _wait(0.8)
+		await _snap("66_spill_above")
+		var c := Vector2(-330, 230)
+		_look(Vector3(c.x + 30, _ground(c) + 3.0, c.y + 30), Vector3(c.x, _ground(c), c.y), 70.0)
+		await _wait(0.6)
+		await _snap("67_spill_wading")
+		_look(Vector3(250, ToyFloor.FLOOR + 2.0, 300), Vector3(220, ToyFloor.FLOOR, 260), 70.0)
+		await _wait(0.6)
+		await _snap("68_floorboards")
 	if only == "" or only == "inside":
 		var j := 0
 		for b in island.buildings:

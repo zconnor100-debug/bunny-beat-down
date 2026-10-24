@@ -55,12 +55,15 @@ func test_projectile_damages_and_kills() -> void:
 	await wait_physics(3)
 	var w := WeaponInstance.new(WeaponDB.get_weapon(&"carrot_pistol"), 0)
 	var dir := (target.get_chest_position() - shooter.get_chest_position()).normalized()
-	for i in 8:
+	var shots := 0
+	for i in 24:   # (bot on bot: AIBrain.DAMAGE_BETWEEN_BOTS makes it ~3x the shots)
 		if not target.alive:
 			break
 		Projectiles.fire(shooter, w, shooter.get_chest_position() + dir * 0.5, dir, 0.0, shooter.visual.hitbox_rids)
+		shots += 1
 		await wait_physics(6)
 	check(not target.alive, "target died after pistol hits (hp %.1f)" % target.health)
+	check(shots > 8, "bots' shots at each other are softened (%d shots)" % shots)
 	check(target.visual.ragdolled, "target went ragdoll")
 	check(shooter.kills == 1, "shooter credited with the kill")
 

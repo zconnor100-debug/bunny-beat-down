@@ -618,7 +618,8 @@ func _fire(w: WeaponInstance) -> void:
 	q.exclude = visual.hitbox_rids
 	if get_world_3d().direct_space_state.intersect_ray(q):
 		origin = chest
-	Projectiles.fire(self, w, origin, dir, current_spread_deg(), visual.hitbox_rids)
+	var carried := get_platform_velocity() if is_on_floor() else Vector3.ZERO   # (riding the toy train)
+	Projectiles.fire(self, w, origin, dir, current_spread_deg(), visual.hitbox_rids, carried)
 	_burst += 1.0
 	_since_shot = 0.0
 	_recoil = 1.0
@@ -820,6 +821,8 @@ func take_damage(info: DamageInfo) -> void:
 		return
 	if is_player and info.attacker is Critter and info.attacker != self and not (info.attacker as Critter).is_player:
 		info.amount *= AIBrain.damage_to_player   # bots hit softer than they look (per difficulty)
+	elif not is_player and info.attacker is Critter and info.attacker != self and not (info.attacker as Critter).is_player:
+		info.amount *= AIBrain.DAMAGE_BETWEEN_BOTS   # (their scraps last, so there's a lobby left to meet)
 	if glass_cannon and (is_player or (info.attacker is Critter and (info.attacker as Critter).is_player and info.attacker != self)):
 		info.amount *= 1.5
 	var dmg := info.amount

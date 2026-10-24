@@ -264,6 +264,10 @@ func begin_drop() -> void:
 	if not fav_poi.is_empty():
 		get_tree().create_timer(12.0).timeout.connect(func():
 			Events.announce.emit("THEY KNOW WHERE YOU LAND", "More critters are heading for %s this time." % fav))
+	# landmarks are popular, but only so popular: a full lobby piling into the
+	# same few spots beat each other down within a minute of landing
+	var per_poi := {}
+	var poi_cap := maxi(2, ceili(critters.size() / maxf(island.pois.size() * 1.5, 1.0)))
 	for c in critters:
 		dropship.board(c)
 		var brain := c.get_node_or_null("AIBrain") as AIBrain
@@ -272,8 +276,10 @@ func begin_drop() -> void:
 			var spot := island.random_land_point(2.5)
 			if rng.randf() < 0.65 and not island.pois.is_empty():
 				var poi: Dictionary = island.pois[rng.randi() % island.pois.size()]
-				var cc: Vector2 = poi.center + Vector2(rng.randf_range(-12, 12), rng.randf_range(-12, 12))
-				spot = Vector3(cc.x, island.terrain.height_at(cc.x, cc.y), cc.y)
+				if int(per_poi.get(poi.name, 0)) < poi_cap:
+					per_poi[poi.name] = int(per_poi.get(poi.name, 0)) + 1
+					var cc: Vector2 = poi.center + Vector2(rng.randf_range(-12, 12), rng.randf_range(-12, 12))
+					spot = Vector3(cc.x, island.terrain.height_at(cc.x, cc.y), cc.y)
 			if not fav_poi.is_empty() and rng.randf() < 0.3:
 				var fc: Vector2 = fav_poi.center + Vector2(rng.randf_range(-10, 10), rng.randf_range(-10, 10))
 				spot = Vector3(fc.x, island.terrain.height_at(fc.x, fc.y), fc.y)
@@ -474,7 +480,26 @@ func alive_critters() -> Array[Critter]:
 	return out
 
 
+## The director paces the bots' scraps with each other: a new bot-on-bot
+## fight only starts while the lobby is thinning slower than this curve (a few
+## at first, then a steady share over about seven minutes). Without it half a
+## full lobby beat each other down within two minutes of landing, before the
+## player ever met them. Fights already going, self-defence and anyone after
+## the player are never held back.
+const BRAWL_START := 0.08
+const BRAWL_SECONDS := 420.0
+var _play_start := -1.0
+
+func bots_may_brawl() -> bool:
+	if phase != Phase.PLAYING or _play_start < 0.0:
+		return true
+	var allowed := total * clampf(BRAWL_START + (_clock - _play_start) / BRAWL_SECONDS, 0.0, 0.95)
+	return float(total - _alive_cache) < allowed
+
+
 func _set_phase(p: Phase) -> void:
+	if p == Phase.PLAYING and _play_start < 0.0:
+		_play_start = _clock
 	phase = p
 	phase_changed.emit(p)
 	Events.match_phase_changed.emit(p)

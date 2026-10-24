@@ -2,7 +2,7 @@ extends SceneTree
 ## Screenshots of the drop in a real match (needs a GPU window): riding the
 ## balloon / toy plane / paper plane, then skydiving after jumping, with the
 ## bots that jump with you.
-##   BBD_TEST=1 godot --path . -s tests/capture_drop.gd -- <out_dir> [map]
+##   BBD_TEST=1 godot --path . -s tests/capture_drop.gd -- <out_dir> [map] [opponents]
 
 
 func _initialize() -> void:
@@ -17,5 +17,7 @@ func _start() -> void:
 		stage.out_dir = a[0]
 	if a.size() > 1:
 		stage.map = a[1]
+	if a.size() > 2:
+		stage.opponents = int(a[2])
 	DirAccess.make_dir_recursive_absolute(stage.out_dir)
 	root.add_child(stage)
