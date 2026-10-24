@@ -24,6 +24,22 @@ static func _coin(heads: bool) -> int:
 	return 0
 
 
+## A seed that gives a brick tower of `courses` courses (its second draw).
+static func _tower_seed(courses: int) -> int:
+	for s in 1000:
+		var r := _rng(s)
+		r.randf_range(7.0, 9.0)
+		if r.randi_range(4, 8) == courses:
+			return s
+	return 0
+
+
+static func _toy_box() -> ToyBox:
+	var tb := ToyBox.new()
+	tb.rng = _rng(1)
+	return tb
+
+
 func specs() -> Array:
 	var out := [
 		["cage/wheel", func(): return CageProps.wheel(_rng(1))],
@@ -45,6 +61,32 @@ func specs() -> Array:
 		["cage/chew_sticks", func(): return CageGym.chew_sticks(_rng(3))],
 		["cage/egg_carton", func(): return CageGym.egg_carton(_rng(1))],
 	]
+	out += [
+		["toy/dollhouse", func(): return ToyProps.dollhouse(_rng(1))],
+		["toy/block_castle", func(): return ToyProps.block_castle(_rng(1))],
+		["toy/brick_house", func(): return ToyProps.brick_house(_rng(1))],
+		["toy/pillow_fort", func(): return ToyProps.pillow_fort(_rng(1))],
+		["toy/crayon_box", func(): return ToyProps.crayon_box(_rng(1))],
+		["toy/coloring_book", func(): return ToyProps.coloring_book(_rng(1))],
+		["toy/tea_table", func(): return ToyProps.tea_table(_rng(1))],
+		["toy/toy_chest", func(): return ToyProps.toy_chest(_rng(1))],
+		["toy/race_track", func(): return ToyProps.race_track(_rng(1))],
+		["toy/fishbowl", func(): return ToyProps.fishbowl(_rng(1), ToyBox.BOWL_RIM)],
+		["toy/baseplate", func(): return ToyProps.baseplate(_rng(1))],
+		["toy/station", func(): return _toy_box()._station()],
+		["toy/locomotive", func(): return ToyTrain.new()._locomotive(_rng(1), 0)],
+		["toy/tender", func(): return ToyTrain.new()._tender(_rng(1), 1)],
+		["toy/open_car", func(): return ToyTrain.new()._open_car(_rng(1), 2)],
+		["toy/caboose", func(): return ToyTrain.new()._caboose(_rng(1), 5)],
+	]
+	for v in ToyProps.LETTER_VARIANTS:
+		out.append(["toy/letter_block_%d" % v, func():
+			var k := CageKit.blank("LetterBlock", _rng(1))
+			k._letter_box(Vector3(0, 0.5, 0), 1.0, Basis(), ToyProps.LETTER_CELLS[v])
+			return k.finish()])
+	for n in range(4, 9):
+		var s := _tower_seed(n)
+		out.append(["toy/brick_tower_%d" % n, func(): return ToyProps.brick_tower(_rng(s))])
 	for h in CageGym.LOOKOUT_HEIGHTS:
 		for canopy in [false, true]:
 			var s := _coin(canopy)
@@ -76,5 +118,15 @@ func _run() -> void:
 		print("raw %s: %d surfaces, %s" % [id, mesh.get_surface_count(), "ok" if err == OK else error_string(err)])
 		root.free()
 		kit.free()
+	# the toy train's loop, for tools/maps/models.py "toy/track" (a profile swept along it)
+	if only.is_empty() or only.has("toy") or only.has("toy/track"):
+		var pts := ToyTrain.loop_points(ToyBox.TRACK_RECT, ToyBox.TRACK_CORNER, ToyFloor.FLOOR)
+		var flat := []
+		for p in pts:
+			flat.append([p.x, p.y, p.z])
+		var f := FileAccess.open(dir.path_join("toy/track_points.json"), FileAccess.WRITE)
+		f.store_string(JSON.stringify({"width": ToyTrain.TRACK_WIDTH, "points": flat}))
+		f.close()
+		print("raw toy/track_points.json: %d points" % pts.size())
 	CageKit.exporting = false
 	get_tree().quit()

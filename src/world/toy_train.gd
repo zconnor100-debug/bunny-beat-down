@@ -184,7 +184,7 @@ func _locomotive(rng: RandomNumberGenerator, _i: int) -> CageKit:
 	k._prism(&"plastic_yellow", [Vector2(-2.4, 0.6), Vector2(2.4, 0.6), Vector2(0.0, 2.6)], -6.2, 1.6)
 	k._ellipsoid(&"lamp", Vector3(0, 6.0, -5.5), Vector3(0.7, 0.7, 0.4), Basis(), false)
 	_wheels(k, 11.0)
-	return k.finish()
+	return k.made_as("toy/locomotive").finish()
 
 
 func _tender(rng: RandomNumberGenerator, _i: int) -> CageKit:
@@ -193,18 +193,18 @@ func _tender(rng: RandomNumberGenerator, _i: int) -> CageKit:
 	k._box(&"paint_red", Vector3(0, 3.6, 0), Vector3(4.8, 2.4, 8.0))
 	k._ellipsoid(&"plastic_black", Vector3(0, 4.9, 0), Vector3(2.0, 0.8, 3.4), Basis(), false)
 	_wheels(k, 8.0)
-	return k.finish()
+	return k.made_as("toy/tender").finish()
 
 
 func _open_car(rng: RandomNumberGenerator, i: int) -> CageKit:
 	var k := CageKit.blank("OpenCar", rng)
-	var paint: StringName = [&"paint_yellow", &"paint_lime", &"paint_purple"][i % 3]
+	var paint := k.accent("accent", [&"paint_yellow", &"paint_lime", &"paint_purple"][i % 3])
 	k._box(&"plastic_black", Vector3(0, 1.6, 0), Vector3(4.8, 0.8, 11.0))
 	k._box(paint, Vector3(0, DECK - 0.3, 0), Vector3(5.2, 0.6, 11.0))
 	for xs in [-1.0, 1.0]:
 		k._box(paint, Vector3(xs * 2.45, DECK + 0.55, 0), Vector3(0.3, 1.1, 11.0))
 	_wheels(k, 11.0)
-	return k.finish()
+	return k.made_as("toy/open_car").finish()
 
 
 func _caboose(rng: RandomNumberGenerator, _i: int) -> CageKit:
@@ -218,7 +218,7 @@ func _caboose(rng: RandomNumberGenerator, _i: int) -> CageKit:
 	k._box(&"paint_yellow", Vector3(0, DECK + 4.0, 0), Vector3(5.6, 0.5, 9.4))
 	k._box(&"paint_red", Vector3(0, DECK + 5.0, 0), Vector3(3.0, 1.6, 3.0))
 	_wheels(k, 9.0)
-	return k.finish()
+	return k.made_as("toy/caboose").finish()
 
 
 ## The wooden track: a light wooden bed with two dark grooves, round the loop.
@@ -237,4 +237,4 @@ func _build_track(rng: RandomNumberGenerator) -> void:
 		k._box(&"rail_wood", mid + Vector3.UP * 0.07, Vector3(TRACK_WIDTH, 0.14, len), basis, false)
 		for s in [-1.0, 1.0]:
 			k._box(&"rail_groove", mid + side * s * 1.6 + Vector3.UP * 0.145, Vector3(0.5, 0.02, len), basis, false)
-	add_child(k.finish())
+	add_child(k.made_as("toy/track").finish())

@@ -30,7 +30,16 @@ RAW = ROOT / "tools" / "_cache" / "maps" / "raw"
 
 # bevel width (m) per model; edges sharper than BEVEL_ANGLE get it
 BEVEL = {"default": 0.07, "cage/chew_sticks": 0.05, "cage/bridge": 0.06, "cage/water_bottle": 0.04,
-         "cage/castle": 0.12, "cage/hut": 0.06, "cage/gym": 0.06}
+         "cage/castle": 0.12, "cage/hut": 0.06, "cage/gym": 0.06,
+         "toy/letter_block": 0.05, "toy/track": 0.03, "toy/baseplate": 0.02, "toy/dollhouse": 0.08}
+
+
+def bevel_width(rel: str) -> float:
+    """The width for a model, or for its family ("toy/letter_block_3" -> "toy/letter_block")."""
+    if rel in BEVEL:
+        return BEVEL[rel]
+    family = rel.rstrip("0123456789").rstrip("_")
+    return BEVEL.get(family, BEVEL["default"])
 BEVEL_ANGLE = 50.0
 SMOOTH_ANGLE = 50.0
 
@@ -96,7 +105,7 @@ def refine(rel: str) -> None:
     weld(ob)
     rounded = round_off_curved_parts(ob)
     m = ob.modifiers.new("Bevel", "BEVEL")
-    m.width = BEVEL.get(rel, BEVEL["default"])
+    m.width = bevel_width(rel)
     m.segments = 3
     m.limit_method = "ANGLE"
     m.angle_limit = math.radians(BEVEL_ANGLE)

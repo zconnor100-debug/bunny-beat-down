@@ -40,7 +40,10 @@ func _run() -> void:
 	cam.fov = 50
 	add_child(cam)
 	cam.current = true
-	for id in ids:
+	for spec in ids:
+		# "<id>@front": seen from straight in front (+Z), to check which way a model faces
+		var id: String = spec.get_slice("@", 0)
+		var front: bool = spec.ends_with("@front")
 		var m := CageKit.model(path_of(id), {"accent": "paint_red"})
 		if m == null:
 			print("missing ", id)
@@ -50,11 +53,12 @@ func _run() -> void:
 		var size := box.size.length()
 		var c := box.get_center()
 		post.position = Vector3(box.position.x - 1.2 - size * 0.05, 1.3, c.z)
-		cam.global_position = c + Vector3(0.55, 0.42, 0.75).normalized() * maxf(size * 1.25, 4.0)
+		var view := Vector3(0.0, 0.25, 1.0) if front else Vector3(0.55, 0.42, 0.75)
+		cam.global_position = c + view.normalized() * maxf(size * 1.25, 4.0)
 		cam.look_at(c, Vector3.UP)
 		for i in 10:
 			await get_tree().process_frame
-		get_viewport().get_texture().get_image().save_png(out_dir.path_join("%s.png" % id.replace("/", "__")))
+		get_viewport().get_texture().get_image().save_png(out_dir.path_join("%s.png" % spec.replace("/", "__").replace("@", "_")))
 		print("shot %s %s" % [id, box.size])
 		m.queue_free()
 		await get_tree().process_frame

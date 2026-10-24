@@ -188,10 +188,7 @@ func _build_toy_pois() -> void:
 
 ## Brick City: plastic-brick houses and towers on a green baseplate.
 func _build_brick_city(p: Dictionary) -> void:
-	var plate := CageKit.blank("Baseplate", rng)
-	plate.collision_layer = 0
-	plate._box(&"plastic_lime", Vector3(0, 0.03, 0), Vector3(110.0, 0.06, 110.0), Basis(), false)
-	_prop(plate, p.center, 0.0, terrain.height_at(p.center.x, p.center.y) + 0.01, false, false)
+	_prop(ToyProps.baseplate(rng), p.center, 0.0, terrain.height_at(p.center.x, p.center.y) + 0.01, false, false)
 	for off in [Vector2(-26, -24), Vector2(26, -24), Vector2(-26, 24), Vector2(26, 24)]:
 		var at: Vector2 = p.center + off
 		_place_kit(p, ToyProps.brick_house(rng), at, _face_centre(at, p.center))
@@ -216,7 +213,7 @@ func _station() -> CageKit:
 	k.footprint = 22.0
 	k.floor_y = deck
 	k.loot_spots = [Vector3(-10.0, deck, -2.0), Vector3(8.0, deck, 1.0)]
-	return k.finish()
+	return k.made_as("toy/station").finish()
 
 
 ## The fishbowl, its water, and goldfish circling inside.

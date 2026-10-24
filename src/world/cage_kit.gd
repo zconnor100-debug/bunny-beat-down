@@ -31,7 +31,7 @@ static var _toy_noise: NoiseTexture2D
 static var _toy_bump: NoiseTexture2D
 
 var _concave := PackedVector3Array()   # triangles of solid lathes (one concave shape)
-var _dress: Array = []                 # [model path, Transform3D, {model material -> cage material key}]
+var _dress: Array = []                 # [model path, Transform3D, {model material -> cage material key}, hull?]
 var _keep: Dictionary = {}             # procedural surfaces still drawn under a dress
 var _made := ""                        # this kit's Blender-refined model (assets/maps/<_made>.glb)
 var _made_xf := Transform3D()
@@ -107,9 +107,11 @@ func accent(slot: String, key: StringName) -> StringName:
 ## at `xf` in the kit's own space. A model material named "cage:<key>" (or
 ## listed in `mats`, model name -> key) is drawn with the cage's material for
 ## that key. Without the model file the kit keeps its procedural look.
-func dress(path: String, xf := Transform3D(), mats := {}) -> CageKit:
+## With `hull`, the model's convex hull is a collider, and the kit's own
+## colliders go (for a model shaped unlike the primitives it replaces).
+func dress(path: String, xf := Transform3D(), mats := {}, hull := false) -> CageKit:
 	if ResourceLoader.exists(path):
-		_dress.append([path, xf, mats])
+		_dress.append([path, xf, mats, hull])
 	return self
 
 
@@ -133,6 +135,24 @@ static func model(path: String, mats := {}) -> Node3D:
 			if key != &"":
 				(mi as MeshInstance3D).set_surface_override_material(i, mat(key))
 	return root
+
+
+## A convex collider round a model (its points in kit space: the shape itself
+## is never scaled, which Jolt dislikes).
+func _hull(m: Node3D) -> void:
+	var pts := PackedVector3Array()
+	for mi in ModelUtil.find_all(m, "MeshInstance3D"):
+		var shape := (mi as MeshInstance3D).mesh.create_convex_shape(true, true)
+		var xf := m.transform * ModelUtil._relative_xform(m, mi)
+		for p in shape.points:
+			pts.append(xf * p)
+	if pts.size() < 4:
+		return
+	var cs := CollisionShape3D.new()
+	var hull := ConvexPolygonShape3D.new()
+	hull.points = pts
+	cs.shape = hull
+	add_child(cs)
 
 
 ## A map model's mesh with the cage's materials baked in (for MultiMeshes).
@@ -491,11 +511,19 @@ func _commit() -> void:
 		for key in _surfaces.keys():
 			if not _keep.has(key):
 				_surfaces.erase(key)
+		if _dress.any(func(d): return d[3]):
+			for c in get_children():
+				if c is CollisionShape3D:
+					remove_child(c)
+					c.free()
+			_concave = PackedVector3Array()
 		for d in _dress:
 			var m := model(d[0], d[2])
 			if m:
 				m.transform = d[1]
 				add_child(m)
+				if d[3]:
+					_hull(m)
 		_dress.clear()
 	var mesh := ArrayMesh.new()
 	for key in _surfaces:

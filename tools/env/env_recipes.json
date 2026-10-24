@@ -118,6 +118,18 @@
     {"id": "cage_popsicle_choc", "source": "sf:2cc7add1a2634dbb9ff71b579fb1d0b4", "height_m": 11.0, "category": "cage", "collision": "none", "desc": "chocolate-dipped ice lolly"},
     {"id": "cage_shell", "source": "sf:9b59afbf4a694e8cb6daa0e0235cff86", "rotate_deg": [-90, 0, 0], "double_sided": true, "scale": 0.0494, "category": "cage", "collision": "none", "desc": "scallop shell resting on its back"},
     {"id": "cage_conch", "source": "sf:410be9cdc3d84f6a9f139189309b4891", "objects": ["^Cylinder009"], "height_m": 6.5, "category": "cage", "collision": "none", "desc": "spiral conch shell"},
-    {"id": "cage_paper", "source": "sf:74e788457d6f4536a0dfaa40564d600a", "height_m": 1.0, "max_tris": 700, "category": "cage", "collision": "none", "desc": "crumpled paper ball (bedding tufts are built from these)"}
+    {"id": "cage_paper", "source": "sf:74e788457d6f4536a0dfaa40564d600a", "height_m": 1.0, "max_tris": 700, "category": "cage", "collision": "none", "desc": "crumpled paper ball (bedding tufts are built from these)"},
+    {"id": "toy_teddy", "source": "sf:9c7081efd187447da9a333f89ea43f80", "rotate_deg": [0, 0, -90], "height_m": 26.0, "category": "toy", "collision": "none", "desc": "cream teddy bear sitting on the floor (Toy Box Bash)"},
+    {"id": "toy_piggy", "source": "sf:07624b0d085540678601b07c36f80de0", "rotate_deg": [0, 0, -90], "height_m": 18.0, "category": "toy", "collision": "none", "desc": "pink piggy bank"},
+    {"id": "toy_rocket", "source": "sf:48a2138808574d39bd671ff75dd4d4d5", "height_m": 34.0, "max_tris": 10000, "category": "toy", "collision": "none", "desc": "white and red toy rocket on its stand"},
+    {"id": "toy_racecar", "source": "sf:27a1886a2b804b8286fe84dff2cb10ad", "rotate_deg": [0, 0, -45], "height_m": 5.4, "max_tris": 6000, "category": "toy", "collision": "none", "desc": "cartoon toy race car"},
+    {"id": "toy_teacup", "source": "sf:877d9bb1031d4909bb4925e6fb9a971a", "height_m": 6.0, "category": "toy", "collision": "none", "desc": "teacup of tea on its saucer"},
+    {"id": "toy_paper_plane", "source": "sf:99121fbec2a347639fb2ccad1a66533b", "scale": 1.18, "category": "toy", "collision": "none", "double_sided": true, "desc": "paper airplane (the Toy Box drop plane)"},
+    {"id": "toy_crayon_red", "source": "sf:22153c3ad0374aaf89ceced9a904283b", "objects": ["^CrayonRed"], "height_m": 16.0, "tex": 256, "category": "toy", "collision": "none", "desc": "red wax crayon"},
+    {"id": "toy_crayon_blue", "source": "sf:22153c3ad0374aaf89ceced9a904283b", "objects": ["^CrayonBlue"], "height_m": 16.0, "tex": 256, "category": "toy", "collision": "none", "desc": "blue wax crayon"},
+    {"id": "toy_crayon_yellow", "source": "sf:22153c3ad0374aaf89ceced9a904283b", "objects": ["^CrayonYellow"], "height_m": 16.0, "tex": 256, "category": "toy", "collision": "none", "desc": "yellow wax crayon"},
+    {"id": "toy_crayon_green", "source": "sf:22153c3ad0374aaf89ceced9a904283b", "objects": ["^CrayonGreen"], "height_m": 16.0, "tex": 256, "category": "toy", "collision": "none", "desc": "green wax crayon"},
+    {"id": "toy_crayon_violet", "source": "sf:22153c3ad0374aaf89ceced9a904283b", "objects": ["^CrayonViolet"], "height_m": 16.0, "tex": 256, "category": "toy", "collision": "none", "desc": "violet wax crayon"},
+    {"id": "toy_crayon_orange", "source": "sf:22153c3ad0374aaf89ceced9a904283b", "objects": ["^CrayonOrange"], "height_m": 16.0, "tex": 256, "category": "toy", "collision": "none", "desc": "orange wax crayon"}
   ]
 }

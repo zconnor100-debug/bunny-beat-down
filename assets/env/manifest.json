@@ -1550,5 +1550,197 @@
     "density_weight": 1.0,
     "sink_m": 0.0,
     "tris": 685
+  },
+  {
+    "id": "toy_teddy",
+    "file": "assets/env/toy_teddy/toy_teddy.glb",
+    "category": "toy",
+    "height_m": 26.0,
+    "footprint_radius_m": 9.3,
+    "collision": "none",
+    "collision_radius_m": 0.0,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 1.0,
+    "sink_m": 0.0,
+    "tris": 8576
+  },
+  {
+    "id": "toy_piggy",
+    "file": "assets/env/toy_piggy/toy_piggy.glb",
+    "category": "toy",
+    "height_m": 18.0,
+    "footprint_radius_m": 10.72,
+    "collision": "none",
+    "collision_radius_m": 0.0,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 1.0,
+    "sink_m": 0.0,
+    "tris": 10988
+  },
+  {
+    "id": "toy_rocket",
+    "file": "assets/env/toy_rocket/toy_rocket.glb",
+    "category": "toy",
+    "height_m": 34.0,
+    "footprint_radius_m": 11.83,
+    "collision": "none",
+    "collision_radius_m": 0.0,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 1.0,
+    "sink_m": 0.0,
+    "tris": 9800
+  },
+  {
+    "id": "toy_racecar",
+    "file": "assets/env/toy_racecar/toy_racecar.glb",
+    "category": "toy",
+    "height_m": 5.4,
+    "footprint_radius_m": 4.46,
+    "collision": "none",
+    "collision_radius_m": 0.0,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 1.0,
+    "sink_m": 0.0,
+    "tris": 5880
+  },
+  {
+    "id": "toy_teacup",
+    "file": "assets/env/toy_teacup/toy_teacup.glb",
+    "category": "toy",
+    "height_m": 6.0,
+    "footprint_radius_m": 8.32,
+    "collision": "none",
+    "collision_radius_m": 0.0,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 1.0,
+    "sink_m": 0.0,
+    "tris": 4088
+  },
+  {
+    "id": "toy_paper_plane",
+    "file": "assets/env/toy_paper_plane/toy_paper_plane.glb",
+    "category": "toy",
+    "height_m": 5.9,
+    "footprint_radius_m": 24.82,
+    "collision": "none",
+    "collision_radius_m": 0.0,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 1.0,
+    "sink_m": 0.0,
+    "tris": 180
+  },
+  {
+    "id": "toy_crayon_red",
+    "file": "assets/env/toy_crayon_red/toy_crayon_red.glb",
+    "category": "toy",
+    "height_m": 16.0,
+    "footprint_radius_m": 0.62,
+    "collision": "none",
+    "collision_radius_m": 0.0,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 1.0,
+    "sink_m": 0.0,
+    "tris": 92
+  },
+  {
+    "id": "toy_crayon_blue",
+    "file": "assets/env/toy_crayon_blue/toy_crayon_blue.glb",
+    "category": "toy",
+    "height_m": 16.0,
+    "footprint_radius_m": 0.62,
+    "collision": "none",
+    "collision_radius_m": 0.0,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 1.0,
+    "sink_m": 0.0,
+    "tris": 92
+  },
+  {
+    "id": "toy_crayon_yellow",
+    "file": "assets/env/toy_crayon_yellow/toy_crayon_yellow.glb",
+    "category": "toy",
+    "height_m": 16.0,
+    "footprint_radius_m": 0.62,
+    "collision": "none",
+    "collision_radius_m": 0.0,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 1.0,
+    "sink_m": 0.0,
+    "tris": 92
+  },
+  {
+    "id": "toy_crayon_green",
+    "file": "assets/env/toy_crayon_green/toy_crayon_green.glb",
+    "category": "toy",
+    "height_m": 16.0,
+    "footprint_radius_m": 0.62,
+    "collision": "none",
+    "collision_radius_m": 0.0,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 1.0,
+    "sink_m": 0.0,
+    "tris": 92
+  },
+  {
+    "id": "toy_crayon_violet",
+    "file": "assets/env/toy_crayon_violet/toy_crayon_violet.glb",
+    "category": "toy",
+    "height_m": 16.0,
+    "footprint_radius_m": 0.62,
+    "collision": "none",
+    "collision_radius_m": 0.0,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 1.0,
+    "sink_m": 0.0,
+    "tris": 92
+  },
+  {
+    "id": "toy_crayon_orange",
+    "file": "assets/env/toy_crayon_orange/toy_crayon_orange.glb",
+    "category": "toy",
+    "height_m": 16.0,
+    "footprint_radius_m": 0.62,
+    "collision": "none",
+    "collision_radius_m": 0.0,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 1.0,
+    "sink_m": 0.0,
+    "tris": 92
   }
 ]

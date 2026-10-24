@@ -1131,6 +1131,102 @@
     ]
   },
   {
+    "asset": "Teddy Bear",
+    "author": "Xeno Studios",
+    "author_url": "https://sketchfab.com/thexenostudios",
+    "source_url": "https://sketchfab.com/3d-models/teddy-bear-9c7081efd187447da9a333f89ea43f80",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "toy_teddy: rescaled x24.3916 to critter-world size, grounded and centred; rotated [0, 0, -90] deg; removed baked emission map; removed baked emission map; removed baked emission map; removed baked emission map; removed baked emission map; removed baked emission map; removed baked emission map; removed baked emission map; textures re-encoded <= 1024px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Environment scenery: cream teddy bear sitting on the floor (Toy Box Bash) (toy_teddy)",
+    "files": [
+      "assets/env/toy_teddy/toy_teddy.glb"
+    ]
+  },
+  {
+    "asset": "Piggy bank",
+    "author": "noitamina_",
+    "author_url": "https://sketchfab.com/noitamina_",
+    "source_url": "https://sketchfab.com/3d-models/piggy-bank-07624b0d085540678601b07c36f80de0",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "toy_piggy: rescaled x97.8394 to critter-world size, grounded and centred; rotated [0, 0, -90] deg; textures re-encoded <= 0px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Environment scenery: pink piggy bank (toy_piggy)",
+    "files": [
+      "assets/env/toy_piggy/toy_piggy.glb"
+    ]
+  },
+  {
+    "asset": "Toy Rocket",
+    "author": "Kroko.blend",
+    "author_url": "https://sketchfab.com/jaromir.ternavskiy",
+    "source_url": "https://sketchfab.com/3d-models/toy-rocket-48a2138808574d39bd671ff75dd4d4d5",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "toy_rocket: rescaled x3.6215 to critter-world size, grounded and centred; decimated 15598 -> 9800 triangles (seams welded first, no cracks); textures re-encoded <= 0px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Environment scenery: white and red toy rocket on its stand (toy_rocket)",
+    "files": [
+      "assets/env/toy_rocket/toy_rocket.glb"
+    ]
+  },
+  {
+    "asset": "3D Cartoon Toy Race Car with Vibrant Colors",
+    "author": "Skill Artist",
+    "author_url": "https://sketchfab.com/SkillArtist",
+    "source_url": "https://sketchfab.com/3d-models/3d-cartoon-toy-race-car-with-vibrant-colors-27a1886a2b804b8286fe84dff2cb10ad",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "toy_racecar: rescaled x16.8918 to critter-world size, grounded and centred; rotated [0, 0, -45] deg; decimated 9993 -> 5880 triangles (seams welded first, no cracks); textures re-encoded <= 1024px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Environment scenery: cartoon toy race car (toy_racecar)",
+    "files": [
+      "assets/env/toy_racecar/toy_racecar.glb"
+    ]
+  },
+  {
+    "asset": "Teacup",
+    "author": "BUNTARO",
+    "author_url": "https://sketchfab.com/oyass3",
+    "source_url": "https://sketchfab.com/3d-models/teacup-877d9bb1031d4909bb4925e6fb9a971a",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "toy_teacup: rescaled x121.204 to critter-world size, grounded and centred; textures re-encoded <= 0px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Environment scenery: teacup of tea on its saucer (toy_teacup)",
+    "files": [
+      "assets/env/toy_teacup/toy_teacup.glb"
+    ]
+  },
+  {
+    "asset": "Paper Plane",
+    "author": "Crodattilo",
+    "author_url": "https://sketchfab.com/Crodattilo",
+    "source_url": "https://sketchfab.com/3d-models/paper-plane-99121fbec2a347639fb2ccad1a66533b",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "toy_paper_plane: rescaled x1.18 to critter-world size, grounded and centred; textures re-encoded <= 0px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Environment scenery: paper airplane (the Toy Box drop plane) (toy_paper_plane)",
+    "files": [
+      "assets/env/toy_paper_plane/toy_paper_plane.glb"
+    ]
+  },
+  {
+    "asset": "CC0 - Crayons",
+    "author": "plaggy",
+    "author_url": "https://sketchfab.com/plaggy",
+    "source_url": "https://sketchfab.com/3d-models/cc0-crayons-22153c3ad0374aaf89ceced9a904283b",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "toy_crayon_red: kept sub-object(s) CrayonRed_Red_0; rescaled x78.8 to critter-world size, grounded and centred; textures re-encoded <= 256px (JPEG colour/ORM, PNG normals) | toy_crayon_blue: kept sub-object(s) CrayonBlue_Blue_0; rescaled x78.8 to critter-world size, grounded and centred; textures re-encoded <= 256px (JPEG colour/ORM, PNG normals) | toy_crayon_yellow: kept sub-object(s) CrayonYellow_Yellow_0; rescaled x78.8 to critter-world size, grounded and centred; textures re-encoded <= 256px (JPEG colour/ORM, PNG normals) | toy_crayon_green: kept sub-object(s) CrayonGreen_Green_0; rescaled x78.8 to critter-world size, grounded and centred; textures re-encoded <= 256px (JPEG colour/ORM, PNG normals) | toy_crayon_violet: kept sub-object(s) CrayonViolet_Violet_0; rescaled x78.8 to critter-world size, grounded and centred; textures re-encoded <= 256px (JPEG colour/ORM, PNG normals) | toy_crayon_orange: kept sub-object(s) CrayonOrange_Orange_0; rescaled x78.8 to critter-world size, grounded and centred; textures re-encoded <= 256px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Environment scenery: red wax crayon (toy_crayon_red), blue wax crayon (toy_crayon_blue), yellow wax crayon (toy_crayon_yellow), green wax crayon (toy_crayon_green), violet wax crayon (toy_crayon_violet), orange wax crayon (toy_crayon_orange)",
+    "files": [
+      "assets/env/toy_crayon_red/toy_crayon_red.glb",
+      "assets/env/toy_crayon_blue/toy_crayon_blue.glb",
+      "assets/env/toy_crayon_yellow/toy_crayon_yellow.glb",
+      "assets/env/toy_crayon_green/toy_crayon_green.glb",
+      "assets/env/toy_crayon_violet/toy_crayon_violet.glb",
+      "assets/env/toy_crayon_orange/toy_crayon_orange.glb"
+    ]
+  },
+  {
     "asset": "Forest Leaves 02 (Poly Haven texture)",
     "author": "Rob Tuytel",
     "author_url": "https://polyhaven.com/all?a=Rob%20Tuytel",
