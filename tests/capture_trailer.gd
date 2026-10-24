@@ -7,6 +7,8 @@ extends SceneTree
 ##         -s tests/capture_trailer.gd
 ## Preview stills instead of a movie:
 ##   godot --path . --fixed-fps 30 -s tests/capture_trailer.gd -- <dir> preview
+## The Hamster Cage cut: add "cage" after the folder (tests/trailer_cage_stage.gd);
+## for the tall phone cut, record at --resolution 1080x1920.
 
 
 func _initialize() -> void:
@@ -15,4 +17,5 @@ func _initialize() -> void:
 
 
 func _start() -> void:
-	root.add_child(load("res://tests/trailer_stage.gd").new())
+	var cage := OS.get_cmdline_user_args().has("cage")
+	root.add_child(load("res://tests/trailer_cage_stage.gd" if cage else "res://tests/trailer_stage.gd").new())

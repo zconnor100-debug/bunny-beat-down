@@ -6,6 +6,8 @@ MP4 (with the game's own sound) and, optionally, a short README GIF.
           --fixed-fps 30 -s tests/capture_trailer.gd > /tmp/movie/log.txt
     python3 tools/make_trailer.py /tmp/movie docs/trailer.mp4 \\
           --gif docs/screenshots/trailer.gif --gif-from 4 --gif-to 21
+    # a tall phone cut (recorded at --resolution 1080x1920):
+    python3 tools/make_trailer.py /tmp/movie_tall docs/trailer_vertical.mp4 --size 1080x1920
 
 The recording starts with the loading screen and the stage quits right after
 the end card, so the trailer is the last N frames, N being the length the stage
@@ -30,7 +32,9 @@ def main() -> None:
     ap.add_argument("--gif-fps", type=int, default=12)
     ap.add_argument("--gif-colors", type=int, default=128)
     ap.add_argument("--crf", type=int, default=26, help="x264 quality (lower = bigger, sharper)")
+    ap.add_argument("--size", default="1920x1080", help="output frame, WxH (1080x1920 for a phone cut)")
     args = ap.parse_args()
+    w, h = (int(v) for v in args.size.split("x"))
 
     log = (args.frames / "log.txt").read_text(errors="replace")
     seconds = float(re.search(r"TRAILER_END .*\(([\d.]+) s\)", log).group(1))
@@ -38,8 +42,9 @@ def main() -> None:
     last = max(int(p.stem[1:]) for p in args.frames.glob("f*.png"))
     start = last - frames
     pattern = str(args.frames / "f%08d.png")
-    # 16:9, 1080p, whatever size the window was
-    video = "crop='min(iw,ih*16/9)':'min(ih,iw*9/16)',scale=1920:1080:flags=lanczos,format=yuv420p"
+    # the output's shape and size, whatever size the window was
+    crop = f"crop='min(iw,ih*{w}/{h})':'min(ih,iw*{h}/{w})'"
+    video = f"{crop},scale={w}:{h}:flags=lanczos,format=yuv420p"
     audio = f"afade=t=in:d=0.4,afade=t=out:st={seconds - 1.2:.2f}:d=1.2,loudnorm=I=-14:TP=-1.5:LRA=11,aresample=48000,alimiter=limit=0.7:level=false"  # (AAC overshoots transients ~2 dB)
     cmd = ["ffmpeg", "-y", "-loglevel", "error",
            "-framerate", str(FPS), "-start_number", str(start), "-i", pattern,
@@ -53,7 +58,7 @@ def main() -> None:
     if args.gif:
         a = start + int(args.gif_from * FPS)
         n = int((args.gif_to - args.gif_from) * FPS)
-        gif = (f"crop='min(iw,ih*16/9)':'min(ih,iw*9/16)',fps={args.gif_fps},scale={args.gif_width}:-2:flags=lanczos,"
+        gif = (f"{crop},fps={args.gif_fps},scale={args.gif_width}:-2:flags=lanczos,"
                f"split[a][b];[a]palettegen=max_colors={args.gif_colors}:stats_mode=diff[p];"
                "[b][p]paletteuse=dither=bayer:bayer_scale=4:diff_mode=rectangle")
         subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-framerate", str(FPS), "-start_number", str(a),

@@ -544,12 +544,16 @@ func _build_ui() -> void:
 			bar.offset_top = -90.0
 		root.add_child(bar)
 	_caption = UITheme.label("", 30, UITheme.CREAM, true)
-	_caption.set_anchors_and_offsets_preset(Control.PRESET_TOP_LEFT)
-	_caption.position = Vector2(40, 24)
+	_caption.set_anchors_preset(Control.PRESET_TOP_LEFT)
+	_caption.offset_left = 40.0
+	_caption.offset_top = 24.0
 	root.add_child(_caption)
 	var skip := UITheme.label("Skip: %s" % GameInput.prompt(&"jump"), 22, Color(UITheme.CREAM, 0.7))
-	skip.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT)
-	skip.position = Vector2(-220, -64)
+	skip.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
+	skip.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	skip.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	skip.offset_right = -40.0
+	skip.offset_bottom = -30.0
 	root.add_child(skip)
 	_flash = ColorRect.new()
 	_flash.color = Color(1, 1, 1, 0)

@@ -481,8 +481,9 @@ func _show_end(title: String, sub: String, won: bool, killer: Critter) -> void:
 	_end.add_child(root)
 	var v := VBoxContainer.new()
 	v.set_anchors_and_offsets_preset(Control.PRESET_CENTER_BOTTOM)
-	v.offset_left = -600
-	v.offset_right = 600
+	var half := minf(600.0, get_viewport().get_visible_rect().size.x * 0.5 - 24.0)   # (narrow windows too)
+	v.offset_left = -half
+	v.offset_right = half
 	v.offset_top = -60
 	v.offset_bottom = -60
 	v.grow_vertical = Control.GROW_DIRECTION_BEGIN   # stack upward from the bottom edge
@@ -503,6 +504,7 @@ func _show_end(title: String, sub: String, won: bool, killer: Critter) -> void:
 		Burrow.add_acorns(_earned)
 	var stats := UITheme.label("Beat downs: %d   •   Damage: %d   •   %s #%d   •   +%d 🌰 (%d in the Burrow)" % [p.kills, roundi(p.damage_dealt), island.map_title, _seed, _earned, Burrow.acorns()], 20, Color(UITheme.CREAM, 0.8))
 	stats.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	stats.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	v.add_child(stats)
 	var row := HBoxContainer.new()
 	row.alignment = BoxContainer.ALIGNMENT_CENTER

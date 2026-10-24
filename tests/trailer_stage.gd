@@ -27,6 +27,7 @@ var _card: ColorRect
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS   # (keeps directing while the match is frozen)
+	RealClock.fixed_step = 1.0 / FPS          # (the rewind and the replay run on trailer time)
 	var a := OS.get_cmdline_user_args()
 	if a.size() > 0:
 		out_dir = a[0]
@@ -262,6 +263,12 @@ func _over_shoulder(c: Critter, at: Critter) -> void:
 	cam.look_at(at.global_position + Vector3.UP * 0.7 - side * 0.3, Vector3.UP)
 
 
+## A tall (phone) frame: smaller titles that wrap.
+func _portrait() -> bool:
+	var s := get_viewport().get_visible_rect().size
+	return s.y > s.x
+
+
 func _build_captions() -> void:
 	_cap = CanvasLayer.new()
 	_cap.layer = 30
@@ -294,6 +301,13 @@ func _build_captions() -> void:
 	_lower.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_lower.modulate.a = 0.0
 	_cap.add_child(_lower)
+	if _portrait():
+		_title.add_theme_font_size_override("font_size", 84)
+		for l in [_sub, _lower]:
+			(l as Label).add_theme_font_size_override("font_size", 32)
+			(l as Label).autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			(l as Label).custom_minimum_size.x = 960.0
+		_lower.offset_bottom = -260
 
 
 func _fade(n: CanvasItem, to: float, seconds: float) -> void:
