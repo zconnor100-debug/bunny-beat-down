@@ -33,7 +33,7 @@ var shooter: Critter
 var playing := false              ## the replay is on screen
 var _poses: Dictionary = {}       # Critter -> ReplayPose
 var _shots: Dictionary = {}       # Projectiles.Shot -> {t0, t1, origin, vel, g, data, own}
-var _nodes: Array = []            # {node, t0, frames: [[t, xf]], ghost, live_xf, live_visible}
+var _nodes: Array = []            # {node, t0, frames: [[t, xf]], ghost, live_xf, live_visible, synced}
 var _decals: Array = []           # [t, decal, old_xf, old_visible, new_xf]
 var _events: Array = []           # [t, "fx", pos, dir, cfg] / [t, "sound", key, pos, volume] / [t, "flash", pos, radius]
 var _cam: Camera3D
@@ -297,6 +297,7 @@ func _aim_camera(i: int, t: float, shot: Dictionary, snap: bool) -> void:
 	var v_focus := _focus(victim, t)
 	var want_pos := Vector3.ZERO
 	var want_look := v_focus
+	var anchor := v_focus   # (what the camera must see: it's kept on this side of any wall)
 	var size := victim.visual.rig.world_head_top if victim.visual and victim.visual.rig else 2.0
 	match i:
 		0:
@@ -309,6 +310,7 @@ func _aim_camera(i: int, t: float, shot: Dictionary, snap: bool) -> void:
 			var right := dir.cross(Vector3.UP).normalized()
 			want_pos = from - dir * (s_size * 1.2 + 1.5) + right * s_size * 0.8 + Vector3.UP * s_size * 0.3
 			want_look = v_focus.lerp(from, 0.1)
+			anchor = from
 		1:
 			if not shot.is_empty() and t < float(shot.t1):
 				# just behind the carrot and off to one side, looking where it goes
@@ -317,6 +319,7 @@ func _aim_camera(i: int, t: float, shot: Dictionary, snap: bool) -> void:
 				var side := vel.cross(Vector3.UP).normalized()
 				want_pos = p - vel * 1.4 + side * 0.7 + Vector3.UP * 0.35
 				want_look = p + vel * 8.0
+				anchor = p
 			else:
 				var from := _focus(shooter, t) if shooter else v_focus + Vector3(8, 0, 0)
 				var mid := (from + v_focus) * 0.5
@@ -331,6 +334,7 @@ func _aim_camera(i: int, t: float, shot: Dictionary, snap: bool) -> void:
 		2:
 			var a := (t - kill_time) * 0.9 + 0.6
 			want_pos = v_focus + Vector3(cos(a), 0, sin(a)) * size * 1.8 + Vector3.UP * size * 0.45
+	want_pos = _unblocked(anchor, want_pos)
 	if snap:
 		_cam.global_position = want_pos
 	else:
@@ -340,6 +344,16 @@ func _aim_camera(i: int, t: float, shot: Dictionary, snap: bool) -> void:
 
 
 ## When the recording of the final fight starts.
+## `want`, or nearer `from` if a wall (a train car, a toy) stands between them.
+func _unblocked(from: Vector3, want: Vector3) -> Vector3:
+	var space := _cam.get_world_3d().direct_space_state
+	var hit := space.intersect_ray(PhysicsRayQueryParameters3D.create(from, want, Layers.WORLD))
+	if hit.is_empty():
+		return want
+	var d := from.distance_to(hit.position)
+	return from + (want - from).normalized() * maxf(d - 0.35, 0.3)
+
+
 func _earliest() -> float:
 	var t := INF
 	for c in [victim, shooter]:
@@ -515,11 +529,21 @@ func _freeze_scene(on: bool) -> void:
 			if on:
 				v.set_meta(&"fp_was", v._first_person)
 			v.set_first_person(false if on else bool(v.get_meta(&"fp_was", false)))
-	if on:
-		for n in _nodes:
-			if is_instance_valid(n.node):
-				n.live_xf = (n.node as Node3D).global_transform
-				n.live_visible = (n.node as Node3D).visible
+	for n in _nodes:
+		if not is_instance_valid(n.node):
+			continue
+		if on:
+			n.live_xf = (n.node as Node3D).global_transform
+			n.live_visible = (n.node as Node3D).visible
+		# (a train car syncs to physics: moved by hand it snaps back to its last
+		# physics position, so for the replay it's moved like any other node)
+		var body := n.node as AnimatableBody3D
+		if body:
+			if on:
+				n.synced = body.sync_to_physics
+				body.sync_to_physics = false
+			elif n.has("synced"):
+				body.sync_to_physics = n.synced
 	if FX.instance:
 		FX.instance.process_mode = Node.PROCESS_MODE_ALWAYS if on else Node.PROCESS_MODE_INHERIT
 	if not on:

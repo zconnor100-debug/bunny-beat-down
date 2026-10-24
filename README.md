@@ -23,6 +23,10 @@ sneaks up on you, you rewind, and this time you turn around.
 Gym's see-through tubes, a rewind you can watch, and the final shot slowed
 down and replayed. There's also a **[vertical phone cut](https://github.com/zconnor100-debug/bunny-beat-down/releases/download/v0.3.0/trailer_hamster_cage_vertical.mp4)**.
 
+▶ **[The Toy Box Bash cut](https://github.com/zconnor100-debug/bunny-beat-down/releases/download/v0.3.1/trailer_toybox.mp4)**: a paper-airplane
+drop, a ride on the toy train, the rewind running the whole train backwards,
+and the final shot replayed from three angles.
+
 ![Trailer: a rival fox creeps up on Bun, a rewind, and revenge](docs/screenshots/trailer.gif)
 
 ![Gameplay: a golden carrot shotgun, a ragdolled fox, and a rocket carrot](docs/screenshots/gameplay.gif)
@@ -406,14 +410,16 @@ loop with a human reviewer:
   makes the changes, and answers each note on the page (done, or a question).
 
 The trailers are directed: the shots and the two critters' inputs are scripted
-(`tests/trailer_stage.gd`, and `tests/trailer_cage_stage.gd` for the Hamster
-Cage cut), but everything on screen is the running game (the
+(`tests/trailer_stage.gd`, `tests/trailer_cage_stage.gd` for the Hamster
+Cage cut and `tests/trailer_toybox_stage.gd` for the Toy Box Bash cut), but
+everything on screen is the running game (the
 island, the rival's name tag and taunts, the killing-blow prompt, the rewind,
 the REVENGE banner). Godot's Movie Maker records it frame by frame with the
 game's own sound, and `tools/make_trailer.py` cuts the MP4 and the GIF. Music
 in the trailers: "Scheming Weasel (faster version)" (the island cut),
 "Pixel Peeker Polka - faster" (the Hamster Cage cut), "Itty Bitty 8 Bit" (the
-phone cut) and "Fiddles McGinty" (both Hamster Cage endings), all by Kevin MacLeod ([incompetech.com](https://incompetech.com)), licensed
+phone cut), "Divertimento K131" (the Toy Box Bash cut) and "Fiddles McGinty"
+(the Hamster Cage and Toy Box Bash endings), all by Kevin MacLeod ([incompetech.com](https://incompetech.com)), licensed
 under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). The phone cut
 is laid out at 1080×1920 but rendered in a 720×1280 window, since Movie
 Maker keeps the project's window size and a 1920-pixel-tall window doesn't

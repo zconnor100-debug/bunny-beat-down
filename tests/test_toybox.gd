@@ -172,6 +172,39 @@ func test_train_riders_shoot_and_rewind() -> void:
 	await wait_physics(30)
 	var aboard := me.global_position.distance_to(car.global_position)
 	check(aboard < 7.0 and me.global_position.y > ToyFloor.FLOOR + ToyTrain.DECK - 0.5, "still aboard the same car after the rewind (%.1f m from its middle)" % aboard)
+	# and the final-shot replay has the riders riding the same cars as they did
+	var kc := mm.kill_cam
+	await wait_physics(120)
+	check(KillCam.recording, "the KillCam is recording the last two")
+	var tape: Array = kc._nodes.filter(func(n): return n.node == car)
+	check(tape.size() == 1, "the car is on the tape once (%d)" % tape.size())
+	if KillCam.recording and tape.size() == 1:
+		var worst := 0.0
+		for i in 8:
+			var t: float = kc.clock - 2.0 + i * 0.25
+			var f: Array = kc._poses[me].sample(t)
+			if f.is_empty():
+				continue
+			var xf := KillCam._xf_at(tape[0].frames, t)
+			worst = maxf(worst, (f[0] as Transform3D).origin.distance_to(xf.origin))
+		check(worst < 7.0, "on the tape, Bun stays aboard the car (up to %.1f m from its middle)" % worst)
+		# ...and in the replay itself (the world paused), the car is where the tape says
+		kc._freeze_scene(true)
+		get_tree().paused = true
+		var t_r: float = kc.clock - 1.5
+		var off := 0.0
+		for i in 6:
+			kc._show(t_r)
+			await get_tree().process_frame
+			off = maxf(off, car.global_position.distance_to(KillCam._xf_at(tape[0].frames, t_r).origin))
+			t_r += 0.1
+		check(off < 0.5, "the replay puts the car where it was (off by up to %.1f m)" % off)
+		kc._show(INF)
+		kc._freeze_scene(false)
+		get_tree().paused = false
+		await wait_physics(30)
+		var after := me.global_position.distance_to(car.global_position)
+		check(after < 7.0 and car.sync_to_physics, "after the replay, the train runs on with Bun aboard (%.1f m)" % after)
 
 
 func test_fishbowl_swim() -> void:
