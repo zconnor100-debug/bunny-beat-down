@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://belulpcnp0rny"
-path="res://.godot/imported/melee_barbed_carrot_melee_barbed_carrot_orm.jpg-468c91e55b0fdd48d814584d9bf79e76.ctex"
+path.s3tc="res://.godot/imported/melee_barbed_carrot_melee_barbed_carrot_orm.jpg-468c91e55b0fdd48d814584d9bf79e76.s3tc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "ab621e5db7e3a98eef96e3abfcf3a58c"
@@ -14,11 +15,11 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/weapons/melee_barbed_carrot_melee_barbed_carrot_orm.jpg"
-dest_files=["res://.godot/imported/melee_barbed_carrot_melee_barbed_carrot_orm.jpg-468c91e55b0fdd48d814584d9bf79e76.ctex"]
+dest_files=["res://.godot/imported/melee_barbed_carrot_melee_barbed_carrot_orm.jpg-468c91e55b0fdd48d814584d9bf79e76.s3tc.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0

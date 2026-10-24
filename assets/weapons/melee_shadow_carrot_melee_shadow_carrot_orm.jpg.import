@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bb0le4dxqgh0j"
-path="res://.godot/imported/melee_shadow_carrot_melee_shadow_carrot_orm.jpg-00485c287d8d365b59d8d269b7b09219.ctex"
+path.s3tc="res://.godot/imported/melee_shadow_carrot_melee_shadow_carrot_orm.jpg-00485c287d8d365b59d8d269b7b09219.s3tc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "a27294a3be4f07e6691f029d1a9ee582"
@@ -14,11 +15,11 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/weapons/melee_shadow_carrot_melee_shadow_carrot_orm.jpg"
-dest_files=["res://.godot/imported/melee_shadow_carrot_melee_shadow_carrot_orm.jpg-00485c287d8d365b59d8d269b7b09219.ctex"]
+dest_files=["res://.godot/imported/melee_shadow_carrot_melee_shadow_carrot_orm.jpg-00485c287d8d365b59d8d269b7b09219.s3tc.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0

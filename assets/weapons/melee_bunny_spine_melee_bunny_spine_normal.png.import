@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bvpahy3yq7bmp"
-path="res://.godot/imported/melee_bunny_spine_melee_bunny_spine_normal.png-2cb7b7eb6f642e178e0f91a674da7352.ctex"
+path.s3tc="res://.godot/imported/melee_bunny_spine_melee_bunny_spine_normal.png-2cb7b7eb6f642e178e0f91a674da7352.s3tc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "d3e8752693825e27d99bccfa2293e5cf"
@@ -14,17 +15,17 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/weapons/melee_bunny_spine_melee_bunny_spine_normal.png"
-dest_files=["res://.godot/imported/melee_bunny_spine_melee_bunny_spine_normal.png-2cb7b7eb6f642e178e0f91a674da7352.ctex"]
+dest_files=["res://.godot/imported/melee_bunny_spine_melee_bunny_spine_normal.png-2cb7b7eb6f642e178e0f91a674da7352.s3tc.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0
 compress/hdr_compression=1
-compress/normal_map=0
+compress/normal_map=1
 compress/channel_pack=0
 mipmaps/generate=true
 mipmaps/limit=-1

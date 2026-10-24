@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://b76ckdi7sbtgn"
-path="res://.godot/imported/melee_fly_swatter_melee_fly_swatter_orm.jpg-ff9062b45a295b28b49d15252510edc2.ctex"
+path.s3tc="res://.godot/imported/melee_fly_swatter_melee_fly_swatter_orm.jpg-ff9062b45a295b28b49d15252510edc2.s3tc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "acdb3ff91be92540090c197feebc1dce"
@@ -14,11 +15,11 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/weapons/melee_fly_swatter_melee_fly_swatter_orm.jpg"
-dest_files=["res://.godot/imported/melee_fly_swatter_melee_fly_swatter_orm.jpg-ff9062b45a295b28b49d15252510edc2.ctex"]
+dest_files=["res://.godot/imported/melee_fly_swatter_melee_fly_swatter_orm.jpg-ff9062b45a295b28b49d15252510edc2.s3tc.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0

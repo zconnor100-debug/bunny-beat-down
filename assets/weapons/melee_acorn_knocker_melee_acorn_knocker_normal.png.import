@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bcyv3pkh0w7ju"
-path="res://.godot/imported/melee_acorn_knocker_melee_acorn_knocker_normal.png-1dfe83eff8f94c2d74d249f9196a4c2b.ctex"
+path.s3tc="res://.godot/imported/melee_acorn_knocker_melee_acorn_knocker_normal.png-1dfe83eff8f94c2d74d249f9196a4c2b.s3tc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "e50e446b855c3888b119cd27bbd3622e"
@@ -14,17 +15,17 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/weapons/melee_acorn_knocker_melee_acorn_knocker_normal.png"
-dest_files=["res://.godot/imported/melee_acorn_knocker_melee_acorn_knocker_normal.png-1dfe83eff8f94c2d74d249f9196a4c2b.ctex"]
+dest_files=["res://.godot/imported/melee_acorn_knocker_melee_acorn_knocker_normal.png-1dfe83eff8f94c2d74d249f9196a4c2b.s3tc.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0
 compress/hdr_compression=1
-compress/normal_map=0
+compress/normal_map=1
 compress/channel_pack=0
 mipmaps/generate=true
 mipmaps/limit=-1

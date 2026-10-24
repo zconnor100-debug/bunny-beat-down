@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://p2f5l5700d2u"
-path="res://.godot/imported/melee_shadow_carrot_melee_shadow_carrot_normal.png-eafa044e94bf71675d67f2784df4b8cb.ctex"
+path.s3tc="res://.godot/imported/melee_shadow_carrot_melee_shadow_carrot_normal.png-eafa044e94bf71675d67f2784df4b8cb.s3tc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "e76b519f0d7bd7a716b5c4d79c111aad"
@@ -14,17 +15,17 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/weapons/melee_shadow_carrot_melee_shadow_carrot_normal.png"
-dest_files=["res://.godot/imported/melee_shadow_carrot_melee_shadow_carrot_normal.png-eafa044e94bf71675d67f2784df4b8cb.ctex"]
+dest_files=["res://.godot/imported/melee_shadow_carrot_melee_shadow_carrot_normal.png-eafa044e94bf71675d67f2784df4b8cb.s3tc.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0
 compress/hdr_compression=1
-compress/normal_map=0
+compress/normal_map=1
 compress/channel_pack=0
 mipmaps/generate=true
 mipmaps/limit=-1

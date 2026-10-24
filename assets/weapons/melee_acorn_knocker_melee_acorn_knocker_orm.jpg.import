@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://cyaj51mbkiqo4"
-path="res://.godot/imported/melee_acorn_knocker_melee_acorn_knocker_orm.jpg-3bb04b4a3bb63381044934b3e62e3031.ctex"
+path.s3tc="res://.godot/imported/melee_acorn_knocker_melee_acorn_knocker_orm.jpg-3bb04b4a3bb63381044934b3e62e3031.s3tc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "d6c629b91aa27da964358028b115d7a5"
@@ -14,11 +15,11 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/weapons/melee_acorn_knocker_melee_acorn_knocker_orm.jpg"
-dest_files=["res://.godot/imported/melee_acorn_knocker_melee_acorn_knocker_orm.jpg-3bb04b4a3bb63381044934b3e62e3031.ctex"]
+dest_files=["res://.godot/imported/melee_acorn_knocker_melee_acorn_knocker_orm.jpg-3bb04b4a3bb63381044934b3e62e3031.s3tc.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0

@@ -321,6 +321,10 @@ The full write-up is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ## Running it
 
+**Download and play:** Linux and Windows builds are on the
+**[latest release](https://github.com/zconnor100-debug/bunny-beat-down/releases/latest)**
+(about 350 MB for Linux and 420 MB for Windows; you need a GPU with Vulkan).
+
 **Desktop app (Linux):** run `./tools/install_desktop.sh`. It adds *Bunny Beat
 Down* to your applications menu and desktop, with Bun as the icon. If a
 standalone build exists in `build/linux/`, it launches that; otherwise it runs
@@ -338,6 +342,8 @@ godot --path .                                          # play
 godot --headless --path . -s tests/run_tests.gd         # all tests (~3 min)
 godot --headless --path . -s tests/run_tests.gd -- ik   # one suite
 godot --headless --path . -s tests/check_scripts.gd     # compile every script
+# before exporting a release: GPU-compress the textures extracted from the models
+python3 tools/compress_textures.py && godot --headless --import
 ```
 
 ### Controls
