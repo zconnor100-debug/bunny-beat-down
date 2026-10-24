@@ -88,6 +88,24 @@
     {"id": "cover_logpile", "source": "sf:3f4205a30a7d4adda50c775fb8cce06c", "height_m": 1.4, "category": "cover", "collision": "convex", "density_weight": 0.3, "desc": "pile of cut logs"},
     {"id": "cover_haybale", "source": "sf:e01a6a0f9ed843279adfac2427c99679", "height_m": 1.3, "category": "cover", "collision": "convex", "density_weight": 0.3, "desc": "hay bale", "tex_normal": 512},
     {"id": "cover_stonewall", "source": "sf:238c2af61ece44d5869a766d13764bfa", "height_m": 1.5, "max_tris": 20000, "category": "cover", "collision": "convex", "density_weight": 0.2, "desc": "mossy dry-stone wall section"},
-    {"id": "fence_rustic", "source": "sf:1514b58714ba4532af673b69804a1755", "height_m": 6.0, "category": "landmark", "collision": "trimesh", "density_weight": 0.05, "desc": "rustic rope-tied log fence", "enabled": false, "double_sided": true}
+    {"id": "fence_rustic", "source": "sf:1514b58714ba4532af673b69804a1755", "height_m": 6.0, "category": "landmark", "collision": "trimesh", "density_weight": 0.05, "desc": "rustic rope-tied log fence", "enabled": false, "double_sided": true},
+    {"id": "food_milk", "source": "sf:94b371db628948d1942b79acdcfcfeff", "height_m": 115.0, "category": "food", "collision": "none", "desc": "cartoon milk carton (the Hamster Cage fridge)"},
+    {"id": "food_cheese", "source": "sf:2a4b93077b574f019d41dea5cbc1c8cd", "height_m": 44.0, "category": "food", "collision": "none", "desc": "wedge of holey cheese"},
+    {"id": "food_eggs", "source": "sf:30d391929e25432e87f84f5cfe02a0fa", "height_m": 38.0, "category": "food", "collision": "none", "desc": "eggs in a tray"},
+    {"id": "food_cake", "source": "sf:b1e9bb2c12754d5da24dec54bbf4d157", "height_m": 90.0, "max_tris": 16000, "category": "food", "collision": "none", "desc": "cartoony layer cake"},
+    {"id": "food_pudding", "source": "sf:a919a574c8bc4848b3bbdaaf5a8c0751", "height_m": 52.0, "category": "food", "collision": "none", "desc": "caramel pudding with cream and a cherry"},
+    {"id": "food_juice", "source": "sf:b951b3777e454ea7b05797930bb1706c", "height_m": 100.0, "category": "food", "collision": "none", "desc": "orange juice carton with a straw"},
+    {"id": "food_pancakes", "source": "sf:d2b2d6bac86b4aeaa37743923e3b765b", "height_m": 50.0, "max_tris": 14000, "category": "food", "collision": "none", "desc": "leftover pancake stack with syrup"},
+    {"id": "food_carrot", "source": "sf:32b1e42427e543ccbdc38e6ad80bb99e", "height_m": 80.0, "max_tris": 14000, "category": "food", "collision": "none", "desc": "chunky cartoon carrot (the crisper drawer)"},
+    {"id": "food_broccoli", "source": "sf:716b2eb9a78f47269c23625442345937", "objects": ["^Object_4$"], "height_m": 72.0, "category": "food", "collision": "none", "desc": "cartoon broccoli (its outline shell left out)"},
+    {"id": "food_sauce_chili", "source": "sf:052e3da5cb8249a2942f4d8341a0e02e", "objects": ["^chili sauce"], "height_m": 100.0, "max_tris": 3000, "category": "food", "collision": "none", "desc": "squeezy chili sauce bottle"},
+    {"id": "food_sauce_mayo", "source": "sf:052e3da5cb8249a2942f4d8341a0e02e", "objects": ["^mayonaise"], "height_m": 100.0, "max_tris": 3000, "category": "food", "collision": "none", "desc": "squeezy mayonnaise bottle"},
+    {"id": "food_sauce_mustard", "source": "sf:052e3da5cb8249a2942f4d8341a0e02e", "objects": ["^mustard"], "height_m": 100.0, "max_tris": 3000, "category": "food", "collision": "none", "desc": "squeezy mustard bottle"},
+    {"id": "food_watermelon", "source": "sf:ae101b55893843d7aacc6f2809fec387", "objects": ["^SM_Fruits_Watermelon_1_"], "height_m": 62.0, "category": "food", "collision": "none", "desc": "watermelon"},
+    {"id": "food_pineapple", "source": "sf:ae101b55893843d7aacc6f2809fec387", "objects": ["^SM_Fruits_Pineapple_1_"], "height_m": 112.0, "category": "food", "collision": "none", "desc": "pineapple"},
+    {"id": "food_grapes", "source": "sf:ae101b55893843d7aacc6f2809fec387", "objects": ["^SM_Fruits_Grape_P2_"], "height_m": 40.0, "max_tris": 4000, "category": "food", "collision": "none", "desc": "bunch of grapes"},
+    {"id": "food_orange", "source": "sf:ae101b55893843d7aacc6f2809fec387", "objects": ["^SM_Fruits_Orange_1_"], "height_m": 40.0, "category": "food", "collision": "none", "desc": "orange"},
+    {"id": "food_apple", "source": "sf:ae101b55893843d7aacc6f2809fec387", "objects": ["^SM_Fruits_Apple_R1_"], "height_m": 36.0, "category": "food", "collision": "none", "desc": "red apple"},
+    {"id": "food_banana", "source": "sf:ae101b55893843d7aacc6f2809fec387", "objects": ["^SM_Fruits_Banana_Y1_"], "height_m": 30.0, "category": "food", "collision": "none", "desc": "bunch of bananas"}
   ]
 }

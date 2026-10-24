@@ -1070,5 +1070,293 @@
     "density_weight": 0.2,
     "sink_m": 0.0,
     "tris": 19600
+  },
+  {
+    "id": "food_milk",
+    "file": "assets/env/food_milk/food_milk.glb",
+    "category": "food",
+    "height_m": 115.0,
+    "footprint_radius_m": 27.24,
+    "collision": "none",
+    "collision_radius_m": 0.0,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 1.0,
+    "sink_m": 0.0,
+    "tris": 529
+  },
+  {
+    "id": "food_cheese",
+    "file": "assets/env/food_cheese/food_cheese.glb",
+    "category": "food",
+    "height_m": 44.0,
+    "footprint_radius_m": 64.66,
+    "collision": "none",
+    "collision_radius_m": 0.0,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 1.0,
+    "sink_m": 0.0,
+    "tris": 11412
+  },
+  {
+    "id": "food_eggs",
+    "file": "assets/env/food_eggs/food_eggs.glb",
+    "category": "food",
+    "height_m": 38.0,
+    "footprint_radius_m": 51.4,
+    "collision": "none",
+    "collision_radius_m": 0.0,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 1.0,
+    "sink_m": 0.0,
+    "tris": 6584
+  },
+  {
+    "id": "food_cake",
+    "file": "assets/env/food_cake/food_cake.glb",
+    "category": "food",
+    "height_m": 90.0,
+    "footprint_radius_m": 40.98,
+    "collision": "none",
+    "collision_radius_m": 0.0,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 1.0,
+    "sink_m": 0.01,
+    "tris": 15678
+  },
+  {
+    "id": "food_pudding",
+    "file": "assets/env/food_pudding/food_pudding.glb",
+    "category": "food",
+    "height_m": 52.0,
+    "footprint_radius_m": 20.05,
+    "collision": "none",
+    "collision_radius_m": 0.0,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 1.0,
+    "sink_m": 0.0,
+    "tris": 1758
+  },
+  {
+    "id": "food_juice",
+    "file": "assets/env/food_juice/food_juice.glb",
+    "category": "food",
+    "height_m": 100.0,
+    "footprint_radius_m": 36.98,
+    "collision": "none",
+    "collision_radius_m": 0.0,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 1.0,
+    "sink_m": 0.0,
+    "tris": 12330
+  },
+  {
+    "id": "food_pancakes",
+    "file": "assets/env/food_pancakes/food_pancakes.glb",
+    "category": "food",
+    "height_m": 50.0,
+    "footprint_radius_m": 39.17,
+    "collision": "none",
+    "collision_radius_m": 0.0,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 1.0,
+    "sink_m": 0.0,
+    "tris": 13720
+  },
+  {
+    "id": "food_carrot",
+    "file": "assets/env/food_carrot/food_carrot.glb",
+    "category": "food",
+    "height_m": 80.0,
+    "footprint_radius_m": 14.93,
+    "collision": "none",
+    "collision_radius_m": 0.0,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 1.0,
+    "sink_m": 0.0,
+    "tris": 13720
+  },
+  {
+    "id": "food_broccoli",
+    "file": "assets/env/food_broccoli/food_broccoli.glb",
+    "category": "food",
+    "height_m": 72.0,
+    "footprint_radius_m": 35.23,
+    "collision": "none",
+    "collision_radius_m": 0.0,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 1.0,
+    "sink_m": 0.0,
+    "tris": 7676
+  },
+  {
+    "id": "food_sauce_chili",
+    "file": "assets/env/food_sauce_chili/food_sauce_chili.glb",
+    "category": "food",
+    "height_m": 100.0,
+    "footprint_radius_m": 16.26,
+    "collision": "none",
+    "collision_radius_m": 0.0,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 1.0,
+    "sink_m": 0.0,
+    "tris": 2939
+  },
+  {
+    "id": "food_sauce_mayo",
+    "file": "assets/env/food_sauce_mayo/food_sauce_mayo.glb",
+    "category": "food",
+    "height_m": 100.0,
+    "footprint_radius_m": 16.26,
+    "collision": "none",
+    "collision_radius_m": 0.0,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 1.0,
+    "sink_m": 0.0,
+    "tris": 2939
+  },
+  {
+    "id": "food_sauce_mustard",
+    "file": "assets/env/food_sauce_mustard/food_sauce_mustard.glb",
+    "category": "food",
+    "height_m": 100.0,
+    "footprint_radius_m": 16.26,
+    "collision": "none",
+    "collision_radius_m": 0.0,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 1.0,
+    "sink_m": 0.0,
+    "tris": 2939
+  },
+  {
+    "id": "food_watermelon",
+    "file": "assets/env/food_watermelon/food_watermelon.glb",
+    "category": "food",
+    "height_m": 62.0,
+    "footprint_radius_m": 51.6,
+    "collision": "none",
+    "collision_radius_m": 0.0,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 1.0,
+    "sink_m": 0.0,
+    "tris": 720
+  },
+  {
+    "id": "food_pineapple",
+    "file": "assets/env/food_pineapple/food_pineapple.glb",
+    "category": "food",
+    "height_m": 112.0,
+    "footprint_radius_m": 55.68,
+    "collision": "none",
+    "collision_radius_m": 0.0,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 1.0,
+    "sink_m": 0.0,
+    "tris": 1340
+  },
+  {
+    "id": "food_grapes",
+    "file": "assets/env/food_grapes/food_grapes.glb",
+    "category": "food",
+    "height_m": 39.72,
+    "footprint_radius_m": 34.69,
+    "collision": "none",
+    "collision_radius_m": 0.0,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 1.0,
+    "sink_m": 0.0,
+    "tris": 3920
+  },
+  {
+    "id": "food_orange",
+    "file": "assets/env/food_orange/food_orange.glb",
+    "category": "food",
+    "height_m": 40.0,
+    "footprint_radius_m": 22.42,
+    "collision": "none",
+    "collision_radius_m": 0.0,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 1.0,
+    "sink_m": 0.0,
+    "tris": 410
+  },
+  {
+    "id": "food_apple",
+    "file": "assets/env/food_apple/food_apple.glb",
+    "category": "food",
+    "height_m": 36.0,
+    "footprint_radius_m": 17.31,
+    "collision": "none",
+    "collision_radius_m": 0.0,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 1.0,
+    "sink_m": 0.0,
+    "tris": 430
+  },
+  {
+    "id": "food_banana",
+    "file": "assets/env/food_banana/food_banana.glb",
+    "category": "food",
+    "height_m": 30.0,
+    "footprint_radius_m": 43.65,
+    "collision": "none",
+    "collision_radius_m": 0.0,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 1.0,
+    "sink_m": 0.0,
+    "tris": 1356
   }
 ]

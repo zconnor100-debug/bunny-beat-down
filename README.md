@@ -25,7 +25,8 @@ down and replayed. There's also a **[vertical phone cut](https://github.com/zcon
 
 ▶ **[The Toy Box Bash cut](https://github.com/zconnor100-debug/bunny-beat-down/releases/download/v0.3.1/trailer_toybox.mp4)**: a paper-airplane
 drop, a ride on the toy train, the rewind running the whole train backwards,
-and the final shot replayed from three angles.
+and the final shot replayed from three angles. There's a
+**[vertical phone cut](https://github.com/zconnor100-debug/bunny-beat-down/releases/download/v0.3.1/trailer_toybox_vertical.mp4)** of it too.
 
 ![Trailer: a rival fox creeps up on Bun, a rewind, and revenge](docs/screenshots/trailer.gif)
 
@@ -237,7 +238,9 @@ and the final shot replayed from three angles.
     water bowls (swim in, climb out over the rim), an aquarium castle, shells
     and plastic plants.
   - A **winter corner** next to a giant fridge the owner left open behind
-    the glass: cold light and mist pour over the wall, and there are snow
+    the glass, stocked with cartoon food (milk, cheese, a layer cake,
+    pancakes, fruit, carrots in the crisper and squeezy sauces in the door):
+    cold light and mist pour over the wall, and there are snow
     drifts, icicles, frost on the panes, ice cubes, frozen peas, popsicles
     and an upturned ice cream tub to hide in.
 
@@ -418,7 +421,8 @@ the REVENGE banner). Godot's Movie Maker records it frame by frame with the
 game's own sound, and `tools/make_trailer.py` cuts the MP4 and the GIF. Music
 in the trailers: "Scheming Weasel (faster version)" (the island cut),
 "Pixel Peeker Polka - faster" (the Hamster Cage cut), "Itty Bitty 8 Bit" (the
-phone cut), "Divertimento K131" (the Toy Box Bash cut) and "Fiddles McGinty"
+Hamster Cage phone cut), "Divertimento K131" (the Toy Box Bash cut), "March of
+the Spoons" (its phone cut) and "Fiddles McGinty"
 (the Hamster Cage and Toy Box Bash endings), all by Kevin MacLeod ([incompetech.com](https://incompetech.com)), licensed
 under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). The phone cut
 is laid out at 1080×1920 but rendered in a 720×1280 window, since Movie

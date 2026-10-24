@@ -191,26 +191,51 @@ static func build_fridge(parent: Node3D, rng: RandomNumberGenerator) -> void:
 	for xs in [-1.0, 1.0]:
 		var dc := Vector3(xc + xs * (w * 0.25 - 6.0), iy0 + 45.0, zc + 20.0)
 		k._box(&"shelf_glass", dc, Vector3(w * 0.5 - 30.0, 90.0, FRIDGE_DEPTH - 60.0), Basis(), false)
-		k._ellipsoid(&"broccoli" if xs < 0 else &"lettuce", dc + Vector3(0, -5.0, 10.0), Vector3(60.0, 38.0, 60.0), Basis(), false, 8, 14)
-	# food on the shelves: milk, cheese, eggs, jam, butter, a soda bottle, leftovers
+	# food on the shelves (cartoon models: tools/env/env_recipes.json "food_*")
 	var s0: float = shelves[0] + 2.0
 	var s1: float = shelves[1] + 2.0
 	var s2: float = shelves[2] + 2.0
-	var front := zf - 70.0
-	k._box(&"milk", Vector3(xa + 80.0, s0 + 75.0, front - 40.0), Vector3(70.0, 150.0, 70.0), Basis(), false)
-	k._prism(&"milk", [Vector2(xa + 45.0, s0 + 150.0), Vector2(xa + 80.0, s0 + 185.0), Vector2(xa + 115.0, s0 + 150.0)], front - 40.0, 70.0)
-	k._box(&"plastic_blue", Vector3(xa + 80.0, s0 + 110.0, front - 4.0), Vector3(60.0, 50.0, 2.0), Basis(), false)
-	k._prism(&"cheese", [Vector2(xc - 40.0, s0), Vector2(xc + 70.0, s0), Vector2(xc - 40.0, s0 + 70.0)], front - 30.0, 80.0)
-	k._box(&"egg_carton", Vector3(xc + 20.0, s1 + 18.0, front - 40.0), Vector3(170.0, 36.0, 80.0), Basis(), false)
-	for i in 6:
-		k._ellipsoid(&"egg", Vector3(xc - 45.0 + (i % 3) * 32.0, s1 + 50.0, front - 60.0 + int(i / 3) * 38.0), Vector3(14.0, 20.0, 14.0), Basis(), false, 8, 12)
-	k._rod(&"jam", Vector3(xb - 90.0, s1, front - 50.0), Vector3(xb - 90.0, s1 + 80.0, front - 50.0), 34.0, false)
-	k._rod(&"plastic_red", Vector3(xb - 90.0, s1 + 80.0, front - 50.0), Vector3(xb - 90.0, s1 + 96.0, front - 50.0), 36.0, false)
-	k._box(&"butter", Vector3(xa + 90.0, s2 + 22.0, front - 40.0), Vector3(90.0, 44.0, 50.0), Basis(), false)
-	k._rod(&"soda", Vector3(xc + 40.0, s2, front - 60.0), Vector3(xc + 40.0, s2 + 150.0, front - 60.0), 24.0, false)
-	k._rod(&"plastic_red", Vector3(xc + 40.0, s2 + 150.0, front - 60.0), Vector3(xc + 40.0, s2 + 170.0, front - 60.0), 10.0, false)
-	k._box(&"leftovers", Vector3(xb - 90.0, s2 + 25.0, front - 70.0), Vector3(110.0, 50.0, 90.0), Basis(), false)
-	k._box(&"plastic_blue", Vector3(xb - 90.0, s2 + 52.0, front - 70.0), Vector3(116.0, 6.0, 96.0), Basis(), false)
+	var food := Node3D.new()
+	food.name = "FridgeFood"
+	parent.add_child(food)
+	# the bottom shelf: milk, cheese, eggs and a pudding
+	_food(food, "food_milk", Vector3(xa + 62.0, s0, zf - 105.0), 0.25, 0.9)
+	_food(food, "food_cheese", Vector3(xc - 25.0, s0, zf - 95.0), 2.6, 0.75)
+	_food(food, "food_eggs", Vector3(xc + 70.0, s0, zf - 120.0), -0.2, 0.85)
+	_food(food, "food_pudding", Vector3(xb - 62.0, s0, zf - 85.0), 0.6, 0.9)
+	_food(food, "food_milk", Vector3(xa + 70.0, s0, zf - 210.0), -0.4, 0.9)
+	_food(food, "food_juice", Vector3(xa + 160.0, s0, zf - 240.0), 0.5, 0.95)
+	_food(food, "food_cheese", Vector3(xc + 40.0, s0, zf - 230.0), -0.8, 0.7)
+	_food(food, "food_pudding", Vector3(xb - 60.0, s0, zf - 190.0), -0.3, 0.85)
+	_food(food, "food_pudding", Vector3(xb - 120.0, s0, zf - 250.0), 1.4, 0.85)
+	# the middle shelf: the birthday-ish cake, juice, pancakes, a jam jar at the back
+	_food(food, "food_cake", Vector3(xa + 85.0, s1, zf - 115.0), 0.3)
+	_food(food, "food_juice", Vector3(xc + 15.0, s1, zf - 130.0), -0.35)
+	_food(food, "food_pancakes", Vector3(xb - 75.0, s1, zf - 100.0), 1.1)
+	_food(food, "food_eggs", Vector3(xb - 85.0, s1, zf - 220.0), 0.4, 0.85)
+	_food(food, "food_milk", Vector3(xc - 30.0, s1, zf - 245.0), 0.1, 0.95)
+	_food(food, "food_carrot", Vector3(xa + 150.0, s1 + 20.0, zf - 230.0), 0.0, 0.8, Basis(Vector3.UP, 1.9) * Basis(Vector3.FORWARD, deg_to_rad(84.0)))
+	# the top shelf: the fruit
+	_food(food, "food_watermelon", Vector3(xa + 85.0, s2, zf - 120.0), 0.5)
+	_food(food, "food_pineapple", Vector3(xc + 10.0, s2, zf - 160.0), 0.2)
+	_food(food, "food_grapes", Vector3(xb - 80.0, s2, zf - 90.0), -0.6)
+	_food(food, "food_banana", Vector3(xb - 70.0, s2, zf - 200.0), 2.2)
+	_food(food, "food_orange", Vector3(xc - 45.0, s2, zf - 75.0), 0.0, 0.9)
+	_food(food, "food_apple", Vector3(xc - 5.0, s2, zf - 70.0), 1.0, 0.95)
+	_food(food, "food_watermelon", Vector3(xa + 100.0, s2, zf - 250.0), 2.0, 0.85)
+	_food(food, "food_grapes", Vector3(xc + 60.0, s2, zf - 260.0), 1.2, 0.9)
+	_food(food, "food_orange", Vector3(xb - 130.0, s2, zf - 150.0), 2.0, 0.85)
+	# the crisper drawers: carrots and broccoli on the left, apples and oranges on the right
+	var cl := xc - (w * 0.25 - 6.0)
+	var cr := xc + (w * 0.25 - 6.0)
+	var floor_y := iy0 + 2.0
+	for i in 4:
+		var lie := Basis(Vector3.UP, 0.35 + i * 0.5) * Basis(Vector3.FORWARD, deg_to_rad(84.0))
+		_food(food, "food_carrot", Vector3(cl - 45.0 + (i % 2) * 40.0, floor_y + 30.0, zc + 70.0 - i * 55.0), 0.0, 1.0, lie)
+	_food(food, "food_broccoli", Vector3(cl + 40.0, floor_y, zc - 30.0), 0.9, 0.95)
+	for i in 5:
+		var at := Vector3(cr - 45.0 + (i % 3) * 45.0, floor_y, zc + 60.0 - int(i / 3) * 55.0 - (i % 2) * 15.0)
+		_food(food, "food_apple" if i % 2 == 0 else "food_orange", at, i * 1.3, 0.95)
 	# the door: hinged on the east edge and swung wide open, away from the tank
 	var hinge := Vector3(xb, 0.0, zf)
 	var open := deg_to_rad(105.0)
@@ -226,9 +251,9 @@ static func build_fridge(parent: Node3D, rng: RandomNumberGenerator) -> void:
 		k._box(&"shelf_glass", bin_c, Vector3(w - 60.0, 40.0, 50.0), door, false)
 		for j in 3:
 			var bx := -w * 0.5 + (j - 1) * 90.0
-			var bottle: StringName = [&"ketchup", &"mustard", &"soda"][(i + j) % 3]
-			var bp := hinge + door * Vector3(bx, 0, -40.0) + Vector3.UP * (y + 20.0)
-			k._rod(bottle, bp, bp + Vector3.UP * (90.0 + j * 15.0), 20.0, false)
+			var bottle: String = ["food_sauce_chili", "food_sauce_mustard", "food_sauce_mayo"][(i + j) % 3]
+			var bp := hinge + door * Vector3(bx, 0, -40.0) + Vector3.UP * (y - 16.0)
+			_food(food, bottle, bp, -open + (j - 1) * 0.4, 0.85 + j * 0.08)
 	parent.add_child(k.finish())
 	# the cold: a bluish light from inside, mist rolling out over the glass,
 	# and snow falling in the winter corner
@@ -243,6 +268,16 @@ static func build_fridge(parent: Node3D, rng: RandomNumberGenerator) -> void:
 	light.position = Vector3(xc, (iy0 + iy1) * 0.5, zf - 60.0)
 	_mist(parent, Vector3(xc - 40.0, 175.0, zf + 6.0), Vector3(150.0, 30.0, 4.0))
 	_snowfall(parent, Vector3(CageFloor.WINTER_AT.x - 20.0, 140.0, CageFloor.WINTER_AT.y + 60.0), Vector3(210.0, 4.0, 150.0))
+
+
+## One of the fridge's foods (an env model), standing at `at`.
+static func _food(parent: Node3D, id: String, at: Vector3, yaw: float, size := 1.0, tilt := Basis()) -> void:
+	var m := ModelUtil.instantiate("res://assets/env/%s/%s.glb" % [id, id])
+	if m == null:
+		return
+	m.name = id
+	parent.add_child(m)
+	m.transform = Transform3D(Basis(Vector3.UP, yaw) * tilt * Basis.from_scale(Vector3.ONE * size), at)
 
 
 ## Icicles hanging from the top trim along the cold corner's two walls.

@@ -26,6 +26,20 @@ func _run() -> void:
 		island.buildings.size(), island.loot_points.size(), (island as HamsterCage).bowls.size()])
 	for p in island.pois:
 		print("  %-20s %s at %s h=%.1f" % [p.name, p.kit, p.center, p.height])
+	if only == "" or only == "fridge":
+		# the fridge's contents up close: the shelves, the crisper, the door bins
+		_look(Vector3(440, 380, -200), Vector3(440, 290, -560), 66.0)
+		await _wait(1.0)
+		await _snap("52a_fridge_shelves")
+		_look(Vector3(380, 140, -330), Vector3(440, 60, -560), 60.0)
+		await _wait(0.6)
+		await _snap("52b_fridge_crisper")
+		_look(Vector3(980, 360, -520), Vector3(660, 230, -640), 60.0)
+		await _wait(0.6)
+		await _snap("52c_fridge_door")
+		if only == "fridge":
+			get_tree().quit()
+			return
 	if only == "":
 		_look(Vector3(0, 1300, 1), Vector3.ZERO, 60.0)
 		await _wait(1.5)

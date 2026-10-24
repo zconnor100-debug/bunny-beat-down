@@ -34,6 +34,8 @@ func test_cage_layout_and_paths() -> void:
 	var stray := cage.loot_points.filter(func(l): return not cf.inside(l.pos.x, l.pos.z, 2.0))
 	check(stray.is_empty(), "no loot outside the tank (%d)" % stray.size())
 	check(cage.get_node_or_null("TankGlass") != null and cage.get_node_or_null("Fridge") != null, "the glass tank and the open fridge are there")
+	var food := cage.get_node_or_null("FridgeFood")
+	check(food != null and food.get_child_count() >= 30, "the fridge is stocked (%d foods)" % (food.get_child_count() if food else 0))
 	# from the big wheel, a bot can walk into every walk-in landmark
 	var map := get_world_3d().navigation_map
 	var wheel: Dictionary = cage.pois.filter(func(p): return p.kit == "wheel")[0]
