@@ -388,7 +388,7 @@ func _log(mat: StringName, a: Vector3, b: Vector3, r: float, solid := true) -> v
 	var dir := axis / length
 	var side := dir.cross(Vector3.UP if absf(dir.y) < 0.9 else Vector3.RIGHT).normalized()
 	var up := side.cross(dir)
-	var seg := 10
+	var seg := _segments(10)
 	var st := _st(mat)
 	for i in seg:
 		var a0 := TAU * i / seg
@@ -429,7 +429,7 @@ func _cone(mat: StringName, a: Vector3, b: Vector3, r: float) -> void:
 	var side := dir.cross(Vector3.UP if absf(dir.y) < 0.9 else Vector3.RIGHT).normalized()
 	var up := side.cross(dir)
 	var st := _st(mat)
-	var seg := 10
+	var seg := _segments(10)
 	for i in seg:
 		var a0 := TAU * (i + 0.5) / seg
 		var p0 := a + (side * cos(TAU * i / seg) + up * sin(TAU * i / seg)) * r
@@ -497,6 +497,11 @@ func _prism_normal(along_z_profile: bool) -> Vector3:
 
 
 # ---- materials & mesh -----------------------------------------------------------------------------
+
+## How many sides a round piece gets (CageKit doubles them for its models).
+func _segments(n: int) -> int:
+	return n
+
 
 func _st(mat: StringName) -> SurfaceTool:
 	if not _surfaces.has(mat):

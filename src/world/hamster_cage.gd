@@ -280,7 +280,7 @@ func _build_lookouts() -> void:
 		if made >= LOOKOUTS:
 			break
 		var at := _random_land(CageFloor.BEDDING - 1.0)
-		var height := rng.randf_range(9.0, 15.0)
+		var height := 9.0 + snappedf(rng.randf_range(0.0, 6.0), 2.0)   # (the heights the lookout models come in)
 		var kit := CageGym.lookout(rng, height, colours[made % colours.size()])
 		var yaw := rng.randf() * TAU
 		# the deck and the far end of the ramp both need room
@@ -308,22 +308,19 @@ func _build_tube_town(p: Dictionary) -> void:
 	var colours := [&"teal", &"purple", &"orange", &"lime"]
 	for i in 4:
 		var here: Vector2 = spots[i]
-		var prev: Vector2 = spots[(i + 3) % 4]
-		var next: Vector2 = spots[(i + 1) % 4]
-		var doors := []
-		for there in [prev, next, here + (here - p.center)]:
-			var d: Vector2 = (there - here).normalized()
-			doors.append(atan2(d.y, d.x))
-		var pod := CageProps.pod(rng, colours[i], doors)
+		# each pod is built facing out (+X), doors out and to both neighbours,
+		# then turned to face out from the middle
+		var out := atan2(here.y - p.center.y, here.x - p.center.x)
+		var pod := CageProps.pod(rng, colours[i], CageProps.TOWN_DOORS, "cage/pod")
 		pod.loot_spots = [Vector3(0, pod.floor_y, 0), Vector3(3.5, pod.floor_y, -2.5)]
-		_place_kit(p, pod, here, 0.0)
+		_place_kit(p, pod, here, -out)
 		pods.append(Vector3(here.x, p.height, here.y))
 	for i in 4:
 		var a: Vector2 = spots[i]
 		var b: Vector2 = spots[(i + 1) % 4]
 		var d := (b - a).normalized()
 		var length := a.distance_to(b) - CageProps.POD_R * 2.0 + 1.2
-		var t := CageProps.tube(rng, colours[(i + 2) % 4], length)
+		var t := CageProps.tube(rng, colours[(i + 2) % 4], length, "cage/tube" if absf(length - CageProps.TOWN_TUBE) < 0.05 else "")
 		_prop(t, (a + b) * 0.5, atan2(d.x, d.y), p.height, true, false)
 		scatter.reserve((a + b) * 0.5, length * 0.5)
 

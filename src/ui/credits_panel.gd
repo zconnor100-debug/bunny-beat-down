@@ -11,7 +11,8 @@ const STICK_SCROLL := 1400.0   # px/s at full stick tilt
 const DIR := "res://assets/credits"
 const SECTIONS := {
 	"characters": "Critters",
-	"environment": "The Island",
+	"environment": "Scenery: the island, the cage and the fridge",
+	"maps": "The Hamster Cage & Toy Box (made in Blender)",
 	"weapons_props": "Carrot Guns & Props",
 	"audio": "Sound & Music",
 	"fonts": "Fonts",

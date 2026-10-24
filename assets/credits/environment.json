@@ -975,6 +975,162 @@
     ]
   },
   {
+    "asset": "Sunflower Seed",
+    "author": "Render at Night",
+    "author_url": "https://sketchfab.com/Render_at_Night",
+    "source_url": "https://sketchfab.com/3d-models/sunflower-seed-bf3bae75c18a457195ee602511fb2745",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "cage_seed: rescaled x0.759 to critter-world size, grounded and centred; rotated [90, 0, 0] deg; decimated 4416 -> 1470 triangles (seams welded first, no cracks); normal map re-baked from the full-detail source onto the decimated mesh; textures re-encoded <= 1024px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Environment scenery: striped sunflower seed, lying flat (the Hamster Cage) (cage_seed)",
+    "files": [
+      "assets/env/cage_seed/cage_seed.glb"
+    ]
+  },
+  {
+    "asset": "Peanut",
+    "author": "yanix",
+    "author_url": "https://sketchfab.com/yanix",
+    "source_url": "https://sketchfab.com/3d-models/peanut-4a80c69306934bb39902451651d837d8",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "cage_peanut: rescaled x0.615 to critter-world size, grounded and centred; rotated [90, 0, 0] deg; decimated 2160 -> 1176 triangles (seams welded first, no cracks); normal map re-baked from the full-detail source onto the decimated mesh; textures re-encoded <= 1024px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Environment scenery: peanut in its shell, lying flat (cage_peanut)",
+    "files": [
+      "assets/env/cage_peanut/cage_peanut.glb"
+    ]
+  },
+  {
+    "asset": "(Game-Ready Free) Broccoli",
+    "author": "HaVe",
+    "author_url": "https://sketchfab.com/HaVe",
+    "source_url": "https://sketchfab.com/3d-models/game-ready-free-broccoli-37831c39556e472cbd722846573b0e38",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "cage_broccoli: rescaled x1.0073 to critter-world size, grounded and centred; textures re-encoded <= 1024px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Environment scenery: broccoli floret as tall as a small tree (cage_broccoli)",
+    "files": [
+      "assets/env/cage_broccoli/cage_broccoli.glb"
+    ]
+  },
+  {
+    "asset": "Carrot (.c4d and .fbx)",
+    "author": "NeoT1",
+    "author_url": "https://sketchfab.com/Neot1",
+    "source_url": "https://sketchfab.com/3d-models/carrot-c4d-and-fbx-089c5e90917b44a188e0c0db259e0782",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "cage_carrot: rescaled x0.0127 to critter-world size, grounded and centred; textures re-encoded <= 1024px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Environment scenery: carrot with its leafy top, lying down (cage_carrot)",
+    "files": [
+      "assets/env/cage_carrot/cage_carrot.glb"
+    ]
+  },
+  {
+    "asset": "Handpainted Corn",
+    "author": "Cozygon",
+    "author_url": "https://sketchfab.com/cozygonanimation",
+    "source_url": "https://sketchfab.com/3d-models/handpainted-corn-5262c35f17924ef5a292abd6dc6e76aa",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "cage_corn: rescaled x20 to critter-world size, grounded and centred; unlit material 'corn_material' rebuilt as lit PBR (roughness 0.9); textures re-encoded <= 1024px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Environment scenery: hand-painted corn cob, lying down (cage_corn)",
+    "files": [
+      "assets/env/cage_corn/cage_corn.glb"
+    ]
+  },
+  {
+    "asset": "Sliced apple",
+    "author": "¡Jacques",
+    "author_url": "https://sketchfab.com/iJacques",
+    "source_url": "https://sketchfab.com/3d-models/sliced-apple-3502a77a4acd44868bd79839d243f2ae",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "cage_apple: rescaled x1.4234 to critter-world size, grounded and centred; textures re-encoded <= 1024px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Environment scenery: an apple and its cut half (cage_apple)",
+    "files": [
+      "assets/env/cage_apple/cage_apple.glb"
+    ]
+  },
+  {
+    "asset": "Pea",
+    "author": "3dChanging",
+    "author_url": "https://sketchfab.com/3dChanging",
+    "source_url": "https://sketchfab.com/3d-models/pea-6e348a8840224c79b271b6dc36f85fca",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "cage_pea: rescaled x1.6705 to critter-world size, grounded and centred; textures re-encoded <= 0px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Environment scenery: a frozen pea the size of a boulder (cage_pea)",
+    "files": [
+      "assets/env/cage_pea/cage_pea.glb"
+    ]
+  },
+  {
+    "asset": "Popsicle Ice Cream Isometric",
+    "author": "ZREEL",
+    "author_url": "https://sketchfab.com/reel.",
+    "source_url": "https://sketchfab.com/3d-models/popsicle-ice-cream-isometric-c34b893d6e7c4267abad4b4fc79ff01a",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "cage_popsicle_blue: rescaled x30.8562 to critter-world size, grounded and centred; decimated 14528 -> 5880 triangles (seams welded first, no cracks); normal map re-baked from the full-detail source onto the decimated mesh; textures re-encoded <= 1024px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Environment scenery: blue ice lolly (cage_popsicle_blue)",
+    "files": [
+      "assets/env/cage_popsicle_blue/cage_popsicle_blue.glb"
+    ]
+  },
+  {
+    "asset": "Popsicle",
+    "author": "Kroko.blend",
+    "author_url": "https://sketchfab.com/jaromir.ternavskiy",
+    "source_url": "https://sketchfab.com/3d-models/popsicle-2cc7add1a2634dbb9ff71b579fb1d0b4",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "cage_popsicle_choc: rescaled x1.0734 to critter-world size, grounded and centred; textures re-encoded <= 512px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Environment scenery: chocolate-dipped ice lolly (cage_popsicle_choc)",
+    "files": [
+      "assets/env/cage_popsicle_choc/cage_popsicle_choc.glb"
+    ]
+  },
+  {
+    "asset": "Seashell",
+    "author": "yaocheng",
+    "author_url": "https://sketchfab.com/yaocheng",
+    "source_url": "https://sketchfab.com/3d-models/seashell-9b59afbf4a694e8cb6daa0e0235cff86",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "cage_shell: rescaled x0.0494 to critter-world size, grounded and centred; rotated [-90, 0, 0] deg; textures re-encoded <= 1024px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Environment scenery: scallop shell resting on its back (cage_shell)",
+    "files": [
+      "assets/env/cage_shell/cage_shell.glb"
+    ]
+  },
+  {
+    "asset": "Seashell",
+    "author": "TraianDumbrava",
+    "author_url": "https://sketchfab.com/TraianDumbrava",
+    "source_url": "https://sketchfab.com/3d-models/seashell-410be9cdc3d84f6a9f139189309b4891",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "cage_conch: kept sub-object(s) Cylinder009_01 - Default_0; rescaled x0.0096 to critter-world size, grounded and centred; textures re-encoded <= 1024px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Environment scenery: spiral conch shell (cage_conch)",
+    "files": [
+      "assets/env/cage_conch/cage_conch.glb"
+    ]
+  },
+  {
+    "asset": "Crumpled Paper",
+    "author": "osamamon",
+    "author_url": "https://sketchfab.com/osamamon",
+    "source_url": "https://sketchfab.com/3d-models/crumpled-paper-74e788457d6f4536a0dfaa40564d600a",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "cage_paper: rescaled x1.5521 to critter-world size, grounded and centred; decimated 2048 -> 685 triangles (seams welded first, no cracks); normal map re-baked from the full-detail source onto the decimated mesh; textures re-encoded <= 1024px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Environment scenery: crumpled paper ball (bedding tufts are built from these) (cage_paper)",
+    "files": [
+      "assets/env/cage_paper/cage_paper.glb"
+    ]
+  },
+  {
     "asset": "Forest Leaves 02 (Poly Haven texture)",
     "author": "Rob Tuytel",
     "author_url": "https://polyhaven.com/all?a=Rob%20Tuytel",

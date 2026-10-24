@@ -10,6 +10,13 @@ class_name CageGym
 const DECK_T := 0.6          ## perch deck thickness
 const RAIL_H := 1.3          ## railing height (crouch behind it)
 const GAP := 6.4             ## railing gap where a tube joins a deck
+## The refined models' sizes (tools/maps): lookouts come in these heights,
+## and bridges, coconuts and chew sticks are scaled from these.
+const LOOKOUT_HEIGHTS := [9, 11, 13, 15]
+const BRIDGE_SPAN := 18.0
+const BRIDGE_RISE := 4.5
+const COCONUT_R := 5.5
+const STICKS_LENGTH := 11.0
 
 
 ## The Hamster Gym, centred on its kit origin (ground level): three perches
@@ -19,7 +26,7 @@ const GAP := 6.4             ## railing gap where a tube joins a deck
 static func gym(rng: RandomNumberGenerator) -> CageKit:
 	var k := CageKit.blank("HamsterGym", rng, &"wood")
 	var colours := [&"pink", &"teal", &"orange", &"purple", &"lime", &"blue", &"yellow"]
-	var deck := func(i: int) -> StringName: return StringName("plastic_" + String(colours[(i + rng.randi()) % colours.size()]))
+	var deck := func(i: int) -> StringName: return k.accent("accent%d" % i, StringName("plastic_" + String(colours[(i + rng.randi()) % colours.size()])))
 	# perches: [centre, height, size, sides with tubes]
 	var a := Vector3(-28, 0, 0)
 	var b := Vector3(8, 0, 0)
@@ -47,7 +54,7 @@ static func gym(rng: RandomNumberGenerator) -> CageKit:
 	k.floor_y = 7.0
 	k.loot_spots = [Vector3(a.x - 3.0, 7.0, 2.0), Vector3(b.x + 2.0, 14.0, -2.0), Vector3(c.x + 1.0, 21.0, c.z + 1.0), Vector3(d.x, 14.0, d.z - 2.0)]
 	k.chest_spot = Vector3(c.x - 2.0, 21.0, c.z - 2.0)
-	return k.finish()
+	return k.made_as("cage/gym").finish()
 
 
 ## A free-standing lookout perch: a deck on stilts with a railing and a
@@ -55,12 +62,15 @@ static func gym(rng: RandomNumberGenerator) -> CageKit:
 static func lookout(rng: RandomNumberGenerator, height: float, colour: StringName) -> CageKit:
 	var k := CageKit.blank("Lookout", rng, &"wood")
 	var size := 12.0
-	perch(k, Vector3.ZERO, height, size, StringName("plastic_" + String(colour)), [&"+x"], rng.randf() < 0.5)
+	var canopy := rng.randf() < 0.5
+	perch(k, Vector3.ZERO, height, size, k.accent("accent", StringName("plastic_" + String(colour))), [&"+x"], canopy)
 	var run := height / tan(deg_to_rad(25.0))
 	k._ramp(&"wood_light", Vector3(size * 0.5 + run, -0.15, 0.0), Vector3(size * 0.5 - 0.3, height, 0.0), 5.0, &"paint_yellow")
 	k.footprint = size * 0.5 + run * 0.5 + 3.0
 	k.floor_y = height
 	k.loot_spots = [Vector3(-2.0, height, 1.5)]
+	if is_equal_approx(height, roundf(height)) and int(height) in LOOKOUT_HEIGHTS:
+		k.made_as("cage/lookout_%d%s" % [int(height), "_canopy" if canopy else ""])
 	return k.finish()
 
 
@@ -179,14 +189,15 @@ static func bendy_bridge(rng: RandomNumberGenerator, span := 18.0, rise := 4.5) 
 			k._rod(&"metal", Vector3(-span * 0.5 + span * t0, sin(t0 * PI) * rise + 0.3, s * (width * 0.5 - 0.4)),
 				Vector3(-span * 0.5 + span * t1, sin(t1 * PI) * rise + 0.3, s * (width * 0.5 - 0.4)), 0.08, false)
 	k.footprint = span * 0.5 + 1.0
-	return k.finish()
+	return k.made_as("cage/bridge", Transform3D(Basis.from_scale(Vector3(span / BRIDGE_SPAN, rise / BRIDGE_RISE, 1.0)), Vector3.ZERO)).finish()
 
 
 ## Half a coconut shell turned over, a doorway cut in its side: a tiny
 ## hideout (walk in, or crouch behind it).
 static func coconut(rng: RandomNumberGenerator, r := 5.5) -> CageKit:
 	var k := CageKit.blank("Coconut", rng, &"wood")
-	var door := rng.randf() * TAU
+	rng.randf()   # (the door: it faces +X now, and the scatter turns the shell anyway)
+	var door := 0.0
 	# the shell wall (with a doorway), then the dome over it
 	k._ring(&"coconut", Vector3(0, r * 0.3, 0), Basis(Vector3.RIGHT, Vector3.UP, Vector3.BACK), r, r * 0.6, 0.5, 20, [[door, 0.75]])
 	var prof := []
@@ -200,13 +211,15 @@ static func coconut(rng: RandomNumberGenerator, r := 5.5) -> CageKit:
 		var a := TAU * i / 3.0
 		k._ellipsoid(&"coconut_in", Vector3(cos(a) * 0.9, r * 0.6 + r * 0.73, sin(a) * 0.9), Vector3(0.45, 0.2, 0.45), Basis(), false, 4, 8)
 	k.footprint = r + 1.5
-	return k.finish()
+	return k.made_as("cage/coconut", Transform3D(Basis.from_scale(Vector3.ONE * r / COCONUT_R), Vector3.ZERO)).finish()
 
 
 ## A bundle of chew sticks: willow twigs tied with a ribbon, lying about.
 static func chew_sticks(rng: RandomNumberGenerator) -> CageKit:
 	var k := CageKit.blank("ChewSticks", rng, &"wood")
 	var length := rng.randf_range(9.0, 13.0)
+	if CageKit.exporting:
+		length = STICKS_LENGTH
 	for i in 7:
 		var off := Vector3(0, 0.55 + floorf(i / 3.0) * 0.75, (i % 3 - 1) * 0.95 + rng.randf_range(-0.15, 0.15))
 		var tilt := rng.randf_range(-0.06, 0.06)
@@ -215,7 +228,7 @@ static func chew_sticks(rng: RandomNumberGenerator) -> CageKit:
 		k._ring(&"plastic_red", Vector3(x, 1.2, 0), Basis(Vector3.BACK, Vector3.RIGHT, Vector3.UP), 1.9, 0.7, 0.12, 14, [], false)
 	k._collide(Vector3(0, 1.2, 0), Vector3(length, 2.4, 3.2))
 	k.footprint = length * 0.5
-	return k.finish()
+	return k.made_as("cage/chew_sticks", Transform3D(Basis.from_scale(Vector3(length / STICKS_LENGTH, 1.0, 1.0)), Vector3.ZERO)).finish()
 
 
 ## An egg carton's bottom half: cardboard cups in two rows (cover, and a
@@ -233,4 +246,4 @@ static func egg_carton(rng: RandomNumberGenerator) -> CageKit:
 	k._box(&"cardboard", Vector3(0, 2.8, 0), Vector3(cell * 6.0 + 0.4, 0.15, cell * 2.0 + 0.4), Basis(), false)
 	k._collide(Vector3(0, 1.45, 0), Vector3(cell * 6.0, 2.9, cell * 2.0))
 	k.footprint = cell * 3.0 + 0.5
-	return k.finish()
+	return k.made_as("cage/egg_carton").finish()

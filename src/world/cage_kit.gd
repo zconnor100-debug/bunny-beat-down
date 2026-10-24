@@ -31,6 +31,15 @@ static var _toy_noise: NoiseTexture2D
 static var _toy_bump: NoiseTexture2D
 
 var _concave := PackedVector3Array()   # triangles of solid lathes (one concave shape)
+var _dress: Array = []                 # [model path, Transform3D, {model material -> cage material key}]
+var _keep: Dictionary = {}             # procedural surfaces still drawn under a dress
+var _made := ""                        # this kit's Blender-refined model (assets/maps/<_made>.glb)
+var _made_xf := Transform3D()
+var _accents: Dictionary = {}          # accent slot -> the material key this kit drew for it
+
+## Building the kits for tools/maps/refine.py (tests/export_kits.gd): no
+## dressing, accent slots keep their names, materials are named by key.
+static var exporting := false
 
 
 static func make_kit(kind: Kind, rng: RandomNumberGenerator) -> CageKit:
@@ -49,8 +58,8 @@ static func make_kit(kind: Kind, rng: RandomNumberGenerator) -> CageKit:
 		Kind.TUB:
 			k.name = "IceCreamTub"
 			k._build_tub()
-	k._commit()
-	return k
+	k.made_as("cage/" + String(k.name).to_snake_case())
+	return k.finish()
 
 
 ## An empty kit to build a prop into (see CageProps); call `finish()` after.
@@ -64,8 +73,132 @@ static func blank(name_: String, rng: RandomNumberGenerator, surface := &"wood")
 
 
 func finish() -> CageKit:
+	if _made != "" and not exporting:
+		dress("res://assets/maps/%s.glb" % _made, _made_xf, _accents)
 	_commit()
 	return self
+
+
+## This kit has a refined model (tests/export_kits.gd -> tools/maps/refine.py:
+## its own geometry, rebuilt clean in Blender): finish() dresses in it, at
+## `xf` (for a model made at a reference size). Colliders stay the kit's.
+func made_as(id: String, xf := Transform3D()) -> CageKit:
+	_made = id
+	_made_xf = xf
+	return self
+
+
+## Round pieces get twice the sides when built for a model (the colliders
+## stay as they are).
+func _segments(n: int) -> int:
+	return n * 2 if exporting else n
+
+
+## A material that varies per kit (a colour from the rng): the refined model
+## has a slot named `slot` for it. Returns the key to build with.
+func accent(slot: String, key: StringName) -> StringName:
+	_accents[slot] = key
+	return StringName(slot) if exporting else key
+
+
+## Dress the kit in a model (assets/maps, made in Blender by tools/maps, or a
+## downloaded one in assets/env): the procedural pieces still make its
+## colliders, footprint, floor and loot spots, but what you see is the model,
+## at `xf` in the kit's own space. A model material named "cage:<key>" (or
+## listed in `mats`, model name -> key) is drawn with the cage's material for
+## that key. Without the model file the kit keeps its procedural look.
+func dress(path: String, xf := Transform3D(), mats := {}) -> CageKit:
+	if ResourceLoader.exists(path):
+		_dress.append([path, xf, mats])
+	return self
+
+
+## Procedural surfaces (by material key) to keep drawing under a dress.
+func keep_surfaces(keys: Array) -> CageKit:
+	for key in keys:
+		_keep[StringName(key)] = true
+	return self
+
+
+## A map model, its "cage:<key>" materials swapped for the cage's own.
+static func model(path: String, mats := {}) -> Node3D:
+	var root := ModelUtil.instantiate(path)
+	if root == null:
+		return null
+	root.name = "Model"
+	for mi in ModelUtil.find_all(root, "MeshInstance3D"):
+		var mesh: Mesh = (mi as MeshInstance3D).mesh
+		for i in mesh.get_surface_count():
+			var key := _cage_key(mesh.surface_get_material(i), mats)
+			if key != &"":
+				(mi as MeshInstance3D).set_surface_override_material(i, mat(key))
+	return root
+
+
+## A map model's mesh with the cage's materials baked in (for MultiMeshes).
+static func model_mesh(path: String, mats := {}) -> Mesh:
+	var src := ModelUtil.first_mesh(path)
+	if src == null:
+		return null
+	var mesh := src.duplicate() as Mesh
+	for i in mesh.get_surface_count():
+		var key := _cage_key(mesh.surface_get_material(i), mats)
+		if key != &"":
+			mesh.surface_set_material(i, mat(key))
+	return mesh
+
+
+## One mesh from several map models, for MultiMesh ground cover: `parts` is
+## [[model path, Transform3D], ...] (rotation and uniform scale).
+static func cluster_mesh(parts: Array, mats := {}) -> ArrayMesh:
+	var out := ArrayMesh.new()
+	for part in parts:
+		var src := model_mesh(part[0], mats)
+		if src == null:
+			continue
+		var xf: Transform3D = part[1]
+		var rot := xf.basis.orthonormalized()
+		for i in src.get_surface_count():
+			var arr := src.surface_get_arrays(i)
+			var v: PackedVector3Array = arr[Mesh.ARRAY_VERTEX]
+			for j in v.size():
+				v[j] = xf * v[j]
+			arr[Mesh.ARRAY_VERTEX] = v
+			if arr[Mesh.ARRAY_NORMAL] != null:
+				var n: PackedVector3Array = arr[Mesh.ARRAY_NORMAL]
+				for j in n.size():
+					n[j] = rot * n[j]
+				arr[Mesh.ARRAY_NORMAL] = n
+			if arr[Mesh.ARRAY_TANGENT] != null:
+				var t: PackedFloat32Array = arr[Mesh.ARRAY_TANGENT]
+				for j in range(0, t.size(), 4):
+					var tv := rot * Vector3(t[j], t[j + 1], t[j + 2])
+					t[j] = tv.x
+					t[j + 1] = tv.y
+					t[j + 2] = tv.z
+				arr[Mesh.ARRAY_TANGENT] = t
+			out.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arr)
+			out.surface_set_material(out.get_surface_count() - 1, src.surface_get_material(i))
+	return out
+
+
+## (exporting) A plain material named for its key, so the model keeps it.
+static func _export_mat(key: StringName) -> StandardMaterial3D:
+	var m := StandardMaterial3D.new()
+	m.resource_name = String(key) if String(key).begins_with("accent") else "cage:" + String(key)
+	var real := mat(key) if not String(key).begins_with("accent") else null
+	if real is StandardMaterial3D:
+		m.albedo_color = (real as StandardMaterial3D).albedo_color
+	elif real is ShaderMaterial and (real as ShaderMaterial).get_shader_parameter(&"albedo") is Color:
+		m.albedo_color = (real as ShaderMaterial).get_shader_parameter(&"albedo")
+	return m
+
+
+static func _cage_key(m: Material, mats: Dictionary) -> StringName:
+	var n := m.resource_name if m else ""
+	if mats.has(n):
+		return StringName(mats[n])
+	return StringName(n.trim_prefix("cage:")) if n.begins_with("cage:") else &""
 
 
 # ---- walk-in buildings ----------------------------------------------------------------------
@@ -80,7 +213,7 @@ func _build_hut() -> void:
 	var t := 0.5
 	footprint = 14.0
 	floor_y = 0.12
-	var roof: StringName = [&"paint_red", &"paint_blue", &"paint_teal", &"paint_purple"][_rng.randi() % 4]
+	var roof := accent("accent", [&"paint_red", &"paint_blue", &"paint_teal", &"paint_purple"][_rng.randi() % 4])
 	_box(&"wood_light", Vector3(0, floor_y - 0.6, 0), Vector3(w + 0.6, 1.2, d + 0.6))
 	for zs in [1.0, -1.0]:
 		_plank_wall(&"wood_honey", Vector3(-w * 0.5, floor_y, zs * d * 0.5), Vector3(w * 0.5, floor_y, zs * d * 0.5), wall_h, t,
@@ -200,6 +333,7 @@ func _build_tub() -> void:
 ## in the (radius, y) plane. `solid` adds it to the prop's concave collider.
 ## `dir` < 0 flips which side faces out (for the inside of a bowl, say).
 func _lathe(mat: StringName, profile: Array, seg: int, centre: Vector3, solid := true, uv_scale := 1.0) -> void:
+	seg = _segments(seg)
 	var st := _st(mat)
 	for i in profile.size() - 1:
 		var p0: Vector2 = profile[i]
@@ -234,6 +368,8 @@ func _lathe(mat: StringName, profile: Array, seg: int, centre: Vector3, solid :=
 ## inside a gap [angle, width] are left out (doorways).
 func _ring(mat: StringName, centre: Vector3, basis: Basis, radius: float, length: float, thick: float, seg: int,
 		gaps := [], solid := true, phase := 0.0) -> void:
+	if gaps.is_empty():
+		seg = _segments(seg)   # (with doorways, keep the collider's panels: the openings must match)
 	var width := 2.0 * (radius + thick) * tan(PI / seg) + 0.04
 	for k in seg:
 		var a := TAU * k / seg + phase
@@ -251,6 +387,8 @@ func _ring(mat: StringName, centre: Vector3, basis: Basis, radius: float, length
 
 ## An ellipsoid (radii along the basis axes); solid ones collide as a convex hull.
 func _ellipsoid(mat: StringName, centre: Vector3, radii: Vector3, basis := Basis(), solid := true, rings := 8, seg := 14) -> void:
+	rings = _segments(rings)
+	seg = _segments(seg)
 	var st := _st(mat)
 	var pts := PackedVector3Array()
 	for i in rings:
@@ -349,12 +487,22 @@ func _face(st: SurfaceTool, p: Array, uv: Array, n: Vector3, solid: bool) -> voi
 
 
 func _commit() -> void:
+	if not _dress.is_empty():
+		for key in _surfaces.keys():
+			if not _keep.has(key):
+				_surfaces.erase(key)
+		for d in _dress:
+			var m := model(d[0], d[2])
+			if m:
+				m.transform = d[1]
+				add_child(m)
+		_dress.clear()
 	var mesh := ArrayMesh.new()
 	for key in _surfaces:
 		var st: SurfaceTool = _surfaces[key]
 		st.generate_tangents()
 		st.commit(mesh)
-		mesh.surface_set_material(mesh.get_surface_count() - 1, mat(key))
+		mesh.surface_set_material(mesh.get_surface_count() - 1, _export_mat(key) if exporting else mat(key))
 	var mi := MeshInstance3D.new()
 	mi.name = "Mesh"
 	mi.mesh = mesh

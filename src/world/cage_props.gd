@@ -12,6 +12,26 @@ const TUBE_R := 2.5            ## inner radius of a Habitrail tube
 const TUBE_WALL := 0.35
 const POD_R := 9.0
 const POD_H := 7.5
+const BOWL_R := 12.0           ## the bowl model's size (scaled to each bowl)
+const BOWL_RIM := 3.4
+## Tube Town's pods, built facing out (+X): doors out and to both neighbours.
+const TOWN_DOORS := [-PI * 0.75, PI * 0.75, 0.0]
+const TOWN_TUBE := 27.0 * 1.41421356 - POD_R * 2.0 + 1.2   ## its tubes' length
+
+
+## A downloaded model (tools/env, assets/env/<id>) or one made in Blender
+## (tools/maps, assets/maps/<name>.glb), for CageKit.dress.
+static func env(id: String) -> String:
+	return "res://assets/env/%s/%s.glb" % [id, id]
+
+
+static func made(name: String) -> String:
+	return "res://assets/maps/%s.glb" % name
+
+
+## Rotation and uniform scale (Basis.scaled scales in world space, so not that).
+static func xf(basis: Basis, size := 1.0, at := Vector3.ZERO) -> Transform3D:
+	return Transform3D(basis * Basis.from_scale(Vector3.ONE * size), at)
 
 
 ## The giant exercise wheel: a ridged teal tread you can run into from the
@@ -44,40 +64,45 @@ static func wheel(rng: RandomNumberGenerator) -> CageKit:
 		k._rod(&"plastic_purple", Vector3(xs * 10.0, -0.3, back - 4.5), hub, 0.9)
 	k._box(&"plastic_purple", Vector3(0, 0.3, back - 4.5), Vector3(23.0, 0.8, 4.0))
 	k.footprint = 19.0
-	return k.finish()
+	return k.made_as("cage/wheel").finish()
 
 
 ## A round Habitrail pod: a ring of plastic panels with doorways at the given
 ## angles (radians, 0 = +X toward +Z), a white domed roof and a rim band.
-static func pod(rng: RandomNumberGenerator, colour: StringName, doors: Array) -> CageKit:
+static func pod(rng: RandomNumberGenerator, colour: StringName, doors: Array, made := "") -> CageKit:
 	var k := CageKit.blank("Pod", rng, &"wood")
+	var wall := k.accent("accent", StringName("plastic_" + String(colour)))
 	var gaps := []
 	for a in doors:
 		gaps.append([a, (TUBE_R + TUBE_WALL) * 2.4 / POD_R])
 	var basis := Basis(Vector3.RIGHT, Vector3.UP, Vector3.BACK)
-	k._ring(StringName("plastic_" + String(colour)), Vector3(0, POD_H * 0.5 - 0.2, 0), basis, POD_R, POD_H + 0.4, 0.45, 28, gaps)
+	k._ring(wall, Vector3(0, POD_H * 0.5 - 0.2, 0), basis, POD_R, POD_H + 0.4, 0.45, 28, gaps)
 	k._lathe(&"plastic_white", [Vector2(POD_R + 0.9, POD_H - 0.1), Vector2(POD_R + 0.9, POD_H + 0.6), Vector2(POD_R * 0.75, POD_H + 2.6),
 		Vector2(POD_R * 0.35, POD_H + 3.4), Vector2(0.0, POD_H + 3.6)], 28, Vector3.ZERO, true)
 	k._lathe(&"plastic_white", [Vector2(0.0, POD_H - 0.1), Vector2(POD_R + 0.9, POD_H - 0.1)], 28, Vector3.ZERO, false)   # the ceiling
 	# a round vent on the dome and a little flag
-	k._lathe(StringName("plastic_" + String(colour)), [Vector2(1.8, POD_H + 3.55), Vector2(1.8, POD_H + 4.2), Vector2(0.0, POD_H + 4.3)], 16, Vector3.ZERO, false)
+	k._lathe(wall, [Vector2(1.8, POD_H + 3.55), Vector2(1.8, POD_H + 4.2), Vector2(0.0, POD_H + 4.3)], 16, Vector3.ZERO, false)
 	k.footprint = POD_R + 1.5
 	k.floor_y = 0.05
+	if made != "":
+		k.made_as(made)   # (a model for this door layout: Tube Town's)
 	return k.finish()
 
 
 ## A straight Habitrail tube along local Z, `length` long, centred on the
 ## origin, its flat bottom panel level with the ground: walk straight through.
-static func tube(rng: RandomNumberGenerator, colour: StringName, length: float) -> CageKit:
+static func tube(rng: RandomNumberGenerator, colour: StringName, length: float, made := "") -> CageKit:
 	var k := CageKit.blank("Tube", rng, &"wood")
 	var basis := Basis(Vector3.RIGHT, Vector3.BACK, Vector3.DOWN)
 	var c := Vector3(0, TUBE_R + 0.05, 0)
-	k._ring(StringName("plastic_" + String(colour)), c, basis, TUBE_R, length, TUBE_WALL, 12)
+	k._ring(k.accent("accent", StringName("plastic_" + String(colour))), c, basis, TUBE_R, length, TUBE_WALL, 12)
 	# connector collars every few metres
 	var n := maxi(2, int(length / 9.0))
 	for i in n + 1:
 		var z := -length * 0.5 + length * i / n
 		k._ring(&"plastic_white", c + Vector3(0, 0, z), basis, TUBE_R + TUBE_WALL, 0.8, 0.3, 12, [], false)
+	if made != "":
+		k.made_as(made)   # (a model for this length: Tube Town's)
 	return k.finish()
 
 
@@ -95,6 +120,8 @@ static func roll(rng: RandomNumberGenerator, length: float, radius := 2.7) -> Ca
 		var out := Vector3(cos(a), -sin(a), 0)
 		k._box(&"cardboard_in", c + out * (radius + 0.31) + Vector3(0, 0, -length * 0.5 + i * 2.0 + 1.0), Vector3(0.12, 0.05, 2.2),
 			Basis(Vector3.BACK, -a) * Basis(Vector3.UP, 0.35), false)
+	if is_equal_approx(radius, 2.7) and (is_equal_approx(length, 9.0) or is_equal_approx(length, 24.0)):
+		k.made_as("cage/roll_%d" % int(length))
 	return k.finish()
 
 
@@ -105,7 +132,7 @@ static func bowl(rng: RandomNumberGenerator, colour: StringName, r: float, rim: 
 	var lip := 1.4
 	var base_r := r * 0.82
 	var floor_y := 0.6
-	var outer := StringName("ceramic_" + String(colour))
+	var outer := k.accent("accent", StringName("ceramic_" + String(colour)))
 	k._lathe(outer, [Vector2(base_r, -0.5), Vector2(r * 0.97, rim - 0.6), Vector2(r, rim)], 40, Vector3.ZERO)
 	k._lathe(&"ceramic_white", [Vector2(r, rim), Vector2(r - lip, rim)], 40, Vector3.ZERO)
 	k._lathe(&"ceramic_white", [Vector2(r - lip, rim), Vector2(r - lip - 0.6, rim - 1.2), Vector2(base_r - lip * 0.8, floor_y + 0.4),
@@ -115,7 +142,7 @@ static func bowl(rng: RandomNumberGenerator, colour: StringName, r: float, rim: 
 	k._lathe(&"plastic_white", [Vector2(r * 0.9 + 0.06, rim * 0.45), Vector2(r * 0.93 + 0.06, rim * 0.62)], 40, Vector3.ZERO, false)
 	k.footprint = r + 1.0
 	k.floor_y = floor_y
-	return k.finish()
+	return k.made_as("cage/bowl", Transform3D(Basis.from_scale(Vector3(r / BOWL_R, rim / BOWL_RIM, r / BOWL_R)), Vector3.ZERO)).finish()
 
 
 ## Radius of a bowl's inside at height y above its base (for the water disc).
@@ -149,7 +176,7 @@ static func seed_bowl(rng: RandomNumberGenerator) -> CageKit:
 			_:
 				k._rod(&"pellet", at, at + Vector3(rng.randf_range(-0.6, 0.6), 0.1, rng.randf_range(-0.6, 0.6)), 0.3, false)
 	k.footprint = r + 1.0
-	return k.finish()
+	return k.made_as("cage/seed_bowl").finish()
 
 
 ## A shallow tray of bathing sand (the sand itself is the floor, painted by
@@ -157,6 +184,8 @@ static func seed_bowl(rng: RandomNumberGenerator) -> CageKit:
 static func sand_tray(rng: RandomNumberGenerator, r: float) -> CageKit:
 	var k := CageKit.blank("SandTray", rng, &"wood")
 	k._lathe(&"plastic_blue", [Vector2(r, -0.6), Vector2(r, 0.12), Vector2(r - 0.8, 0.12), Vector2(r - 0.8, -0.6)], 40, Vector3.ZERO, false)
+	if is_equal_approx(r, 16.6):
+		k.made_as("cage/sand_tray")
 	return k.finish()
 
 
@@ -179,6 +208,8 @@ static func platform(rng: RandomNumberGenerator, height: float) -> CageKit:
 	k.footprint = w * 0.5 + length * 0.5 + 2.0
 	k.floor_y = height
 	k.loot_spots = [Vector3(-4.0, height, 0.0), Vector3(3.0, height, -2.0)]
+	if is_equal_approx(height, 9.0):
+		k.made_as("cage/platform")
 	return k.finish()
 
 
@@ -201,7 +232,7 @@ static func water_bottle(rng: RandomNumberGenerator) -> CageKit:
 		k._rod(&"metal", Vector3(-7.0, y + 0.4, -1.0), Vector3(-7.0, y + 0.4, -10.4), 0.35, false)
 		k._rod(&"metal", Vector3(7.0, y + 0.4, -1.0), Vector3(7.0, y + 0.4, -10.4), 0.35, false)
 	k.set_meta(&"drip_from", spout_end + Vector3.DOWN * 1.3)
-	return k.finish()
+	return k.made_as("cage/water_bottle").finish()
 
 
 # ---- food & cover ---------------------------------------------------------------------------
@@ -209,8 +240,11 @@ static func water_bottle(rng: RandomNumberGenerator) -> CageKit:
 static func sunflower_seed(rng: RandomNumberGenerator, length := 2.2) -> CageKit:
 	var k := CageKit.blank("Seed", rng, &"wood")
 	# long axis along the ellipsoid's own Y (so the stripes run tip to tip), laid flat
-	var basis := Basis(Vector3.UP, rng.randf() * TAU) * Basis(Vector3.RIGHT, PI * 0.5 + rng.randf_range(-0.15, 0.15))
+	var yaw := rng.randf() * TAU
+	var tilt := rng.randf_range(-0.15, 0.15)
+	var basis := Basis(Vector3.UP, yaw) * Basis(Vector3.RIGHT, PI * 0.5 + tilt)
 	k._ellipsoid(&"seed_shell", Vector3(0, length * 0.2, 0), Vector3(length * 0.32, length * 0.5, length * 0.2), basis)
+	k.dress(env("cage_seed"), xf(Basis(Vector3.UP, yaw) * Basis(Vector3.RIGHT, tilt * 0.3), length / 2.2))
 	return k.finish()
 
 
@@ -219,6 +253,7 @@ static func pellet(rng: RandomNumberGenerator, length := 2.4) -> CageKit:
 	var dir := Vector3(cos(rng.randf() * TAU), 0, sin(rng.randf() * TAU)).normalized()
 	var r := length * 0.28
 	k._rod(&"pellet", Vector3.UP * r - dir * length * 0.5, Vector3.UP * r + dir * length * 0.5, r)
+	k.dress(env("cage_peanut"), xf(Basis(Vector3.UP, atan2(dir.x, dir.z)), length / 2.4))   # (a peanut in its shell)
 	return k.finish()
 
 
@@ -232,10 +267,13 @@ static func broccoli(rng: RandomNumberGenerator, size := 1.0) -> CageKit:
 		var a := TAU * i / 3.0 + rng.randf()
 		k._rod(&"broccoli_stem", Vector3(0, h * 0.45, 0), Vector3(cos(a) * 1.6 * size, h * 0.75, sin(a) * 1.6 * size), 0.5 * size, false)
 	k._ellipsoid(&"broccoli", Vector3(0, h * 0.85, 0), Vector3(2.6, 1.7, 2.6) * size)
+	var yaw := 0.0
 	for i in 7:
 		var a := TAU * i / 7.0 + rng.randf() * 0.4
+		yaw += a
 		var at := Vector3(cos(a) * 2.0 * size, h * 0.8 + rng.randf_range(-0.2, 0.6) * size, sin(a) * 2.0 * size)
 		k._ellipsoid(&"broccoli", at, Vector3.ONE * rng.randf_range(1.0, 1.4) * size, Basis(), false, 6, 10)
+	k.dress(env("cage_broccoli"), xf(Basis(Vector3.UP, yaw), size))
 	return k.finish()
 
 
@@ -245,6 +283,7 @@ static func carrot_stick(rng: RandomNumberGenerator) -> CageKit:
 	var r := 0.9
 	k._rod(&"carrot", Vector3.UP * r - dir * 3.0, Vector3.UP * r + dir * 2.0, r)
 	k._cone(&"carrot", Vector3.UP * r + dir * 2.0, Vector3.UP * r * 0.8 + dir * 4.2, r)
+	k.dress(env("cage_carrot"), xf(Basis(Vector3.UP, atan2(-dir.z, dir.x)), 1.0, dir * 0.6))   # (tip toward dir)
 	return k.finish()
 
 
@@ -255,6 +294,7 @@ static func corn_cob(rng: RandomNumberGenerator) -> CageKit:
 	for i in 3:
 		var a := -0.6 + i * 0.6
 		k._ellipsoid(&"broccoli_stem", basis * Vector3(sin(a) * 1.0, 1.0, -4.2), Vector3(0.6, 0.3, 2.2), basis * Basis(Vector3.UP, a), false, 5, 8)
+	k.dress(env("cage_corn"), xf(basis))
 	return k.finish()
 
 
@@ -264,6 +304,7 @@ static func apple_slice(rng: RandomNumberGenerator) -> CageKit:
 	var b := Basis(Vector3.UP, yaw)
 	k._ellipsoid(&"apple_flesh", Vector3(0, 1.1, 0), Vector3(3.0, 1.1, 1.2), b)
 	k._ellipsoid(&"apple_skin", b * Vector3(0, 1.1, -0.35), Vector3(3.05, 1.12, 0.9), b, false)
+	k.dress(env("cage_apple"), xf(b, 0.8))   # (an apple and its cut half)
 	return k.finish()
 
 
@@ -278,6 +319,7 @@ static func block(rng: RandomNumberGenerator, size: float) -> CageKit:
 		var n := b * (Basis(Vector3.UP, f * PI * 0.5) * Vector3.BACK)
 		k._ellipsoid(&"cardboard_in", Vector3(0, size * 0.5, 0) + n * size * 0.5, Vector3(size * 0.18, size * 0.18, 0.05),
 			Basis(n.cross(Vector3.UP).normalized(), Vector3.UP, n), false, 4, 10)
+	k.dress(made("cage/chew_block"), xf(b, size), {"accent": m})
 	return k.finish()
 
 
@@ -292,6 +334,7 @@ static func hamster_ball(rng: RandomNumberGenerator, r := 6.0) -> CageKit:
 		var a := TAU * i / 10.0
 		var n := b * Vector3(cos(a), 0, sin(a))
 		k._box(&"plastic_purple", c + n * (r + 0.02), Vector3(0.25, r * 0.6, 0.06), Basis(n.cross(b.y).normalized(), b.y, n), false)
+	k.dress(made("cage/hamster_ball"), xf(b, r))
 	return k.finish()
 
 
@@ -299,9 +342,12 @@ static func hamster_ball(rng: RandomNumberGenerator, r := 6.0) -> CageKit:
 static func pea(rng: RandomNumberGenerator, r := 1.6) -> CageKit:
 	var k := CageKit.blank("Pea", rng, &"rock")
 	k._ellipsoid(&"pea", Vector3(0, r * 0.9, 0), Vector3(r, r * 0.95, r))
+	var yaw := 0.0
 	for i in 3:
 		var a := rng.randf() * TAU
+		yaw = a
 		k._ellipsoid(&"frost", Vector3(cos(a) * r * 0.4, r * 1.55, sin(a) * r * 0.4), Vector3(r * 0.45, r * 0.18, r * 0.4), Basis(), false, 4, 8)
+	k.dress(env("cage_pea"), xf(Basis(Vector3.UP, yaw), r / 1.6))
 	return k.finish()
 
 
@@ -311,6 +357,7 @@ static func ice_cube(rng: RandomNumberGenerator, size: float) -> CageKit:
 	var b := Basis(Vector3.UP, rng.randf() * TAU) * Basis(Vector3.RIGHT, rng.randf_range(-0.08, 0.08))
 	k._box(&"ice", Vector3(0, size * 0.48, 0), Vector3.ONE * size, b)
 	k._box(&"frost", Vector3(0, size * 0.97, 0), Vector3(size * 0.96, 0.08, size * 0.96), b, false)
+	k.dress(made("cage/ice_cube"), xf(b, size))
 	return k.finish()
 
 
@@ -331,19 +378,25 @@ static func popsicle(rng: RandomNumberGenerator) -> CageKit:
 	k._box(m, origin + b * Vector3(0, h * 0.5, 0), Vector3(h * 0.45, h, h * 0.2), b)
 	k._box(&"popsicle_stick", origin + b * Vector3(0, -1.2, 0), Vector3(1.0, 4.0, 0.3), b)
 	k._box(&"frost", origin + b * Vector3(0, h * 0.75, h * 0.1 + 0.02), Vector3(h * 0.38, h * 0.3, 0.05), b, false)
+	# a blue ice lolly or a chocolate one (that model's flat side faces along X)
+	var blue := colours.find(m) % 2 == 0
+	var lolly := b if blue else b * Basis(Vector3.UP, PI * 0.5)
+	k.dress(env("cage_popsicle_blue" if blue else "cage_popsicle_choc"), xf(lolly, (h + 3.2) / 11.0, origin + b * Vector3(0, -3.2, 0)))
 	return k.finish()
 
 
 ## A scallop seashell (aquarium decoration), resting on its back.
 static func shell(rng: RandomNumberGenerator, size := 4.0) -> CageKit:
 	var k := CageKit.blank("Shell", rng, &"rock")
-	var b := Basis(Vector3.UP, rng.randf() * TAU) * Basis(Vector3.RIGHT, -0.25)
+	var yaw := rng.randf() * TAU
+	var b := Basis(Vector3.UP, yaw) * Basis(Vector3.RIGHT, -0.25)
 	k._ellipsoid(&"shell", Vector3(0, size * 0.32, 0), Vector3(size, size * 0.38, size * 0.85), b, true, 6, 16)
 	for i in 9:
 		var a := lerpf(-1.2, 1.2, i / 8.0)
 		var dir := b * Vector3(sin(a), 0.0, cos(a))
 		k._box(&"plastic_pink", Vector3(0, size * 0.62, 0) + dir * size * 0.42 + b.y * 0.02, Vector3(0.18, 0.16, size * 0.8),
 			Basis(dir.cross(b.y).normalized(), b.y, dir), false)
+	k.dress(env("cage_shell"), xf(Basis(Vector3.UP, yaw), size / 4.0))
 	return k.finish()
 
 
@@ -526,6 +579,10 @@ static func entry(kind: String) -> Dictionary:
 static func _mesh(kind: String) -> ArrayMesh:
 	if _meshes.has(kind):
 		return _meshes[kind]
+	var model := _model_mesh(kind)
+	if model:
+		_meshes[kind] = model
+		return model
 	var rng := RandomNumberGenerator.new()
 	rng.seed = hash(kind)
 	var k := CageKit.blank("tmp", rng)
@@ -568,3 +625,38 @@ static func _mesh(kind: String) -> ArrayMesh:
 	k.free()
 	_meshes[kind] = mesh
 	return mesh
+
+
+## The ground cover from models: paper bedding tufts of crumpled paper, seeds
+## and peanuts, the Blender-made plastic plant and snow clumps (null without
+## the model files: then the procedural ones above).
+static func _model_mesh(kind: String) -> ArrayMesh:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = hash(kind)
+	var parts := []
+	match kind:
+		"fluff":
+			if not ResourceLoader.exists(env("cage_paper")):
+				return null
+			for i in 5:
+				var a := TAU * i / 5.0 + rng.randf()
+				var d := rng.randf_range(0.2, 1.1) if i else 0.0
+				var s := rng.randf_range(1.2, 1.7) if i else 1.9
+				parts.append([env("cage_paper"), xf(Basis(Vector3.UP, rng.randf() * TAU) * Basis(Vector3.RIGHT, rng.randf_range(-0.6, 0.6)), s,
+					Vector3(cos(a) * d, -0.1 * s, sin(a) * d))])
+		"seeds":
+			if not ResourceLoader.exists(env("cage_seed")) or not ResourceLoader.exists(env("cage_peanut")):
+				return null
+			for i in 7:
+				var at := Vector3(rng.randf_range(-1.2, 1.2), 0.0, rng.randf_range(-1.2, 1.2))
+				var id := "cage_seed" if i % 2 == 0 else "cage_peanut"
+				parts.append([env(id), xf(Basis(Vector3.UP, rng.randf() * TAU), rng.randf_range(0.4, 0.5), at)])
+		"plant":
+			if not ResourceLoader.exists(made("cage/plant")):
+				return null
+			parts.append([made("cage/plant"), Transform3D()])
+		_:
+			if not ResourceLoader.exists(made("cage/snowball")):
+				return null
+			parts.append([made("cage/snowball"), Transform3D()])
+	return CageKit.cluster_mesh(parts)

@@ -1358,5 +1358,197 @@
     "density_weight": 1.0,
     "sink_m": 0.0,
     "tris": 1356
+  },
+  {
+    "id": "cage_seed",
+    "file": "assets/env/cage_seed/cage_seed.glb",
+    "category": "cage",
+    "height_m": 0.73,
+    "footprint_radius_m": 1.1,
+    "collision": "none",
+    "collision_radius_m": 0.0,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 1.0,
+    "sink_m": 0.0,
+    "tris": 1470
+  },
+  {
+    "id": "cage_peanut",
+    "file": "assets/env/cage_peanut/cage_peanut.glb",
+    "category": "cage",
+    "height_m": 0.79,
+    "footprint_radius_m": 1.21,
+    "collision": "none",
+    "collision_radius_m": 0.0,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 1.0,
+    "sink_m": 0.0,
+    "tris": 1176
+  },
+  {
+    "id": "cage_broccoli",
+    "file": "assets/env/cage_broccoli/cage_broccoli.glb",
+    "category": "cage",
+    "height_m": 6.0,
+    "footprint_radius_m": 2.8,
+    "collision": "none",
+    "collision_radius_m": 0.0,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 1.0,
+    "sink_m": 0.0,
+    "tris": 6108
+  },
+  {
+    "id": "cage_carrot",
+    "file": "assets/env/cage_carrot/cage_carrot.glb",
+    "category": "cage",
+    "height_m": 2.63,
+    "footprint_radius_m": 3.65,
+    "collision": "none",
+    "collision_radius_m": 0.0,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 1.0,
+    "sink_m": 0.0,
+    "tris": 5544
+  },
+  {
+    "id": "cage_corn",
+    "file": "assets/env/cage_corn/cage_corn.glb",
+    "category": "cage",
+    "height_m": 2.05,
+    "footprint_radius_m": 4.51,
+    "collision": "none",
+    "collision_radius_m": 0.0,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 1.0,
+    "sink_m": 0.0,
+    "tris": 456
+  },
+  {
+    "id": "cage_apple",
+    "file": "assets/env/cage_apple/cage_apple.glb",
+    "category": "cage",
+    "height_m": 3.4,
+    "footprint_radius_m": 3.14,
+    "collision": "none",
+    "collision_radius_m": 0.0,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 1.0,
+    "sink_m": 0.0,
+    "tris": 6208
+  },
+  {
+    "id": "cage_pea",
+    "file": "assets/env/cage_pea/cage_pea.glb",
+    "category": "cage",
+    "height_m": 3.0,
+    "footprint_radius_m": 1.68,
+    "collision": "none",
+    "collision_radius_m": 0.0,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 1.0,
+    "sink_m": 0.0,
+    "tris": 1216
+  },
+  {
+    "id": "cage_popsicle_blue",
+    "file": "assets/env/cage_popsicle_blue/cage_popsicle_blue.glb",
+    "category": "cage",
+    "height_m": 11.0,
+    "footprint_radius_m": 3.37,
+    "collision": "none",
+    "collision_radius_m": 0.0,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 1.0,
+    "sink_m": 0.0,
+    "tris": 5880
+  },
+  {
+    "id": "cage_popsicle_choc",
+    "file": "assets/env/cage_popsicle_choc/cage_popsicle_choc.glb",
+    "category": "cage",
+    "height_m": 11.0,
+    "footprint_radius_m": 1.5,
+    "collision": "none",
+    "collision_radius_m": 0.0,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 1.0,
+    "sink_m": 0.0,
+    "tris": 2336
+  },
+  {
+    "id": "cage_shell",
+    "file": "assets/env/cage_shell/cage_shell.glb",
+    "category": "cage",
+    "height_m": 1.17,
+    "footprint_radius_m": 4.16,
+    "collision": "none",
+    "collision_radius_m": 0.0,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 1.0,
+    "sink_m": 0.0,
+    "tris": 1006
+  },
+  {
+    "id": "cage_conch",
+    "file": "assets/env/cage_conch/cage_conch.glb",
+    "category": "cage",
+    "height_m": 6.5,
+    "footprint_radius_m": 1.62,
+    "collision": "none",
+    "collision_radius_m": 0.0,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 1.0,
+    "sink_m": 0.0,
+    "tris": 506
+  },
+  {
+    "id": "cage_paper",
+    "file": "assets/env/cage_paper/cage_paper.glb",
+    "category": "cage",
+    "height_m": 1.0,
+    "footprint_radius_m": 0.58,
+    "collision": "none",
+    "collision_radius_m": 0.0,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 1.0,
+    "sink_m": 0.0,
+    "tris": 685
   }
 ]

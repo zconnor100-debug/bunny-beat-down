@@ -106,6 +106,18 @@
     {"id": "food_grapes", "source": "sf:ae101b55893843d7aacc6f2809fec387", "objects": ["^SM_Fruits_Grape_P2_"], "height_m": 40.0, "max_tris": 4000, "category": "food", "collision": "none", "desc": "bunch of grapes"},
     {"id": "food_orange", "source": "sf:ae101b55893843d7aacc6f2809fec387", "objects": ["^SM_Fruits_Orange_1_"], "height_m": 40.0, "category": "food", "collision": "none", "desc": "orange"},
     {"id": "food_apple", "source": "sf:ae101b55893843d7aacc6f2809fec387", "objects": ["^SM_Fruits_Apple_R1_"], "height_m": 36.0, "category": "food", "collision": "none", "desc": "red apple"},
-    {"id": "food_banana", "source": "sf:ae101b55893843d7aacc6f2809fec387", "objects": ["^SM_Fruits_Banana_Y1_"], "height_m": 30.0, "category": "food", "collision": "none", "desc": "bunch of bananas"}
+    {"id": "food_banana", "source": "sf:ae101b55893843d7aacc6f2809fec387", "objects": ["^SM_Fruits_Banana_Y1_"], "height_m": 30.0, "category": "food", "collision": "none", "desc": "bunch of bananas"},
+    {"id": "cage_seed", "source": "sf:bf3bae75c18a457195ee602511fb2745", "rotate_deg": [90, 0, 0], "scale": 0.759, "max_tris": 1500, "category": "cage", "collision": "none", "desc": "striped sunflower seed, lying flat (the Hamster Cage)"},
+    {"id": "cage_peanut", "source": "sf:4a80c69306934bb39902451651d837d8", "rotate_deg": [90, 0, 0], "scale": 0.615, "max_tris": 1200, "category": "cage", "collision": "none", "desc": "peanut in its shell, lying flat"},
+    {"id": "cage_broccoli", "source": "sf:37831c39556e472cbd722846573b0e38", "height_m": 6.0, "category": "cage", "collision": "none", "desc": "broccoli floret as tall as a small tree"},
+    {"id": "cage_carrot", "source": "sf:089c5e90917b44a188e0c0db259e0782", "scale": 0.01274, "category": "cage", "collision": "none", "desc": "carrot with its leafy top, lying down"},
+    {"id": "cage_corn", "source": "sf:5262c35f17924ef5a292abd6dc6e76aa", "scale": 20.0, "category": "cage", "collision": "none", "desc": "hand-painted corn cob, lying down"},
+    {"id": "cage_apple", "source": "sf:3502a77a4acd44868bd79839d243f2ae", "height_m": 3.4, "category": "cage", "collision": "none", "desc": "an apple and its cut half"},
+    {"id": "cage_pea", "source": "sf:6e348a8840224c79b271b6dc36f85fca", "height_m": 3.0, "category": "cage", "collision": "none", "desc": "a frozen pea the size of a boulder"},
+    {"id": "cage_popsicle_blue", "source": "sf:c34b893d6e7c4267abad4b4fc79ff01a", "height_m": 11.0, "max_tris": 6000, "category": "cage", "collision": "none", "desc": "blue ice lolly"},
+    {"id": "cage_popsicle_choc", "source": "sf:2cc7add1a2634dbb9ff71b579fb1d0b4", "height_m": 11.0, "category": "cage", "collision": "none", "desc": "chocolate-dipped ice lolly"},
+    {"id": "cage_shell", "source": "sf:9b59afbf4a694e8cb6daa0e0235cff86", "rotate_deg": [-90, 0, 0], "double_sided": true, "scale": 0.0494, "category": "cage", "collision": "none", "desc": "scallop shell resting on its back"},
+    {"id": "cage_conch", "source": "sf:410be9cdc3d84f6a9f139189309b4891", "objects": ["^Cylinder009"], "height_m": 6.5, "category": "cage", "collision": "none", "desc": "spiral conch shell"},
+    {"id": "cage_paper", "source": "sf:74e788457d6f4536a0dfaa40564d600a", "height_m": 1.0, "max_tris": 700, "category": "cage", "collision": "none", "desc": "crumpled paper ball (bedding tufts are built from these)"}
   ]
 }
