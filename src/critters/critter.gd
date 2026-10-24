@@ -831,6 +831,8 @@ func take_damage(info: DamageInfo) -> void:
 		info.amount *= AIBrain.damage_to_player   # bots hit softer than they look (per difficulty)
 	elif not is_player and info.attacker is Critter and info.attacker != self and not (info.attacker as Critter).is_player:
 		info.amount *= AIBrain.DAMAGE_BETWEEN_BOTS   # (their scraps last, so there's a lobby left to meet)
+		if AIBrain.kills_held:
+			info.amount *= AIBrain.HELD_DAMAGE   # (the director: the lobby's thinning too fast)
 	if glass_cannon and (is_player or (info.attacker is Critter and (info.attacker as Critter).is_player and info.attacker != self)):
 		info.amount *= 1.5
 	var dmg := info.amount

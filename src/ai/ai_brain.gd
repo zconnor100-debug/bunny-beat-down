@@ -35,18 +35,26 @@ static var damage_to_player := 0.65
 ## Bots fighting each other hit softer too: at full damage a 50-critter lobby
 ## was mostly gone in a minute and a half, before the player met anyone.
 const DAMAGE_BETWEEN_BOTS := 0.35
+## Set by the director (MatchManager.bots_may_kill) while the lobby is thinning
+## faster than its curve: bots still fight each other just as often, but hit
+## each other this much softer, so most scraps end with the loser running off.
+static var kills_held := false
+const HELD_DAMAGE := 0.15
 static var _player_attackers: Dictionary = {}   # brain instance id -> msec its slot expires
 const ATTACK_SLOT_HOLD_MS := 1500
 const BRAWL_RANGE := 7.0          ## unarmed bots club anyone this close instead of fleeing
 ## Fresh off the drop, bots loot before they pick fights with each other (they
-## still fight back, and still come for you): without it half the lobby beat
-## each other down in the first minute and the player met nobody.
+## still fight back, still fight whoever lands right next to them, and still
+## come for you): without it half the lobby beat each other down in the first
+## minute and the player met nobody.
 const SETTLE_SECONDS := 30.0
+const SETTLE_FIGHT_RANGE := 12.0
 ## Bots start fights with each other only up close (they come for you from as
-## far as they can see you): this is the player's battle royale.
+## far as they can see you): this is the player's battle royale. Up close they
+## always do: bots who see each other and walk on by look like teams.
 const BOT_FIGHT_RANGE := 30.0
-## Losing a scrap with another bot (this low), a bot breaks off for a while to
-## heal or hide instead of fighting to the last carrot.
+## Losing a scrap with another bot (this low, and lower than the other), a bot
+## breaks off for a while to heal or hide instead of fighting to the last carrot.
 const BREAK_OFF_HEALTH := 45.0
 const BREAK_OFF_SECONDS := 12.0
 
@@ -176,14 +184,13 @@ func _perceive() -> void:
 		# a target is someone we're sure of (or still tracking)
 		if aware < (0.5 if other == target else 1.0):
 			continue
-		# just landed, or the other bot is far off: leave it be, unless it started it
-		if not other.is_player and (settling() or d > BOT_FIGHT_RANGE) and _clock - float(_provoked.get(other, -100.0)) > 8.0:
+		# the other bot is far off, or we just landed and it isn't right here:
+		# leave it be, unless it started it
+		if not other.is_player and (d > BOT_FIGHT_RANGE or (settling() and d > SETTLE_FIGHT_RANGE)) \
+				and _clock - float(_provoked.get(other, -100.0)) > 8.0:
 			continue
 		if not other.is_player and _clock < float(_avoid.get(other, -1.0)):
-			continue   # (we broke off from this one)
-		if not other.is_player and other != target and _clock - float(_provoked.get(other, -100.0)) > 8.0 \
-				and match_manager and match_manager.has_method("bots_may_brawl") and not match_manager.bots_may_brawl():
-			continue   # (the director: not yet, see MatchManager.bots_may_brawl)
+			continue   # (one of us broke off from the other)
 		# prefer close, weak, and whoever is already our target (a rival: you)
 		var score := d * (0.6 + other.health / 200.0) * (0.6 if other == target else 1.0) * (0.35 if rival and other.is_player else 1.0)
 		if score < best_score:
@@ -289,8 +296,9 @@ func _choose_mode() -> void:
 		if target == null or not armed or me.health < 40.0:
 			mode = Mode.FLEE_STORM
 			return
-	if target and not target.is_player and me.health < BREAK_OFF_HEALTH:
-		# losing to another bot: break off, run, patch up
+	if target and not target.is_player and me.health < BREAK_OFF_HEALTH and me.health < target.health:
+		# losing to another bot: break off, run, patch up (two beaten-up bots
+		# still have it out: running from everyone, they'd wander about together)
 		_avoid[target] = _clock + BREAK_OFF_SECONDS
 		var away := me.global_position - target.global_position
 		away.y = 0.0

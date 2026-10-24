@@ -293,8 +293,13 @@ func begin_drop() -> void:
 	_set_phase(Phase.DROPPING)
 
 
+func _exit_tree() -> void:
+	AIBrain.kills_held = false   # (a static: no holding back outside a match)
+
+
 func _process(delta: float) -> void:
 	_clock += delta
+	AIBrain.kills_held = not bots_may_kill()
 	if phase == Phase.PLAYING:
 		_direct(delta)
 		_supply_t += delta
@@ -486,20 +491,25 @@ func alive_critters() -> Array[Critter]:
 	return out
 
 
-## The director paces the bots' scraps with each other: a new bot-on-bot
-## fight only starts while the lobby is thinning slower than this curve (a few
-## at first, then a steady share over about seven minutes). Without it half a
-## full lobby beat each other down within two minutes of landing, before the
-## player ever met them. Fights already going, self-defence and anyone after
-## the player are never held back.
+## The director paces how deadly the bots' scraps with each other are: while
+## the lobby is thinning faster than this curve (a few at first, then a steady
+## share over about seven minutes), bots hit each other softer
+## (AIBrain.HELD_DAMAGE) and most fights end with the loser running off.
+## Without it half a full lobby beat each other down within two minutes of
+## landing, before the player ever met them. It never stops a fight starting
+## (bots that met and walked on by read as teams), and never softens anyone's
+## hits on the player.
 const BRAWL_START := 0.08
 const BRAWL_SECONDS := 420.0
 var _play_start := -1.0
 
-func bots_may_brawl() -> bool:
-	if phase != Phase.PLAYING or _play_start < 0.0:
+func bots_may_kill() -> bool:
+	if phase == Phase.LOADING or phase == Phase.ENDED:
 		return true
-	var allowed := total * clampf(BRAWL_START + (_clock - _play_start) / BRAWL_SECONDS, 0.0, 0.95)
+	# (the curve starts once everyone's down; until then, early landers
+	# scrapping on the ground get the starting share)
+	var played := _clock - _play_start if _play_start >= 0.0 else 0.0
+	var allowed := total * clampf(BRAWL_START + played / BRAWL_SECONDS, 0.0, 0.95)
 	return float(total - _alive_cache) < allowed
 
 

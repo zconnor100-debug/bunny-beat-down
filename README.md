@@ -155,6 +155,12 @@ and the final shot replayed from three angles. There's a
   - Only one to three bots (by difficulty) shoot at you at once, in bursts,
     and their hits on you are softened by difficulty.
   - They heal, flee the Briar, and path across a navmesh baked from tiles.
+  - Bots that see each other up close always fight: no walking past each
+    other like teammates. A director keeps the lobby alive for you instead:
+    while it's thinning faster than a steady curve, bots hit each other
+    softer and most scraps end with the loser running off
+    (`tests/diag_brawl.gd` counts fights, bots that saw each other and did
+    nothing, and the death toll over a 49-bot match).
 - **Bots are characters, not targets.** The 63 bots each have a name and a
   personality for life (Hothead, Sneak, Show-off, Grudge-holder,
   Scaredy-cat, Prankster), and the game remembers the score between each of
