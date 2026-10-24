@@ -16,6 +16,8 @@ const TRACER_SHADER := preload("res://src/fx/tracer.gdshader")
 const TRACER_SECONDS := 0.06         ## a tracer is as long as this much flight
 const TRACER_ENEMY := Color(1.0, 0.3, 0.04, 1.0)     ## shots at you: hot orange
 const TRACER_OWN := Color(1.0, 0.85, 0.5, 0.5)       ## your own: fainter, out of your way
+## Your own tracers' colour this match (the Workshop's "Your tracers" look).
+static var own_tracer := TRACER_OWN
 
 static var instance: Projectiles
 
@@ -251,12 +253,17 @@ func _draw_tracers(shots: Array[Shot], frac: float) -> void:
 		var side := back.cross(Vector3.UP if absf(back.y) < 0.98 else Vector3.RIGHT).normalized()
 		tm.set_instance_transform(n, Transform3D(Basis(side, back.cross(side), back * length), s.pos + s.vel * frac))
 		var own := s.shooter is Critter and (s.shooter as Critter).is_player
-		var col := TRACER_OWN if own else TRACER_ENEMY
+		var col := own_tracer if own else TRACER_ENEMY
 		if s.data.pellets > 1:
 			col.a *= 0.55
 		tm.set_instance_custom_data(n, col)
 		n += 1
 	tm.visible_instance_count = n
+
+
+## The tracer colour for a Workshop look ("cream" is the stock one).
+static func tracer_color(look: String) -> Color:
+	return TRACER_OWN if look == "cream" else Color(Workshop.color(look), 0.6)
 
 
 ## Number of tracer streaks drawn last frame (tests).

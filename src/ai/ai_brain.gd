@@ -80,6 +80,11 @@ var _next_sense := 0.0            # (a radical bot's next "where are you?")
 ## "close" → bots keep their distance from you, "far" → they rush you.
 static var player_style := ""
 static var player_stealth := 1.0  ## the Light Step perk: bots spot you this much slower
+## The Muffler (Workshop): bots hear your shots half as far, and your muzzle
+## flash doesn't give you away.
+static var player_muffled := false
+## How far everyone sees, times this (Pea Soup, a run modifier).
+static var vision_scale := 1.0
 var _hunt_pos := Vector3.INF      # the director sent us to flush the player out of hiding
 var _hunt_until := 0.0
 
@@ -164,7 +169,7 @@ func _perceive() -> void:
 	var best: Critter = null
 	var best_score := INF
 	var best_vis := 0.0
-	var range_ := VISION_RANGE * lerpf(0.7, 1.15, skill)
+	var range_ := VISION_RANGE * lerpf(0.7, 1.15, skill) * vision_scale
 	var seen := {}
 	for c in me.get_tree().get_nodes_in_group(&"critters"):
 		var other := c as Critter
@@ -264,8 +269,10 @@ func _random_aim_error(dist: float) -> Vector3:
 func _on_shot_heard(shooter: Node, origin: Vector3, _id: StringName) -> void:
 	if shooter == me or me == null or not me.alive:
 		return
-	_shots_seen[shooter] = _clock
-	if origin.distance_to(me.global_position) < HEARING_RANGE * _t("gunfire", 1.0):
+	var muffled := player_muffled and shooter is Critter and (shooter as Critter).is_player
+	if not muffled:
+		_shots_seen[shooter] = _clock
+	if origin.distance_to(me.global_position) < HEARING_RANGE * _t("gunfire", 1.0) * (0.5 if muffled else 1.0):
 		_heard_pos = origin
 		_heard_t = _clock
 

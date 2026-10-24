@@ -116,15 +116,45 @@ static func impact(pos: Vector3, normal: Vector3, surface: StringName) -> void:
 		"size": 0.025, "scale": Vector2(0.6, 1.3), "color": col.darkened(0.2), "fade": false})
 
 
-## Carrot-dust pop and a fleck of green at the muzzle.
-static func muzzle(pos: Vector3, dir: Vector3, big: bool) -> void:
+const FLASH := Color(1.0, 0.75, 0.35, 0.9)
+
+
+## Carrot-dust pop and a fleck of green at the muzzle; the player's Workshop
+## looks tint the flash and add smoke ("puff", "matching", "spores"), and a
+## Muffler shrinks it (`k`).
+static func muzzle(pos: Vector3, dir: Vector3, big: bool, tint := FLASH, smoke := "", k := 1.0) -> void:
 	if instance == null:
 		return
-	var k := 1.8 if big else 1.0
-	instance._burst(pos, dir, {"amount": int(6 * k), "lifetime": 0.25, "speed": Vector2(1.0, 3.0) * k, "spread": 18.0, "gravity": 0.0,
-		"size": 0.07 * k, "scale": Vector2(0.6, 1.4), "color": Color(1.0, 0.75, 0.35, 0.9), "fade": true, "damping": 6.0, "additive": true})
-	instance._burst(pos, dir, {"amount": int(3 * k), "lifetime": 0.6, "speed": Vector2(0.5, 1.5), "spread": 40.0, "gravity": 2.0,
+	k *= 1.8 if big else 1.0
+	instance._burst(pos, dir, {"amount": maxi(2, int(6 * k)), "lifetime": 0.25, "speed": Vector2(1.0, 3.0) * k, "spread": 18.0, "gravity": 0.0,
+		"size": 0.07 * k, "scale": Vector2(0.6, 1.4), "color": tint, "fade": true, "damping": 6.0, "additive": true})
+	instance._burst(pos, dir, {"amount": maxi(1, int(3 * k)), "lifetime": 0.6, "speed": Vector2(0.5, 1.5), "spread": 40.0, "gravity": 2.0,
 		"size": 0.03, "scale": Vector2(0.6, 1.2), "color": Color(0.3, 0.65, 0.2), "fade": true, "damping": 2.0})
+	match smoke:
+		"puff", "matching":
+			var c := Color(0.92, 0.92, 0.9, 0.45) if smoke == "puff" else Color(tint.lerp(Color.WHITE, 0.35), 0.5)
+			instance._burst(pos, dir, {"amount": 4, "lifetime": 1.3, "speed": Vector2(0.3, 1.0), "spread": 30.0, "gravity": -0.5,
+				"size": 0.2 * k, "scale": Vector2(0.7, 1.6), "color": c, "fade": true, "damping": 2.5})
+		"spores":
+			instance._burst(pos, dir, {"amount": 10, "lifetime": 1.8, "speed": Vector2(0.4, 1.4), "spread": 50.0, "gravity": -0.25,
+				"size": 0.045, "scale": Vector2(0.5, 1.3), "color": Color(0.85, 1.0, 0.5, 0.85), "fade": true, "damping": 1.6, "additive": true})
+
+
+## The burst when the player beats a critter down (a Workshop look):
+## "confetti", "leaves", "carrots" or "hearts" ("none": nothing).
+static func beat_down(pos: Vector3, style: String) -> void:
+	if instance == null:
+		return
+	var sets := {
+		"confetti": [["chip", [Color(1, 0.3, 0.35), Color(1, 0.85, 0.2), Color(0.3, 0.7, 1), Color(0.45, 0.9, 0.35)], 6.0, 0.09]],
+		"leaves": [["leaf", [Color(0.95, 0.45, 0.1), Color(0.85, 0.2, 0.1), Color(0.95, 0.75, 0.2)], 2.2, 0.16]],
+		"carrots": [["leaf", [Color(1.0, 0.5, 0.1)], 9.0, 0.14], ["blob", [Color(0.35, 0.75, 0.25)], 6.0, 0.06]],
+		"hearts": [["heart", [Color(1, 0.4, 0.6), Color(1, 0.6, 0.75)], -1.2, 0.16]],
+	}
+	for s in sets.get(style, []):
+		for col in s[1]:
+			instance._burst(pos, Vector3.UP, {"amount": 9, "lifetime": 1.8, "speed": Vector2(2.0, 5.0), "spread": 70.0, "gravity": s[2],
+				"size": s[3], "scale": Vector2(0.7, 1.3), "color": col, "fade": true, "damping": 1.4, "shape": s[0]})
 
 
 static func explosion(pos: Vector3, radius: float) -> void:
@@ -243,14 +273,15 @@ func _process_material(cfg: Dictionary) -> ParticleProcessMaterial:
 func _draw_mesh(cfg: Dictionary) -> QuadMesh:
 	var size: float = cfg.get("size", 0.1)
 	var additive: bool = cfg.get("additive", false)
-	var key := "%s_%s" % [size, additive]
+	var shape: String = cfg.get("shape", "blob")
+	var key := "%s_%s_%s" % [size, additive, shape]
 	if _draw_meshes.has(key):
 		return _draw_meshes[key]
 	var mat := StandardMaterial3D.new()
 	mat.billboard_mode = BaseMaterial3D.BILLBOARD_PARTICLES
 	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	mat.vertex_color_use_as_albedo = true
-	mat.albedo_texture = FXTextures.soft_blob()
+	mat.albedo_texture = FXTextures.soft_blob() if shape == "blob" else FXTextures.shape(shape)
 	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	if additive:
 		mat.blend_mode = BaseMaterial3D.BLEND_MODE_ADD

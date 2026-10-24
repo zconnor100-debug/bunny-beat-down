@@ -24,7 +24,13 @@ static func get_weapon(id: StringName) -> WeaponData:
 	return null
 
 
+## Every random gun is this one (Rocket Party, a run modifier), unless empty.
+static var only: StringName = &""
+
+
 static func random_weapon(rng: RandomNumberGenerator) -> WeaponData:
+	if only != &"" and get_weapon(only):
+		return get_weapon(only)
 	var total := 0.0
 	for w in all():
 		total += w.loot_weight

@@ -45,6 +45,8 @@ var springs: SpringBoneSimulator3D
 var limb_hider: LimbHider
 var holder: Node3D
 var weapon_model: Node3D
+## The player's Workshop kit for the guns it holds (GunKit: sight, laser, skin).
+var kit: Dictionary = {}
 var muzzle: Node3D
 var helmet: Node3D
 var attachments: Dictionary = {}     # role -> BoneAttachment3D
@@ -210,6 +212,7 @@ func set_weapon(w: WeaponInstance) -> void:
 		weapon_model = _fallback_gun(w.data)
 	holder.add_child(weapon_model)
 	weapon_model.scale = Vector3.ONE * rig.scale * WEAPON_SCALE
+	GunKit.dress(weapon_model, kit, weapon_model.global_transform.basis.get_scale().x, w.rarity == Rarity.Tier.GOLDEN)
 	for gi in ModelUtil.find_all(weapon_model, "GeometryInstance3D"):
 		(gi as GeometryInstance3D).layers = RENDER_LAYER
 	if w.rarity == Rarity.Tier.GOLDEN:

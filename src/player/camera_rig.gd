@@ -213,6 +213,8 @@ func _update_viewmodel(delta: float, w: WeaponInstance) -> void:
 				_viewmodel = target.visual._fallback_gun(w.data)
 			if w.rarity == Rarity.Tier.GOLDEN:
 				target.visual._gild(_viewmodel)
+			# (the beam reaches a couple of metres ahead in first person)
+			GunKit.dress(_viewmodel, target.visual.kit, 3.5, w.rarity == Rarity.Tier.GOLDEN)
 			for gi in ModelUtil.find_all(_viewmodel, "GeometryInstance3D"):
 				(gi as GeometryInstance3D).cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 			_viewmodel.scale = Vector3.ONE * 1.15

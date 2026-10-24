@@ -6,6 +6,8 @@ extends RefCounted
 var data: WeaponData
 var rarity: int = Rarity.Tier.BABY
 var ammo_in_mag: int = 0
+## Carrots per magazine, times this (the holder's Carrot Quiver, Workshop).
+var mag_scale := 1.0
 
 
 func _init(data_: WeaponData = null, rarity_: int = 0, full := true) -> void:
@@ -16,7 +18,7 @@ func _init(data_: WeaponData = null, rarity_: int = 0, full := true) -> void:
 
 
 func magazine_size() -> int:
-	return maxi(1, roundi(data.magazine * Rarity.MAGAZINE[rarity]))
+	return maxi(1, roundi(data.magazine * Rarity.MAGAZINE[rarity] * mag_scale))
 
 
 func damage_scale() -> float:

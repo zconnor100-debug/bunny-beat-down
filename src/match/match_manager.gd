@@ -35,6 +35,8 @@ var _feuded: Dictionary = {}        # "a|b" -> true (a feud line once per pair a
 var _feud_t := -100.0
 var _director_said: Dictionary = {}   # bot -> true (it cursed the director this match)
 var _was_shrinking := false
+const WANTED_EVERY := 40.0
+var _wanted_t := 0.0
 ## The director: bots that learn you (see PlayerProfile). Camping draws
 ## hunters, a hot streak makes the bots sharpen up for a while.
 const CAMP_RADIUS := 14.0
@@ -63,8 +65,12 @@ func setup(world_root_: Node3D, island_: Island, opponents: int, difficulty: int
 	pace = pace_
 	# this match's Burrow modifiers and perks that act on everyone
 	Critter.glass_cannon = Burrow.modifier_on("glass_cannon")
-	CritterVisual.name_tag_range_scale = 2.0 if Burrow.has_perk("hawk_eye") else 1.0
+	CritterVisual.name_tag_range_scale = (2.0 if Burrow.has_perk("hawk_eye") else 1.0) * (0.6 if Burrow.modifier_on("pea_soup") else 1.0)
 	AIBrain.player_stealth = 0.6 if Burrow.has_perk("light_step") else 1.0
+	AIBrain.player_muffled = Workshop.fitted("muffler")
+	AIBrain.vision_scale = 0.5 if Burrow.modifier_on("pea_soup") else 1.0
+	WeaponDB.only = &"carrot_rocket_launcher" if Burrow.modifier_on("rocket_party") else &""
+	Projectiles.own_tracer = Projectiles.tracer_color(Workshop.look("tracer"))
 	rng.seed = seed_ * 7 + 1
 	var moods := Storm.VARIANTS.keys().filter(func(k): return k != "classic")
 	briar_variant = "classic" if rng.randf() < 0.25 else moods[rng.randi() % moods.size()]
@@ -116,6 +122,8 @@ func setup(world_root_: Node3D, island_: Island, opponents: int, difficulty: int
 		c.defies_director = brain.traits.get("defiant", false)
 		c.add_child(brain)
 		_heat_loadout(c, n, heat)
+		if Burrow.modifier_on("stampede"):
+			c.speed_scale = 1.2
 	_choose_bounty()
 	RivalBook.save()
 	total = critters.size() + 1   # + the player, who joins after picking a critter
@@ -143,6 +151,27 @@ func spawn_player(def: CritterDef, skin_id: String) -> Critter:
 
 ## The perks you took into this match from the Burrow.
 func _apply_perks(p: Critter) -> void:
+	# the Workshop's attachments (before any gun goes in the paws)
+	if Workshop.fitted("red_dot"):
+		p.aim_spread_scale = 0.75
+	if Workshop.fitted("laser"):
+		p.hip_spread_scale = 0.8
+	if Workshop.fitted("stock"):
+		p.bloom_scale = 0.7
+	if Workshop.fitted("long_mag"):
+		p.mag_scale = 1.3
+	p.visual.kit = {"sight": Workshop.fitted("red_dot"), "laser": Workshop.fitted("laser"), "skin": Workshop.look("skin")}
+	p.flash_look = Workshop.look("flash")
+	p.smoke_look = Workshop.look("smoke")
+	p.muffled = Workshop.fitted("muffler")
+	if Burrow.has_perk("big_appetite"):
+		p.clover_heal *= 1.5
+	if Burrow.has_perk("deep_pockets"):
+		p.inventory.ammo_cap_scale = 1.5
+	if Burrow.has_perk("thorn_coat"):
+		p.briar_scale = 0.5
+	if Burrow.has_perk("regrowth"):
+		p.shield_regrow = 25.0
 	if Burrow.has_perk("thick_fur"):
 		p.armor = 50.0
 	if Burrow.has_perk("pocket_clover"):
@@ -247,6 +276,11 @@ func _spawn_critter(def: CritterDef, display: String) -> Critter:
 	c.name = "Critter_%s" % display.replace(" ", "_")
 	world_root.add_child(c)
 	critters.append(c)
+	if Burrow.modifier_on("fragile"):
+		c.max_health *= 0.5
+		c.health = c.max_health
+	if Burrow.modifier_on("clover_drought"):
+		c.clover_heal *= 0.5
 	# everyone waits, parked out of harm's way, until the drop vehicle takes
 	# them (while you pick your critter: left standing at the origin, bots fell
 	# out of any map with no floor there, the Toy Box's being 4 m up)
@@ -342,7 +376,10 @@ func begin_drop() -> void:
 
 
 func _exit_tree() -> void:
-	AIBrain.kills_held = false   # (a static: no holding back outside a match)
+	AIBrain.kills_held = false   # (statics: none of this match's rules outside it)
+	AIBrain.player_muffled = false
+	AIBrain.vision_scale = 1.0
+	WeaponDB.only = &""
 	RivalBook.save()             # (the bots' grudges and wins from this match)
 
 
@@ -400,6 +437,17 @@ func _direct(delta: float) -> void:
 		var near := island.in_poi(p, 1.6)
 		if not near.is_empty():
 			PlayerProfile.note_landing(near.name)
+	# Most Wanted (a run modifier): every so often the nearest bots are told
+	# where you are
+	if Burrow.modifier_on("most_wanted"):
+		_wanted_t += delta
+		if _wanted_t >= WANTED_EVERY and player.state == Critter.State.GROUND:
+			_wanted_t = 0.0
+			var bots := alive_critters().filter(func(c): return c != player and c.has_node("AIBrain"))
+			bots.sort_custom(func(a, b): return a.global_position.distance_squared_to(player.global_position) < b.global_position.distance_squared_to(player.global_position))
+			for b in bots.slice(0, 3):
+				(b.get_node("AIBrain") as AIBrain).hunt(player.global_position, 25.0)
+			Events.headline.emit("The bots know where you are.")
 	# camping: sitting in one small spot for a while draws a few hunters
 	_camp_cooldown = maxf(0.0, _camp_cooldown - delta)
 	if _camp_anchor == Vector3.INF or player.global_position.distance_to(_camp_anchor) > CAMP_RADIUS:
@@ -523,6 +571,11 @@ func _on_critter_died(victim: Node, info: DamageInfo) -> void:
 		elif c.display_name == bounty_name and not bounty_paid:
 			bounty_paid = true
 			Events.rival_news.emit("BOUNTY!", "You beat down %s: +%d acorns" % [c.display_name, bounty])
+		if Burrow.has_perk("adrenaline"):
+			player.health = minf(player.max_health, player.health + 20.0)
+		if Burrow.has_perk("scavenger"):
+			Pickup.spawn(world_root, Pickup.clover_spec(1), c.global_position + Vector3.UP * 0.6, Vector3(0, 3.0, 0))
+		FX.beat_down(c.get_chest_position(), Workshop.look("kill_fx"))
 		var heat_now := Cast.heat(c.display_name)
 		if heat_now > heat_was:
 			Events.headline.emit("%s won't forget this. They're %s now." % [c.display_name, Cast.HEAT_LABELS[heat_now]])

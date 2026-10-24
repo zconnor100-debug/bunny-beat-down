@@ -90,6 +90,27 @@ var second_wind := false
 ## A bot sore enough at the director (Cast.DEFIANT_AT) that its hits on
 ## other bots aren't softened by the director's pacing.
 var defies_director := false
+## The player's kit from the Burrow and the Workshop (MatchManager._apply_perks),
+## and run modifiers that act on everyone: aimed and hip-fire spread (Red Dot
+## Sight, Laser Pointer), trigger bloom (Padded Stock), carrots per magazine
+## of guns picked up (Carrot Quiver), what a clover heals (Big Appetite,
+## Clover Drought), what the Briar does (Thorn Coat), a shield that grows
+## back when unhurt for a while (Regrowth), running speed (Stampede).
+var aim_spread_scale := 1.0
+var hip_spread_scale := 1.0
+var bloom_scale := 1.0
+var mag_scale := 1.0
+var clover_heal := 40.0
+var briar_scale := 1.0
+var shield_regrow := 0.0
+var speed_scale := 1.0
+## Workshop looks and the Muffler, for the player's muzzle flash.
+var flash_look := "carrot"
+var smoke_look := "none"
+var muffled := false
+const REGROW_AFTER := 6.0
+const REGROW_RATE := 6.0          ## shield points a second
+var _unhurt_t := 0.0
 ## Glass Cannon: the player deals and takes half as much again.
 static var glass_cannon := false
 var _water_level := -INF
@@ -202,13 +223,13 @@ func current_spread_deg() -> float:
 	if w == null:
 		return 0.0
 	var d := w.data
-	var base := d.spread_aim_deg if want_aim else d.spread_hip_deg
+	var base := d.spread_aim_deg * aim_spread_scale if want_aim else d.spread_hip_deg * hip_spread_scale
 	# walking (and strafing) barely matters, running flat out does; aiming
 	# steadies it further. In the air everything is looser.
 	var moving := clampf(Vector2(velocity.x, velocity.z).length() / def.move_speed, 0.0, 1.0)
 	var move := d.spread_move_deg * moving * moving * (0.4 if want_aim else 1.0)
 	var air := 0.0 if is_on_floor() else 1.0
-	return base + move + air + _bloom - (0.3 * base if _crouch > 0.5 else 0.0)
+	return base + move + air + _bloom * bloom_scale - (0.3 * base if _crouch > 0.5 else 0.0)
 
 
 # ---- physics ------------------------------------------------------------------------------
@@ -217,6 +238,9 @@ func _physics_process(delta: float) -> void:
 	if state == State.DEAD or state == State.IN_DROPSHIP:
 		return
 	_hurt_sound_cd = maxf(0.0, _hurt_sound_cd - delta)
+	_unhurt_t += delta
+	if shield_regrow > 0.0 and _unhurt_t > REGROW_AFTER and armor < shield_regrow:
+		armor = minf(shield_regrow, armor + REGROW_RATE * delta)
 	match state:
 		State.FREEFALL, State.GLIDING:
 			_air_drop_move(delta)
@@ -258,7 +282,7 @@ func _ground_move(delta: float) -> void:
 		speed *= lerpf(1.0, 0.7, clampf(wade / (h * 0.5), 0.0, 1.0))
 	if w:
 		speed *= w.data.move_speed_scale
-	speed *= slow_factor
+	speed *= slow_factor * speed_scale
 	var basis := Basis(Vector3.UP, look_yaw)
 	var wish := basis * Vector3(move_input.x, 0, -move_input.y)
 	if wish.length() > 1.0:
@@ -634,7 +658,11 @@ func _fire(w: WeaponInstance) -> void:
 	_burst += 1.0
 	_since_shot = 0.0
 	_recoil = 1.0
-	FX.muzzle(origin, dir, w.data.projectile == WeaponData.ProjectileKind.ROCKET or w.data.pellets > 1)
+	var tint := FX.FLASH
+	if flash_look != "carrot":   # (rainbow steps round the hues every 2.4 s)
+		tint = Color(Workshop.color(flash_look, snappedf(Time.get_ticks_msec() / 2400.0, 1.0 / 12.0)), 0.9)
+	FX.muzzle(origin, dir, w.data.projectile == WeaponData.ProjectileKind.ROCKET or w.data.pellets > 1, tint, smoke_look,
+		0.5 if muffled else 1.0)
 	if is_player:
 		Audio.play(w.data.sfx_fire, -2.0, 0.06)
 	else:
@@ -690,6 +718,10 @@ func cycle_weapon(step: int) -> void:
 ## Pick up a gun: fills an empty slot, otherwise swaps with the held one.
 ## Returns the weapon that was dropped, if any.
 func give_weapon(w: WeaponInstance) -> WeaponInstance:
+	# (a full gun stays full in a bigger magazine; a smaller one spills the extra)
+	var was_full := w.ammo_in_mag >= w.magazine_size()
+	w.mag_scale = mag_scale
+	w.ammo_in_mag = w.magazine_size() if was_full else mini(w.ammo_in_mag, w.magazine_size())
 	var slot := inventory.first_free_slot()
 	var dropped: WeaponInstance = null
 	if slot < 0:
@@ -707,7 +739,7 @@ func use_clover() -> bool:
 		return false
 	inventory.clovers -= 1
 	inventory.changed.emit()
-	health = minf(max_health, health + 40.0)
+	health = minf(max_health, health + clover_heal)
 	Audio.play_at(&"pickup_health", global_position)
 	Events.clover_eaten.emit(self)
 	return true
@@ -842,6 +874,9 @@ func take_damage(info: DamageInfo) -> void:
 				RivalBook.note_director(hitter.display_name, 1)
 	if glass_cannon and (is_player or (info.attacker is Critter and (info.attacker as Critter).is_player and info.attacker != self)):
 		info.amount *= 1.5
+	if info.kind == DamageInfo.Kind.STORM:
+		info.amount *= briar_scale
+	_unhurt_t = 0.0
 	var dmg := info.amount
 	if info.kind != DamageInfo.Kind.STORM and info.kind != DamageInfo.Kind.FALL and armor > 0.0:
 		var absorbed := minf(armor, dmg)

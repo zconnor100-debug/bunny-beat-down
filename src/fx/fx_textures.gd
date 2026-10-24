@@ -22,6 +22,40 @@ static func soft_blob() -> Texture2D:
 	return _cache["blob"]
 
 
+## A white particle shape (for tinting): "heart", "leaf" or "chip" (a
+## confetti square), drawn by its signed distance with a soft edge.
+static func shape(kind: String) -> Texture2D:
+	if _cache.has("shape_" + kind):
+		return _cache["shape_" + kind]
+	var n := 64
+	var img := Image.create(n, n, false, Image.FORMAT_RGBA8)
+	for y in n:
+		for x in n:
+			var p := Vector2((x + 0.5) / n * 2.0 - 1.0, 1.0 - (y + 0.5) / n * 2.0)   # -1..1, y up
+			var d := 1.0
+			match kind:
+				"heart":
+					# two discs and a point: the classic heart
+					var a := p.distance_to(Vector2(-0.33, 0.25)) - 0.42
+					var b := p.distance_to(Vector2(0.33, 0.25)) - 0.42
+					var tip := (absf(p.x) * 0.9 + (p.y + 0.85) * -0.62) if p.y < 0.25 else 1.0
+					d = minf(minf(a, b), maxf(tip, -p.y - 0.85))
+				"leaf":
+					# a pointed oval, and a vein
+					var q := Vector2(p.x * 1.9, p.y)
+					d = q.length() - 0.9 + absf(p.y) * 0.25
+					if absf(p.x) < 0.04 and absf(p.y) < 0.75:
+						d = maxf(d, 0.02)
+				_:
+					d = maxf(absf(p.x) - 0.75, absf(p.y) - 0.45)
+			var alpha := clampf(0.5 - d * 18.0, 0.0, 1.0)
+			img.set_pixel(x, y, Color(1, 1, 1, alpha))
+	img.generate_mipmaps()
+	var t := ImageTexture.create_from_image(img)
+	_cache["shape_" + kind] = t
+	return t
+
+
 ## A soft streak for wind ribbons (particle trails): it fades across its
 ## width and toward both ends (u across the ribbon, v along it).
 static func streak() -> Texture2D:

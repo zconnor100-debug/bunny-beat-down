@@ -107,6 +107,9 @@ func _build_world() -> void:
 	island.progress.connect(_on_load_progress)
 	await island.generate(_seed, quality, true)
 	island.tune_lighting(lighting)
+	if Burrow.modifier_on("pea_soup"):
+		lighting.env.fog_density *= 6.0   # (Pea Soup: distance fog only; height fog blanks the view here)
+		lighting.env.fog_light_color = Color(0.72, 0.78, 0.62)
 
 	# let physics register every prop before loot checks its spot against them
 	await get_tree().physics_frame
@@ -502,7 +505,7 @@ func _show_end(title: String, sub: String, won: bool, killer: Critter) -> void:
 	if not _paid:
 		_paid = true
 		_earned = Burrow.reward(1 if won else p.placement, match_manager.total, p.kills, match_manager.revenges) \
-			+ (match_manager.bounty if match_manager.bounty_paid else 0)
+			+ (match_manager.bounty * (2 if Burrow.has_perk("bounty_hunter") else 1) if match_manager.bounty_paid else 0)
 		Burrow.add_acorns(_earned)
 	var stats := UITheme.label("Beat downs: %d   •   Damage: %d   •   %s #%d   •   +%d 🌰 (%d in the Burrow)" % [p.kills, roundi(p.damage_dealt), island.map_title, _seed, _earned, Burrow.acorns()], 20, Color(UITheme.CREAM, 0.8))
 	stats.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER

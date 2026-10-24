@@ -28,6 +28,8 @@ var ammo := {
 	WeaponData.AmmoType.ROCKET: 0,
 }
 var clovers := 0
+## Spare carrots carried, times this (Deep Pockets).
+var ammo_cap_scale := 1.0
 
 
 func first_free_slot() -> int:
@@ -73,7 +75,7 @@ func take_weapon(slot: int) -> WeaponInstance:
 
 ## Adds carrots; returns how many did not fit.
 func add_ammo(type: int, amount: int) -> int:
-	var cap: int = AMMO_CAP[type]
+	var cap: int = roundi(AMMO_CAP[type] * ammo_cap_scale)
 	var fit := mini(amount, cap - ammo[type])
 	ammo[type] += fit
 	if fit > 0:

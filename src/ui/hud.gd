@@ -29,6 +29,9 @@ var _news_frame := -1          # the frame a rival's news (REVENGE!...) was show
 var _rewind_tint: ColorRect
 var _rewind_fx: CanvasLayer        ## the tape-rewinding look while the world runs back
 var _feed: VBoxContainer
+## The crosshair's Workshop look (read once a match).
+var reticle_style := "cross"
+var reticle_color := Color(1, 1, 1, 0.92)
 var _minimap: Minimap
 var _bigmap: Minimap
 var _storm_tint: ColorRect
@@ -189,6 +192,8 @@ func setup(player_: Critter, rig_: CameraRig, mm: MatchManager) -> void:
 	Events.critter_died.connect(_on_critter_died)
 	Events.taunt.connect(_on_taunt)
 	Events.headline.connect(_on_headline)
+	reticle_style = Workshop.look("reticle")
+	reticle_color = Color(Workshop.color(Workshop.look("reticle_color")), 0.92)
 	Events.rival_news.connect(func(t, sub):
 		_news_frame = Engine.get_process_frames()
 		show_message(t, sub, 4.0))
@@ -566,14 +571,7 @@ class HUDOverlay:
 			var cam := hud.rig.camera
 			var spread := deg_to_rad(p.current_spread_deg())
 			var gap := tan(spread) / tan(deg_to_rad(cam.fov) * 0.5) * size.y * 0.5 + 4.0
-			var col := Color(1, 1, 1, 0.92)
-			for dir in [Vector2.RIGHT, Vector2.LEFT, Vector2.UP, Vector2.DOWN]:
-				var a: Vector2 = c + dir * gap
-				var b: Vector2 = c + dir * (gap + 10.0)
-				draw_line(a, b, Color(0, 0, 0, 0.6), 4.0)
-				draw_line(a, b, col, 2.0)
-			draw_circle(c, 2.5, Color(0, 0, 0, 0.6))
-			draw_circle(c, 1.6, col)
+			Reticle.draw(self, c, gap, hud.reticle_style, hud.reticle_color)
 		# unlocking a treasure chest: progress bar under the crosshair
 		var pcn := p.get_node_or_null("PlayerController") as PlayerController
 		var crate := pcn.focused_crate() if pcn else null

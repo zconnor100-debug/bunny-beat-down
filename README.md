@@ -195,13 +195,32 @@ and the final shot replayed from three angles. There's a
   range those guns are worst at). Sit still too long and the nearest bots
   come to flush you out; go on a hot streak and they sharpen up for a while.
 - **The Burrow (roguelike progression).** Every match pays acorns (by
-  placement, beat-downs and revenge on rivals). Spend them in the Burrow on
-  perks that are real power, because there's nobody else's fairness to
-  protect: Thick Fur (drop in with 50 shield), Pocket Clovers, Quick Paws,
-  Spring Legs, Lucky Start (land with a Prize-tier gun or better), Second
-  Wind (survive one killing blow), Light Step and Hawk Eye. Take two into
-  each match. Run modifiers (Low Gravity, Glass Cannon, Golden Hour, Briar
-  Rush) change a match and how much it pays.
+  placement, beat-downs, revenge on rivals and bounties). Spend them in the
+  Burrow on perks that are real power, because there's nobody else's
+  fairness to protect: Thick Fur (drop in with 50 shield), Pocket Clovers,
+  Quick Paws, Spring Legs, Lucky Start (land with a Prize-tier gun or
+  better), Second Wind (survive one killing blow), Light Step, Hawk Eye, Big
+  Appetite, Deep Pockets, Adrenaline (beat-downs heal), Thorn Coat (the
+  Briar hurts half as much), Regrowth (a shield that grows back), Scavenger,
+  Acorn Magnet and Bounty Hunter. Take two into each match, three once
+  you've built A Bigger Burrow. Run modifiers change a match and how much it
+  pays: Low Gravity, Glass Cannon, Golden Hour, Briar Rush, Pea Soup (fog),
+  Fragile Fluff (everyone on half health), Rocket Party (every gun a rocket
+  launcher), Most Wanted (the nearest bots are told where you are), Stampede
+  and Clover Drought.
+- **The Workshop (in the Burrow): gun upgrades and looks, bought with
+  acorns.** Attachments go on every gun you pick up: a Red Dot Sight on the
+  gun's own sight line (in first person you aim through its tube at the
+  dot; aimed shots 25% tighter), a Carrot Quiver (30% bigger magazines), a
+  Muffler (bots hear your shots half as far and your flash doesn't give you
+  away), a Laser Pointer (a beam, and tighter hip fire) and a Padded Stock
+  (less bloom). Looks: seven reticles (cross, dot, circle, chevron, carrot,
+  acorn, paw print) in six colours, seven gun skins (a shader over the
+  gun's own materials: fern camo, candy stripe, midnight, bubblegum, frost,
+  gilded), muzzle-flash colours (rainbow too), muzzle smoke, your tracer
+  colour and the burst when you beat a critter down (confetti, autumn
+  leaves, a carrot shower, hearts). `tests/capture_workshop.gd` renders them
+  all.
 - **Rewind.** The game records the last ten seconds of the match, and you
   get three rewinds a match: press **T** (or pick *Rewind* in the pause
   menu), or take one when a killing blow lands, since the game freezes and
@@ -369,7 +388,7 @@ The full write-up is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
   the same views: 31% fewer triangles on the island, 31% on the Hamster
   Cage, 79% on Toy Box Bash, and a third to two thirds fewer shadow
   triangles.
-- **Tests that play the game.** A headless suite of 103 tests covers:
+- **Tests that play the game.** A headless suite of 107 tests covers:
   - the IK maths, hitboxes, ragdolls and dismemberment;
   - island navigation, the three biomes and the big buildings (a Bun walks
     in through the barn doors; every indoor loot spot is reachable on the
@@ -388,7 +407,8 @@ The full write-up is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
     director (paid back, remembered, a defiant bot's hits), the lobby news
     and the Rogues' Gallery, the bots learning you (landings, fighting style,
     camping, hot streaks), every Briar mood, the Burrow (earning,
-    unlocking, equipping, every perk and modifier in a match), rewinds
+    unlocking, equipping, every perk and modifier in a match, the third
+    slot, the Workshop's attachments and looks on your guns), rewinds
     (everyone and everything put back; the world running backwards first;
     the killing-blow offer) and the final-shot replay (recorded bone by bone
     with the carrot that did it; slow motion, then the replay with the world
