@@ -36,7 +36,11 @@ jobs:
 
       - name: Anything new for players?
         id: v
-        run: python3 tools/release_version.py | tee -a "$GITHUB_OUTPUT"
+        run: |
+          # (a commit from before this pipeline existed has nothing to release)
+          if [ -f tools/release_version.py ]; then python3 tools/release_version.py > version.txt; else echo "release=no" > version.txt; fi
+          cat version.txt
+          cat version.txt >> "$GITHUB_OUTPUT"
 
       - name: Export templates (cached)
         if: steps.v.outputs.release == 'yes'
