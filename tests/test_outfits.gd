@@ -150,3 +150,45 @@ func test_the_gallery_shows_each_rogue_dressed() -> void:
 	check(c.visual.outfit.size() == Outfits.look_of("Sir Toadsworth").wear.size(), "in his top hat and bow tie")
 	check(c.current_weapon() != null and String(c.current_weapon().data.id) == Cast.member("Sir Toadsworth").weapon, "with his favourite gun")
 	gallery.queue_free()
+
+
+func test_clothes_fit_each_species_snugly() -> void:
+	# hats centred over the skull and no wider than a hat should be, glasses as
+	# wide as the eyes are apart, a cape skinned to the back and lying on it
+	var tried := {}
+	for n in Cast.names():
+		var sp: String = Cast.member(n).species
+		if tried.has(sp):
+			continue
+		tried[sp] = true
+		var c := spawn_critter("res://data/critters/%s.tres" % sp, Vector3(0, 0.1, 0))
+		await wait_physics(2)
+		var f := OutfitFit.of(c.visual)
+		var cap := Outfits.wear_piece(c.visual, "trucker_red")
+		var specs := Outfits.wear_piece(c.visual, "sunglasses")
+		var cape := Outfits.wear_piece(c.visual, "cape")
+		await wait_frames(2)
+		var cap_box := _box_in(c.visual, cap, &"head")
+		var skull := f.head_width_at(f.brow_y)
+		check(absf(cap_box.get_center().x - f.head_c.x) < skull * 0.08, "%s: the cap is centred (%.3f vs %.3f)" % [sp, cap_box.get_center().x, f.head_c.x])
+		check(cap_box.size.x < skull * 1.6, "%s: and not oversized (%.3f across a %.3f skull)" % [sp, cap_box.size.x, skull])
+		check(cap_box.position.y < f.crown_y and cap_box.end.y > f.crown_y, "%s: and on the crown" % sp)
+		var specs_box := _box_in(c.visual, specs, &"head")
+		check(specs_box.size.x > f.eye_x * 2.0 and specs_box.size.x < f.eye_x * 6.0,
+			"%s: the glasses span the eyes (%.3f, eyes %.3f apart)" % [sp, specs_box.size.x, f.eye_x * 2.0])
+		var mi := cape as MeshInstance3D
+		if check(mi != null and mi.skin != null, "%s: the cape is skinned to the body" % sp):
+			var top := Outfits.cape_top(f)
+			var box := mi.get_aabb()
+			check(absf(box.end.y - top) < f.head_h * 0.15, "%s: hung from the shoulders (top %.3f, shoulders %.3f)" % [sp, box.end.y, top])
+			var inside := 0
+			var verts: PackedVector3Array = mi.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
+			for p in verts:
+				if p.y < top - f.head_h * 0.1 and p.z > f.back_at(p.y) + f.head_d * 0.02:
+					inside += 1
+			check(inside < verts.size() / 20, "%s: lying on the back, not through it (%d of %d inside)" % [sp, inside, verts.size()])
+		Outfits.undress(c.visual)
+		await wait_frames(1)
+		check(not is_instance_valid(cape) or cape.is_queued_for_deletion(), "%s: and it comes off with the rest" % sp)
+		c.queue_free()
+		await wait_physics(1)

@@ -2308,7 +2308,7 @@
     "file": "assets/env/outfit_headband/outfit_headband.glb",
     "category": "outfit",
     "height_m": 0.3,
-    "footprint_radius_m": 0.46,
+    "footprint_radius_m": 0.38,
     "collision": "none",
     "collision_radius_m": 0.0,
     "scale_range": [
@@ -2318,22 +2318,6 @@
     "density_weight": 1.0,
     "sink_m": 0.0,
     "tris": 1152
-  },
-  {
-    "id": "outfit_headphones",
-    "file": "assets/env/outfit_headphones/outfit_headphones.glb",
-    "category": "outfit",
-    "height_m": 0.3,
-    "footprint_radius_m": 0.12,
-    "collision": "none",
-    "collision_radius_m": 0.0,
-    "scale_range": [
-      0.85,
-      1.15
-    ],
-    "density_weight": 1.0,
-    "sink_m": 0.0,
-    "tris": 520
   },
   {
     "id": "outfit_bow_tie",

@@ -446,6 +446,22 @@ def level_ground(obj, cfg: dict) -> None:
         f"levelled the scanned ground patch (tilt {math.degrees(math.acos(min(1.0, n.z))):.1f} deg)")
 
 
+def thin_ring(obj, k: float) -> None:
+    """A ring (a sweatband) made thinner: every vertex drawn in toward the
+    ring's inner edge, keeping the hole's size, the height and the texture."""
+    me = obj.data
+    v = verts(obj)
+    cx = float(v[:, 0].min() + v[:, 0].max()) / 2
+    cy = float(v[:, 1].min() + v[:, 1].max()) / 2
+    r = np.hypot(v[:, 0] - cx, v[:, 1] - cy)
+    inner = float(np.percentile(r, 2))
+    scale = (inner + (r - inner) * k) / np.maximum(r, 1e-6)
+    for vert, s in zip(me.vertices, scale):
+        vert.co.x = cx + (vert.co.x - cx) * float(s)
+        vert.co.y = cy + (vert.co.y - cy) * float(s)
+    me.update()
+
+
 def place(obj, cfg: dict) -> dict:
     """Rotate, scale to in-game size, ground at z=0, footprint centred. Returns info."""
     me = obj.data
@@ -915,6 +931,9 @@ def build(cfg: dict, order: list[str]) -> None:
     if "loose_parts" in cfg:
         obj = pick_loose_parts(obj, cfg["loose_parts"])
         notes.append(f"separated loose part(s) {cfg['loose_parts']} of the source mesh")
+    if cfg.get("thin_ring"):
+        thin_ring(obj, float(cfg["thin_ring"]))
+        notes.append(f"ring made thinner (x{cfg['thin_ring']} its thickness)")
     placed = place(obj, cfg)
     notes.extend(cfg.pop("_notes", []))
     notes.append(f"rescaled x{placed['scale_factor']:g} to critter-world size, grounded and centred")

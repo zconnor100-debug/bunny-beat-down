@@ -409,23 +409,10 @@
     "source_url": "https://sketchfab.com/3d-models/sweat-band-for-gorilla-tag-fan-game-no-textures-99178c593c12413fab594caa2056b17c",
     "license": "CC BY 4.0",
     "license_url": "https://creativecommons.org/licenses/by/4.0/",
-    "changes": "outfit_headband: rescaled x1.2156 to critter-world size, grounded and centred; textures re-encoded <= 0px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "changes": "outfit_headband: ring made thinner (x0.4 its thickness); rescaled x1.2156 to critter-world size, grounded and centred; textures re-encoded <= 0px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
     "used_for": "Rogue outfit: sweatband headband (outfit_headband)",
     "files": [
       "assets/env/outfit_headband/outfit_headband.glb"
-    ]
-  },
-  {
-    "asset": "Headphones Low Poly Pixelart",
-    "author": "Cyberleaf Studio",
-    "author_url": "https://sketchfab.com/cyberleaf",
-    "source_url": "https://sketchfab.com/3d-models/headphones-low-poly-pixelart-384fc414d42d47239775cbd3aeec23ec",
-    "license": "CC BY 4.0",
-    "license_url": "https://creativecommons.org/licenses/by/4.0/",
-    "changes": "outfit_headphones: rescaled x0.0729 to critter-world size, grounded and centred; textures re-encoded <= 128px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
-    "used_for": "Rogue outfit: headphones (outfit_headphones)",
-    "files": [
-      "assets/env/outfit_headphones/outfit_headphones.glb"
     ]
   },
   {

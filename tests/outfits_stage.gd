@@ -3,7 +3,8 @@ extends Node3D
 ## "pieces": every outfit model on its own, from the front (+Z, the way a
 ## critter faces), the side and above, with a red arrow showing +Z, to set
 ## which way each one faces. "cast": every rogue in its outfit, one species
-## at a time, front and three-quarter.
+## at a time, front and three-quarter. "fit": print each species' measures
+## (OutfitFit), to see where things will go.
 
 var out_dir := "user://outfits"
 var only := ""
@@ -30,15 +31,37 @@ func _run() -> void:
 	cam.fov = 30.0
 	add_child(cam)
 	cam.current = true
-	if only == "" or only == "pieces":
-		await _pieces()
+	if only == "fit":
+		await _fits()
+	if only == "" or only.begins_with("pieces"):
+		await _pieces(only.trim_prefix("pieces").trim_prefix(":"))
 	if only == "" or only.begins_with("cast"):
 		await _cast(only.trim_prefix("cast").trim_prefix(":"))
 	get_tree().quit()
 
 
-func _pieces() -> void:
-	var ids: Array = Outfits.PIECES.keys()
+func _fits() -> void:
+	for sp in ["bun", "bandit_bunny", "squirrel", "fox", "raccoon", "frog", "beaver", "hamster"]:
+		var c := Critter.new()
+		c.def = load("res://data/critters/%s.tres" % sp)
+		add_child(c)
+		c.process_mode = Node.PROCESS_MODE_DISABLED
+		await get_tree().process_frame
+		var f := OutfitFit.of(c.visual)
+		print("FIT %s chin %.3f crown %.3f/%.3f head w%.3f d%.3f h%.3f c%s eye x%.3f y%.3f z%.3f face z%.3f w%.3f muzzle y%.3f z%.3f w%.3f neck y%.3f w%.3f front %.3f chest y%.3f w%.3f f%.3f b%.3f shoulder y%.3f w%.3f hip %.3f" % [
+			sp, f.chin_y, f.crown_y, f.crown_z, f.head_w, f.head_d, f.head_h, f.head_c, f.eye_x, f.eye_y, f.eye_z, f.face_z, f.face_w,
+			f.muzzle_y, f.muzzle_z, f.muzzle_w, f.neck_y, f.neck_w, f.neck_front, f.chest_y, f.chest_w, f.chest_front, f.chest_back,
+			f.shoulder_y, f.shoulder_w, f.hip_y])
+		var rows := []
+		for i in 13:
+			var y := lerpf(f.hip_y, f.crown_y, i / 12.0)
+			rows.append("%.2f:w%.2f f%.2f b%.2f hw%.2f" % [y, f.body_width_at(y), f.front_at(y), f.back_at(y), f.head_width_at(y)])
+		print("  ", " | ".join(rows))
+		c.queue_free()
+
+
+func _pieces(which := "") -> void:
+	var ids: Array = Outfits.PIECES.keys() if which == "" else Array(which.split(","))
 	for i in ids.size():
 		var root := Node3D.new()
 		add_child(root)
@@ -72,6 +95,8 @@ func _pieces() -> void:
 
 
 func _cast(species: String) -> void:
+	var bare := species.ends_with("+bare")
+	species = species.trim_suffix("+bare")
 	var ground := StaticBody3D.new()
 	ground.collision_layer = Layers.WORLD
 	var cs := CollisionShape3D.new()
@@ -106,22 +131,35 @@ func _cast(species: String) -> void:
 			add_child(c)
 			c.place_at(Vector3((i - (names.size() - 1) * 0.5) * 2.6, 0.05, 0), 0.0)
 			c.display_name = names[i]
-			Outfits.dress(c, names[i])
+			if bare:
+				c.visual.apply_skin(String(Outfits.look_of(names[i]).get("skin", "default")))
+			else:
+				Outfits.dress(c, names[i])
 			c.process_mode = Node.PROCESS_MODE_DISABLED
 			crits.append(c)
 		await get_tree().process_frame
 		await get_tree().process_frame
 		# each rogue up close: three-quarters from the front, and from behind
 		for c in crits:
+			for o in crits:
+				o.visible = o == c   # (alone in the shot: the side view looks along the line)
 			var h: float = c.visual.rig.world_head_top
 			var f := OutfitFit.of(c.visual)
 			var s: float = c.visual.rig.size
 			# the head and shoulders, whatever the species' proportions
 			var at := c.global_position + Vector3.UP * lerpf(f.neck_y, f.crown_y, 0.55) * s
 			var span := maxf((f.crown_y - f.chest_y) * s * 1.6, f.head_w * s * 1.8)
-			for view in [["front", Vector3(0.45, 0.12, -1.0)], ["back", Vector3(-0.5, 0.2, 1.0)]]:
+			for view in [["front", Vector3(0.45, 0.12, -1.0)], ["back", Vector3(-0.5, 0.2, 1.0)], ["straight", Vector3(0, 0.08, -1.0)],
+					["side", Vector3(1.0, 0.08, 0.0)]]:
 				cam.global_position = at + (view[1] as Vector3).normalized() * span * 2.2
 				cam.look_at(at, Vector3.UP)
+				await _snap("rogue_%s_%s" % [c.display_name.replace(" ", "_").replace(".", ""), view[0]])
+			# and the whole of it, from behind and the side (packs, capes, wings)
+			var mid := c.global_position + Vector3.UP * f.crown_y * s * 0.55
+			var whole := f.crown_y * s * 1.15
+			for view in [["bodyback", Vector3(-0.45, 0.25, 1.0)], ["bodyside", Vector3(1.0, 0.1, 0.2)]]:
+				cam.global_position = mid + (view[1] as Vector3).normalized() * whole * 2.0
+				cam.look_at(mid, Vector3.UP)
 				await _snap("rogue_%s_%s" % [c.display_name.replace(" ", "_").replace(".", ""), view[0]])
 		for c in crits:
 			c.queue_free()

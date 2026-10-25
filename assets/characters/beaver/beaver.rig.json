@@ -4,6 +4,8 @@
   "species": "beaver",
   "head_top": 1.0,
   "eye_height": 0.85,
+  "eyes": [0.042, 0.8107],
+  "hat_stretch": 1.35,
   "rest_pose": "T",
   "bones": {
     "hips": "coluna",

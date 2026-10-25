@@ -104,20 +104,44 @@ a long brush tail stays out of the legs at a bound).
 
 Every member of the Cast wears its own outfit (`Outfits.LOOKS`: a fur and a
 few pieces). The pieces are ordinary models (built by `tools/env` like the
-scenery, category "outfit") and know nothing about critters; `OutfitFit`
-measures each model once from its skinned mesh in the rest pose: the skull
-(every vertex owned by the head bone or anything under it, minus ears that
-swing on their own bones), its breadth at twelve heights, the crown (from the
-middle third only, so ears that are part of the head mesh don't lift a hat),
-the eyes (from eyeball bones when the rig has them, the fox's, otherwise the
-front of the face either side of the snout), the neck, the chest and the
-back. A piece has a slot and a few numbers (how big next to what, how far a
-hat comes down, how much of it is chin strap or a sloping brim) and is placed
-from those, on the bone it belongs to, so a top hat fits a lanky fox, a frog
-whose head is mostly mouth and a hamster with no neck. A headshot or a blast
-knocks the head's pieces off as debris, like the acorn helmet.
-`test_outfits` checks every rogue's look exists and that, on every species, a
-hat sits on the crown, glasses at the eyes and a pack on the back.
+scenery, category "outfit") and know nothing about critters. Both sides are
+measured, and each piece is fitted to each critter from the two:
+
+* **The pieces** (`tools/outfits/measure_pieces.py`, run in Blender, writes
+  `OutfitShapes`): rays cast up into every model on a grid find where the head
+  goes: the hollow inside a cap's crown (not its visor), the empty middle of a
+  crown or a sweatband, its centre, width each way and the height of its rim.
+  A few that no ray can read are given by hand (a top hat's closed crown, a
+  chin strap hanging below a shako's rim).
+* **The critters** (`OutfitFit`, once per model from its skinned mesh in the
+  rest pose): the skull and the body are *cut across* at 24 heights (the
+  triangles, not the vertices, so a big low-poly beaver head reads as round
+  as it looks), giving the skull's breadth, and the body's breadth, front and
+  back, at every height; the crown (from the middle third only, so ears in
+  the head mesh don't lift a hat); the eyes (`rig.json` "eyes", read off
+  straight-on renders by `tests/capture_eyes.gd`, since a squirrel's sit deep
+  in their sockets), the brow, the snout, the chin, the shoulders and where a
+  big tail leaves the body.
+
+A hat's rim goes down from the crown toward the brow (its `sink`: a party
+hat perched on top, a beanie pulled right down), its hole made as wide as the
+skull is there (but never out to a hamster's ears) and no deeper than the
+head, and its crown squashed or stretched a little so the inside sits on the
+skull (`hat_stretch` in `rig.json` for the beaver's tall egg of a head).
+Glasses are scaled so their lenses land on the eyes; a bandana's loop is sized
+to the snout, its front on the front of the face below the eyes (its back is
+hidden in a big round head); a scarf goes round the neck under the chin. A
+cape is **skinned to the spine**: its top rides the chest and its hem the hips,
+draped at rest over the back as far as it bulges, so it lies on a hunched
+squirrel or a running fox instead of swinging out like a board (the mesh is
+built beside the critter's own, with the body's bind poses, once per model).
+A headshot or a blast knocks the head's pieces off as debris, like the acorn
+helmet. `test_outfits` checks every rogue's look exists and, on every
+species, that a hat sits on the crown, centred and not oversized, glasses
+span the eyes, a pack is on the back and a cape lies on it.
+`tests/capture_outfits.gd -- DIR cast:<species>` renders every rogue of a
+species (front, side, back and whole body) to check fits by eye, and `-- DIR
+fit` prints every species' measurements.
 
 ## Hitboxes, ragdolls and gore
 

@@ -4,6 +4,7 @@
   "species": "raccoon",
   "head_top": 1.05,
   "eye_height": 0.76,
+  "eyes": [0.1281, 0.7578],
   "rest_pose": "A",
   "bones": {
     "hips": "mixamorig_Hips",

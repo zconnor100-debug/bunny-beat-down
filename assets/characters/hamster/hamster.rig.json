@@ -4,6 +4,7 @@
   "species": "hamster",
   "head_top": 0.8,
   "eye_height": 0.71,
+  "eyes": [0.0513, 0.7042],
   "rest_pose": "T",
   "bones": {
     "hips": "Caderas",
