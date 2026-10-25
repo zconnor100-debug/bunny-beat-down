@@ -159,6 +159,26 @@ func _build_ui() -> void:
 	ver.offset_left = 24
 	ver.offset_top = -40
 	_ui.add_child(ver)
+	# a newer release out? a button for it, under the version
+	var updates := UpdateCheck.new()
+	add_child(updates)
+	updates.found.connect(_show_update)
+	updates.start()
+
+
+## A newer release is out: a button bottom left that opens its download page.
+func _show_update(version: String, url: String) -> void:
+	if _ui == null or _ui.has_node("Update"):
+		return
+	var b := UITheme.button("⬆  Update ready: v%s  ·  Get it" % version, func(): OS.shell_open(url))
+	b.name = "Update"
+	b.add_theme_font_size_override("font_size", 20)
+	b.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT)
+	b.offset_left = 20
+	b.offset_top = -96
+	b.offset_bottom = -48
+	b.grow_horizontal = Control.GROW_DIRECTION_END
+	_ui.add_child(b)
 
 
 func _play_button() -> Button:

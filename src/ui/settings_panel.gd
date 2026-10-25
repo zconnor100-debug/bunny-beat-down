@@ -32,6 +32,7 @@ func _ready() -> void:
 	_slider("Music volume", &"music_volume", 0.0, 1.0, 0.05)
 	_slider("Effects volume", &"sfx_volume", 0.0, 1.0, 0.05)
 	_check("Show FPS", &"show_fps")
+	_check("Check for updates", &"check_updates")
 	var back := UITheme.button("Back", func(): closed.emit())
 	back.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	v.add_child(back)

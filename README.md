@@ -18,8 +18,13 @@ gore, and floppy physics ears are included.
 
 Built in **Godot 4.6** (GDScript, Jolt physics, Forward+).
 
-▶ **[Watch the 30-second trailer](docs/trailer.mp4)** (with sound): a rival
-sneaks up on you, you rewind, and this time you turn around.
+▶ **[The new 30-second phone trailer](docs/trailer_phone.mp4)** (with sound):
+30-critter brawls on all three maps, the toy train ploughing through a
+battle, a rocket into a huddle in slow motion, carrots that split and pop, a
+nemesis and its gang, and the rewind.
+
+▶ **[The island trailer](docs/trailer.mp4)**: a rival sneaks up on you, you
+rewind, and this time you turn around.
 
 ▶ **[The Hamster Cage cut](https://github.com/zconnor100-debug/bunny-beat-down/releases/download/v0.6.0/trailer_hamster_cage.mp4)**: up the Hamster
 Gym's see-through tubes, a rewind you can watch, and the final shot slowed
@@ -465,7 +470,7 @@ The full write-up is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
   the same views: 31% fewer triangles on the island, 31% on the Hamster
   Cage, 79% on Toy Box Bash, and a third to two thirds fewer shadow
   triangles.
-- **Tests that play the game.** A headless suite of 126 tests covers:
+- **Tests that play the game.** A headless suite of 128 tests covers:
   - the IK maths, hitboxes, ragdolls and dismemberment, and how critters
     carry themselves (never frozen, guns carried low but shooting from the
     aim, held clear of the head, both paws on the handles of every gun, feet
@@ -513,7 +518,18 @@ The full write-up is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 **Download and play:** Linux and Windows builds are on the
 **[latest release](https://github.com/zconnor100-debug/bunny-beat-down/releases/latest)**
-(about 350 MB for Linux and 420 MB for Windows; you need a GPU with Vulkan).
+(about 400 MB for Linux and 480 MB for Windows; you need a GPU with Vulkan).
+
+**Updates are automatic.** Every push that changes the game, once the tests
+pass, is built for Linux and Windows, smoke-tested (a headless drop onto the
+island) and published as a new release by
+[`.github/workflows/release.yml`](.github/workflows/release.yml), so the link
+above always has the newest build. Versions only go up (`tools/release_version.py`:
+v0.6.1, then v0.6.1.1, v0.6.1.2, ... until the next line in `project.godot`),
+the notes are written from the commits since the last release plus any
+highlights in `docs/release_notes/` (`tools/release_notes.py`), and the game's
+main menu shows an **Update ready** button when a newer version is out
+(`src/ui/update_check.gd`; Settings → "Check for updates" turns it off).
 
 **Desktop app (Linux):** run `./tools/install_desktop.sh`. It adds *Bunny Beat
 Down* to your applications menu and desktop, with Bun as the icon. If a
@@ -596,7 +612,13 @@ loop with a human reviewer:
   note. Once nothing has been added for 10 minutes, Claude claims the new notes,
   makes the changes, and answers each note on the page (done, or a question).
 
-The trailers are directed: the shots and the two critters' inputs are scripted
+The phone trailer is a cut of short shots recorded a map at a time
+(`tests/trailer_reel_stage.gd`, with the bots in the battles driven by a few
+lines each: nearest foe, strafe, burst fire) and put together by
+`tools/make_reel.py`, which also makes a ~3 MB cut for messaging apps and an
+under-1 MB one for a plain MMS. Its music is "Run Amok" by Kevin MacLeod.
+
+The other trailers are directed: the shots and the two critters' inputs are scripted
 (`tests/trailer_stage.gd`, `tests/trailer_cage_stage.gd` for the Hamster
 Cage cut and `tests/trailer_toybox_stage.gd` for the Toy Box Bash cut), but
 everything on screen is the running game (the

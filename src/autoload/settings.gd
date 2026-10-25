@@ -31,6 +31,7 @@ const DEFAULTS := {
 	"map": "island",                # "island" (Wildwood Island), "cage" (Hamster Cage) or "toybox" (Toy Box Bash)
 	"player_character": "bun",
 	"player_skin": "default",
+	"check_updates": true,          # ask GitHub for a newer release on the main menu (UpdateCheck)
 }
 
 var path: String = REAL_PATH
