@@ -10,6 +10,9 @@ extends SceneTree
 ## The Hamster Cage cut: add "cage" after the folder (tests/trailer_cage_stage.gd),
 ## the Toy Box Bash cut: "toybox" (tests/trailer_toybox_stage.gd);
 ## for the tall phone cut, record at --resolution 1080x1920.
+## The 30-second phone reel is recorded a map at a time ("reel island", "reel
+## cage", "reel toybox": tests/trailer_reel_stage.gd) and cut together by
+## tools/make_reel.py.
 
 
 func _initialize() -> void:
@@ -20,4 +23,6 @@ func _initialize() -> void:
 func _start() -> void:
 	var a := OS.get_cmdline_user_args()
 	var stage := "res://tests/trailer_cage_stage.gd" if a.has("cage") else ("res://tests/trailer_toybox_stage.gd" if a.has("toybox") else "res://tests/trailer_stage.gd")
+	if a.has("reel"):
+		stage = "res://tests/trailer_reel_stage.gd"   # (the phone reel: "reel island|cage|toybox")
 	root.add_child(load(stage).new())
