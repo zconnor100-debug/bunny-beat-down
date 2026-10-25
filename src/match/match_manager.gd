@@ -87,6 +87,7 @@ func setup(world_root_: Node3D, island_: Island, opponents: int, difficulty: int
 	add_child(kill_cam)
 	Events.critter_died.connect(_on_critter_died)
 	Events.critter_damaged.connect(_on_critter_damaged)
+	Events.shot_fired.connect(_on_shot_fired)
 	var d := clampi(difficulty, 0, 2)
 	AIBrain.player_attack_slots = [1, 2, 3][d]
 	AIBrain.damage_to_player = [0.45, 0.65, 0.85][d]
@@ -560,6 +561,8 @@ func _on_critter_died(victim: Node, info: DamageInfo) -> void:
 	if player == null:
 		return   # (no match ends before you've joined it)
 	var killer := info.attacker as Critter
+	if killer and killer != player and killer != c and critters.has(killer):
+		RivalBook.note_bot_kill(killer.display_name, info.weapon_id, killer.global_position.distance_to(c.global_position))
 	if c == player and killer and killer != player:
 		if RivalBook.note_you_died_to(killer.display_name, String(killer.def.id)):
 			killer.set_meta(&"new_rival", true)
@@ -609,10 +612,22 @@ func _on_critter_died(victim: Node, info: DamageInfo) -> void:
 		finished.emit(winner, player.placement if not player.alive else 1)
 
 
-## Your hits, for the trackers (StatBook).
+## Hits, for the trackers: yours (StatBook) and the bots' own (RivalBook).
 func _on_critter_damaged(victim: Node, info: DamageInfo) -> void:
-	if player and info.attacker == player and victim != player and victim is Critter:
-		StatBook.note_hit(info.weapon_id, info.amount, info.headshot, info.kind == DamageInfo.Kind.EXPLOSION)
+	if player == null or not victim is Critter or info.attacker == victim:
+		return
+	var blast := info.kind == DamageInfo.Kind.EXPLOSION
+	if info.attacker == player:
+		StatBook.note_hit(info.weapon_id, info.amount, info.headshot, blast)
+	elif info.attacker is Critter and critters.has(info.attacker):
+		RivalBook.note_bot_hit(info.attacker.display_name, info.weapon_id, info.amount, info.headshot, blast)
+
+
+## The bots' carrots fired, for their trackers (yours count in Critter._fire).
+func _on_shot_fired(shooter: Node, _origin: Vector3, weapon_id: StringName) -> void:
+	if player and shooter != player and shooter is Critter and critters.has(shooter):
+		var w := WeaponDB.get_weapon(weapon_id)
+		RivalBook.note_bot_shot(shooter.display_name, w.pellets if w else 1)
 
 
 func _rival_names() -> Array:

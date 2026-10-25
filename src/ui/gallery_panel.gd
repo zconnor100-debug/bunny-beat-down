@@ -3,8 +3,9 @@ extends PanelContainer
 ## The Rogues' Gallery: all 49 bots (Cast), the ones with the most history
 ## with you first. Each card: its name (and how radical you've made it), its
 ## species, way of fighting, voice and favourite gun, who it is, the score
-## between you, its wins, and the grudges it holds (against bots, and the
-## director). Pad friendly: every card is a button, so the list scrolls with
+## between you, its wins, its trackers (accuracy, headshots, damage,
+## beat-downs by gun, longest beat-down), and the grudges it holds (against
+## bots, and the director). Pad friendly: every card is a button, so the list scrolls with
 ## the focus.
 
 signal closed
@@ -118,6 +119,7 @@ static func card(n: String) -> String:
 			"Your nemesis: heavily armed, armoured, and it always jumps when you do."][t]])
 	if RivalBook.wins(n) > 0 or RivalBook.bot_kills(n) > 0:
 		lines.append("Won %s  ·  beat down %s" % [_count(RivalBook.wins(n), "match", "matches"), _count(RivalBook.bot_kills(n), "other critter", "other critters")])
+	lines.append_array(tracker_lines(n))
 	var g := RivalBook.grudges(n)
 	if not g.is_empty():
 		var keys := g.keys()
@@ -129,6 +131,22 @@ static func card(n: String) -> String:
 	elif d > 0:
 		lines.append("Grumbling about the director (%d)." % d)
 	return "\n".join(lines)
+
+
+## The bot's trackers: accuracy, headshots and damage, then its beat-downs
+## by gun (the top three) and its longest. Nothing before it's fired a carrot.
+static func tracker_lines(n: String) -> Array:
+	var out := []
+	var s := RivalBook.bot_stats(n)
+	if s.shots > 0.0:
+		out.append("Accuracy %s  ·  %s  ·  %d damage" % [StatBook.percent(s), _count(int(s.heads), "headshot", "headshots"), int(s.damage)])
+	var g := RivalBook.gun_kills(n)
+	if not g.is_empty():
+		var ids := g.keys()
+		ids.sort_custom(func(a, b): return int(g[a]) > int(g[b]) if int(g[a]) != int(g[b]) else a < b)
+		out.append("Beat-downs by gun: %s  ·  longest %d m" % [", ".join(ids.slice(0, 3).map(
+			func(id): return "%s %d" % [StatBook.gun_name(StringName(id)), int(g[id])])), roundi(RivalBook.longest(n))])
+	return out
 
 
 static func _count(k: int, one: String, many: String) -> String:

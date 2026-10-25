@@ -204,7 +204,9 @@ and the final shot replayed from three angles. There's a
   - The drop opens with the lobby's news: who you've made radical, who's
     feuding, who's furious with the director, and the bounty. The
     **Rogues' Gallery** (main menu) has a card for each of the 49: who they
-    are, how they fight, the score with you, their wins and grudges.
+    are, how they fight, the score with you, their wins and grudges, and
+    their own trackers (accuracy, headshots, damage, beat-downs by gun and
+    their longest beat-down).
 - **The bots learn you.** They remember where you like to land (and more of
   them head there), and which guns you win with (they fight you at the
   range those guns are worst at). Sit still too long and the nearest bots
@@ -403,7 +405,7 @@ The full write-up is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
   the same views: 31% fewer triangles on the island, 31% on the Hamster
   Cage, 79% on Toy Box Bash, and a third to two thirds fewer shadow
   triangles.
-- **Tests that play the game.** A headless suite of 110 tests covers:
+- **Tests that play the game.** A headless suite of 111 tests covers:
   - the IK maths, hitboxes, ragdolls and dismemberment;
   - island navigation, the three biomes and the big buildings (a Bun walks
     in through the barn doors; every indoor loot spot is reachable on the
@@ -416,7 +418,8 @@ The full write-up is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
   - how carrots fly (on the crosshair within range, little leading at each
     gun's range, bursts that bloom and settle, the shotgun's pattern) and
     the trackers (shots, pellets, blasts, headshots and beat-downs counted
-    per gun and per critter, the HUD counter, the Trophy Room);
+    per gun and per critter, the HUD counter, the Trophy Room, and each
+    bot's own counts on its Rogues' Gallery card);
   - the cast (49 characters, each fighting its own way; a full lobby with
     no "Fox 3"), rivals (made, remembered across runs, back in the next
     match, hunting and taunting, revenge), radical bots (each step, their

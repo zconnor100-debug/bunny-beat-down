@@ -8,7 +8,9 @@ extends RefCounted
 ## becomes your RIVAL: it's always in your next matches, it hunts you, and it
 ## taunts you, in its own voice. Beat it and the game tells you about your
 ## revenge. Bots also keep grudges against the bots that beat them down, and
-## against the director (the Briar, the pacing), and count their wins.
+## against the director (the Briar, the pacing), and count their wins. And
+## each keeps its own trackers, like yours (StatBook): carrots fired, hits,
+## headshots, damage, beat-downs by gun and its longest beat-down.
 ##
 ## Automated test runs use their own file, like Settings.
 
@@ -53,6 +55,7 @@ const PERSONALITIES := {
 }
 
 static var _cfg: ConfigFile
+static var _blast := {}               # (bot: the frame its last rocket blast counted as a hit)
 
 
 static func path() -> String:
@@ -190,6 +193,57 @@ static func wins(bot: String) -> int:
 
 static func note_win(bot: String) -> void:
 	_book().set_value(bot, "wins", wins(bot) + 1)
+
+
+## The bot's trackers (counted in matches you're in: MatchManager calls in).
+## A carrot shot (`pellets` at once; the club's swings aren't counted).
+static func note_bot_shot(bot: String, pellets := 1) -> void:
+	_add(bot, "shots", pellets)
+
+
+## The bot hurt a critter. A rocket's blast is one hit however many it
+## catches, and a club hit isn't a carrot that landed (accuracy is carrots).
+static func note_bot_hit(bot: String, gun_id: StringName, damage: float, headshot: bool, blast := false) -> void:
+	_add(bot, "damage", damage)
+	if headshot:
+		_add(bot, "heads", 1)
+	if gun_id == &"" or gun_id == &"melee":
+		return
+	if blast:
+		if int(_blast.get(bot, -1)) == Engine.get_process_frames():
+			return
+		_blast[bot] = Engine.get_process_frames()
+	_add(bot, "hits", 1)
+
+
+## The bot beat a critter down (you or another bot) from `distance` metres.
+static func note_bot_kill(bot: String, gun_id: StringName, distance: float) -> void:
+	var g := gun_kills(bot)
+	var id := "melee" if gun_id == &"" else String(gun_id)
+	g[id] = int(g.get(id, 0)) + 1
+	_book().set_value(bot, "gun_kills", g)
+	_book().set_value(bot, "longest", maxf(longest(bot), distance))
+
+
+## {shots, hits, heads, damage} (StatBook.accuracy / percent read it).
+static func bot_stats(bot: String) -> Dictionary:
+	var out := {}
+	for key in ["shots", "hits", "heads", "damage"]:
+		out[key] = float(_book().get_value(bot, key, 0.0))
+	return out
+
+
+## Its beat-downs by gun: {gun id: count} ("melee" for the club).
+static func gun_kills(bot: String) -> Dictionary:
+	return (_book().get_value(bot, "gun_kills", {}) as Dictionary).duplicate()
+
+
+static func longest(bot: String) -> float:
+	return float(_book().get_value(bot, "longest", 0.0))
+
+
+static func _add(bot: String, key: String, by: float) -> void:
+	_book().set_value(bot, key, float(_book().get_value(bot, key, 0.0)) + by)
 
 
 ## A line in the bot's own voice for an event: "spot", "kill" or "lose".

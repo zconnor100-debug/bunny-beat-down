@@ -95,6 +95,49 @@ func test_the_trophy_room_and_the_guns_counter() -> void:
 	check(hud._weapon_name.text.ends_with("⚔ 1"), "the HUD counts the LMG's beat-downs: %s" % hud._weapon_name.text)
 
 
+func test_the_bots_keep_their_own_trackers() -> void:
+	var mm := await _match()
+	var you := mm.spawn_player(load("res://data/critters/bun.tres"), "default")
+	you.place_at(Vector3(0, 40.0, 0), 0.0)
+	var bots := mm.critters.filter(func(c): return c != you)
+	var a: Critter = bots[0]
+	var b: Critter = bots[1]
+	a.place_at(Vector3(20, 40.0, 0), 0.0)
+	b.place_at(Vector3(-5, 40.0, 0), 0.0)
+	await wait_physics(3)
+	# carrots fired (into the sky): a shotgun's nine pellets, then two rifle shots
+	a.aim_point = a.global_position + Vector3(0, 60.0, -5.0)
+	a._fire(WeaponInstance.new(WeaponDB.get_weapon(&"carrot_shotgun"), Rarity.Tier.GARDEN))
+	var rifle := WeaponInstance.new(WeaponDB.get_weapon(&"carrot_rifle"), Rarity.Tier.GARDEN)
+	a._fire(rifle)
+	a._fire(rifle)
+	# hits: a headshot, a club hit (not a carrot), then the beat-down from 25 m
+	var head := DamageInfo.make(10.0, DamageInfo.Kind.BULLET, a, &"carrot_rifle")
+	head.headshot = true
+	b.take_damage(head)
+	b.take_damage(DamageInfo.make(5.0, DamageInfo.Kind.MELEE, a, &"melee"))
+	b.take_damage(DamageInfo.make(999.0, DamageInfo.Kind.BULLET, a, &"carrot_rifle"))
+	await wait_frames(2)
+	var s := RivalBook.bot_stats(a.display_name)
+	check(s.shots == 11.0 and s.hits == 2.0 and s.heads == 1.0, "%s: 11 carrots, 2 hits, 1 headshot (%s)" % [a.display_name, s])
+	check(RivalBook.gun_kills(a.display_name) == {"carrot_rifle": 1}, "a beat-down with the rifle (%s)" % [RivalBook.gun_kills(a.display_name)])
+	check(absf(RivalBook.longest(a.display_name) - 25.0) < 1.0, "from ~25 m (%.1f)" % RivalBook.longest(a.display_name))
+	check(StatBook.gun(&"carrot_rifle").shots == 0.0, "and none of it counts as yours")
+	# it beats you down with the club
+	you.take_damage(DamageInfo.make(999.0, DamageInfo.Kind.MELEE, a, &"melee"))
+	await wait_frames(2)
+	check(RivalBook.gun_kills(a.display_name).get("melee", 0) == 1, "the club's beat-downs count too")
+	var card := GalleryPanel.card(a.display_name)
+	check(card.contains("Accuracy 18%") and card.contains("1 headshot")
+		and card.contains("Beat-downs by gun: %s 1, Club 1" % StatBook.gun_name(&"carrot_rifle")) and card.contains("longest 25 m"),
+		"its card: %s" % card)
+	RivalBook._cfg = null
+	check(RivalBook.gun_kills(a.display_name).size() == 2, "remembered after a restart")
+	var here := mm.critters.map(func(c): return c.display_name)
+	var stranger: String = Cast.names().filter(func(n): return not here.has(n))[0]
+	check(GalleryPanel.tracker_lines(stranger).is_empty(), "a bot that's never fired has no trackers (%s)" % stranger)
+
+
 func _match() -> MatchManager:
 	var cage := HamsterCage.new()
 	add_child(cage)
