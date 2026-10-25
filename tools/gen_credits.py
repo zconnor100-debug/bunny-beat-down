@@ -18,6 +18,7 @@ SECTIONS = {
     "characters": "Critters",
     "environment": "Scenery: the island, the cage and the fridge",
     "maps": "Map models (made in Blender)",
+    "outfits": "Rogue outfits: hats, glasses, capes and the rest",
     "weapons_props": "Carrot Guns & Props",
     "audio": "Sound & Music",
     "fonts": "Fonts",

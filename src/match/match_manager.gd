@@ -132,8 +132,14 @@ func setup(world_root_: Node3D, island_: Island, opponents: int, difficulty: int
 		if rival:
 			rivals_here.append(c)
 		RivalBook.note_meeting(n, String(def.id))
+		# each rogue in its own fur and outfit (Outfits); the roll is made either
+		# way, so a seed lays out the same island whatever the bots wear
 		var skins := def.skins()
-		c.visual.apply_skin(String(skins[rng.randi() % skins.size()].get("id", "default")))
+		var skin_roll := rng.randi()
+		if Outfits.look_of(n).is_empty():
+			c.visual.apply_skin(String(skins[skin_roll % skins.size()].get("id", "default")))
+		else:
+			Outfits.dress(c, n)
 		var brain := AIBrain.new()
 		brain.name = "AIBrain"
 		brain.island = island

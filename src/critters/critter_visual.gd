@@ -57,6 +57,7 @@ var meshes: Array[MeshInstance3D] = []
 var _att_by_bone: Dictionary = {}    # bone index -> BoneAttachment3D
 var ragdolled := false
 var dismembered: Dictionary = {}     # role -> true
+var outfit: Array[Node3D] = []       ## a rogue's outfit pieces (Outfits), riding on the bones
 
 var trick: JumpTrick
 var _model_base := Transform3D.IDENTITY
@@ -764,25 +765,36 @@ func push_bone(role: StringName, impulse: Vector3, at: Vector3) -> void:
 
 
 func pop_helmet(impulse: Vector3) -> void:
+	# (a rogue's hat, glasses and the rest fly off with it)
+	for piece in outfit.duplicate():
+		if is_instance_valid(piece) and piece.get_parent() == attachments.get(&"head"):
+			outfit.erase(piece)
+			_knock_off(piece, impulse * randf_range(0.8, 1.2), 0.25)
 	if helmet == null or not is_instance_valid(helmet):
 		return
+	_knock_off(helmet, impulse, 0.4)
+	helmet = null
+
+
+## Send something the critter was wearing flying: a little physics body
+## that bounces about and is tidied away later.
+func _knock_off(thing: Node3D, impulse: Vector3, mass: float) -> void:
 	var body := RigidBody3D.new()
 	body.collision_layer = Layers.DEBRIS
 	body.collision_mask = Layers.WORLD | Layers.DEBRIS
-	body.mass = 0.4
+	body.mass = mass
 	var cs := CollisionShape3D.new()
 	var sph := SphereShape3D.new()
 	sph.radius = 0.12 * rig.world_scale
 	cs.shape = sph
 	cs.position = Vector3(0, 0.08 * rig.world_scale, 0)
 	body.add_child(cs)
-	var xf := helmet.global_transform
+	var xf := thing.global_transform
 	Despawner.debris_parent(self).add_child(body)   # (test runs have no current scene)
 	body.global_transform = Transform3D(xf.basis.orthonormalized(), xf.origin)
-	helmet.reparent(body, true)
+	thing.reparent(body, true)
 	body.apply_central_impulse(impulse + Vector3.UP * 1.2)
 	body.angular_velocity = Vector3(randf_range(-12, 12), randf_range(-6, 6), randf_range(-12, 12))
-	helmet = null
 	Despawner.schedule(body, 45.0)
 	if KillCam.recording and not KillCam.instance.playing:
 		KillCam.instance.note_node(body)

@@ -18,7 +18,8 @@ gore, and floppy physics ears are included.
 
 Built in **Godot 4.6** (GDScript, Jolt physics, Forward+).
 
-▶ **[The new 30-second phone trailer](docs/trailer_phone.mp4)** (with sound):
+▶ **[The new 30-second trailer](docs/trailer_1080p.mp4)** in 1080p (with sound;
+also [cut for phones](docs/trailer_phone.mp4)):
 30-critter brawls on all three maps, the toy train ploughing through a
 battle, a rocket into a huddle in slow motion, carrots that split and pop, a
 nemesis and its gang, and the rewind.
@@ -189,8 +190,15 @@ and the final shot replayed from three angles. There's a
   Sharpshooter, Ambusher, Brawler, Vulture, Duelist, Survivor, Hunter...) and
   a favourite carrot gun; no two share a style and a gun, so each fights a
   little differently (`Cast`: the AI reads its style as numbers: range,
-  aggression, nerve, how it hears gunfire, whom it picks on). The game
-  remembers the score between each of them and you, across runs:
+  aggression, nerve, how it hears gunfire, whom it picks on). **Each wears its
+  own look**, the same fur and outfit every match, picked to match who they
+  are: Captain Carrot's captain's cap and medal, Sir Toadsworth's top hat and
+  monocle, Dam Dan's hard hat, Sly the tracker's deerstalker, Bunnicula's
+  cape, Timber's lumberjack beanie. Forty-odd hats, glasses, masks, scarves,
+  capes and backpacks (CC BY models, credited in the game) are fitted to
+  every species from its own mesh, ride on the bones, and fly off with a
+  headshot. (Your own critter keeps the skins you pick.) The game remembers
+  the score between each of them and you, across runs:
   - A bot that has beaten you down twice becomes your **rival**: it's always
     in your next matches (with a purple "⚔ RIVAL" name tag), it hunts you,
     and it taunts you in its own voice, in speech bubbles and the kill feed
@@ -470,7 +478,7 @@ The full write-up is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
   the same views: 31% fewer triangles on the island, 31% on the Hamster
   Cage, 79% on Toy Box Bash, and a third to two thirds fewer shadow
   triangles.
-- **Tests that play the game.** A headless suite of 128 tests covers:
+- **Tests that play the game.** A headless suite of 131 tests covers:
   - the IK maths, hitboxes, ragdolls and dismemberment, and how critters
     carry themselves (never frozen, guns carried low but shooting from the
     aim, held clear of the head, both paws on the handles of every gun, feet
@@ -494,7 +502,8 @@ The full write-up is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
     the finale and its retry), a nemesis hunt and its signature gun, gangs,
     scars and your stolen gun, and the Trail and draft screens; milestones
     (reached once, paid once, each unlock acting only for you);
-  - the cast (49 characters, each fighting its own way; a full lobby with
+  - the cast (49 characters, each fighting its own way and wearing its own
+    outfit, every piece fitted to every species; a full lobby with
     no "Fox 3"), rivals (made, remembered across runs, back in the next
     match, hunting and taunting, revenge), radical bots (each step, their
     loadout and name tag, the bounty), grudges between bots and against the
@@ -615,8 +624,11 @@ loop with a human reviewer:
 The phone trailer is a cut of short shots recorded a map at a time
 (`tests/trailer_reel_stage.gd`, with the bots in the battles driven by a few
 lines each: nearest foe, strafe, burst fire) and put together by
-`tools/make_reel.py`, which also makes a ~3 MB cut for messaging apps and an
-under-1 MB one for a plain MMS. Its music is "Run Amok" by Kevin MacLeod.
+`tools/make_reel.py`, at full 1080p in two shapes (1080×1920 for phones,
+1920×1080 for widescreens): a high-quality master and a cut under 16 MB to
+send in a message. Godot renders the frames at full size even in a window
+that fits on the screen (a temporary `override.cfg` with the viewport at
+1080p and `stretch/mode="viewport"`). Its music is "Run Amok" by Kevin MacLeod.
 
 The other trailers are directed: the shots and the two critters' inputs are scripted
 (`tests/trailer_stage.gd`, `tests/trailer_cage_stage.gd` for the Hamster

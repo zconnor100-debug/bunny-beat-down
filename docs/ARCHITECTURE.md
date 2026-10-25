@@ -100,6 +100,25 @@ a long brush tail stays out of the legs at a bound).
 > returns the rest pose. Code that needs the rendered pose reads it from
 > `BoneAttachment3D` nodes or ragdoll bodies (`CritterVisual.current_bone_global`).
 
+## Outfits: one hat, eight heads
+
+Every member of the Cast wears its own outfit (`Outfits.LOOKS`: a fur and a
+few pieces). The pieces are ordinary models (built by `tools/env` like the
+scenery, category "outfit") and know nothing about critters; `OutfitFit`
+measures each model once from its skinned mesh in the rest pose: the skull
+(every vertex owned by the head bone or anything under it, minus ears that
+swing on their own bones), its breadth at twelve heights, the crown (from the
+middle third only, so ears that are part of the head mesh don't lift a hat),
+the eyes (from eyeball bones when the rig has them, the fox's, otherwise the
+front of the face either side of the snout), the neck, the chest and the
+back. A piece has a slot and a few numbers (how big next to what, how far a
+hat comes down, how much of it is chin strap or a sloping brim) and is placed
+from those, on the bone it belongs to, so a top hat fits a lanky fox, a frog
+whose head is mostly mouth and a hamster with no neck. A headshot or a blast
+knocks the head's pieces off as debris, like the acorn helmet.
+`test_outfits` checks every rogue's look exists and that, on every species, a
+hat sits on the crown, glasses at the eyes and a pack on the back.
+
 ## Hitboxes, ragdolls and gore
 
 `RigInfo` turns the rest pose into body *segments* (start, end, radius). Each

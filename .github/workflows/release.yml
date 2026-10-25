@@ -37,8 +37,13 @@ jobs:
       - name: Anything new for players?
         id: v
         run: |
-          # (a commit from before this pipeline existed has nothing to release)
-          if [ -f tools/release_version.py ]; then python3 tools/release_version.py > version.txt; else echo "release=no" > version.txt; fi
+          # (a commit from before this pipeline existed has nothing to release; nor
+          # does one whose workflows have since changed on main: GitHub won't let
+          # this token tag it, and the newer commit's own run releases instead)
+          git fetch -q origin main
+          if [ ! -f tools/release_version.py ]; then echo "release=no" > version.txt
+          elif ! git diff --quiet "$SHA" origin/main -- .github/workflows; then echo "release=no" > version.txt
+          else python3 tools/release_version.py > version.txt; fi
           cat version.txt
           cat version.txt >> "$GITHUB_OUTPUT"
 

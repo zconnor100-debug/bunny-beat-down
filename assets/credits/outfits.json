@@ -1,0 +1,535 @@
+[
+  {
+    "asset": "Captain's Hat",
+    "author": "Kurtophecles",
+    "author_url": "https://sketchfab.com/KurtShoemaker",
+    "source_url": "https://sketchfab.com/3d-models/captains-hat-d9dab73466824b45b622ffd72d0586c4",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "outfit_captain_hat: rescaled x0.0393 to critter-world size, grounded and centred; unlit material 'UVChecker' rebuilt as lit PBR (roughness 0.9); textures re-encoded <= 512px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Rogue outfit: captain's cap (outfit_captain_hat)",
+    "files": [
+      "assets/env/outfit_captain_hat/outfit_captain_hat.glb"
+    ]
+  },
+  {
+    "asset": "Low Poly Red Top Hat",
+    "author": "Designed By Jonathan",
+    "author_url": "https://sketchfab.com/designedbyjonathan",
+    "source_url": "https://sketchfab.com/3d-models/low-poly-red-top-hat-ef103acfc23943c382d66963a3869c09",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "outfit_top_hat: rescaled x0.0028 to critter-world size, grounded and centred; decimated 4608 -> 2940 triangles (seams welded first, no cracks); textures re-encoded <= 0px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Rogue outfit: red top hat (outfit_top_hat)",
+    "files": [
+      "assets/env/outfit_top_hat/outfit_top_hat.glb"
+    ]
+  },
+  {
+    "asset": "The Gentelman Top Hat",
+    "author": "oconop23",
+    "author_url": "https://sketchfab.com/oconop23",
+    "source_url": "https://sketchfab.com/3d-models/the-gentelman-top-hat-a7e96eae73684e46b624142d0c230509",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "outfit_gent_top_hat: rescaled x0.1663 to critter-world size, grounded and centred; textures re-encoded <= 256px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Rogue outfit: gentleman's top hat with monocle and moustache (outfit_gent_top_hat)",
+    "files": [
+      "assets/env/outfit_gent_top_hat/outfit_gent_top_hat.glb"
+    ]
+  },
+  {
+    "asset": "Free Low Poly Crown",
+    "author": "warcool",
+    "author_url": "https://sketchfab.com/warcool",
+    "source_url": "https://sketchfab.com/3d-models/free-low-poly-crown-fe698c2b67d54695bfa49b890a9c7250",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "outfit_crown: rescaled x1.1269 to critter-world size, grounded and centred; removed baked emission map; textures re-encoded <= 512px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Rogue outfit: little gold crown (outfit_crown)",
+    "files": [
+      "assets/env/outfit_crown/outfit_crown.glb"
+    ]
+  },
+  {
+    "asset": "Low Poly Cowboy Hat",
+    "author": "Yanez Designs",
+    "author_url": "https://sketchfab.com/Yanez-Designs",
+    "source_url": "https://sketchfab.com/3d-models/low-poly-cowboy-hat-16c504d81f5843c3985d7f208c27b79a",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "outfit_cowboy_hat: rescaled x0.0013 to critter-world size, grounded and centred; textures re-encoded <= 512px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Rogue outfit: cowboy hat (outfit_cowboy_hat)",
+    "files": [
+      "assets/env/outfit_cowboy_hat/outfit_cowboy_hat.glb"
+    ]
+  },
+  {
+    "asset": "Artist Beret",
+    "author": "shimtimultimedia",
+    "author_url": "https://sketchfab.com/shimtimultimedia",
+    "source_url": "https://sketchfab.com/3d-models/artist-beret-656b9aeef87b42d298bc6d3bb1a61c35",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "outfit_beret: rescaled x1.8455 to critter-world size, grounded and centred; textures re-encoded <= 0px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Rogue outfit: artist's beret (outfit_beret)",
+    "files": [
+      "assets/env/outfit_beret/outfit_beret.glb"
+    ]
+  },
+  {
+    "asset": "Bucket Hat",
+    "author": "shimtimultimedia",
+    "author_url": "https://sketchfab.com/shimtimultimedia",
+    "source_url": "https://sketchfab.com/3d-models/bucket-hat-24985764343240ecbc680545c13c28d1",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "outfit_bucket_hat: rescaled x1.8426 to critter-world size, grounded and centred; textures re-encoded <= 512px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Rogue outfit: bucket hat (outfit_bucket_hat)",
+    "files": [
+      "assets/env/outfit_bucket_hat/outfit_bucket_hat.glb"
+    ]
+  },
+  {
+    "asset": "Cavalier Hat",
+    "author": "shimtimultimedia",
+    "author_url": "https://sketchfab.com/shimtimultimedia",
+    "source_url": "https://sketchfab.com/3d-models/cavalier-hat-8dc244d4e06a4e868c6efa796cdcfcf6",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "outfit_cavalier_hat: rescaled x3.7244 to critter-world size, grounded and centred; decimated 5984 -> 2940 triangles (seams welded first, no cracks); normal map re-baked from the full-detail source onto the decimated mesh; textures re-encoded <= 512px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Rogue outfit: cavalier hat (outfit_cavalier_hat)",
+    "files": [
+      "assets/env/outfit_cavalier_hat/outfit_cavalier_hat.glb"
+    ]
+  },
+  {
+    "asset": "Fez Hat Tall (Toon)",
+    "author": "shimtimultimedia",
+    "author_url": "https://sketchfab.com/shimtimultimedia",
+    "source_url": "https://sketchfab.com/3d-models/fez-hat-tall-toon-a24e4ca4b3fc4e6a9f3bfad6940c3f25",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "outfit_fez: rescaled x1.6573 to critter-world size, grounded and centred; textures re-encoded <= 0px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Rogue outfit: tall fez (outfit_fez)",
+    "files": [
+      "assets/env/outfit_fez/outfit_fez.glb"
+    ]
+  },
+  {
+    "asset": "Fur Hat (Toon)",
+    "author": "shimtimultimedia",
+    "author_url": "https://sketchfab.com/shimtimultimedia",
+    "source_url": "https://sketchfab.com/3d-models/fur-hat-toon-67ef44bea828407f8e6f6c68d5e90691",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "outfit_fur_hat: rescaled x1.3717 to critter-world size, grounded and centred; textures re-encoded <= 0px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Rogue outfit: fur hat (outfit_fur_hat)",
+    "files": [
+      "assets/env/outfit_fur_hat/outfit_fur_hat.glb"
+    ]
+  },
+  {
+    "asset": "Mountie Hat (Toon)",
+    "author": "shimtimultimedia",
+    "author_url": "https://sketchfab.com/shimtimultimedia",
+    "source_url": "https://sketchfab.com/3d-models/mountie-hat-toon-6ff5c35bade14b2c93d0e6ec1c7df802",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "outfit_mountie_hat: rescaled x2.0813 to critter-world size, grounded and centred; decimated 7678 -> 2940 triangles (seams welded first, no cracks); normal map re-baked from the full-detail source onto the decimated mesh; textures re-encoded <= 512px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Rogue outfit: campaign (Mountie) hat (outfit_mountie_hat)",
+    "files": [
+      "assets/env/outfit_mountie_hat/outfit_mountie_hat.glb"
+    ]
+  },
+  {
+    "asset": "Lowpoly Bearskin (Blue)",
+    "author": "shimtimultimedia",
+    "author_url": "https://sketchfab.com/shimtimultimedia",
+    "source_url": "https://sketchfab.com/3d-models/lowpoly-bearskin-blue-eff9e67acb1242f49d4357aac1a9c32a",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "outfit_bearskin: rescaled x0.92 to critter-world size, grounded and centred; textures re-encoded <= 512px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Rogue outfit: guardsman's bearskin (outfit_bearskin)",
+    "files": [
+      "assets/env/outfit_bearskin/outfit_bearskin.glb"
+    ]
+  },
+  {
+    "asset": "Lowpoly Marching Band Hat (Red)",
+    "author": "shimtimultimedia",
+    "author_url": "https://sketchfab.com/shimtimultimedia",
+    "source_url": "https://sketchfab.com/3d-models/lowpoly-marching-band-hat-red-b6f99d62c0cf4c7ea2bfd68ffca6bed9",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "outfit_band_hat: rescaled x0.6294 to critter-world size, grounded and centred; textures re-encoded <= 128px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Rogue outfit: marching band hat (outfit_band_hat)",
+    "files": [
+      "assets/env/outfit_band_hat/outfit_band_hat.glb"
+    ]
+  },
+  {
+    "asset": "Robin Hood Hat",
+    "author": "shimtimultimedia",
+    "author_url": "https://sketchfab.com/shimtimultimedia",
+    "source_url": "https://sketchfab.com/3d-models/robin-hood-hat-7bdddd13b73b470f9146586d49582c7b",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "outfit_robin_hat: rescaled x1.9332 to critter-world size, grounded and centred; decimated 12672 -> 2940 triangles (seams welded first, no cracks); normal map re-baked from the full-detail source onto the decimated mesh; foliage materials converted to alpha-clip (cut-out) with bled RGBA albedo; textures re-encoded <= 512px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Rogue outfit: archer's feathered cap (outfit_robin_hat)",
+    "files": [
+      "assets/env/outfit_robin_hat/outfit_robin_hat.glb"
+    ]
+  },
+  {
+    "asset": "Trucker Hat Red (Toon)",
+    "author": "shimtimultimedia",
+    "author_url": "https://sketchfab.com/shimtimultimedia",
+    "source_url": "https://sketchfab.com/3d-models/trucker-hat-red-toon-ba25f1c2b1c5442c9a5a1710643cede2",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "outfit_trucker_red: rescaled x2.6516 to critter-world size, grounded and centred; textures re-encoded <= 0px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Rogue outfit: red trucker cap (outfit_trucker_red)",
+    "files": [
+      "assets/env/outfit_trucker_red/outfit_trucker_red.glb"
+    ]
+  },
+  {
+    "asset": "Trucker Hat Blue (Toon)",
+    "author": "shimtimultimedia",
+    "author_url": "https://sketchfab.com/shimtimultimedia",
+    "source_url": "https://sketchfab.com/3d-models/trucker-hat-blue-toon-07850a3af3514bccaa48c8ea450a5df5",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "outfit_trucker_blue: rescaled x2.6516 to critter-world size, grounded and centred; textures re-encoded <= 0px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Rogue outfit: blue trucker cap (outfit_trucker_blue)",
+    "files": [
+      "assets/env/outfit_trucker_blue/outfit_trucker_blue.glb"
+    ]
+  },
+  {
+    "asset": "Trucker Hat Yellow (Toon)",
+    "author": "shimtimultimedia",
+    "author_url": "https://sketchfab.com/shimtimultimedia",
+    "source_url": "https://sketchfab.com/3d-models/trucker-hat-yellow-toon-c49590f608fd4032a42c4eace992be12",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "outfit_trucker_yellow: rescaled x2.6516 to critter-world size, grounded and centred; textures re-encoded <= 0px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Rogue outfit: yellow trucker cap (outfit_trucker_yellow)",
+    "files": [
+      "assets/env/outfit_trucker_yellow/outfit_trucker_yellow.glb"
+    ]
+  },
+  {
+    "asset": "CP Hats Collection - Construction Helmet",
+    "author": "Nilay Gomkale",
+    "author_url": "https://sketchfab.com/NilayG",
+    "source_url": "https://sketchfab.com/3d-models/cp-hats-collection-construction-helmet-e3e34a365e0e4bb1971684cf8cd7e57a",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "outfit_hard_hat: rescaled x0.1759 to critter-world size, grounded and centred; unlit material 'Construction_helmet' rebuilt as lit PBR (roughness 0.9); unlit material 'Silhouette' rebuilt as lit PBR (roughness 0.9); decimated 36096 -> 2940 triangles (seams welded first, no cracks); normal map re-baked from the full-detail source onto the decimated mesh; textures re-encoded <= 512px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Rogue outfit: construction hard hat (outfit_hard_hat)",
+    "files": [
+      "assets/env/outfit_hard_hat/outfit_hard_hat.glb"
+    ]
+  },
+  {
+    "asset": "CP Hats Collection - Party Hat",
+    "author": "Nilay Gomkale",
+    "author_url": "https://sketchfab.com/NilayG",
+    "source_url": "https://sketchfab.com/3d-models/cp-hats-collection-party-hat-7fad55d031d347e5ae780e3d86a52825",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "outfit_party_hat: rescaled x0.0884 to critter-world size, grounded and centred; unlit material 'Birthday_hat' rebuilt as lit PBR (roughness 0.9); unlit material 'Silhouette' rebuilt as lit PBR (roughness 0.9); decimated 3576 -> 2940 triangles (seams welded first, no cracks); textures re-encoded <= 512px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Rogue outfit: party hat (outfit_party_hat)",
+    "files": [
+      "assets/env/outfit_party_hat/outfit_party_hat.glb"
+    ]
+  },
+  {
+    "asset": "CP Hats Collection - Propeller Hat",
+    "author": "Nilay Gomkale",
+    "author_url": "https://sketchfab.com/NilayG",
+    "source_url": "https://sketchfab.com/3d-models/cp-hats-collection-propeller-hat-7bc2cb0501ce47458cd0f92bee9e645a",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "outfit_propeller_hat: rescaled x0.1528 to critter-world size, grounded and centred; unlit material 'Silhouette' rebuilt as lit PBR (roughness 0.9); unlit material 'Properller_hat_wing' rebuilt as lit PBR (roughness 0.9); unlit material 'Properller_hat' rebuilt as lit PBR (roughness 0.9); unlit material 'Properller_hat_pin' rebuilt as lit PBR (roughness 0.9); decimated 5528 -> 2940 triangles (seams welded first, no cracks); normal map re-baked from the full-detail source onto the decimated mesh; textures re-encoded <= 512px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Rogue outfit: propeller beanie (outfit_propeller_hat)",
+    "files": [
+      "assets/env/outfit_propeller_hat/outfit_propeller_hat.glb"
+    ]
+  },
+  {
+    "asset": "CP Hats Collection - Beanie",
+    "author": "Nilay Gomkale",
+    "author_url": "https://sketchfab.com/NilayG",
+    "source_url": "https://sketchfab.com/3d-models/cp-hats-collection-beanie-635a0feed6734d1b837a81028d54d188",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "outfit_beanie: rescaled x0.2751 to critter-world size, grounded and centred; unlit material 'Beanie' rebuilt as lit PBR (roughness 0.9); unlit material 'Silhouette' rebuilt as lit PBR (roughness 0.9); decimated 16384 -> 2939 triangles (seams welded first, no cracks); normal map re-baked from the full-detail source onto the decimated mesh; textures re-encoded <= 512px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Rogue outfit: brown beanie (outfit_beanie)",
+    "files": [
+      "assets/env/outfit_beanie/outfit_beanie.glb"
+    ]
+  },
+  {
+    "asset": "Horned Viking Helmet",
+    "author": "ARToffice",
+    "author_url": "https://sketchfab.com/ARToffice",
+    "source_url": "https://sketchfab.com/3d-models/horned-viking-helmet-88b7ec34f5134ce2b35c82dbbc42345c",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "outfit_viking_helmet: rescaled x0.2165 to critter-world size, grounded and centred; textures re-encoded <= 512px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Rogue outfit: horned helmet (outfit_viking_helmet)",
+    "files": [
+      "assets/env/outfit_viking_helmet/outfit_viking_helmet.glb"
+    ]
+  },
+  {
+    "asset": "Pirate hat",
+    "author": "ReversedG",
+    "author_url": "https://sketchfab.com/ReversedG",
+    "source_url": "https://sketchfab.com/3d-models/pirate-hat-84b496f5860340eca3cc1d63985aa524",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "outfit_pirate_hat: rescaled x2.5448 to critter-world size, grounded and centred; textures re-encoded <= 512px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Rogue outfit: pirate tricorne (outfit_pirate_hat)",
+    "files": [
+      "assets/env/outfit_pirate_hat/outfit_pirate_hat.glb"
+    ]
+  },
+  {
+    "asset": "Stylized wizard hat",
+    "author": "Enkarra",
+    "author_url": "https://sketchfab.com/Enkarra",
+    "source_url": "https://sketchfab.com/3d-models/stylized-wizard-hat-f59021d602334367987bcd7657cec722",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "outfit_wizard_hat: rescaled x0.1694 to critter-world size, grounded and centred; textures re-encoded <= 512px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Rogue outfit: wizard hat (outfit_wizard_hat)",
+    "files": [
+      "assets/env/outfit_wizard_hat/outfit_wizard_hat.glb"
+    ]
+  },
+  {
+    "asset": "Medieval Knight Helmet",
+    "author": "Jess3D",
+    "author_url": "https://sketchfab.com/-Jess3D-",
+    "source_url": "https://sketchfab.com/3d-models/medieval-knight-helmet-dcb15e240a3c43c9b8166ccd34ab6316",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "outfit_knight_helmet: rescaled x0.0994 to critter-world size, grounded and centred; textures re-encoded <= 0px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Rogue outfit: knight's great helm (outfit_knight_helmet)",
+    "files": [
+      "assets/env/outfit_knight_helmet/outfit_knight_helmet.glb"
+    ]
+  },
+  {
+    "asset": "Chef Hat (Toon)",
+    "author": "shimtimultimedia",
+    "author_url": "https://sketchfab.com/shimtimultimedia",
+    "source_url": "https://sketchfab.com/3d-models/chef-hat-toon-0fe884ae9a734e22b6d1eb41127f1cc6",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "outfit_chef_hat: rescaled x1.9288 to critter-world size, grounded and centred; textures re-encoded <= 512px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Rogue outfit: chef's hat (outfit_chef_hat)",
+    "files": [
+      "assets/env/outfit_chef_hat/outfit_chef_hat.glb"
+    ]
+  },
+  {
+    "asset": "Low Poly Sun Glasses",
+    "author": "LortDigital",
+    "author_url": "https://sketchfab.com/LortDigital",
+    "source_url": "https://sketchfab.com/3d-models/low-poly-sun-glasses-eb9bc6464f9f44cfba403a0cd1dc5cda",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "outfit_sunglasses: rescaled x0.002 to critter-world size, grounded and centred; textures re-encoded <= 0px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Rogue outfit: sunglasses (outfit_sunglasses)",
+    "files": [
+      "assets/env/outfit_sunglasses/outfit_sunglasses.glb"
+    ]
+  },
+  {
+    "asset": "Sunglasses_Free",
+    "author": "AlvaWong",
+    "author_url": "https://sketchfab.com/alvawong06",
+    "source_url": "https://sketchfab.com/3d-models/sunglasses-free-deeb41e3f5f1480bb6f79f474c9f7ef5",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "outfit_aviators: rescaled x0.4257 to critter-world size, grounded and centred; foliage materials converted to alpha-clip (cut-out) with bled RGBA albedo; textures re-encoded <= 512px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Rogue outfit: aviator sunglasses (outfit_aviators)",
+    "files": [
+      "assets/env/outfit_aviators/outfit_aviators.glb"
+    ]
+  },
+  {
+    "asset": "Monocle from Poly by Google",
+    "author": "IronEqual",
+    "author_url": "https://sketchfab.com/ie-niels",
+    "source_url": "https://sketchfab.com/3d-models/monocle-from-poly-by-google-6e21c0394d0443b58ddef39d26f7ea47",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "outfit_monocle: rescaled x0.0312 to critter-world size, grounded and centred; textures re-encoded <= 0px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Rogue outfit: monocle (outfit_monocle)",
+    "files": [
+      "assets/env/outfit_monocle/outfit_monocle.glb"
+    ]
+  },
+  {
+    "asset": "Goggles",
+    "author": "Mateus Schwaab",
+    "author_url": "https://sketchfab.com/Mehrus",
+    "source_url": "https://sketchfab.com/3d-models/goggles-95367f12085743f096f0679abc0701a2",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "outfit_goggles: rescaled x0.0027 to critter-world size, grounded and centred; unlit material 'Scene_-_Root' rebuilt as lit PBR (roughness 0.9); textures re-encoded <= 512px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Rogue outfit: aviator goggles (outfit_goggles)",
+    "files": [
+      "assets/env/outfit_goggles/outfit_goggles.glb"
+    ]
+  },
+  {
+    "asset": "Bandana Mask",
+    "author": "Tactical_Beard",
+    "author_url": "https://sketchfab.com/Tactical_Beard",
+    "source_url": "https://sketchfab.com/3d-models/bandana-mask-1d39e7ae6b5748acb2ffddf420893f5a",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "outfit_bandana_mask: rescaled x0.2311 to critter-world size, grounded and centred; textures re-encoded <= 512px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Rogue outfit: bandana mask (outfit_bandana_mask)",
+    "files": [
+      "assets/env/outfit_bandana_mask/outfit_bandana_mask.glb"
+    ]
+  },
+  {
+    "asset": "Sweat Band For Gorilla Tag Fan Game NO TEXTURES",
+    "author": "bluemonkez",
+    "author_url": "https://sketchfab.com/bluemonke10",
+    "source_url": "https://sketchfab.com/3d-models/sweat-band-for-gorilla-tag-fan-game-no-textures-99178c593c12413fab594caa2056b17c",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "outfit_headband: rescaled x1.2156 to critter-world size, grounded and centred; textures re-encoded <= 0px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Rogue outfit: sweatband headband (outfit_headband)",
+    "files": [
+      "assets/env/outfit_headband/outfit_headband.glb"
+    ]
+  },
+  {
+    "asset": "Headphones Low Poly Pixelart",
+    "author": "Cyberleaf Studio",
+    "author_url": "https://sketchfab.com/cyberleaf",
+    "source_url": "https://sketchfab.com/3d-models/headphones-low-poly-pixelart-384fc414d42d47239775cbd3aeec23ec",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "outfit_headphones: rescaled x0.0729 to critter-world size, grounded and centred; textures re-encoded <= 128px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Rogue outfit: headphones (outfit_headphones)",
+    "files": [
+      "assets/env/outfit_headphones/outfit_headphones.glb"
+    ]
+  },
+  {
+    "asset": "Bow Tie",
+    "author": "Peakz",
+    "author_url": "https://sketchfab.com/Peakz",
+    "source_url": "https://sketchfab.com/3d-models/bow-tie-9e1b78768e4447f4befbcc2211bfe1d0",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "outfit_bow_tie: rescaled x0.1402 to critter-world size, grounded and centred; textures re-encoded <= 512px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Rogue outfit: bow tie (outfit_bow_tie)",
+    "files": [
+      "assets/env/outfit_bow_tie/outfit_bow_tie.glb"
+    ]
+  },
+  {
+    "asset": "Scarf (Simple Low Poly)",
+    "author": "KJ",
+    "author_url": "https://sketchfab.com/kj3dx",
+    "source_url": "https://sketchfab.com/3d-models/scarf-simple-low-poly-99251059433d454a983ebc74981f0871",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "outfit_scarf: rescaled x0.598 to critter-world size, grounded and centred; textures re-encoded <= 0px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Rogue outfit: scarf (outfit_scarf)",
+    "files": [
+      "assets/env/outfit_scarf/outfit_scarf.glb"
+    ]
+  },
+  {
+    "asset": "medal",
+    "author": "armtoucher",
+    "author_url": "https://sketchfab.com/armtoucher",
+    "source_url": "https://sketchfab.com/3d-models/medal-8d2b7074affb44dd84a82c1515980540",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "outfit_medal: rescaled x9.345 to critter-world size, grounded and centred; decimated 4828 -> 2414 triangles (seams welded first, no cracks); textures re-encoded <= 512px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Rogue outfit: medal on a ribbon (outfit_medal)",
+    "files": [
+      "assets/env/outfit_medal/outfit_medal.glb"
+    ]
+  },
+  {
+    "asset": "Necklace Low Poly",
+    "author": "41iveR",
+    "author_url": "https://sketchfab.com/41iveR",
+    "source_url": "https://sketchfab.com/3d-models/necklace-low-poly-25ee9eaa2e0e483f937d5507cf636c31",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "outfit_bead_necklace: rescaled x0.0855 to critter-world size, grounded and centred; decimated 4016 -> 2940 triangles (seams welded first, no cracks); textures re-encoded <= 512px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Rogue outfit: bead necklace (outfit_bead_necklace)",
+    "files": [
+      "assets/env/outfit_bead_necklace/outfit_bead_necklace.glb"
+    ]
+  },
+  {
+    "asset": "Cape",
+    "author": "photon (that one larry)",
+    "author_url": "https://sketchfab.com/Professor_E12",
+    "source_url": "https://sketchfab.com/3d-models/cape-b9efc9d1f1234564b7d5afd20ef76ffc",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "outfit_cape: rescaled x0.2319 to critter-world size, grounded and centred; textures re-encoded <= 512px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Rogue outfit: cape (outfit_cape)",
+    "files": [
+      "assets/env/outfit_cape/outfit_cape.glb"
+    ]
+  },
+  {
+    "asset": "Backpack - Low Poly PBR [1 of 2]",
+    "author": "RETROSPEC",
+    "author_url": "https://sketchfab.com/retro.spec",
+    "source_url": "https://sketchfab.com/3d-models/backpack-low-poly-pbr-1-of-2-0b795895343b44b69191ef9b55b35840",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "outfit_backpack: rescaled x0.0732 to critter-world size, grounded and centred; textures re-encoded <= 512px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Rogue outfit: backpack (outfit_backpack)",
+    "files": [
+      "assets/env/outfit_backpack/outfit_backpack.glb"
+    ]
+  },
+  {
+    "asset": "Straw Hat",
+    "author": "leman0312",
+    "author_url": "https://sketchfab.com/leman0312",
+    "source_url": "https://sketchfab.com/3d-models/straw-hat-5e87ea49ef554c5a97734c35db688bf4",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "outfit_straw_hat: rescaled x0.1186 to critter-world size, grounded and centred; decimated 5868 -> 2940 triangles (seams welded first, no cracks); normal map re-baked from the full-detail source onto the decimated mesh; textures re-encoded <= 512px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Rogue outfit: wide straw sun hat (outfit_straw_hat)",
+    "files": [
+      "assets/env/outfit_straw_hat/outfit_straw_hat.glb"
+    ]
+  },
+  {
+    "asset": "Deerstalker Hat",
+    "author": "alyx",
+    "author_url": "https://sketchfab.com/alyxxx",
+    "source_url": "https://sketchfab.com/3d-models/deerstalker-hat-9088fdc12c7e4b3ba05613adafbea8d2",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "outfit_deerstalker: rescaled x0.0573 to critter-world size, grounded and centred; textures re-encoded <= 128px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Rogue outfit: deerstalker (outfit_deerstalker)",
+    "files": [
+      "assets/env/outfit_deerstalker/outfit_deerstalker.glb"
+    ]
+  }
+]

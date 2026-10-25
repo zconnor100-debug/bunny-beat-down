@@ -26,6 +26,7 @@ ROOT = TOOLS.parents[1]
 CACHE = ROOT / "tools" / "_cache" / "env"
 BUILD = CACHE / "_build"
 OUT = ROOT / "assets" / "credits" / "environment.json"
+OUT_OUTFITS = ROOT / "assets" / "credits" / "outfits.json"   # the rogues' hats and the rest (category "outfit")
 
 CC0 = ("CC0 1.0", "https://creativecommons.org/publicdomain/zero/1.0/")
 
@@ -120,8 +121,10 @@ def merge_by_source(entries: list[dict]) -> list[dict]:
     return list(merged.values())
 
 
-def model_entries() -> list[dict]:
-    recipes = json.loads((TOOLS / "env_recipes.json").read_text())["assets"]
+def model_entries(outfits: bool = False) -> list[dict]:
+    """Scenery models, or (outfits=True) the rogues' outfit pieces."""
+    recipes = [r for r in json.loads((TOOLS / "env_recipes.json").read_text())["assets"]
+               if (r.get("category") == "outfit") == outfits]
     manifest = {e["id"] for e in json.loads((ROOT / "assets" / "env" / "manifest.json").read_text())}
     by_source: "OrderedDict[str, list[dict]]" = OrderedDict()
     for r in recipes:
@@ -141,7 +144,7 @@ def model_entries() -> list[dict]:
             used.append(f"{r.get('desc', r['id'])} ({r['id']})")
             files.append(f"assets/env/{r['id']}/{r['id']}.glb")
         e["changes"] = " | ".join(changes) + " | exported as GLB (+Y up, metres)"
-        e["used_for"] = "Environment scenery: " + ", ".join(used)
+        e["used_for"] = ("Rogue outfit: " if outfits else "Environment scenery: ") + ", ".join(used)
         e["files"] = files
         entries.append(e)
         # materials swapped for a Poly Haven surface (e.g. sharper tree bark) credit that texture too
@@ -192,7 +195,11 @@ def texture_entries() -> list[dict]:
 
 
 def main() -> None:
-    entries = merge_by_source(model_entries() + texture_entries())
+    write(OUT, merge_by_source(model_entries() + texture_entries()))
+    write(OUT_OUTFITS, merge_by_source(model_entries(outfits=True)))
+
+
+def write(out: Path, entries: list[dict]) -> None:
     # sanity: every license must be one the project allows
     allowed = {"CC0 1.0", "CC BY 4.0", "CC BY 3.0", "MIT (project)"}
     bad = [e["asset"] for e in entries if e["license"] not in allowed]
@@ -202,9 +209,9 @@ def main() -> None:
         for f in e["files"]:
             if not (ROOT / f).exists():
                 raise SystemExit(f"credited file missing: {f}")
-    OUT.parent.mkdir(parents=True, exist_ok=True)
-    OUT.write_text(json.dumps(entries, indent=2, ensure_ascii=False) + "\n")
-    print(f"wrote {OUT.relative_to(ROOT)}: {len(entries)} entries")
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(json.dumps(entries, indent=2, ensure_ascii=False) + "\n")
+    print(f"wrote {out.relative_to(ROOT)}: {len(entries)} entries")
 
 
 if __name__ == "__main__":
