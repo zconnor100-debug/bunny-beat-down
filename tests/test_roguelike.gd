@@ -155,7 +155,7 @@ func test_carrots_that_split_pierce_bounce_and_pop() -> void:
 	var blasts := [0]
 	Events.explosion.connect(func(_p, _r): blasts[0] += 1)
 	for i in 6:
-		you.aim_point = b.get_chest_position() + Vector3(4, 0, 0)
+		you.aim_point = you.global_position + Vector3(5, 0, 0)   # (the floor: every carrot lands)
 		you._fire(rifle)
 	await wait_physics(30)
 	check(blasts[0] == 1, "one pop in six carrots (%d)" % blasts[0])
@@ -285,6 +285,8 @@ func test_nemesis_gang_scars_and_your_stolen_gun() -> void:
 	var you := mm.spawn_player(load("res://data/critters/bun.tres"), "default")
 	for c in mm.critters:
 		c.place_at(Vector3(c.global_position.x, 40.0, c.global_position.z), 0.0)
+		if c != you:
+			c.get_node("AIBrain").process_mode = Node.PROCESS_MODE_DISABLED   # (nobody grabs the drop first)
 	await wait_physics(3)
 	vex.take_damage(DamageInfo.make(999.0, DamageInfo.Kind.BULLET, you, &"carrot_rifle"))
 	await wait_frames(2)
@@ -294,7 +296,8 @@ func test_nemesis_gang_scars_and_your_stolen_gun() -> void:
 	sly.take_damage(shot)
 	await wait_frames(2)
 	var sigs := get_tree().get_nodes_in_group(&"pickups").filter(func(p): return p.is_weapon() and (p.spec.weapon as WeaponInstance).signature == "Sly")
-	check(mm.nemesis == null and sigs.size() == 1 and RivalBook.signature_won("Sly"), "nemesis down: its signature gun drops, and it's in your book (%s, %d, %s)" % [mm.nemesis, sigs.size(), RivalBook.signature_won("Sly")])
+	check(mm.nemesis == null and sigs.size() == 1 and RivalBook.signature_won("Sly"),
+		"nemesis down: its signature gun drops, and it's in your book (%s, %d, %s)" % [mm.nemesis, sigs.size(), RivalBook.signature_won("Sly")])
 	check(RivalBook.scars("Sly").has("eye_patch"), "and Sly will remember that headshot")
 	you.give_weapon(WeaponInstance.new(WeaponDB.get_weapon(&"carrot_lmg"), Rarity.Tier.GOLDEN))
 	you.take_damage(DamageInfo.make(999.0, DamageInfo.Kind.BULLET, croaker, &"carrot_rifle"))

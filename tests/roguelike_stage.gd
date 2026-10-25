@@ -1,7 +1,7 @@
 extends "res://tests/workshop_stage.gd"
 ## Stage for tests/capture_roguelike.gd: every species wearing scars (an eye
 ## patch, a bandaged arm, a splinted leg), close-ups, an acorn shrine, a boon
-## draft and the Trail (the test profile).
+## draft, the Trail and the Trophy Room's milestones (the test profile).
 
 
 func _run() -> void:
@@ -72,4 +72,21 @@ func _run() -> void:
 	cc.add_child(tp)
 	await _wait(0.5)
 	await _snap("94_trail")
+	tp.queue_free()
+	# the Trophy Room's milestones page, part of the way there
+	StatBook.begin_match(&"bun")
+	for i in 15:
+		StatBook.note_kill(&"carrot_pistol", 20.0)
+	for i in 9:
+		StatBook.note_kill(&"carrot_shotgun", 6.0)
+	StatBook.end_match(1, 24, false)
+	Mastery.check()
+	var room := TrophyPanel.new()
+	cc.add_child(room)
+	await _wait(0.3)
+	for b in room.find_children("*", "Button", true, false):
+		if b.text == "Milestones":
+			b.pressed.emit()
+	await _wait(0.4)
+	await _snap("95_milestones")
 	get_tree().quit()

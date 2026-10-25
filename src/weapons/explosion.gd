@@ -11,6 +11,8 @@ const COVER_SCALE := 0.3
 static func detonate(tree: SceneTree, pos: Vector3, weapon: WeaponInstance, shooter: Node, direct: Critter = null) -> void:
 	var data := weapon.data
 	var radius := data.splash_radius
+	if shooter is Critter and (shooter as Critter).is_player and data.projectile == WeaponData.ProjectileKind.ROCKET:
+		radius *= Mastery.blast_scale()   # (Big Bang)
 	FX.explosion(pos, radius)
 	Audio.play_at(&"explosion", pos, 4.0, 0.1)
 	Events.explosion.emit(pos, radius)

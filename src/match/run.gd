@@ -57,7 +57,7 @@ static func active() -> bool:
 ## Start a new run (the old one, if any, is given up).
 static func start(seed_: int) -> void:
 	var s := {"active": true, "seed": seed_, "trail": generate(seed_), "row": 0, "at": -1, "playing": -1,
-		"helmets": HELMETS, "rewinds": REWINDS, "boons": {}, "keepsake": {},
+		"helmets": max_helmets(), "rewinds": REWINDS + Mastery.run_rewinds(), "boons": {}, "keepsake": {},
 		"pending": [], "last": {}, "over": false, "complete": false,
 		"stats": {"matches": 0, "wins": 0, "kills": 0, "goals": 0}}
 	_record("started", 1)
@@ -241,7 +241,7 @@ static func picnic(choice: String) -> void:
 		return
 	match choice:
 		"mend":
-			s.helmets = mini(s.helmets + 1, HELMETS)
+			s.helmets = mini(s.helmets + 1, max_helmets())
 		"rewinds":
 			s.rewinds += PICNIC_REWINDS
 		"boon":
@@ -266,6 +266,7 @@ static func take_pending(boon := "", keepsake: Dictionary = {}) -> void:
 		Boons.reset(s.boons)
 		Boons.add(boon)
 		s.boons = Boons.held.duplicate()
+		Mastery.note_boons(Boons.held.size())
 	if first is Dictionary and first.has("keepsake"):
 		s.keepsake = keepsake
 	_save(s)
@@ -283,6 +284,11 @@ static func keepsake() -> WeaponInstance:
 
 static func rewinds() -> int:
 	return int(state().get("rewinds", REWINDS))
+
+
+## Acorn helmets a run starts with (Trailblazer adds one: Mastery).
+static func max_helmets() -> int:
+	return HELMETS + Mastery.run_helmets()
 
 
 static func helmets() -> int:

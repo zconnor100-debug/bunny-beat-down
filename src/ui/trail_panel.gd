@@ -114,7 +114,7 @@ func _summary(s: Dictionary) -> void:
 func _status(s: Dictionary) -> Control:
 	var v := VBoxContainer.new()
 	var h := int(s.get("helmets", Run.HELMETS))
-	var shells := "🌰".repeat(h) + "◌".repeat(maxi(0, Run.HELMETS - h))
+	var shells := "🌰".repeat(h) + "◌".repeat(maxi(0, Run.max_helmets() - h))
 	var keep := Run.keepsake()
 	Boons.reset(Run.boons())
 	v.add_child(_text("Helmets %s   ·   Rewinds ⟲ %d   ·   Keepsake: %s" % [shells, int(s.get("rewinds", 0)),
@@ -133,9 +133,10 @@ func _reward(r) -> void:
 	if str(r) == "draft":
 		var d := DraftPanel.new()
 		d.heading = "Pick a boon"
-		d.choices = Boons.offer(_rng(), 3)
+		d.choices = Boons.offer(_rng(), Mastery.draft_size())
 		d.chosen.connect(func(id):
 			Run.take_pending(id)
+			Mastery.check()
 			rebuild())
 		var c := CenterContainer.new()
 		c.add_child(d)
@@ -172,7 +173,7 @@ func _picnic() -> void:
 	_v.add_child(_buttons([
 		["Mend a helmet", func():
 			Run.picnic("mend")
-			rebuild(), Run.helmets() < Run.HELMETS],
+			rebuild(), Run.helmets() < Run.max_helmets()],
 		["Find %d rewinds" % Run.PICNIC_REWINDS, func():
 			Run.picnic("rewinds")
 			rebuild()],

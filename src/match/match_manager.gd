@@ -347,7 +347,7 @@ func _on_shrine_used(by: Critter) -> void:
 
 ## Offer the player a draft of boons (DraftPanel, via game.gd).
 func offer_boons(title: String) -> void:
-	var choices := Boons.offer(extra_rng, 3)
+	var choices := Boons.offer(extra_rng, Mastery.draft_size())
 	if not choices.is_empty():
 		boons_offered.emit(choices, title)
 
@@ -358,6 +358,19 @@ func choose_boon(id: String) -> void:
 	if player:
 		Boons.apply_level(player, id, was, Boons.level(id))
 	Events.headline.emit("Boon: %s" % Boons.title(id))
+	Mastery.note_boons(Boons.held.size())
+	_check_mastery()
+
+
+## Milestones (Mastery) reached just now: announced, one at a time.
+func _check_mastery() -> void:
+	var fresh := Mastery.check()
+	for i in fresh.size():
+		var m: Dictionary = fresh[i]
+		if i == 0:
+			Events.announce.emit("MILESTONE: %s" % String(m.name).to_upper(), "%s: %s." % [m.text.trim_suffix("."), m.gives])
+		else:
+			Events.headline.emit("Milestone: %s (%s)" % [m.name, m.gives])
 
 
 ## The bounty: the most radical bot you've made (Vengeful or worse), else
@@ -758,6 +771,7 @@ func _on_critter_died(victim: Node, info: DamageInfo) -> void:
 			player.health = minf(player.max_health, player.health + 20.0)
 		_boons_on_kill(c)
 		_scar(c, info)
+		_check_mastery()
 		if not RivalBook.took_gun(c.display_name).is_empty():
 			RivalBook.clear_took_gun(c.display_name)
 			Events.headline.emit("You got your %s back from %s." % [c.get_meta(&"your_gun", "gun"), c.display_name])
@@ -782,6 +796,7 @@ func _on_critter_died(victim: Node, info: DamageInfo) -> void:
 		kill_cam.note_final(c, info)   # (before anyone hears the match is over)
 	if c == player:
 		StatBook.end_match(c.placement, total, true)
+		_check_mastery()
 		player_eliminated.emit(c.placement, info.attacker as Critter)
 	if alive.size() <= 1 and phase != Phase.ENDED:
 		var winner: Critter = alive[0] if alive.size() == 1 else null
@@ -791,6 +806,7 @@ func _on_critter_died(victim: Node, info: DamageInfo) -> void:
 				RivalBook.note_win(winner.display_name)
 			else:
 				StatBook.end_match(1, total, false)
+				_check_mastery()
 		_set_phase(Phase.ENDED)
 		storm.active = false
 		finished.emit(winner, player.placement if not player.alive else 1)

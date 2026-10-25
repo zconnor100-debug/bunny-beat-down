@@ -855,7 +855,8 @@ func _melee_strike() -> void:
 			victims[c] = [area.get_meta(&"role", &"chest"), d, area.global_position]
 	for c in victims:
 		var v: Array = victims[c]
-		var info := DamageInfo.make(MELEE_DAMAGE * RigInfo.DAMAGE_SCALE.get(v[0], 1.0), DamageInfo.Kind.MELEE, self, &"melee")
+		var info := DamageInfo.make(MELEE_DAMAGE * RigInfo.DAMAGE_SCALE.get(v[0], 1.0) * (Mastery.club_scale() if is_player else 1.0),
+			DamageInfo.Kind.MELEE, self, &"melee")
 		info.position = v[2]
 		info.direction = fwd
 		info.bone_role = v[0]

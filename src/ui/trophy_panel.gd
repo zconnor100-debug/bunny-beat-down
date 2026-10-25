@@ -3,8 +3,10 @@ extends PanelContainer
 ## The Trophy Room: your trackers (StatBook). A row for every carrot gun and
 ## the club (beat-downs, accuracy, headshots, damage, longest beat-down) and
 ## for every critter you can play (matches, wins, best placing, beat-downs,
-## beat-downs per time beaten, accuracy), with totals. Fits without
-## scrolling; B or Back closes it.
+## beat-downs per time beaten, accuracy), with totals, your runs and the
+## signature guns you've won; and, on its second page, the milestones
+## (Mastery): what each takes, how far along you are, what it gives. Fits
+## without scrolling; B or Back closes it.
 
 signal closed
 
@@ -20,14 +22,31 @@ func _ready() -> void:
 	var title := UITheme.label("Trophy Room", 52, UITheme.CARROT_LIGHT, true)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(title)
-	v.add_child(UITheme.label("Guns", 28, UITheme.CARROT_LIGHT, true))
-	v.add_child(_table(["", "Beat-downs", "Accuracy", "Headshots", "Damage", "Longest"], gun_rows()))
-	v.add_child(UITheme.label("Critters", 28, UITheme.CARROT_LIGHT, true))
-	v.add_child(_table(["", "Matches", "Wins", "Best", "Beat-downs", "Per defeat", "Accuracy"], critter_rows()))
-	v.add_child(UITheme.label("Runs: " + Run.records_line(), 21, UITheme.CREAM))
+	var pages := HBoxContainer.new()
+	pages.alignment = BoxContainer.ALIGNMENT_CENTER
+	pages.add_theme_constant_override("separation", 14)
+	v.add_child(pages)
+	var trackers := VBoxContainer.new()
+	trackers.add_theme_constant_override("separation", 10)
+	v.add_child(trackers)
+	var milestones := VBoxContainer.new()
+	milestones.visible = false
+	v.add_child(milestones)
+	pages.add_child(UITheme.button("Trackers", func():
+		trackers.visible = true
+		milestones.visible = false))
+	pages.add_child(UITheme.button("Milestones", func():
+		trackers.visible = false
+		milestones.visible = true))
+	trackers.add_child(UITheme.label("Guns", 28, UITheme.CARROT_LIGHT, true))
+	trackers.add_child(_table(["", "Beat-downs", "Accuracy", "Headshots", "Damage", "Longest"], gun_rows()))
+	trackers.add_child(UITheme.label("Critters", 28, UITheme.CARROT_LIGHT, true))
+	trackers.add_child(_table(["", "Matches", "Wins", "Best", "Beat-downs", "Per defeat", "Accuracy"], critter_rows()))
+	trackers.add_child(UITheme.label("Runs: " + Run.records_line(), 21, UITheme.CREAM))
 	var sigs := RivalBook.signatures()
-	v.add_child(UITheme.label("Signature guns won: " + (", ".join(sigs.map(func(b): return RivalBook.signature_gun(b).display_name()))
+	trackers.add_child(UITheme.label("Signature guns won: " + (", ".join(sigs.map(func(b): return RivalBook.signature_gun(b).display_name()))
 		if not sigs.is_empty() else "none yet (win a nemesis hunt)"), 21, UITheme.CREAM))
+	milestones.add_child(_milestones())
 	var back := UITheme.button("Back", func(): closed.emit())
 	back.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	v.add_child(back)
@@ -65,6 +84,23 @@ static func critter_rows() -> Array:
 		rows.append([def.display_name if def else String(id), "%d" % int(c.matches), "%d" % int(c.wins),
 			"#%d" % int(c.best) if c.best > 0.0 else "—", "%d" % int(c.kills), per, StatBook.percent(c)])
 	return rows
+
+
+## The milestones: ✓ and gold once reached.
+func _milestones() -> GridContainer:
+	var grid := GridContainer.new()
+	grid.columns = 4
+	grid.add_theme_constant_override("h_separation", 26)
+	grid.add_theme_constant_override("v_separation", 3)
+	for h in ["Milestone", "What it takes", "", "What it gives"]:
+		grid.add_child(UITheme.label(h, 18, Color(UITheme.CREAM, 0.7)))
+	for r in Mastery.rows():
+		var c: Color = UITheme.CARROT_LIGHT if r[4] else UITheme.CREAM
+		grid.add_child(UITheme.label(("✓ " if r[4] else "") + String(r[0]), 19, c, r[4]))
+		grid.add_child(UITheme.label(r[1], 18, Color(UITheme.CREAM, 0.9)))
+		grid.add_child(UITheme.label(r[2], 18, c))
+		grid.add_child(UITheme.label(r[3], 18, UITheme.LEAF if r[4] else Color(UITheme.CREAM, 0.75)))
+	return grid
 
 
 func _table(headers: Array, rows: Array) -> GridContainer:

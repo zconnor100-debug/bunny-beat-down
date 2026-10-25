@@ -477,6 +477,7 @@ func _finish_run_stop() -> void:
 	var placement := p.placement if not p.alive else (1 if won else match_manager.alive_critters().size())
 	var guns: Array = (p.inventory.weapons if p.alive else p.last_weapons).filter(func(w): return w != null and w != p.get_meta(&"stolen", null))
 	_run_result = Run.finish_match(placement, match_manager.total, p.kills, won, guns, match_manager.time_keeper.charges, Boons.held)
+	match_manager._check_mastery()   # (the runs' milestones)
 
 
 ## The end screen's line about the run.

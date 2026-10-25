@@ -263,6 +263,16 @@ and the final shot replayed from three angles. There's a
   Fragile Fluff (everyone on half health), Rocket Party (every gun a rocket
   launcher), Most Wanted (the nearest bots are told where you are), Stampede
   and Clover Drought.
+- **Milestones (mastery).** Eighteen goals read off your trackers, each
+  unlocking something for good (`Mastery`, the Trophy Room's second page
+  shows your progress): master a gun and its carrots change in your paws
+  (15 pistol beat-downs and they bounce, 25 with the SMG and they pop, 20
+  with the shotgun and its pellets split, 20 with the rifle and they pierce,
+  and so on), 10 rocket beat-downs widen your blasts, 10 with the club make
+  it hit harder; 50 headshots, a win and making a Nemesis unlock Workshop
+  looks; finishing a run gives every run a fourth acorn helmet, clearing
+  three stops a fourth rewind, holding six boons at once makes drafts offer
+  four. Adding one is a row in a table.
 - **The Workshop (in the Burrow): gun upgrades and looks, bought with
   acorns.** Attachments go on every gun you pick up: a Red Dot Sight on the
   gun's own sight line (in first person you aim through its tube at the
@@ -443,7 +453,7 @@ The full write-up is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
   the same views: 31% fewer triangles on the island, 31% on the Hamster
   Cage, 79% on Toy Box Bash, and a third to two thirds fewer shadow
   triangles.
-- **Tests that play the game.** A headless suite of 118 tests covers:
+- **Tests that play the game.** A headless suite of 121 tests covers:
   - the IK maths, hitboxes, ragdolls and dismemberment;
   - island navigation, the three biomes and the big buildings (a Bun walks
     in through the barn doors; every indoor loot spot is reachable on the
@@ -462,7 +472,8 @@ The full write-up is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
     Carrot Juice in a match, carrots that split, pierce, bounce and pop,
     acorn shrines, a run down the Trail (goals, helmets, rewards, picnics,
     the finale and its retry), a nemesis hunt and its signature gun, gangs,
-    scars and your stolen gun, and the Trail and draft screens;
+    scars and your stolen gun, and the Trail and draft screens; milestones
+    (reached once, paid once, each unlock acting only for you);
   - the cast (49 characters, each fighting its own way; a full lobby with
     no "Fox 3"), rivals (made, remembered across runs, back in the next
     match, hunting and taunting, revenge), radical bots (each step, their

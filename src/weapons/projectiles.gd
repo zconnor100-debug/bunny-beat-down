@@ -146,14 +146,15 @@ func _add(s: Shot) -> void:
 		KillCam.instance.note_shot(s)
 
 
-## What this shooter's carrots do from this gun: your boons, and the gun's
-## own mutation (whoever holds it). Rockets are rockets.
+## What this shooter's carrots do from this gun: your boons and mastered
+## guns (Mastery), and the gun's own mutation (whoever holds it). Rockets are rockets.
 static func mutations_for(shooter: Node, weapon: WeaponInstance) -> Dictionary:
 	var m := {}
 	if weapon.data.projectile == WeaponData.ProjectileKind.ROCKET:
 		return m
 	if shooter is Critter and (shooter as Critter).is_player:
 		m = Boons.carrot_mutations()
+		_merge(m, Mastery.gun_mutation(weapon.data.id))
 	if weapon.mutation != "":
 		_merge(m, Boons.gun_mutation(weapon.mutation))
 	return m
