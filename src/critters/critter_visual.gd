@@ -150,7 +150,7 @@ func set_first_person(on: bool) -> void:
 	_first_person = on
 	for m in meshes:
 		m.cast_shadow = _shadow_mode()
-	for n in [helmet, weapon_model, club_model]:
+	for n in [helmet, weapon_model, club_model] + outfit:
 		_match_first_person(n)
 
 
@@ -158,9 +158,13 @@ func set_first_person(on: bool) -> void:
 ## cast shadows (the camera draws its own viewmodel). Anything put in its
 ## paws later — a gun picked up, the club — follows the same rule.
 func _match_first_person(n: Node) -> void:
-	if n:
+	if n and is_instance_valid(n):
 		for m in ModelUtil.find_all(n, "GeometryInstance3D"):
 			(m as GeometryInstance3D).cast_shadow = _shadow_mode()
+
+
+func match_first_person(n: Node) -> void:
+	_match_first_person(n)
 
 
 func _shadow_mode() -> GeometryInstance3D.ShadowCastingSetting:

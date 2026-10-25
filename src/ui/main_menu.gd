@@ -94,6 +94,7 @@ func _build_diorama() -> void:
 	_bun.display_name = _bun.def.display_name
 	add_child(_bun)
 	_bun.visual.apply_skin(String(Settings.get_value(&"player_skin")))
+	Outfits.dress_player(_bun)
 	_bun.place_at(Vector3(0, 0.05, 0), PI * 0.85)
 	_bun.give_weapon(WeaponInstance.new(WeaponDB.get_weapon(&"carrot_lmg"), Rarity.Tier.GOLDEN))
 

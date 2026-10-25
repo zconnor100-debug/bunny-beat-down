@@ -211,6 +211,7 @@ func _show() -> void:
 	_stage.add_child(_preview)
 	_preview.place_at(Vector3(0, 0.05, 0), 0.0)
 	_preview.give_weapon(WeaponInstance.new(WeaponDB.get_weapon(&"carrot_rifle"), Rarity.Tier.PRIZE))
+	Outfits.dress_player(_preview)
 	_frame(_preview.visual.rig.world_head_top if _preview.visual.rig else 1.33)
 	var skins := d.skins()
 	var cur_skin := String(Settings.get_value(&"player_skin"))

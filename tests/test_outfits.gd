@@ -41,9 +41,9 @@ func test_pieces_sit_where_they_belong_on_every_species() -> void:
 		var f := OutfitFit.of(c.visual)
 		check(f.valid, "%s measured" % sp)
 		check(f.crown_y > f.eye_y and f.eye_y > f.neck_y, "%s: neck < eyes < crown (%.2f %.2f %.2f)" % [sp, f.neck_y, f.eye_y, f.crown_y])
-		var hat := Outfits.wear(c.visual, "top_hat")
-		var specs := Outfits.wear(c.visual, "sunglasses")
-		var pack := Outfits.wear(c.visual, "backpack")
+		var hat := Outfits.wear_piece(c.visual, "top_hat")
+		var specs := Outfits.wear_piece(c.visual, "sunglasses")
+		var pack := Outfits.wear_piece(c.visual, "backpack")
 		await wait_frames(2)
 		var hat_box := _box_in(c.visual, hat, &"head")
 		check(hat_box.position.y > f.eye_y - f.head_h * 0.05 and hat_box.position.y < f.crown_y + f.head_h * 0.05,
@@ -98,3 +98,55 @@ func _bodies_holding(prefix: String) -> Array:
 			if String(ch.name).begins_with(prefix):
 				out.append(n)
 	return out
+
+
+func test_your_wardrobe_is_yours_alone() -> void:
+	# every wardrobe option is a piece with a model; none of the rogues wears
+	# one; the ones you can't buy are a milestone's reward
+	var worn_by_rogues := {}
+	for n in Outfits.LOOKS:
+		for item in Outfits.LOOKS[n].wear:
+			worn_by_rogues[item[0] if item is Array else item] = n
+	for cat in Workshop.WARDROBE:
+		for o in Workshop.LOOKS[cat].options:
+			if o[0] == "none":
+				continue
+			check(Outfits.PIECES.has(o[0]) and ResourceLoader.exists(Outfits.model_path(o[0])), "%s is a piece with a model" % o[0])
+			check(not worn_by_rogues.has(o[0]), "no rogue wears the %s (%s does)" % [o[0], worn_by_rogues.get(o[0], "")])
+			var item := "%s:%s" % [cat, o[0]]
+			if Workshop.earned_only(item):
+				check(not Mastery.giving(item).is_empty(), "the %s is a milestone's reward" % o[1])
+
+
+func test_you_wear_what_you_pick_in_the_workshop() -> void:
+	PlayerProfile.reset_for_tests()
+	Burrow.add_acorns(500)
+	check(Workshop.outfit().is_empty(), "nothing worn to start")
+	check(Workshop.buy("wear_hat:fedora") and Workshop.set_look("wear_hat", "fedora"), "buy the fedora and wear it")
+	check(not Workshop.buy("wear_back:fairy_wings"), "the fairy wings aren't for sale")
+	check(Workshop.owns("wear_face:none"), "going without is free")
+	check(Workshop.outfit() == ["fedora"], "wearing the fedora (%s)" % [Workshop.outfit()])
+	var c := spawn_critter("res://data/critters/bun.tres", Vector3(0, 0.1, 0))
+	await wait_physics(2)
+	Outfits.dress_player(c)
+	check(c.visual.outfit.size() == 1, "the bun wears it")
+	check(c.visual.helmet != null and not c.visual.helmet.visible, "a hat takes the acorn helmet's place")
+	Outfits.undress(c.visual)
+	check(c.visual.outfit.is_empty() and c.visual.helmet.visible, "and the helmet comes back without it")
+	# a milestone gives the fairy wings
+	Run._record("completed", 3)
+	Mastery.check()
+	check(Workshop.owns("wear_back:fairy_wings"), "three runs finished: the fairy wings are yours")
+
+
+func test_the_gallery_shows_each_rogue_dressed() -> void:
+	var gallery := GalleryPanel.new()
+	add_child(gallery)
+	await wait_frames(3)
+	gallery._show("Sir Toadsworth")
+	await wait_frames(3)
+	var c: Critter = gallery._portrait.shown_critter()
+	check(c != null and c.def.id == &"frog", "Sir Toadsworth stands in the gallery")
+	check(c.visual.outfit.size() == Outfits.look_of("Sir Toadsworth").wear.size(), "in his top hat and bow tie")
+	check(c.current_weapon() != null and String(c.current_weapon().data.id) == Cast.member("Sir Toadsworth").weapon, "with his favourite gun")
+	gallery.queue_free()

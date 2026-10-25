@@ -531,5 +531,226 @@
     "files": [
       "assets/env/outfit_deerstalker/outfit_deerstalker.glb"
     ]
+  },
+  {
+    "asset": "Low Poly: Witch's Hat",
+    "author": "ClintonAbbott.Art",
+    "author_url": "https://sketchfab.com/clintonabbott.art",
+    "source_url": "https://sketchfab.com/3d-models/low-poly-witchs-hat-d63d984e26614f008fd4d8721506a54d",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "outfit_witch_hat: rescaled x0.1124 to critter-world size, grounded and centred; textures re-encoded <= 512px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Rogue outfit: witch's hat (outfit_witch_hat)",
+    "files": [
+      "assets/env/outfit_witch_hat/outfit_witch_hat.glb"
+    ]
+  },
+  {
+    "asset": "Low Poly Santa Hat",
+    "author": "scrampunk",
+    "author_url": "https://sketchfab.com/scrampunk",
+    "source_url": "https://sketchfab.com/3d-models/low-poly-santa-hat-7010557be50e459da9d0a2bcc0cfff4a",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "outfit_santa_hat: rescaled x0.0917 to critter-world size, grounded and centred; textures re-encoded <= 512px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Rogue outfit: Santa hat (outfit_santa_hat)",
+    "files": [
+      "assets/env/outfit_santa_hat/outfit_santa_hat.glb"
+    ]
+  },
+  {
+    "asset": "Graduation Cap Pro",
+    "author": "mahernahlab",
+    "author_url": "https://sketchfab.com/mahernahlab",
+    "source_url": "https://sketchfab.com/3d-models/graduation-cap-pro-48291f7500eb4c34b881ba32bcff2d41",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "outfit_grad_cap: rescaled x0.2578 to critter-world size, grounded and centred; unlit material 'Material.001' rebuilt as lit PBR (roughness 0.9); unlit material 'Material.002' rebuilt as lit PBR (roughness 0.9); unlit material 'Cylinder.003__0' rebuilt as lit PBR (roughness 0.9); unlit material 'Material.003' rebuilt as lit PBR (roughness 0.9); textures re-encoded <= 0px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Rogue outfit: graduation cap (outfit_grad_cap)",
+    "files": [
+      "assets/env/outfit_grad_cap/outfit_grad_cap.glb"
+    ]
+  },
+  {
+    "asset": "Fedora Hat",
+    "author": "alexnoiseless",
+    "author_url": "https://sketchfab.com/alexnoiseless",
+    "source_url": "https://sketchfab.com/3d-models/fedora-hat-008a0b9867c241a190eb5941f5b4dffb",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "outfit_fedora: rescaled x0.5243 to critter-world size, grounded and centred; decimated 3292 -> 2940 triangles (seams welded first, no cracks); removed baked emission map; removed baked emission map; foliage materials converted to alpha-clip (cut-out) with bled RGBA albedo; textures re-encoded <= 512px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Rogue outfit: fedora (outfit_fedora)",
+    "files": [
+      "assets/env/outfit_fedora/outfit_fedora.glb"
+    ]
+  },
+  {
+    "asset": "Flower Crown",
+    "author": "Moe",
+    "author_url": "https://sketchfab.com/MoeTheModelerAndRipper",
+    "source_url": "https://sketchfab.com/3d-models/flower-crown-539bbaac9b8f41cf82e83eda742f3a37",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "outfit_flower_crown: rescaled x3.501 to critter-world size, grounded and centred; decimated 10890 -> 5878 triangles (seams welded first, no cracks); normal map re-baked from the full-detail source onto the decimated mesh; textures re-encoded <= 512px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Rogue outfit: flower crown (outfit_flower_crown)",
+    "files": [
+      "assets/env/outfit_flower_crown/outfit_flower_crown.glb"
+    ]
+  },
+  {
+    "asset": "Jester-Hat",
+    "author": "someone84368263",
+    "author_url": "https://sketchfab.com/someone84368263",
+    "source_url": "https://sketchfab.com/3d-models/jester-hat-e0df35e947014510807dd99b44f574f6",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "outfit_jester_hat: rescaled x0.0775 to critter-world size, grounded and centred; decimated 13344 -> 2940 triangles (seams welded first, no cracks); normal map re-baked from the full-detail source onto the decimated mesh; textures re-encoded <= 512px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Rogue outfit: jester's hat (outfit_jester_hat)",
+    "files": [
+      "assets/env/outfit_jester_hat/outfit_jester_hat.glb"
+    ]
+  },
+  {
+    "asset": "Low Poly Cartoon Beanie Cap",
+    "author": "chroma3d",
+    "author_url": "https://sketchfab.com/vendol21",
+    "source_url": "https://sketchfab.com/3d-models/low-poly-cartoon-beanie-cap-b4e559480f364fdfb4915c046b0dc9a0",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "outfit_flap_beanie: rescaled x0.0074 to critter-world size, grounded and centred; textures re-encoded <= 0px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Rogue outfit: beanie with ear flaps (outfit_flap_beanie)",
+    "files": [
+      "assets/env/outfit_flap_beanie/outfit_flap_beanie.glb"
+    ]
+  },
+  {
+    "asset": "Heart- Glasses",
+    "author": "jhowars65",
+    "author_url": "https://sketchfab.com/jhowars65",
+    "source_url": "https://sketchfab.com/3d-models/heart-glasses-8e0c9e077d7940ae9a25504d0157aaa0",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "outfit_heart_glasses: rescaled x3.9328 to critter-world size, grounded and centred; textures re-encoded <= 0px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Rogue outfit: heart glasses (outfit_heart_glasses)",
+    "files": [
+      "assets/env/outfit_heart_glasses/outfit_heart_glasses.glb"
+    ]
+  },
+  {
+    "asset": "Party_Glasses_Star💮📷",
+    "author": "ayumi ikeda",
+    "author_url": "https://sketchfab.com/rxf10240",
+    "source_url": "https://sketchfab.com/3d-models/party-glasses-star-78bf450d1b864e6f9a8b0466c79a4503",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "outfit_star_glasses: rescaled x0.041 to critter-world size, grounded and centred; foliage materials converted to alpha-clip (cut-out) with bled RGBA albedo; textures re-encoded <= 512px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Rogue outfit: star party glasses (outfit_star_glasses)",
+    "files": [
+      "assets/env/outfit_star_glasses/outfit_star_glasses.glb"
+    ]
+  },
+  {
+    "asset": "3D Glasses",
+    "author": "seodoaa",
+    "author_url": "https://sketchfab.com/seodoaa",
+    "source_url": "https://sketchfab.com/3d-models/3d-glasses-5cb2d8563fd3457c9ff3b585aeabfedb",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "outfit_glasses_3d: rescaled x0.2255 to critter-world size, grounded and centred; textures re-encoded <= 0px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Rogue outfit: 3D glasses (outfit_glasses_3d)",
+    "files": [
+      "assets/env/outfit_glasses_3d/outfit_glasses_3d.glb"
+    ]
+  },
+  {
+    "asset": "Deal with it glasses [Original]",
+    "author": "BasicModel",
+    "author_url": "https://sketchfab.com/BasicModel",
+    "source_url": "https://sketchfab.com/3d-models/deal-with-it-glasses-original-1c5b6d8f43754e3ba9643b96f6e4c27e",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "outfit_pixel_shades: rescaled x1.2 to critter-world size, grounded and centred; textures re-encoded <= 32px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Rogue outfit: pixel shades (outfit_pixel_shades)",
+    "files": [
+      "assets/env/outfit_pixel_shades/outfit_pixel_shades.glb"
+    ]
+  },
+  {
+    "asset": "Sapphire Necklace",
+    "author": "ddemon26",
+    "author_url": "https://sketchfab.com/ddemon26",
+    "source_url": "https://sketchfab.com/3d-models/sapphire-necklace-fec5f9292f5f479da89ae4e6db46aa13",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "outfit_sapphire_necklace: rescaled x5.8124 to critter-world size, grounded and centred; textures re-encoded <= 0px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Rogue outfit: sapphire necklace (outfit_sapphire_necklace)",
+    "files": [
+      "assets/env/outfit_sapphire_necklace/outfit_sapphire_necklace.glb"
+    ]
+  },
+  {
+    "asset": "Necklace (Artemis) - Character Jewelry (Free)",
+    "author": "CT Reed",
+    "author_url": "https://sketchfab.com/continuumreed",
+    "source_url": "https://sketchfab.com/3d-models/necklace-artemis-character-jewelry-free-ba8d6f335c3e45d2970688aa1b67437d",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "outfit_ring_necklace: rescaled x1.9631 to critter-world size, grounded and centred; foliage materials converted to alpha-clip (cut-out) with bled RGBA albedo; textures re-encoded <= 512px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Rogue outfit: silver ring necklace (outfit_ring_necklace)",
+    "files": [
+      "assets/env/outfit_ring_necklace/outfit_ring_necklace.glb"
+    ]
+  },
+  {
+    "asset": "Jetpack - Low Poly",
+    "author": "calebcram",
+    "author_url": "https://sketchfab.com/calebcram",
+    "source_url": "https://sketchfab.com/3d-models/jetpack-low-poly-478fd958ed2c4f85886cd8d16adbdde4",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "outfit_jetpack: rescaled x0.0233 to critter-world size, grounded and centred; textures re-encoded <= 512px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Rogue outfit: jetpack (outfit_jetpack)",
+    "files": [
+      "assets/env/outfit_jetpack/outfit_jetpack.glb"
+    ]
+  },
+  {
+    "asset": "Fairy Wings (Summer)",
+    "author": "Ace-Jane",
+    "author_url": "https://sketchfab.com/LGBT_DOESN-T_KILL",
+    "source_url": "https://sketchfab.com/3d-models/fairy-wings-summer-a7e0e35e23684042bb1d647e2426f822",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "outfit_fairy_wings: rescaled x0.1443 to critter-world size, grounded and centred; decimated 3224 -> 2940 triangles (seams welded first, no cracks); textures re-encoded <= 256px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Rogue outfit: fairy wings (outfit_fairy_wings)",
+    "files": [
+      "assets/env/outfit_fairy_wings/outfit_fairy_wings.glb"
+    ]
+  },
+  {
+    "asset": "Black Wings",
+    "author": "Chenchanchong",
+    "author_url": "https://sketchfab.com/Chenchanchong",
+    "source_url": "https://sketchfab.com/3d-models/black-wings-c07e65d3490b48aaa0f2d278e2efaa9b",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "outfit_dark_wings: rescaled x0.2267 to critter-world size, grounded and centred; decimated 4292 -> 2940 triangles (seams welded first, no cracks); foliage materials converted to alpha-clip (cut-out) with bled RGBA albedo; textures re-encoded <= 256px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Rogue outfit: dark feathered wings (outfit_dark_wings)",
+    "files": [
+      "assets/env/outfit_dark_wings/outfit_dark_wings.glb"
+    ]
+  },
+  {
+    "asset": "Butterfly wings",
+    "author": "Cybertron B-127",
+    "author_url": "https://sketchfab.com/robo-reboot",
+    "source_url": "https://sketchfab.com/3d-models/butterfly-wings-d8c0e2dd562e4892b79cb4d4584b5ecd",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "outfit_butterfly_wings: rescaled x0.8 to critter-world size, grounded and centred; foliage materials converted to alpha-clip (cut-out) with bled RGBA albedo; textures re-encoded <= 512px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Rogue outfit: butterfly wings (outfit_butterfly_wings)",
+    "files": [
+      "assets/env/outfit_butterfly_wings/outfit_butterfly_wings.glb"
+    ]
   }
 ]

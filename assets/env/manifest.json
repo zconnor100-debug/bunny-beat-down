@@ -2462,5 +2462,277 @@
     "density_weight": 1.0,
     "sink_m": 0.0,
     "tris": 424
+  },
+  {
+    "id": "outfit_witch_hat",
+    "file": "assets/env/outfit_witch_hat/outfit_witch_hat.glb",
+    "category": "outfit",
+    "height_m": 0.3,
+    "footprint_radius_m": 0.22,
+    "collision": "none",
+    "collision_radius_m": 0.0,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 1.0,
+    "sink_m": 0.0,
+    "tris": 1080
+  },
+  {
+    "id": "outfit_santa_hat",
+    "file": "assets/env/outfit_santa_hat/outfit_santa_hat.glb",
+    "category": "outfit",
+    "height_m": 0.3,
+    "footprint_radius_m": 0.18,
+    "collision": "none",
+    "collision_radius_m": 0.0,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 1.0,
+    "sink_m": 0.0,
+    "tris": 575
+  },
+  {
+    "id": "outfit_grad_cap",
+    "file": "assets/env/outfit_grad_cap/outfit_grad_cap.glb",
+    "category": "outfit",
+    "height_m": 0.3,
+    "footprint_radius_m": 0.76,
+    "collision": "none",
+    "collision_radius_m": 0.0,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 1.0,
+    "sink_m": 0.0,
+    "tris": 2700
+  },
+  {
+    "id": "outfit_fedora",
+    "file": "assets/env/outfit_fedora/outfit_fedora.glb",
+    "category": "outfit",
+    "height_m": 0.3,
+    "footprint_radius_m": 0.36,
+    "collision": "none",
+    "collision_radius_m": 0.0,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 1.0,
+    "sink_m": 0.0,
+    "tris": 2940
+  },
+  {
+    "id": "outfit_flower_crown",
+    "file": "assets/env/outfit_flower_crown/outfit_flower_crown.glb",
+    "category": "outfit",
+    "height_m": 0.3,
+    "footprint_radius_m": 0.53,
+    "collision": "none",
+    "collision_radius_m": 0.0,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 1.0,
+    "sink_m": 0.0,
+    "tris": 5878
+  },
+  {
+    "id": "outfit_jester_hat",
+    "file": "assets/env/outfit_jester_hat/outfit_jester_hat.glb",
+    "category": "outfit",
+    "height_m": 0.3,
+    "footprint_radius_m": 0.56,
+    "collision": "none",
+    "collision_radius_m": 0.0,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 1.0,
+    "sink_m": 0.0,
+    "tris": 2940
+  },
+  {
+    "id": "outfit_flap_beanie",
+    "file": "assets/env/outfit_flap_beanie/outfit_flap_beanie.glb",
+    "category": "outfit",
+    "height_m": 0.3,
+    "footprint_radius_m": 0.07,
+    "collision": "none",
+    "collision_radius_m": 0.0,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 1.0,
+    "sink_m": 0.0,
+    "tris": 2028
+  },
+  {
+    "id": "outfit_heart_glasses",
+    "file": "assets/env/outfit_heart_glasses/outfit_heart_glasses.glb",
+    "category": "outfit",
+    "height_m": 0.3,
+    "footprint_radius_m": 0.37,
+    "collision": "none",
+    "collision_radius_m": 0.0,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 1.0,
+    "sink_m": 0.0,
+    "tris": 1052
+  },
+  {
+    "id": "outfit_star_glasses",
+    "file": "assets/env/outfit_star_glasses/outfit_star_glasses.glb",
+    "category": "outfit",
+    "height_m": 0.3,
+    "footprint_radius_m": 0.43,
+    "collision": "none",
+    "collision_radius_m": 0.0,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 1.0,
+    "sink_m": 0.0,
+    "tris": 652
+  },
+  {
+    "id": "outfit_glasses_3d",
+    "file": "assets/env/outfit_glasses_3d/outfit_glasses_3d.glb",
+    "category": "outfit",
+    "height_m": 0.3,
+    "footprint_radius_m": 0.8,
+    "collision": "none",
+    "collision_radius_m": 0.0,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 1.0,
+    "sink_m": 0.0,
+    "tris": 356
+  },
+  {
+    "id": "outfit_pixel_shades",
+    "file": "assets/env/outfit_pixel_shades/outfit_pixel_shades.glb",
+    "category": "outfit",
+    "height_m": 0.3,
+    "footprint_radius_m": 0.96,
+    "collision": "none",
+    "collision_radius_m": 0.0,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 1.0,
+    "sink_m": 0.0,
+    "tris": 1332
+  },
+  {
+    "id": "outfit_sapphire_necklace",
+    "file": "assets/env/outfit_sapphire_necklace/outfit_sapphire_necklace.glb",
+    "category": "outfit",
+    "height_m": 0.3,
+    "footprint_radius_m": 1.08,
+    "collision": "none",
+    "collision_radius_m": 0.0,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 1.0,
+    "sink_m": 0.0,
+    "tris": 120
+  },
+  {
+    "id": "outfit_ring_necklace",
+    "file": "assets/env/outfit_ring_necklace/outfit_ring_necklace.glb",
+    "category": "outfit",
+    "height_m": 0.3,
+    "footprint_radius_m": 0.18,
+    "collision": "none",
+    "collision_radius_m": 0.0,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 1.0,
+    "sink_m": 0.0,
+    "tris": 1212
+  },
+  {
+    "id": "outfit_jetpack",
+    "file": "assets/env/outfit_jetpack/outfit_jetpack.glb",
+    "category": "outfit",
+    "height_m": 0.3,
+    "footprint_radius_m": 0.15,
+    "collision": "none",
+    "collision_radius_m": 0.0,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 1.0,
+    "sink_m": 0.0,
+    "tris": 2312
+  },
+  {
+    "id": "outfit_fairy_wings",
+    "file": "assets/env/outfit_fairy_wings/outfit_fairy_wings.glb",
+    "category": "outfit",
+    "height_m": 0.3,
+    "footprint_radius_m": 0.35,
+    "collision": "none",
+    "collision_radius_m": 0.0,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 1.0,
+    "sink_m": 0.0,
+    "tris": 2940
+  },
+  {
+    "id": "outfit_dark_wings",
+    "file": "assets/env/outfit_dark_wings/outfit_dark_wings.glb",
+    "category": "outfit",
+    "height_m": 0.3,
+    "footprint_radius_m": 0.38,
+    "collision": "none",
+    "collision_radius_m": 0.0,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 1.0,
+    "sink_m": 0.0,
+    "tris": 2940
+  },
+  {
+    "id": "outfit_butterfly_wings",
+    "file": "assets/env/outfit_butterfly_wings/outfit_butterfly_wings.glb",
+    "category": "outfit",
+    "height_m": 0.3,
+    "footprint_radius_m": 0.2,
+    "collision": "none",
+    "collision_radius_m": 0.0,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 1.0,
+    "sink_m": 0.0,
+    "tris": 2
   }
 ]

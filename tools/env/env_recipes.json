@@ -175,6 +175,23 @@
     {"id": "outfit_cape", "source": "sf:b9efc9d1f1234564b7d5afd20ef76ffc", "height_m": 0.3, "max_tris": 3000, "tex": 512, "category": "outfit", "collision": "none", "desc": "cape", "exclude": ["^Icosphere"]},
     {"id": "outfit_backpack", "source": "sf:0b795895343b44b69191ef9b55b35840", "height_m": 0.3, "max_tris": 3000, "tex": 512, "category": "outfit", "collision": "none", "desc": "backpack"},
     {"id": "outfit_straw_hat", "source": "sf:5e87ea49ef554c5a97734c35db688bf4", "height_m": 0.3, "max_tris": 3000, "tex": 512, "category": "outfit", "collision": "none", "desc": "wide straw sun hat"},
-    {"id": "outfit_deerstalker", "source": "sf:9088fdc12c7e4b3ba05613adafbea8d2", "exclude": ["^Object_2$"], "height_m": 0.3, "max_tris": 3000, "tex": 512, "category": "outfit", "collision": "none", "desc": "deerstalker"}
+    {"id": "outfit_deerstalker", "source": "sf:9088fdc12c7e4b3ba05613adafbea8d2", "exclude": ["^Object_2$"], "height_m": 0.3, "max_tris": 3000, "tex": 512, "category": "outfit", "collision": "none", "desc": "deerstalker"},
+    {"id": "outfit_witch_hat", "source": "sf:d63d984e26614f008fd4d8721506a54d", "height_m": 0.3, "max_tris": 3000, "tex": 512, "category": "outfit", "collision": "none", "desc": "witch's hat"},
+    {"id": "outfit_santa_hat", "source": "sf:7010557be50e459da9d0a2bcc0cfff4a", "height_m": 0.3, "max_tris": 3000, "tex": 512, "category": "outfit", "collision": "none", "desc": "Santa hat"},
+    {"id": "outfit_grad_cap", "source": "sf:48291f7500eb4c34b881ba32bcff2d41", "height_m": 0.3, "max_tris": 3000, "tex": 512, "category": "outfit", "collision": "none", "desc": "graduation cap"},
+    {"id": "outfit_fedora", "source": "sf:008a0b9867c241a190eb5941f5b4dffb", "height_m": 0.3, "max_tris": 3000, "tex": 512, "category": "outfit", "collision": "none", "desc": "fedora"},
+    {"id": "outfit_flower_crown", "source": "sf:539bbaac9b8f41cf82e83eda742f3a37", "height_m": 0.3, "max_tris": 6000, "tex": 512, "category": "outfit", "collision": "none", "desc": "flower crown"},
+    {"id": "outfit_jester_hat", "source": "sf:e0df35e947014510807dd99b44f574f6", "height_m": 0.3, "max_tris": 3000, "tex": 512, "category": "outfit", "collision": "none", "desc": "jester's hat"},
+    {"id": "outfit_flap_beanie", "source": "sf:b4e559480f364fdfb4915c046b0dc9a0", "height_m": 0.3, "max_tris": 3000, "tex": 512, "category": "outfit", "collision": "none", "desc": "beanie with ear flaps"},
+    {"id": "outfit_heart_glasses", "source": "sf:8e0c9e077d7940ae9a25504d0157aaa0", "exclude": ["^Icosphere"], "height_m": 0.3, "max_tris": 3000, "tex": 512, "category": "outfit", "collision": "none", "desc": "heart glasses"},
+    {"id": "outfit_star_glasses", "source": "sf:78bf450d1b864e6f9a8b0466c79a4503", "height_m": 0.3, "max_tris": 3000, "tex": 512, "category": "outfit", "collision": "none", "desc": "star party glasses"},
+    {"id": "outfit_glasses_3d", "source": "sf:5cb2d8563fd3457c9ff3b585aeabfedb", "height_m": 0.3, "max_tris": 3000, "tex": 512, "category": "outfit", "collision": "none", "desc": "3D glasses"},
+    {"id": "outfit_pixel_shades", "source": "sf:1c5b6d8f43754e3ba9643b96f6e4c27e", "height_m": 0.3, "max_tris": 3000, "tex": 512, "category": "outfit", "collision": "none", "desc": "pixel shades"},
+    {"id": "outfit_sapphire_necklace", "source": "sf:fec5f9292f5f479da89ae4e6db46aa13", "height_m": 0.3, "max_tris": 3000, "tex": 512, "category": "outfit", "collision": "none", "desc": "sapphire necklace"},
+    {"id": "outfit_ring_necklace", "source": "sf:ba8d6f335c3e45d2970688aa1b67437d", "height_m": 0.3, "max_tris": 3000, "tex": 512, "category": "outfit", "collision": "none", "desc": "silver ring necklace"},
+    {"id": "outfit_jetpack", "source": "sf:478fd958ed2c4f85886cd8d16adbdde4", "height_m": 0.3, "max_tris": 3000, "tex": 512, "category": "outfit", "collision": "none", "desc": "jetpack"},
+    {"id": "outfit_fairy_wings", "source": "sf:a7e0e35e23684042bb1d647e2426f822", "height_m": 0.3, "max_tris": 3000, "tex": 512, "category": "outfit", "collision": "none", "desc": "fairy wings"},
+    {"id": "outfit_dark_wings", "source": "sf:c07e65d3490b48aaa0f2d278e2efaa9b", "exclude": ["^Icosphere"], "height_m": 0.3, "max_tris": 3000, "tex": 512, "category": "outfit", "collision": "none", "desc": "dark feathered wings"},
+    {"id": "outfit_butterfly_wings", "source": "sf:d8c0e2dd562e4892b79cb4d4584b5ecd", "height_m": 0.3, "max_tris": 3000, "tex": 512, "category": "outfit", "collision": "none", "desc": "butterfly wings"}
   ]
 }

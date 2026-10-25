@@ -28,7 +28,8 @@ extends RefCounted
 ## back: how far back from the middle of the skull a hat sits (share of its depth);
 ## strap: the share of the model's height that hangs below where the head
 ## goes in (a chin strap, a sloping brim);
-## flat: squash it to this share of its height (a band as thin as a band).
+## flat: squash it to this share of its height (a band as thin as a band);
+## tint: its colour when the look doesn't give one (a model that came pale).
 const PIECES := {
 	"captain_hat": {"slot": "hat", "size": 1.15, "yaw": 0.0, "sink": 0.16},
 	"top_hat": {"slot": "hat", "size": 0.95, "yaw": 0.0, "sink": 0.1},
@@ -71,6 +72,24 @@ const PIECES := {
 	"medal": {"slot": "medal", "size": 1.0, "yaw": 0.0},
 	"cape": {"slot": "cape", "size": 2.1, "yaw": 0.0, "two_sided": true},
 	"backpack": {"slot": "pack", "size": 1.25, "yaw": 0.0},
+	# yours only (the Workshop's wardrobe: no rogue wears these)
+	"witch_hat": {"slot": "hat", "size": 1.5, "yaw": 0.0, "sink": 0.12},
+	"santa_hat": {"slot": "hat", "size": 1.2, "yaw": 0.0, "sink": 0.2},
+	"grad_cap": {"slot": "hat", "size": 1.3, "yaw": 0.0, "sink": 0.1, "tint": "#23232b"},
+	"fedora": {"slot": "hat", "size": 1.35, "yaw": 0.0, "sink": 0.16},
+	"flower_crown": {"slot": "hat", "size": 0.95, "yaw": 0.0, "sink": 0.06},
+	"jester_hat": {"slot": "hat", "size": 1.6, "yaw": 0.0, "sink": 0.14},
+	"flap_beanie": {"slot": "hat", "size": 1.0, "yaw": 0.0, "sink": 0.2, "strap": 0.6},
+	"heart_glasses": {"slot": "glasses", "size": 1.15, "yaw": 0.0, "tint": "#ff6fae"},
+	"star_glasses": {"slot": "glasses", "size": 1.25, "yaw": 0.0},
+	"glasses_3d": {"slot": "glasses", "size": 1.15, "yaw": 0.0},
+	"pixel_shades": {"slot": "glasses", "size": 1.15, "yaw": 90.0},
+	"sapphire_necklace": {"slot": "collar", "size": 1.7, "yaw": 90.0},
+	"ring_necklace": {"slot": "collar", "size": 1.35, "yaw": 0.0},
+	"jetpack": {"slot": "pack", "size": 1.1, "yaw": 0.0},
+	"fairy_wings": {"slot": "cape", "size": 2.4, "yaw": 0.0, "two_sided": true},
+	"dark_wings": {"slot": "cape", "size": 3.0, "yaw": 0.0, "two_sided": true},
+	"butterfly_wings": {"slot": "cape", "size": 2.6, "yaw": 0.0, "two_sided": true},
 }
 
 ## Who wears what: the fur (one of the species' skins) and the pieces, each
@@ -148,6 +167,29 @@ static func look_of(rogue: String) -> Dictionary:
 	return LOOKS.get(rogue, {})
 
 
+## Dress your own critter: your skin (Settings) and what you wear from the
+## Workshop's wardrobe (or `wear` instead, to try things on). A hat takes the
+## place of the acorn helmet.
+static func dress_player(c: Critter, wear: Variant = null) -> void:
+	if c.visual == null or c.visual.rig == null:
+		return
+	var pieces: Array = wear if wear is Array else Workshop.outfit()
+	for id in pieces:
+		wear_piece(c.visual, id)
+	if c.visual.helmet and is_instance_valid(c.visual.helmet):
+		c.visual.helmet.visible = not pieces.any(func(id): return PIECES.get(id, {}).get("slot", "") == "hat")
+
+
+## Take off every piece (to dress again).
+static func undress(v: CritterVisual) -> void:
+	for piece in v.outfit:
+		if is_instance_valid(piece):
+			piece.queue_free()
+	v.outfit.clear()
+	if v.helmet and is_instance_valid(v.helmet):
+		v.helmet.visible = true
+
+
 ## Dress a critter as `rogue` (its skin and pieces). Nothing for a name that
 ## has no look (the player, test critters).
 static func dress(c: Critter, rogue: String) -> void:
@@ -159,14 +201,16 @@ static func dress(c: Critter, rogue: String) -> void:
 	for item in look.get("wear", []):
 		var id: String = item[0] if item is Array else item
 		var tint := Color(item[1]) if item is Array else Color.WHITE
-		wear(c.visual, id, tint)
+		wear_piece(c.visual, id, tint)
 
 
 ## Put one piece on (returns it, or null if its model is missing).
-static func wear(v: CritterVisual, id: String, tint := Color.WHITE) -> Node3D:
+static func wear_piece(v: CritterVisual, id: String, tint := Color.WHITE) -> Node3D:
 	var spec: Dictionary = PIECES.get(id, {})
 	if spec.is_empty():
 		return null
+	if tint == Color.WHITE and spec.has("tint"):
+		tint = Color(spec.tint)
 	var m := ModelUtil.instantiate(model_path(id))
 	if m == null:
 		return null
@@ -194,6 +238,7 @@ static func wear(v: CritterVisual, id: String, tint := Color.WHITE) -> Node3D:
 			_tint(g as MeshInstance3D, tint, spec.get("two_sided", false))
 	att.add_child(holder)
 	v.outfit.append(holder)
+	v.match_first_person(holder)   # (your own outfit only casts a shadow in first person)
 	return holder
 
 
@@ -235,7 +280,7 @@ static func _place(f: OutfitFit, slot: String, spec: Dictionary, box: AABB) -> T
 			k = f.chest_w * 0.22 * size / w
 			at = Vector3(f.head_c.x + f.chest_w * 0.18, lerpf(f.chest_y, f.neck_y, 0.35) - box.get_center().y * k, f.chest_front + f.head_d * 0.02 - box.position.z * k)
 		"cape":
-			k = f.chest_w * size / w
+			k = maxf(f.chest_w, f.head_w * 0.75) * size / w   # (a lanky fox's chest is narrower than its head)
 			at = Vector3(f.head_c.x, maxf(f.shoulder_y, f.neck_y) + f.head_h * 0.15 - box.end.y * k, f.chest_back - f.head_d * 0.06 - box.end.z * k)
 		"pack":
 			k = f.chest_w * 0.75 * size / w

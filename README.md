@@ -218,8 +218,9 @@ and the final shot replayed from three angles. There's a
     it (its hits are never softened) and curses it when the Briar moves.
   - The drop opens with the lobby's news: who you've made radical, who's
     feuding, who's furious with the director, and the bounty. The
-    **Rogues' Gallery** (main menu) has a card for each of the 49: who they
-    are, how they fight, the score with you, their wins and grudges, and
+    **Rogues' Gallery** (main menu) has a card for each of the 49: the
+    rogue itself turning on a little stand in its outfit with its favourite
+    gun (spin it with the mouse), who they are, how they fight, the score with you, their wins and grudges, and
     their own trackers (accuracy, headshots, damage, beat-downs by gun and
     their longest beat-down).
   - **Your Nemesis hunts you.** A bot you've beaten down eight times is your
@@ -285,7 +286,10 @@ and the final shot replayed from three angles. There's a
   it hit harder; 50 headshots, a win and making a Nemesis unlock Workshop
   looks; finishing a run gives every run a fourth acorn helmet, clearing
   three stops a fourth rewind, holding six boons at once makes drafts offer
-  four. Adding one is a row in a table.
+  four; and five wardrobe pieces can only be earned (three wins for the
+  mortarboard, 30 rogues beaten for the jester's cap, 25 sniper headshots
+  for the star glasses, three runs for the fairy wings, two nemesis hunts
+  for the dark wings). Adding one is a row in a table.
 - **The Workshop (in the Burrow): gun upgrades and looks, bought with
   acorns.** Attachments go on every gun you pick up: a Red Dot Sight on the
   gun's own sight line (in first person you aim through its tube at the
@@ -297,7 +301,14 @@ and the final shot replayed from three angles. There's a
   gun's own materials: fern camo, candy stripe, midnight, bubblegum, frost,
   gilded), muzzle-flash colours (rainbow too), muzzle smoke, your tracer
   colour and the burst when you beat a critter down (confetti, autumn
-  leaves, a carrot shower, hearts). `tests/capture_workshop.gd` renders them
+  leaves, a carrot shower, hearts). **Your wardrobe** is yours alone (no
+  rogue wears any of it): a hat (ear-flap beanie, flower crown, Santa hat,
+  fedora, witch's and wizard's hats, a mortarboard, a jester's cap),
+  something for your face (heart, 3D, pixel and star glasses), a necklace,
+  and something on your back (butterfly, fairy or dark wings, a jetpack),
+  fitted to whichever critter you play like the rogues' outfits and shown
+  on you beside the list as you browse, bought or not. A hat takes the
+  acorn helmet's place. `tests/capture_workshop.gd` renders them
   all.
 - **Rewind.** The game records the last ten seconds of the match, and you
   get three rewinds a match (on a run, three for the whole run): press **T** (or pick *Rewind* in the pause
@@ -478,7 +489,7 @@ The full write-up is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
   the same views: 31% fewer triangles on the island, 31% on the Hamster
   Cage, 79% on Toy Box Bash, and a third to two thirds fewer shadow
   triangles.
-- **Tests that play the game.** A headless suite of 131 tests covers:
+- **Tests that play the game.** A headless suite of 134 tests covers:
   - the IK maths, hitboxes, ragdolls and dismemberment, and how critters
     carry themselves (never frozen, guns carried low but shooting from the
     aim, held clear of the head, both paws on the handles of every gun, feet

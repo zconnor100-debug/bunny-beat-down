@@ -172,6 +172,7 @@ func spawn_player(def: CritterDef, skin_id: String) -> Critter:
 	var display := "Bun" if def.id == &"bun" else "You (%s)" % def.display_name
 	player = _spawn_critter(def, display)
 	player.visual.apply_skin(skin_id)
+	Outfits.dress_player(player)   # (your wardrobe, from the Workshop)
 	StatBook.begin_match(def.id)
 	_apply_perks(player)
 	var pc := PlayerController.new()

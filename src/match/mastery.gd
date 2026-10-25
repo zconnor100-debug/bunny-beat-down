@@ -56,6 +56,17 @@ const MILESTONES := [
 		"reward": {"run_rewinds": 1}, "gives": "a fourth rewind on every run"},
 	{"id": "trailblazer", "name": "Trailblazer", "text": "Finish a run.", "stat": "runs_done", "need": 1,
 		"reward": {"run_helmets": 1}, "gives": "a fourth acorn helmet on every run"},
+	# wardrobe pieces you can't buy (Workshop: cost -1)
+	{"id": "top_of_class", "name": "Top of the Class", "text": "Win 3 matches.", "stat": "wins", "need": 3,
+		"reward": {"look": "wear_hat:grad_cap"}, "gives": "the mortarboard"},
+	{"id": "court_jester", "name": "Court Jester", "text": "Beat down 30 different bots from the cast.", "stat": "cast_beaten", "need": 30,
+		"reward": {"look": "wear_hat:jester_hat"}, "gives": "the jester's cap"},
+	{"id": "star_shooter", "name": "Star Shooter", "text": "Land 25 headshots with the sniper.", "stat": "gun_heads:carrot_sniper", "need": 25,
+		"reward": {"look": "wear_face:star_glasses"}, "gives": "the star glasses"},
+	{"id": "fairy_tale", "name": "Fairy Tale", "text": "Finish 3 runs.", "stat": "runs_done", "need": 3,
+		"reward": {"look": "wear_back:fairy_wings"}, "gives": "the fairy wings"},
+	{"id": "dark_horse", "name": "Dark Horse", "text": "Win 2 nemesis hunts.", "stat": "signatures", "need": 2,
+		"reward": {"look": "wear_back:dark_wings"}, "gives": "the dark wings"},
 ]
 
 
@@ -140,6 +151,14 @@ static func check() -> Array:
 # ---- the rewards, where they act ---------------------------------------------------------------
 
 ## A mastered gun's mutation, for your carrots (Projectiles.mutations_for).
+## The milestone that gives a Workshop look ("category:id"), or {}.
+static func giving(look: String) -> Dictionary:
+	for m in MILESTONES:
+		if m.reward.get("look", "") == look:
+			return m
+	return {}
+
+
 static func gun_mutation(gun_id: StringName) -> Dictionary:
 	for m in MILESTONES:
 		if m.reward.get("mutation", "") == String(gun_id) and has(m.id):

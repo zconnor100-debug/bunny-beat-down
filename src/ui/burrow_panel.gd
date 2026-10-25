@@ -4,14 +4,16 @@ extends PanelContainer
 ## take into the next match (Burrow.slots() of them), upgrade the Burrow,
 ## switch run modifiers on or off, and in the Workshop buy gun attachments
 ## (fit or take them off) and looks (browse each with ◂ ▸; one you own is
-## worn as soon as you pick it). Pad friendly: every row is buttons, and the
-## list scrolls with the focus.
+## worn as soon as you pick it), your wardrobe among them: a portrait beside
+## the list shows you wearing what you're browsing, bought or not. Pad
+## friendly: every row is buttons, and the list scrolls with the focus.
 
 signal closed
 
 var _acorns: Label
 var _list: VBoxContainer
 var _browse: Dictionary = {}        # look category -> option index shown
+var _portrait: CritterPortrait
 
 
 func _ready() -> void:
@@ -26,11 +28,16 @@ func _ready() -> void:
 	_acorns = UITheme.label("", 24, UITheme.CREAM)
 	_acorns.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(_acorns)
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 16)
+	v.add_child(row)
 	var scroll := ScrollContainer.new()
-	scroll.custom_minimum_size = Vector2(1040, 560)
+	scroll.custom_minimum_size = Vector2(720, 560)
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	scroll.follow_focus = true
-	v.add_child(scroll)
+	row.add_child(scroll)
+	_portrait = CritterPortrait.new(Vector2(320, 560))
+	row.add_child(_portrait)
 	_list = VBoxContainer.new()
 	_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_list.add_theme_constant_override("separation", 8)
@@ -54,6 +61,7 @@ func _rebuild(focus_key := "") -> void:
 		_list.remove_child(c)
 		c.queue_free()
 	_acorns.text = "🌰 %d acorns   •   perks equipped: %d of %d" % [Burrow.acorns(), Burrow.equipped().size(), Burrow.slots()]
+	_portrait.show_player(trying_on())
 	var focus: Dictionary = {}   # key -> button
 	_heading("Perks")
 	for id in Burrow.PERKS:
@@ -89,6 +97,10 @@ func _rebuild(focus_key := "") -> void:
 		focus[id] = _row("%s — %s" % [a.name, a.text], state, func(): _attachment_pressed(id))
 	_heading("Workshop: looks")
 	for cat in Workshop.LOOKS:
+		if not Workshop.WARDROBE.has(cat):
+			_look_row(cat, focus)
+	_heading("Workshop: wardrobe (yours alone: no rogue wears these)")
+	for cat in Workshop.WARDROBE:
 		_look_row(cat, focus)
 	var to_focus: Control = focus.get(focus_key)
 	if to_focus == null:
@@ -127,7 +139,8 @@ func _look_row(cat: String, focus: Dictionary) -> void:
 	var l := UITheme.label("%s: %s" % [Workshop.LOOKS[cat].label, opt[1]], 21)
 	l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	h.add_child(l)
-	h.add_child(LookPreview.new(cat, opt[0], self))
+	if not Workshop.WARDROBE.has(cat):   # (the wardrobe shows on you, in the portrait)
+		h.add_child(LookPreview.new(cat, opt[0], self))
 	var prev := UITheme.button("◂", func(): _step(cat, -1))
 	prev.custom_minimum_size = Vector2(60, 0)
 	h.add_child(prev)
@@ -135,6 +148,9 @@ func _look_row(cat: String, focus: Dictionary) -> void:
 	next.custom_minimum_size = Vector2(60, 0)
 	h.add_child(next)
 	var state := "Buy — %d 🌰" % int(opt[2])
+	if Workshop.earned_only(item):
+		var m := Mastery.giving(item)
+		state = "Earn: %s" % m.get("name", "a milestone")
 	if Workshop.owns(item):
 		state = "Wearing ✓" if Workshop.look(cat) == opt[0] else "Wear"
 	var act := UITheme.button(state, func(): _look_pressed(cat))
@@ -151,6 +167,11 @@ func shown(cat: String) -> String:
 	return Workshop.LOOKS[cat].options[_browse[cat]][0]
 
 
+## The wardrobe as browsed: what the portrait tries on you.
+func trying_on() -> Array:
+	return Workshop.WARDROBE.map(func(cat): return shown(cat)).filter(func(id): return id != "none")
+
+
 func _step(cat: String, by: int) -> void:
 	var n: int = Workshop.LOOKS[cat].options.size()
 	_browse[cat] = posmod(int(_browse[cat]) + by, n)
@@ -161,6 +182,9 @@ func _step(cat: String, by: int) -> void:
 func _look_pressed(cat: String) -> void:
 	var id := shown(cat)
 	var item := "%s:%s" % [cat, id]
+	if not Workshop.owns(item) and Workshop.earned_only(item):
+		_acorns.text = "Not for sale: %s — %s" % [Mastery.giving(item).get("name", "a milestone"), Mastery.giving(item).get("text", "")]
+		return
 	if not Workshop.owns(item) and not Workshop.buy(item):
 		_short()
 		return

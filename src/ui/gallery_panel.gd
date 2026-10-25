@@ -1,7 +1,8 @@
 class_name GalleryPanel
 extends PanelContainer
 ## The Rogues' Gallery: all 49 bots (Cast), the ones with the most history
-## with you first. Each card: its name (and how radical you've made it), its
+## with you first. Each card: the rogue itself, turning on a little stand in
+## its own outfit with its favourite gun (CritterPortrait), its name (and how radical you've made it), its
 ## species, way of fighting, voice and favourite gun, who it is, the score
 ## between you, its wins, its trackers (accuracy, headshots, damage,
 ## beat-downs by gun, longest beat-down), and the grudges it holds (against
@@ -16,6 +17,7 @@ const SPECIES := {"bandit_bunny": "Bandit Bunny", "squirrel": "Squirrel", "fox":
 var _list: VBoxContainer
 var _name: Label
 var _detail: Label
+var _portrait: CritterPortrait
 
 
 func _ready() -> void:
@@ -46,12 +48,20 @@ func _ready() -> void:
 	side.custom_minimum_size = Vector2(580, 0)
 	side.add_theme_constant_override("separation", 6)
 	h.add_child(side)
+	_portrait = CritterPortrait.new(Vector2(580, 250))
+	side.add_child(_portrait)
 	_name = UITheme.label("", 34, UITheme.CARROT_LIGHT, true)
 	_name.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	side.add_child(_name)
+	# (the card scrolls under the portrait: a rogue with a long history has a lot to say)
+	var card_scroll := ScrollContainer.new()
+	card_scroll.custom_minimum_size = Vector2(580, 250)
+	card_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	side.add_child(card_scroll)
 	_detail = UITheme.label("", 21)
 	_detail.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	side.add_child(_detail)
+	_detail.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	card_scroll.add_child(_detail)
 	var back := UITheme.button("Back", func(): closed.emit())
 	back.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	v.add_child(back)
@@ -177,6 +187,7 @@ static func _times(k: int) -> String:
 
 
 func _show(n: String) -> void:
+	_portrait.show_rogue(n)
 	_name.text = Cast.title(n)
 	_name.add_theme_color_override("font_color", Cast.HEAT_COLORS[Cast.heat(n)] if Cast.heat(n) > 0 else UITheme.CARROT_LIGHT)
 	_detail.text = card(n)

@@ -4,7 +4,9 @@ extends RefCounted
 ## kept for good. ATTACHMENTS change how your guns handle (each one you own
 ## and fit goes on every gun you pick up); LOOKS are yours to show off: the
 ## reticle and its colour, the guns' skin, the muzzle flash and smoke, your
-## tracers, and the burst when you beat a critter down.
+## tracers, the burst when you beat a critter down, and your wardrobe: a hat,
+## something for your face, your neck and your back (Outfits pieces no rogue
+## wears; a cost of -1 means it can only be earned, as a Milestone's reward).
 ## Kept in the PlayerProfile with the rest of the Burrow.
 
 const ATTACHMENTS := {
@@ -33,7 +35,21 @@ const LOOKS := {
 		["sky", "Sky", 25], ["plum", "Plum", 25], ["gold", "Gold", 60]]},
 	"kill_fx": {"label": "Beat-down burst", "options": [["none", "None", 0], ["confetti", "Confetti", 40],
 		["leaves", "Autumn leaves", 40], ["carrots", "Carrot shower", 50], ["hearts", "Hearts", 50]]},
+	"wear_hat": {"label": "Hat", "options": [["none", "None", 0], ["flap_beanie", "Ear-flap beanie", 50],
+		["flower_crown", "Flower crown", 60], ["santa_hat", "Santa hat", 70], ["fedora", "Fedora", 80],
+		["witch_hat", "Witch's hat", 90], ["wizard_hat", "Wizard's hat", 110], ["grad_cap", "Mortarboard", -1],
+		["jester_hat", "Jester's cap", -1]]},
+	"wear_face": {"label": "Face", "options": [["none", "None", 0], ["heart_glasses", "Heart glasses", 40],
+		["glasses_3d", "3D glasses", 40], ["pixel_shades", "Pixel shades", 75],
+		["star_glasses", "Star glasses", -1]]},
+	"wear_neck": {"label": "Neck", "options": [["none", "None", 0], ["sapphire_necklace", "Sapphire necklace", 50],
+		["ring_necklace", "Silver ring necklace", 60]]},
+	"wear_back": {"label": "Back", "options": [["none", "None", 0], ["butterfly_wings", "Butterfly wings", 120],
+		["jetpack", "Jetpack", 150], ["fairy_wings", "Fairy wings", -1], ["dark_wings", "Dark wings", -1]]},
 }
+
+## Your wardrobe's slots, in the order they're shown.
+const WARDROBE := ["wear_hat", "wear_face", "wear_neck", "wear_back"]
 
 ## The palette the looks pick from.
 const COLORS := {
@@ -110,6 +126,23 @@ static func set_look(category: String, id: String) -> bool:
 static func look_name(category: String, id: String) -> String:
 	var opt := _option("%s:%s" % [category, id])
 	return opt[1] if not opt.is_empty() else id
+
+
+## What you're wearing: the Outfits piece in each wardrobe slot, skipping
+## the empty ones.
+static func outfit() -> Array:
+	var out := []
+	for cat in WARDROBE:
+		var id := look(cat)
+		if id != "none":
+			out.append(id)
+	return out
+
+
+## Earned only (a Milestone's reward), not for sale.
+static func earned_only(item: String) -> bool:
+	var opt := _option(item)
+	return not opt.is_empty() and int(opt[2]) < 0
 
 
 static func color(id: String, t := 0.0) -> Color:
