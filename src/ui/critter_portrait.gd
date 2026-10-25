@@ -134,6 +134,7 @@ func _show(key: String, def_id: String, dress: Callable) -> void:
 	_critter.place_at(Vector3(0, 0.05, 0), PI)
 	dress.call(_critter)
 	_critter._unhurt_t = 99.0   # (calm: the gun carried low, out of the way of the face)
+	_critter.visual.poser.relax()
 	var h: float = _critter.visual.rig.world_head_top if _critter.visual.rig else 1.33
 	# a tall, narrow frame needs the camera further back to fit the critter's width
 	var back := 2.9 * maxf(1.0, 0.8 * size.y / maxf(size.x, 1.0)) if size.x > 0.0 else 2.9

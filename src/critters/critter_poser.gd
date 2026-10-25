@@ -194,6 +194,12 @@ func setup(rig_: RigInfo) -> void:
 	_fidget_wait = _rng.randf_range(2.0, 6.0)
 
 
+## Start relaxed, the gun already carried low (a portrait, not a fight).
+func relax() -> void:
+	gun_up = 0.0
+	_up = 0.0
+
+
 ## Called by the critter when it touches down.
 func on_landed(impact_speed: float) -> void:
 	_land_amt = clampf(impact_speed / 14.0, 0.0, 1.0)
