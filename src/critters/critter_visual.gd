@@ -97,6 +97,9 @@ func build(critter_: Node3D, def_: CritterDef) -> bool:
 		m.layers = RENDER_LAYER
 		meshes.append(m)
 
+	# mitten paws get knuckles, so they can close on a handle too
+	PawKnuckles.apply(self)
+
 	holder = Node3D.new()
 	holder.name = "WeaponHolder"
 	add_child(holder)
@@ -107,6 +110,7 @@ func build(critter_: Node3D, def_: CritterDef) -> bool:
 	poser.gait = def.gait
 	skeleton.add_child(poser)
 	poser.setup(rig)
+	poser.paws = PawGrip.paws(self)
 
 	_build_hitboxes_and_ragdoll()
 	_build_springs()

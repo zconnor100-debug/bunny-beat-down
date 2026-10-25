@@ -398,7 +398,9 @@ The full write-up is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
     where the raised muzzle would be, so how a gun is carried never changes
     the aim.
   - It solves **analytic two-bone IK** so the paws hold each gun's real grip
-    markers.
+    markers, closing into fists round the handles (paws measured from each
+    model's mesh; mitten paws with no finger bones get knuckles at load).
+    Every critter is tested with every gun.
 - **Dismemberment without pre-cut meshes.** A severed limb is a copy of the
   same skinned model with its skeleton *re-rooted* at the cut bone. On the
   corpse, a final modifier collapses the missing subtree into the stump; on
@@ -463,10 +465,11 @@ The full write-up is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
   the same views: 31% fewer triangles on the island, 31% on the Hamster
   Cage, 79% on Toy Box Bash, and a third to two thirds fewer shadow
   triangles.
-- **Tests that play the game.** A headless suite of 125 tests covers:
+- **Tests that play the game.** A headless suite of 126 tests covers:
   - the IK maths, hitboxes, ragdolls and dismemberment, and how critters
     carry themselves (never frozen, guns carried low but shooting from the
-    aim, held clear of the head, feet stepping round on a turn);
+    aim, held clear of the head, both paws on the handles of every gun, feet
+    stepping round on a turn);
   - island navigation, the three biomes and the big buildings (a Bun walks
     in through the barn doors; every indoor loot spot is reachable on the
     navmesh), the Hamster Cage (bots can walk into every pod, hut, castle and

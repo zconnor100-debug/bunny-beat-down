@@ -23,7 +23,9 @@ static func spawn_limb_gib(visual: CritterVisual, bone_idx: int, impulse: Vector
 	if skel == null:
 		copy.free()
 		return null
-	var sub := visual.rig.subtree(bone_idx)
+	# (bones the live critter was given at load time, like mitten paws'
+	# knuckles, aren't in this fresh copy of the model)
+	var sub := Array(visual.rig.subtree(bone_idx)).filter(func(i): return i < skel.get_bone_count())
 	var globals := {}
 	for i in sub:
 		globals[i] = visual.current_bone_global(i)

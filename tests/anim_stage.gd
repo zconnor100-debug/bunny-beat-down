@@ -160,6 +160,54 @@ func _run() -> void:
 		await _strip("aim_side", 1, 0.1, Vector3(4.4, 0.5, 0.0), true)
 		await _clear()
 
+	# --- paws on the gun, up close: from the trigger side and the support side
+	if _wants("grip"):
+		for i in ALL.size():
+			var c := _spawn(ALL[i], Vector3(_lane(i), 0.05, -200), 0.0, true)
+			c.want_aim = true
+		await _wait(1.0)
+		Engine.time_scale = 0.0
+		await get_tree().process_frame
+		# both paws on the gun: from the trigger side, the support side and below
+		# (critters face -Z; their right is +X)
+		for view in [["grip_right", Vector3(1.0, 0.35, -0.6)], ["grip_left", Vector3(-1.0, 0.35, -0.6)],
+				["grip_under", Vector3(0.2, -0.8, -0.6)]]:
+			for c in actors:
+				var at: Vector3 = (c.visual.bone_world_position(&"r_hand") + c.visual.bone_world_position(&"l_hand")) * 0.5
+				cam.global_position = at + (view[1] as Vector3).normalized() * c.visual.rig.world_head_top * 0.75
+				cam.look_at(at, Vector3.UP)
+				await get_tree().process_frame
+				get_viewport().get_texture().get_image().save_png(out_dir.path_join("%s_%s_0.png" % [view[0], c.def.id]))
+		Engine.time_scale = 1.0
+		print("scene grip")
+		await _clear()
+
+	# --- as you see yourself in play: from the game camera over the right
+	# shoulder (CameraRig's offsets), relaxed and then aiming
+	if _wants("ots"):
+		for i in ALL.size():
+			_spawn(ALL[i], Vector3(_lane(i), 0.05, -300), 0.0, true)
+		await _wait(3.5)   # (the guns come down)
+		for aiming in [false, true]:
+			for c in actors:
+				c.want_aim = aiming
+			await _wait(0.8)
+			Engine.time_scale = 0.0
+			await get_tree().process_frame
+			for c in actors:
+				var ws: float = c.visual.rig.world_scale
+				var eye: Vector3 = c.get_eye_position() + Vector3.UP * 0.12 * ws
+				var dist := (CameraRig.TP_AIM_DISTANCE if aiming else CameraRig.TP_DISTANCE) * ws
+				cam.global_position = eye + Vector3.RIGHT * CameraRig.TP_SHOULDER * ws * (0.75 if aiming else 1.0) + Vector3.BACK * dist
+				cam.look_at(cam.global_position + Vector3.FORWARD, Vector3.UP)
+				cam.fov = 70.0
+				await get_tree().process_frame
+				get_viewport().get_texture().get_image().save_png(out_dir.path_join("ots_%s_%s_0.png" % ["aim" if aiming else "relaxed", c.def.id]))
+			Engine.time_scale = 1.0
+		cam.fov = 40.0
+		print("scene ots")
+		await _clear()
+
 	# --- on the move, side on (running toward +X, seen from their left)
 	for scene in ["walk_armed", "sprint_unarmed", "sprint_armed", "jump_armed", "jump_running", "strafe"]:
 		if not _wants(scene):

@@ -85,6 +85,17 @@ const FIDGET_TIME := {
 	"wiggle": 1.4, "bounce": 1.5, "gun_check": 2.2,
 }
 const PAWS_FREE := ["stretch", "scratch"]
+## A closed fist: how far each finger joint bends (radians, knuckle first).
+const FINGER_CURL := [1.2, 1.35, 1.0]
+## How far an arm too short for its gun may stretch to keep hold of it.
+const GRIP_STRETCH_MAX := 3.2
+## The trigger paw sits at most this share of the arm's length in front of
+## the shoulder (a pistol held out one-handed, nearly straight).
+const HOLD_REACH := 0.55
+const PISTOL_REACH := 0.9
+## How far a fist may turn round its handle to spare the wrist (radians).
+const ROLL_RANGE := 1.1
+const ROLL_STEPS := 7
 
 signal footstep(hop: bool)
 
@@ -114,6 +125,15 @@ var gun_up := 1.0             ## 1 gun up at the aim (aiming, shooting, alert), 
 var sprinting := false        ## running flat out (a relaxed long gun goes across the chest)
 var shouldered := false       ## a shoulder-fired launcher
 var gun_box := AABB()         ## the held gun's bounds in its own frame (-Z = muzzle)
+var paws: Dictionary = {}     ## PawGrip per side (&"l", &"r"): how each paw closes on a handle
+## How well each paw holds its handle, last frame (per side, -1 when it holds
+## none): how far the fist is from the handle (in body heights), and how far
+## the wrist bends from the line of the forearm (radians). Only measured while
+## `measuring` is on (tests and tools: it costs a few skeleton look-ups).
+static var measuring := false
+var grip_miss := {&"l": -1.0, &"r": -1.0}
+var wrist_bend := {&"l": -1.0, &"r": -1.0}
+var arm_stretch := {&"l": 1.0, &"r": 1.0}   ## how far each arm stretched to reach (1 = not at all)
 
 ## Where the gun would sit raised to the aim (world space). Shots leave from
 ## its muzzle even while the gun is lowered, so how a gun is carried never
@@ -406,7 +426,14 @@ func _process_modification_with_delta(delta: float) -> void:
 	if armed and not gliding:
 		var down := -wbasis.y
 		var right := wbasis.x
-		var hold := hold_distance * S
+		# (as far out as this critter's own arms reach comfortably: guns are
+		# sized to the body, arms aren't — a hamster's are half a fox's)
+		var arm_r: float = _seg_len["r_arm1"] + _seg_len["r_arm2"]
+		# toward the middle of the body when the other arm is too short to
+		# reach across to the right shoulder (a hamster hugs it to its tummy)
+		var arm_l: float = _seg_len["l_arm1"] + _seg_len["l_arm2"]
+		var mid_k := clampf(2.0 * (1.0 - 0.8 * arm_l / maxf(sh_r.distance_to(sh_l), 0.001)), 0.35, 1.0)
+		var hold := minf(hold_distance * S, arm_r * (PISTOL_REACH if not two_handed and not club else HOLD_REACH))
 		if club:
 			# club: held up by the right shoulder; a swing winds it back over the
 			# shoulder, then brings it down across the body
@@ -417,11 +444,12 @@ func _process_modification_with_delta(delta: float) -> void:
 				grip += a * strike * 0.12 * S
 				wbasis = wbasis.rotated(a, -0.5 * strike)
 		elif two_handed:
-			grip = sh_r.lerp(sh_mid, 0.35) + a * hold + down * 0.07 * S
+			grip = sh_r.lerp(sh_mid, mid_k) + a * hold + down * 0.07 * S
 		else:
-			grip = sh_mid.lerp(sh_r, 0.4) + a * hold + down * 0.02 * S
+			grip = sh_mid.lerp(sh_r, 0.4 * (1.0 - mid_k) / 0.65) + a * hold + down * 0.02 * S
 		if not club:
-			grip += _head_clearance(grip, wbasis)
+			grip += _head_clearance(grip, wbasis, _seg_len["l_arm1"] + _seg_len["l_arm2"])
+			grip += a * _torso_clearance(grip, a)
 		grip -= a * recoil * 0.05 * S
 		wbasis = wbasis.rotated(right, recoil * 0.25)
 		if reload_k > 0.0:
@@ -441,6 +469,7 @@ func _process_modification_with_delta(delta: float) -> void:
 		has_raised = false
 
 	# ---- arms -------------------------------------------------------------------------
+	var held := {}   # side -> [hand basis, finger curl] for a paw closed on a handle
 	for side in [&"r", &"l"]:
 		var sgn := 1.0 if side == &"r" else -1.0
 		var up_i: int = rig.bone[StringName(side + "_upper_arm")]
@@ -477,6 +506,28 @@ func _process_modification_with_delta(delta: float) -> void:
 				target = _support_point(skel, grip, wbasis, S)
 				if crawling:
 					target = target.lerp(crawl_paw[side], _crawl)
+			if not crawling:
+				# close the paw on the handle: turn the hand to it, then put the
+				# wrist wherever puts the fist (not the wrist) on it
+				var frame := _handle(side, grip, wbasis, skel, S)
+				var g: PawGrip = paws.get(side)
+				if not frame.is_empty() and g and g.valid:
+					var at: Vector3 = frame[0]
+					if frame[4] != null:
+						# a fore-end: slide back along it until the paw can reach
+						at += (frame[4] as Vector3) * _slide(at - g.hold.length() * (frame[2] as Vector3) - shoulder,
+							frame[4], frame[5], arm_len * 1.05)
+					var hb := _best_turn(side, g, at, frame, shoulder, l1, l2, pole)
+					target = at - hb * g.hold
+					held[side] = [hb, frame[3], at]
+			# short arms reach a little further than they should rather than let
+			# go of the gun (cartoon-style, as under the glider)
+			var reach := clampf(shoulder.distance_to(target) / (arm_len * 0.98), 1.0, GRIP_STRETCH_MAX)
+			arm_stretch[side] = reach
+			if reach > 1.0:
+				_stretch_arm(lo_i, hand_i, reach)
+				l1 *= reach
+				l2 *= reach
 			if crawling:
 				pole = pole.lerp(shoulder + RIGHT * sgn * 0.5 * S - UP * 0.3 * S + FWD * 0.2 * S, _crawl)
 				if reload_k > 0.0:
@@ -489,6 +540,8 @@ func _process_modification_with_delta(delta: float) -> void:
 			target = free[0]
 			pole = free[1]
 		_two_bone(up_i, lo_i, hand_i, l1, l2, target, pole)
+		_close_paw(side, hand_i, held.get(side, []), 1.0 if gliding else 0.22)
+		_measure_grip(side, lo_i, hand_i, held.get(side, []), S)
 
 	# ---- legs -------------------------------------------------------------------------
 	var turning := grounded and not gliding and not crawling and not trick_active and _move < 0.25
@@ -688,12 +741,38 @@ func _free_paw(side: StringName, shoulder: Vector3, arm_len: float, S: float, ho
 
 # ---- guns -------------------------------------------------------------------------------
 
+## How far the gun has to come forward so the trigger paw closes on its grip
+## in front of the body, not inside a round tummy: the grip has to be a fist's
+## depth outside the chest, spine and hip capsules.
+func _torso_clearance(grip: Vector3, a: Vector3) -> float:
+	var g: PawGrip = paws.get(&"r")
+	var fist := (g.thickness if g and g.valid else 0.03 * rig.scale) * 0.8
+	var push := 0.0
+	# (the trunk where the hips put it: the spine bends too little to matter)
+	var hips: int = rig.bone[&"hips"]
+	var now := _g(hips) * (rig.rest[&"hips"] as Transform3D).affine_inverse()
+	for role in [&"hips", &"spine", &"chest"]:
+		var seg: Dictionary = rig.segments.get(role, {})
+		if seg.is_empty():
+			continue
+		var p0: Vector3 = now * (seg["start"] as Vector3)
+		var p1: Vector3 = now * (seg["end"] as Vector3)
+		var c := Geometry3D.get_closest_point_to_segment(grip, p0, p1)
+		var off := grip - c
+		var ahead := off.dot(a)
+		var side := (off - a * ahead).length()
+		var reach: float = float(seg["radius"]) + fist
+		if side < reach:
+			push = maxf(push, sqrt(reach * reach - side * side) - ahead)
+	return push
+
+
 ## Move a raised gun clear of the head, so long guns sit against the cheek
 ## and launchers on the shoulder instead of through the face: out to the
-## right, or down under the chin, whichever is the smaller move. The head is
+## right, or down under the chin if the other paw couldn't follow. The head is
 ## its capsule (neck joint to crown), sampled at three points. Returns the
 ## offset to add to the grip (skeleton space).
-func _head_clearance(grip: Vector3, wb: Basis) -> Vector3:
+func _head_clearance(grip: Vector3, wb: Basis, arm_l: float) -> Vector3:
 	var seg: Dictionary = rig.segments.get(&"head", {})
 	if gun_box.size == Vector3.ZERO or seg.is_empty():
 		return Vector3.ZERO
@@ -711,7 +790,13 @@ func _head_clearance(grip: Vector3, wb: Basis) -> Vector3:
 			under = maxf(under, box.end.y - c.y)
 	if out <= 0.0:
 		return Vector3.ZERO
-	return wb.x * minf(out, r * 1.5) if out < under else -wb.y * minf(under, r)
+	# out to the cheek is how a gun is shouldered, as far as the other paw can
+	# follow it across; past that a gun drops under the chin instead. A
+	# launcher always rides on the shoulder, beside the head (under the chin
+	# its fat tube would be down at the tummy).
+	if shouldered or out <= minf(r * 1.2, arm_l * 0.45):
+		return wb.x * out
+	return -wb.y * minf(under, r * 2.0)
 
 
 ## The gun as carried: lowered when relaxed (a launcher rests tipped up on
@@ -825,6 +910,107 @@ static func _club_strike(p: float) -> float:
 	return smoothstep(CLUB_WIND_END - 0.06, 0.29, p) * (1.0 - smoothstep(CLUB_STRIKE_END, 0.8, p))
 
 
+## The handle a paw closes on (skeleton space): [where it runs through the
+## fist, the knuckle line (little finger → index), out of the palm, finger
+## curl] (and for a fore-end, the way back along it and how far); [] for none. The trigger paw wraps the pistol grip (raked back like
+## the guns' grips, palm on its right side, fingers round the front), or the
+## club's handle; the other paw cups the fore-end from below (palm up,
+## fingers up its far side), or wraps the trigger paw on a pistol.
+func _handle(side: StringName, grip: Vector3, wb: Basis, skel: Skeleton3D, S: float) -> Array:
+	if side == &"r":
+		if club:
+			return [grip, -wb.z, _square(-wb.x, -wb.z), 1.0, null, 0.0, -0.6, 0.6]
+		var rake := (wb * Vector3(0.0, 0.975, -0.22)).normalized()   # up the grip
+		return [grip, rake, _square(-wb.x * 0.85 - wb.z * 0.3, rake), 1.0, null, 0.0, -0.45, 0.45]
+	if club:
+		return []
+	var g: PawGrip = paws.get(&"l")
+	var depth := g.thickness if g else 0.03 * S
+	if not two_handed:
+		var other: PawGrip = paws.get(&"r")
+		var gap := ((other.thickness if other else 0.03 * S) + depth) * 0.55
+		var rake := (wb * Vector3(0.0, 0.975, -0.22)).normalized()
+		return [grip - wb.x * gap - rake * depth * 0.4, rake, _square(wb.x, rake), 0.8, null, 0.0, -0.9, 0.9]
+	var at := _support_point(skel, grip, wb, S)
+	# (+ which way the paw can slide back along the fore-end, and how far
+	# before it bumps into the trigger paw; then how far it may turn: from
+	# cupping it from below, palm up, round to the left side, palm in)
+	var fists := ((paws[&"r"] as PawGrip).width if paws.has(&"r") else 0.06 * S) * 0.5 + (g.width if g else 0.06 * S) * 0.5
+	# (turning about the barrel, forward, a positive turn rolls the palm from up to the gun's left side)
+	return [at + wb.y * depth * 0.3, -wb.z, wb.y, 0.7, wb.z, maxf(0.0, (grip - at).dot(wb.z) - fists * 1.1), -0.25, 1.35]
+
+
+## The paw's orientation on its handle: a fist can turn round the handle, so
+## try turns within its range and keep the one whose wrist bends least from
+## the line the forearm will take (solved with the same IK the arm uses),
+## with a mild preference for the handle's natural hold.
+func _best_turn(side: StringName, g: PawGrip, at: Vector3, frame: Array, shoulder: Vector3, l1: float, l2: float,
+		pole: Vector3) -> Basis:
+	var w: Vector3 = frame[1]
+	var lo: float = frame[6] if frame.size() > 6 else -ROLL_RANGE
+	var hi: float = frame[7] if frame.size() > 7 else ROLL_RANGE
+	var best := Basis()
+	var best_cost := INF
+	for i in ROLL_STEPS:
+		var roll := lerpf(lo, hi, float(i) / float(ROLL_STEPS - 1))
+		var pl := Basis(w, roll) * (frame[2] as Vector3)
+		var hb := g.hand_basis((pl.cross(w) if side == &"r" else w.cross(pl)).normalized(), w, pl)
+		var wrist := at - hb * g.hold
+		var sol := IKMath.solve_two_bone(shoulder, l1, l2, wrist, pole)
+		var cost := (sol[1] - sol[0]).angle_to(hb * g.along) + absf(roll) * 0.15
+		if cost < best_cost:
+			best_cost = cost
+			best = hb
+	return best
+
+
+## How far back along `axis` (at most `most`) a wrist `d` from the shoulder
+## must slide to come within `reach` of it (or as close as the line gets).
+static func _slide(d: Vector3, axis: Vector3, most: float, reach: float) -> float:
+	var dz := d.dot(axis)
+	var disc := dz * dz - d.length_squared() + reach * reach
+	return clampf(-dz - sqrt(disc) if disc >= 0.0 else -dz, 0.0, most)
+
+
+## `v` made square to `axis` (unit).
+static func _square(v: Vector3, axis: Vector3) -> Vector3:
+	return (v - axis * v.dot(axis)).normalized()
+
+
+## Turn a paw closed on a handle (`held`: [hand basis, curl]) and curl its
+## fingers round; an empty paw just relaxes, its fingers loosely bent.
+func _measure_grip(side: StringName, lower: int, hand: int, held: Array, S: float) -> void:
+	if not measuring:
+		return
+	var g: PawGrip = paws.get(side)
+	if held.is_empty() or hand < 0 or g == null or not g.valid:
+		grip_miss[side] = -1.0
+		wrist_bend[side] = -1.0
+		return
+	var h := _g(hand)
+	var hb := h.basis.orthonormalized()
+	grip_miss[side] = (h.origin + hb * g.hold).distance_to(held[2]) / (rig.head_top * S / rig.scale)
+	wrist_bend[side] = (h.origin - _g(lower).origin).angle_to(hb * g.along)
+
+
+func _close_paw(side: StringName, hand: int, held: Array, relaxed: float) -> void:
+	var g: PawGrip = paws.get(side)
+	if hand < 0 or g == null or not g.valid:
+		return
+	var curl := relaxed
+	if not held.is_empty():
+		_set_global_basis(hand, held[0])
+		curl = held[1]
+	# (each joint turns toward the palm in its own frame: PawGrip.curl_axis)
+	var skel := get_skeleton()
+	for chain in g.fingers:
+		for j in (chain as PackedInt32Array).size():
+			var b: int = chain[j]
+			skel.set_bone_pose_rotation(b, g.rest_rot[b] * Quaternion(g.curl_axis[b], FINGER_CURL[mini(j, 2)] * curl))
+	for b in g.thumb:
+		skel.set_bone_pose_rotation(b, g.rest_rot[b] * Quaternion(g.curl_axis[b], 0.45 * curl))
+
+
 func _support_point(skel: Skeleton3D, grip: Vector3, wbasis: Basis, S: float) -> Vector3:
 	if two_handed and support_marker and is_instance_valid(support_marker):
 		return skel.global_transform.affine_inverse() * support_marker.global_position
@@ -862,11 +1048,15 @@ func _set_global_origin(idx: int, pos: Vector3) -> void:
 ## their bones (no bone scale: hitboxes ride on the bones, and the physics
 ## engine wants them unscaled). The skin between stretches like taffy.
 ## The skeleton restores the rest pose every frame, so this lasts one frame.
+## (Every bone between the elbow and the paw stretches: some rigs have two
+## forearm bones.)
 func _stretch_arm(lower: int, hand: int, k: float) -> void:
 	var skel := get_skeleton()
 	skel.set_bone_pose_position(lower, skel.get_bone_rest(lower).origin * k)
-	if hand >= 0:
-		skel.set_bone_pose_position(hand, skel.get_bone_rest(hand).origin * k)
+	var i := hand
+	while i >= 0 and i != lower:
+		skel.set_bone_pose_position(i, skel.get_bone_rest(i).origin * k)
+		i = skel.get_bone_parent(i)
 
 
 func _two_bone(upper: int, lower: int, end: int, l1: float, l2: float, target: Vector3, pole: Vector3) -> void:

@@ -104,3 +104,43 @@ func test_turning_on_the_spot_steps_round() -> void:
 	check(stepped.size() == 2, "both feet step round as it turns (%s)" % [stepped.keys()])
 	await wait_physics(30)
 	check(p._step_side == &"", "and settle when it stops")
+
+
+func test_every_critter_holds_every_gun_by_its_handles() -> void:
+	# both paws closed on the handles (the fist round the grip, the other paw on
+	# the fore-end, or cupping a pistol hand), with the wrist bent no further
+	# than a wrist can: every species with every gun, aiming level, up and down.
+	# Mitten paws (no finger bones) are given knuckles to close with.
+	const IDS := ["bun", "bandit_bunny", "squirrel", "fox", "raccoon", "frog", "beaver", "hamster"]
+	const GUNS := [&"carrot_pistol", &"carrot_smg", &"carrot_shotgun", &"carrot_rifle", &"carrot_lmg", &"carrot_sniper", &"carrot_rocket_launcher"]
+	CritterPoser.measuring = true
+	var crits := []
+	for i in IDS.size():
+		for j in GUNS.size():
+			var c := spawn_critter("res://data/critters/%s.tres" % IDS[i], Vector3(i * 6.0 - 21.0, 0.1, j * 6.0 - 18.0))
+			c.give_weapon(WeaponInstance.new(WeaponDB.get_weapon(GUNS[j])))
+			c.want_aim = true
+			crits.append(c)
+	for id in ["frog", "raccoon", "beaver"]:
+		var v: CritterVisual = crits[IDS.find(id) * GUNS.size()].visual
+		check(v.skeleton.find_bone("bbd_knuckle_r") >= 0 and v.poser.paws[&"r"].fingers.size() == 1, "%s's mitten paws get knuckles" % id)
+	for pitch in [0.0, 30.0, -30.0]:
+		for k in 12:
+			for c in crits:
+				c.look_pitch = deg_to_rad(pitch)
+				c.aim_point = c.get_eye_position() + c.look_direction() * 30.0
+			await wait_frames(1)
+		var worst := [0.0, ""]
+		var bend := [0.0, ""]
+		for n in crits.size():
+			var p: CritterPoser = crits[n].visual.poser
+			var what := "%s/%s %+.0f°" % [IDS[n / GUNS.size()], GUNS[n % GUNS.size()], pitch]
+			for side in [&"l", &"r"]:
+				if p.grip_miss[side] > worst[0]:
+					worst = [p.grip_miss[side], "%s %s paw" % [what, side]]
+				if p.wrist_bend[side] > bend[0]:
+					bend = [p.wrist_bend[side], "%s %s paw" % [what, side]]
+			check(p.grip_miss[&"l"] >= 0.0 and p.grip_miss[&"r"] >= 0.0, "%s: both paws on a handle" % what)
+		check(worst[0] < 0.01, "aiming %+.0f°: every paw on its handle (worst %.3f body heights: %s)" % [pitch, worst[0], worst[1]])
+		check(bend[1] == "" or bend[0] < deg_to_rad(85.0), "aiming %+.0f°: no wrist bent past 85° (worst %.0f°: %s)" % [pitch, rad_to_deg(bend[0]), bend[1]])
+	CritterPoser.measuring = false

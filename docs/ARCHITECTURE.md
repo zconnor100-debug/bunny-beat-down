@@ -70,7 +70,22 @@ from the rest pose:
    with a little lag behind fast turns.
 6. **Analytic two-bone IK** (`IKMath.solve_two_bone`, unit tested) puts both
    paws on the gun's real `Muzzle`/`SupportGrip` markers, or pumps, swings,
-   raises and stretches them when they're empty.
+   raises and stretches them when they're empty. The paws really close on the
+   handles: `PawGrip` measures each model's paw once from its skinned mesh
+   (which way it runs, which side the palm is on, its depth and breadth, where
+   the hole of a fist is) and the poser turns the hand to the handle, puts
+   that hole on it, and curls the fingers round (each joint about one
+   precomputed axis, so it costs a rotation per bone). A fist may turn round
+   its handle, so of a few turns it takes the one that bends the wrist least;
+   the support paw slides back along the fore-end until it can reach; guns
+   sit as far out as each critter's own arms reach (a hamster's are half a
+   fox's), move toward the middle when the other arm is too short to reach
+   across, and come out in front of round tummies. Mitten paws with no finger
+   bones (the frog, the raccoon, the beaver) are given knuckles at load time
+   (`PawKnuckles`: two bones per paw and the fingers' skin reweighted onto
+   them, built once per model). `test_anims` checks every critter with every
+   gun, aiming level, up and down: both paws on their handles, no wrist bent
+   past 85°.
 7. Legs solve two-bone IK to the gait's foot targets: tucked on the way up
    a jump, reaching for the ground on the way down. Standing still, planted
    feet stay put in the world while the body turns over them and step round
