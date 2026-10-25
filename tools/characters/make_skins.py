@@ -166,6 +166,9 @@ def pattern(pt, ctx):
     elif pt["type"] == "blob":
         c = np.array(pt["center"])
         rad = np.array(pt["radius"])
+        if pt.get("mirror"):                          # the same blob on both sides (eyes, cheeks)
+            P = P.copy()
+            P[..., 0] = np.abs(P[..., 0]) * (1.0 if c[0] >= 0 else -1.0)
         d = np.sqrt((((P - c) / rad) ** 2).sum(axis=-1))
         r = np.clip((1.0 + pt.get("soft", 0.25) - d) / pt.get("soft", 0.25), 0.0, 1.0)
     elif pt["type"] == "stripes":
@@ -296,6 +299,13 @@ if ONLY and os.path.exists(path):
         existing = {e["id"]: e for e in json.load(f)}
 entries = [{"id": "default", "name": RECIPE.get("default_name", "Classic")}]
 for s in RECIPE["skins"]:
+    if s["id"] == "default":
+        # a recipe "default" skin touches up the GLB's own texture (still listed first)
+        if s["id"] in outputs:
+            entries[0]["albedo"] = outputs[s["id"]]
+        elif s["id"] in existing and "albedo" in existing[s["id"]]:
+            entries[0]["albedo"] = existing[s["id"]]["albedo"]
+        continue
     if s["id"] in outputs:
         entries.append({"id": s["id"], "name": s["name"], "albedo": outputs[s["id"]]})
     elif s["id"] in existing:

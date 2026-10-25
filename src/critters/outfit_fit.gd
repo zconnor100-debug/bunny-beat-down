@@ -46,6 +46,7 @@ var shoulder_y := 0.65
 var shoulder_w := 0.3           ## from shoulder joint to shoulder joint, plus the arms' thickness
 var hip_y := 0.4
 var hat_stretch := 1.0          ## hats this much taller (rig.json "hat_stretch": a beaver's head is a tall egg)
+var hat_size := 1.0             ## hats this much bigger, sitting lower (rig.json "hat_size": a squirrel's big head suits a big hat)
 var tail_y := -1.0              ## where a big tail (a fox's, a squirrel's) leaves the body; -1: none
 var _head_rows := PackedFloat32Array()   # skull breadth at ROWS heights, neck to crown
 var _lo := 0.0                            # the body outline's heights: hips to crown
@@ -53,6 +54,7 @@ var _hi := 1.0
 var _wide := PackedFloat32Array()        # body breadth at each row
 var _front := PackedFloat32Array()       # how far forward the body is at each row
 var _back := PackedFloat32Array()        # how far back
+var _drape := PackedFloat32Array()       # how far back, tail and all, ground to crown (a cape hangs over it)
 
 
 static func of(visual: CritterVisual) -> OutfitFit:
@@ -80,6 +82,15 @@ func front_at(y: float) -> float:
 
 func back_at(y: float) -> float:
 	return _row(_back, _lo, _hi, y, chest_back)
+
+
+## How far back the critter is at y counting its tail: what a cape hangs over
+## (from where the tail leaves the body down, and close to the body: not a
+## fox's tail curling up and far out behind it).
+func drape_back_at(y: float) -> float:
+	if tail_y < 0.0 or y > tail_y + head_h * 0.1:
+		return back_at(y)
+	return maxf(_row(_drape, 0.0, _hi, y, back_at(y)), back_at(y) - head_d * 0.45)
 
 
 static func _row(rows: PackedFloat32Array, lo: float, hi: float, y: float, fallback: float) -> float:
@@ -114,10 +125,15 @@ func _measure(v: CritterVisual) -> void:
 		for b in rig.chains[chain_name]:
 			for e in rig.subtree(b):
 				limbs[e] = true
+	var tail_bones := {}
+	for b in rig.chains.get(&"tail", PackedInt32Array()):
+		for e in rig.subtree(b):
+			tail_bones[e] = true
 	var head: Array = []
 	var trunk: Array = []
 	var head_tris := PackedVector3Array()    # (triangles, three points each: the outlines are
 	var trunk_tris := PackedVector3Array()   # cut through them, however sparse the vertices)
+	var tail_tris := PackedVector3Array()
 	for m in v.meshes:
 		if m.mesh == null or m.skin == null:
 			continue
@@ -134,7 +150,7 @@ func _measure(v: CritterVisual) -> void:
 			var bones: PackedInt32Array = arr[Mesh.ARRAY_BONES]
 			var weights: PackedFloat32Array = arr[Mesh.ARRAY_WEIGHTS]
 			var per := weights.size() / maxi(verts.size(), 1)
-			var kind := PackedByteArray()   # per vertex: 1 skull, 2 body, 3 both
+			var kind := PackedByteArray()   # per vertex: 1 skull, 2 body, 4 tail
 			kind.resize(verts.size())
 			var at := PackedVector3Array()
 			at.resize(verts.size())
@@ -155,6 +171,8 @@ func _measure(v: CritterVisual) -> void:
 				if not limbs.has(best):
 					trunk.append(p)
 					kind[vi] |= 2
+				elif tail_bones.has(best):
+					kind[vi] |= 4
 			var idx: PackedInt32Array = arr[Mesh.ARRAY_INDEX] if arr[Mesh.ARRAY_INDEX] != null else PackedInt32Array(range(verts.size()))
 			for t in idx.size() / 3:
 				var a := idx[t * 3]
@@ -165,6 +183,8 @@ func _measure(v: CritterVisual) -> void:
 					head_tris.append_array([at[a], at[b], at[c]])
 				if k & 2:
 					trunk_tris.append_array([at[a], at[b], at[c]])
+				if (kind[a] | kind[b] | kind[c]) & 6 == 6 or k & 4:
+					tail_tris.append_array([at[a], at[b], at[c]])
 	if head.size() < 20 or trunk.size() < 20:
 		return
 	var mid := Vector3.ZERO
@@ -232,6 +252,11 @@ func _measure(v: CritterVisual) -> void:
 	chest_front = front_at(chest_y)
 	chest_back = back_at(chest_y)
 	hat_stretch = float(rig.data.get("hat_stretch", 1.0))
+	hat_size = float(rig.data.get("hat_size", 1.0))
+	# the back with the tail, from the ground up: what a cape drapes over
+	trunk_tris.append_array(tail_tris)
+	for row: Array in _sections(trunk_tris, 0.0, _hi, mid.x, head_w * 0.5):
+		_drape.append(row[2] if row[2] < INF else back_at(0.0))
 	var tail: PackedInt32Array = rig.chains.get(&"tail", PackedInt32Array())
 	if tail.size() >= 3:   # (a bunny's puff doesn't count)
 		tail_y = skel.get_bone_global_rest(tail[0]).origin.y

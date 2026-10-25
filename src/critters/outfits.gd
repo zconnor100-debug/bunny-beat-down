@@ -247,6 +247,8 @@ static func wear_piece(v: CritterVisual, id: String, tint := Color.WHITE) -> Nod
 		if cape:
 			_finish(v, cape, spec, tint)
 		return cape
+	if slot == "mask":
+		_wrap(v, m, xf, fit, id)
 	holder.transform = (v.rig.rest[role] as Transform3D).affine_inverse() * xf
 	att.add_child(holder)
 	_finish(v, holder, spec, tint)
@@ -296,6 +298,7 @@ static func _drape(v: CritterVisual, m: Node3D, xf: Transform3D, f: OutfitFit, i
 	return cape
 
 
+const DRAPE_SLOPE := 0.6   ## how steeply a cape leans out over a bulge (out per unit down)
 static var _draped := {}   # model path:piece -> [ArrayMesh, Skin] (the same for every critter of a kind)
 
 
@@ -369,9 +372,17 @@ static func _drape_mesh(v: CritterVisual, m: Node3D, xf: Transform3D, f: OutfitF
 	var step := maxf(top - lo, 0.01) / STEPS
 	var line := PackedFloat32Array()   # z of the drape line at each step down from the top
 	var inside := PackedFloat32Array() # z of the cape's inside (its front) there
+	var raw := PackedFloat32Array()
+	for i in STEPS + 1:
+		raw.append(f.drape_back_at(top - step * i) - f.head_d * 0.04 * clampf(i / 4.0, 0.0, 1.0))
 	var run := INF
 	for i in STEPS + 1:
-		run = minf(run, f.back_at(top - step * i) - f.head_d * 0.04 * clampf(i / 4.0, 0.0, 1.0))
+		# (and it leans out ahead of a bulge lower down, as cloth does, rather
+		# than kinking round it: at most DRAPE_SLOPE out per unit down)
+		var ahead := raw[i]
+		for j in range(i + 1, STEPS + 1):
+			ahead = minf(ahead, raw[j] + (j - i) * step * DRAPE_SLOPE)
+		run = minf(run, ahead)
 		line.append(run)
 		inside.append(-INF)
 	for s in surfaces:
@@ -440,6 +451,42 @@ static func _drape_mesh(v: CritterVisual, m: Node3D, xf: Transform3D, f: OutfitF
 	return [mesh, skin]
 
 
+## A bandana's knot and tails pulled in onto the back of the head and neck
+## (sized to the snout, on a big head its loop would leave them hanging in
+## the air behind): every vertex behind the middle of the head goes no
+## further back, and no further out to the side, than the critter does
+## there. The bent meshes are made once per model.
+static func _wrap(v: CritterVisual, m: Node3D, xf: Transform3D, f: OutfitFit, id: String) -> void:
+	var key := v.def.resolved_model() + ":" + id
+	for g in ModelUtil.find_all(m, "MeshInstance3D"):
+		var mi := g as MeshInstance3D
+		if mi.mesh == null:
+			continue
+		var gk := key + ":" + String(m.get_path_to(mi))
+		if not _wrapped.has(gk):
+			var to_skel := xf * _under(mi, m)
+			var back_to := to_skel.affine_inverse()
+			var mesh := ArrayMesh.new()
+			for si in mi.mesh.get_surface_count():
+				var arr := mi.mesh.surface_get_arrays(si)
+				var vs: PackedVector3Array = arr[Mesh.ARRAY_VERTEX]
+				for i in vs.size():
+					var p := to_skel * vs[i]
+					if p.z < f.head_c.z:
+						p.z = maxf(p.z, f.back_at(p.y) - f.head_d * 0.03)
+						var half := maxf(f.body_width_at(p.y), f.head_width_at(p.y)) * 0.5 + f.head_d * 0.03
+						p.x = f.head_c.x + clampf(p.x - f.head_c.x, -half, half)
+					vs[i] = back_to * p
+				arr[Mesh.ARRAY_VERTEX] = vs
+				mesh.add_surface_from_arrays(mi.mesh.surface_get_primitive_type(si), arr)
+				mesh.surface_set_material(si, mi.mesh.surface_get_material(si))
+			_wrapped[gk] = mesh
+		mi.mesh = _wrapped[gk]
+
+
+static var _wrapped := {}   # model path:piece:node -> the piece's mesh, bent to that model
+
+
 ## A node's transform relative to `root` (the root's own transform included).
 static func _under(n: Node3D, root: Node3D) -> Transform3D:
 	var t := Transform3D.IDENTITY
@@ -478,6 +525,14 @@ static func _place(f: OutfitFit, id: String, spec: Dictionary, turn: Basis, box:
 				"hat":
 					seat = lerpf(f.crown_y, f.brow_y, float(spec.get("sink", 0.8)))
 					round = minf(f.head_width_at(seat), f.head_width_at(f.eye_y))   # (not out to a hamster's ears)
+					if f.hat_size > 1.0 and not spec.get("on_crown", false):
+						# a bigger hat for a big head: it slides down until the skull fills
+						# it (no lower than just above the eyes) and is that much wider
+						var want := round * f.hat_size
+						var floor_y := maxf(f.brow_y - f.head_h * 0.04, seat - f.head_h * 0.25)
+						while seat > floor_y and f.head_width_at(seat) < want:
+							seat -= f.head_h * 0.01
+						round = want
 					if spec.get("to_chin", false):
 						# a helmet over the whole head: as wide as the face
 						seat = f.chin_y - f.head_h * 0.05
@@ -569,12 +624,13 @@ static func _place(f: OutfitFit, id: String, spec: Dictionary, turn: Basis, box:
 				f.front_at(y) + f.head_d * 0.01 - box.position.z * k)
 		"cape":
 			# as wide as the back it hangs down (a squirrel is wider below than at
-			# the shoulders), and no lower than where a big tail leaves the body
+			# the shoulders) and the shoulders and arms, down to near the ground
+			# (over a tail: it drapes)
 			var top := cape_top(f)
-			var bottom := f.tail_y + f.head_h * 0.05 if f.tail_y > 0.0 else top * 0.12
-			var wide := f.shoulder_w * 1.15
+			var bottom := top * 0.1
+			var wide := f.shoulder_w * 1.35
 			for i in 6:
-				wide = maxf(wide, f.body_width_at(lerpf(top, maxf(bottom, f.hip_y), i / 5.0)) * 0.95)
+				wide = maxf(wide, f.body_width_at(lerpf(top, f.hip_y, i / 5.0)) * 1.05)
 			k = wide * size / w
 			var ky := minf(k, (top - bottom) / maxf(box.size.y, 0.001))
 			at = Vector3(f.head_c.x - box.get_center().x * k, top - box.end.y * ky, f.back_at(top) + f.head_d * 0.03 - box.end.z * k)

@@ -61,6 +61,7 @@ const STEP_TIME := 0.2
 const LOW_PITCH := 0.42
 const LOW_PITCH_PISTOL := 0.7
 const LOW_PITCH_SHOULDER := -0.22
+const LOW_REACH := 0.9         ## the relaxed carry stops lowering where the paws would be this many arm lengths below the shoulders
 ## At a sprint a relaxed long gun dips further and swings across the body.
 const CARRY_PITCH := 0.62
 const CARRY_YAW := 0.55
@@ -464,7 +465,7 @@ func _process_modification_with_delta(delta: float) -> void:
 		raised_holder = skel.global_transform * Transform3D(wbasis, grip)
 		has_raised = true
 		if not club:
-			var carried := _carried(grip, wbasis, a, up_s, sh_r, sh_mid, hold, S, fk)
+			var carried := _carried(grip, wbasis, a, up_s, sh_r, sh_mid, hold, S, fk, sh_l, skel)
 			grip = carried.origin
 			wbasis = carried.basis
 		if crawling and _crawl > 0.01:
@@ -809,7 +810,7 @@ func _head_clearance(grip: Vector3, wb: Basis, arm_l: float) -> Vector3:
 ## the shoulder), across the chest at a sprint, nudged by breathing, dragging
 ## a little behind quick turns, and turned to look at in the gun-check fidget.
 func _carried(grip: Vector3, wb: Basis, a: Vector3, up_s: Vector3, sh_r: Vector3, sh_mid: Vector3,
-		hold: float, S: float, fk: float) -> Transform3D:
+		hold: float, S: float, fk: float, sh_l: Vector3, skel: Skeleton3D) -> Transform3D:
 	var right := wb.x
 	var low := maxf(1.0 - _up, _carry)
 	if low > 0.001:
@@ -823,6 +824,21 @@ func _carried(grip: Vector3, wb: Basis, a: Vector3, up_s: Vector3, sh_r: Vector3
 		var lg := grip + wb * pivot - lb * pivot - up_s * (0.02 if shouldered else 0.05) * S + (sh_mid - sh_r) * 0.1
 		if not two_handed:
 			lg -= a * hold * (0.25 + 0.3 * _carry)   # a pistol comes in toward the chest
+		# only as low as the paws hang: short arms (a hamster's) hold it higher
+		# rather than stretch down after it
+		var on_gun := _support_local(skel, grip, wb, S)
+		var need0 := _reach_need(grip, wb, on_gun, sh_r, sh_l, up_s)
+		var limit := maxf(need0, LOW_REACH)
+		var lo := 0.0
+		var hi := 1.0
+		if _reach_need(lg, lb, on_gun, sh_r, sh_l, up_s) > limit:
+			for i in 6:
+				var t := (lo + hi) * 0.5
+				if _reach_need(grip.lerp(lg, t), wb.slerp(lb, t), on_gun, sh_r, sh_l, up_s) > limit:
+					hi = t
+				else:
+					lo = t
+			low *= lo
 		grip = grip.lerp(lg, low)
 		wb = wb.slerp(lb, low)
 	if _fidget == "gun_check" and fk > 0.0:
@@ -830,6 +846,24 @@ func _carried(grip: Vector3, wb: Basis, a: Vector3, up_s: Vector3, sh_r: Vector3
 		wb = wb.slerp(wb.rotated(a, 0.9).rotated(right, 0.2), fk)
 	grip += up_s * sin(_breath) * 0.006 * S * _still
 	return Transform3D(wb.rotated(up_s, _sway.x).rotated(right, _sway.y), grip)
+
+
+## Where the support paw holds the gun, in the gun's own frame.
+func _support_local(skel: Skeleton3D, grip: Vector3, wb: Basis, S: float) -> Vector3:
+	if two_handed and support_marker and is_instance_valid(support_marker) and holder and is_instance_valid(holder):
+		return holder.global_transform.affine_inverse() * support_marker.global_position
+	return Transform3D(wb, grip).affine_inverse() * _support_point(skel, grip, wb, S)
+
+
+## How far down the paws must go to hold the gun at (grip, wb): the lower of
+## the two, below its shoulder, in arm lengths. The support paw may slide back
+## along the fore-end toward the grip (as it does when the end is out of reach).
+func _reach_need(grip: Vector3, wb: Basis, on_gun: Vector3, sh_r: Vector3, sh_l: Vector3, up_s: Vector3) -> float:
+	var arm_r: float = _seg_len["r_arm1"] + _seg_len["r_arm2"]
+	var arm_l: float = _seg_len["l_arm1"] + _seg_len["l_arm2"]
+	var back := grip + wb * (on_gun * 0.4)
+	var support := back if (grip + wb * on_gun).dot(up_s) < back.dot(up_s) else grip + wb * on_gun
+	return maxf((sh_r - grip).dot(up_s) / maxf(arm_r, 0.001), (sh_l - support).dot(up_s) / maxf(arm_l, 0.001))
 
 
 ## How the gun lags a quick turn of the aim and swings back (call per frame).

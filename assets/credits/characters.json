@@ -46,7 +46,7 @@
     "source_url": "https://sketchfab.com/3d-models/chipku-blenders-opensourse-mascot-rigged-1d0b4641c80f49aab951948fe297c359",
     "license": "CC BY 4.0",
     "license_url": "https://creativecommons.org/licenses/by/4.0/",
-    "changes": "Rest pose rebuilt from the skin's bind pose; rescaled so the top of the skull is at 0.9 m, feet on the ground; the separate eye meshes skinned to the head bone; foot and paw bones re-parented out of the IK chains and the IK/face-control bones removed; the torso bone split into two (torso, torso_upper) with weights blended along it; skin influences limited to 4 per vertex; bones renamed Godot-safe (Sketchfab _NN suffixes dropped, '.' and ':' replaced by '_'); Sketchfab helper nodes and non-deforming root/end bones removed; meshes joined into one; colour textures re-encoded as JPEG. Recoloured skin variants (Grey, Black, Fox Squirrel, Blueberry): the base-colour texture recoloured per region (fur, markings, clothing) in the OKLab colour space, keeping the original painted shading and detail.",
+    "changes": "Rest pose rebuilt from the skin's bind pose; rescaled so the top of the skull is at 0.9 m, feet on the ground; the separate eye meshes skinned to the head bone; foot and paw bones re-parented out of the IK chains and the IK/face-control bones removed; the torso bone split into two (torso, torso_upper) with weights blended along it; skin influences limited to 4 per vertex; bones renamed Godot-safe (Sketchfab _NN suffixes dropped, '.' and ':' replaced by '_'); Sketchfab helper nodes and non-deforming root/end bones removed; meshes joined into one; colour textures re-encoded as JPEG. Recoloured skin variants (Classic, Grey, Black, Fox Squirrel, Blueberry): the base-colour texture recoloured per region (fur, markings, clothing) in the OKLab colour space, keeping the original painted shading and detail.",
     "used_for": "Enemy: Squirrel",
     "files": [
       "assets/characters/squirrel/squirrel.glb",
@@ -55,6 +55,7 @@
       "assets/characters/squirrel/skins.json",
       "assets/characters/squirrel/skins/black_fur.jpg",
       "assets/characters/squirrel/skins/blueberry_fur.jpg",
+      "assets/characters/squirrel/skins/default_fur.jpg",
       "assets/characters/squirrel/skins/fox_squirrel_fur.jpg",
       "assets/characters/squirrel/skins/grey_fur.jpg"
     ]

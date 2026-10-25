@@ -67,6 +67,25 @@ func test_a_relaxed_gun_is_carried_low_but_shoots_from_the_aim() -> void:
 	check(v.muzzle_position().distance_to(v.muzzle.global_position) < 0.05, "and shooting from the muzzle you see")
 
 
+func test_short_arms_carry_a_gun_higher() -> void:
+	# a hamster's arms are half a fox's: relaxed, it keeps the gun at its tummy
+	# instead of stretching its arms down after a muzzle by its feet
+	var c := spawn_critter("res://data/critters/hamster.tres", Vector3(0, 0.1, 0))
+	c.give_weapon(WeaponInstance.new(WeaponDB.get_weapon(&"carrot_rifle")))
+	await wait_physics(3)
+	_face_ahead(c)
+	await wait_physics(int((Critter.READY_HOLD + 1.0) * Engine.physics_ticks_per_second))
+	await wait_frames(2)
+	var v := c.visual
+	var skel := v.skeleton
+	var arm: float = v.poser._seg_len["r_arm1"] + v.poser._seg_len["r_arm2"]
+	var shoulder := (v.rig.rest[&"r_upper_arm"] as Transform3D).origin
+	var to_skel := skel.global_transform.affine_inverse()
+	var drop := (shoulder.y - (to_skel * v.holder.global_position).y) / arm
+	var up := (shoulder.y - (to_skel * v.poser.raised_holder.origin).y) / arm
+	check(drop < up + 0.15, "relaxed, the gun hangs no lower than the paws hold it up (%.2f arm lengths down, %.2f raised)" % [drop, up])
+
+
 func test_big_guns_are_held_clear_of_the_head() -> void:
 	for pair in [["beaver", &"carrot_rocket_launcher"], ["frog", &"carrot_sniper"], ["raccoon", &"carrot_lmg"], ["squirrel", &"carrot_shotgun"]]:
 		var c := spawn_critter("res://data/critters/%s.tres" % pair[0], Vector3(0, 0.1, 0))

@@ -1,7 +1,10 @@
 [
   {
     "id": "default",
-    "name": "Classic"
+    "name": "Classic",
+    "albedo": {
+      "Material.003": "skins/default_fur.jpg"
+    }
   },
   {
     "id": "grey",
