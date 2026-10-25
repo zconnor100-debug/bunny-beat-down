@@ -47,16 +47,38 @@ from the rest pose:
 
 1. A gait clock advances from the critter's *real* velocity (bunnies, the
    hop gait; everyone else, a run cycle), so feet never skate when speed changes.
-2. The hips bob, lean into speed, squash on landing and flinch when hit
-   (a damped spring).
-3. Aim pitch/yaw is spread across spine → chest → neck → head.
-4. The held gun is placed in front of the shoulder (with recoil kick and a
-   reload tilt), and **analytic two-bone IK** (`IKMath.solve_two_bone`, unit
-   tested) puts both paws on the gun's real `Muzzle`/`SupportGrip` markers.
-5. Legs solve two-bone IK to the gait's foot targets.
+2. The hips bob, lean into speed (hoppers pitch nose-down on each push-off),
+   kick off for a jump, sink and bounce back on landing, and flinch when
+   hit (a damped spring).
+3. Aim pitch/yaw is spread across spine → chest → neck → head. The chest
+   keeps most of a run's lean while the neck and head level the eyes, and
+   bare-pawed runners swing their shoulders against their hips.
+4. Idle life goes on top, on each critter's own clock (scaled time, a random
+   start, so a crowd never moves in step): breathing that turns to panting
+   after a sprint, a slow weight shift from paw to paw, glances off the aim,
+   and **fidgets**: a table of each species' own (`FIDGETS`: thumps, a
+   nibble on the jaw bone, tail swishes, knee bobs, stretches, ear scratches,
+   a look over the gun). Fidgets start only while the critter stands calm and
+   fade out the moment it moves or gets alert.
+5. The held gun is placed in front of the shoulder (with recoil kick and a
+   reload tilt) and moved clear of the head: the head's capsule is sampled
+   in the gun's frame and the gun steps out to the cheek or down under the
+   chin, whichever is less. That is the **raised** pose (`raised_holder`),
+   and shots always leave from its muzzle. The gun you *see* is then carried:
+   up on the aim when shooting, aiming, reloading or just hit, tipped down
+   about its butt when things go quiet, swung across the body at a sprint,
+   with a little lag behind fast turns.
+6. **Analytic two-bone IK** (`IKMath.solve_two_bone`, unit tested) puts both
+   paws on the gun's real `Muzzle`/`SupportGrip` markers, or pumps, swings,
+   raises and stretches them when they're empty.
+7. Legs solve two-bone IK to the gait's foot targets: tucked on the way up
+   a jump, reaching for the ground on the way down. Standing still, planted
+   feet stay put in the world while the body turns over them and step round
+   once it has turned far enough.
 
 Ears and tails run through Godot's `SpringBoneSimulator3D` after the poser, so
-they flop with every hop, landing and hit.
+they flop with every hop, landing and hit (stiff enough to keep their shape:
+a long brush tail stays out of the legs at a bound).
 
 > Engine detail worth knowing: `Skeleton3D` restores the *un-modified* pose
 > after skinning, so `get_bone_global_pose()` outside the modifier stack

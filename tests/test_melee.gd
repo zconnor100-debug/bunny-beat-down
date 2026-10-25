@@ -20,6 +20,7 @@ func test_a_swing_hits_in_front_only() -> void:
 	await wait_physics(3)
 	me.want_melee = true
 	await wait_physics(2)
+	await wait_frames(2)   # (the poser shows the club when the skeleton updates)
 	check(me.is_swinging(), "empty paws: the swing starts")
 	check(me.visual.club_model != null and me.visual.poser.club, "the club comes out")
 	check(me.visual.poser.armed and me.visual.holder.visible, "and is held up in the paws (shown)")

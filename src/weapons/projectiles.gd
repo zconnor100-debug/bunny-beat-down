@@ -317,7 +317,7 @@ func _draw_tracers(shots: Array[Shot], frac: float) -> void:
 		var back := -s.vel / speed
 		var side := back.cross(Vector3.UP if absf(back.y) < 0.98 else Vector3.RIGHT).normalized()
 		tm.set_instance_transform(n, Transform3D(Basis(side, back.cross(side), back * length), s.pos + s.vel * frac))
-		var own := s.shooter is Critter and (s.shooter as Critter).is_player
+		var own := is_instance_valid(s.shooter) and s.shooter is Critter and (s.shooter as Critter).is_player
 		var col := own_tracer if own else TRACER_ENEMY
 		if s.data.pellets > 1:
 			col.a *= 0.55

@@ -557,6 +557,14 @@ func _update_visual(delta: float) -> void:
 	p.reload_progress = reload_progress()
 	_recoil = move_toward(_recoil, 0.0, delta * 6.0)
 	p.recoil = _recoil
+	# the gun comes up to the aim when aiming, shooting, reloading or just hurt,
+	# and goes back down a little while after things go quiet
+	p.gun_up = 1.0 if want_aim or want_fire or is_reloading() or _since_shot < READY_HOLD or _unhurt_t < READY_HOLD else 0.0
+	p.sprinting = want_sprint and Vector2(velocity.x, velocity.z).length() > def.move_speed * 0.9
+
+
+## Seconds the gun stays up after the last shot (or hit taken).
+const READY_HOLD := 2.5
 
 
 ## Footsteps are a gameplay cue: other critters' steps are loud, strongly panned

@@ -199,6 +199,7 @@ func set_weapon(w: WeaponInstance) -> void:
 	muzzle = null
 	_loaded_round = null
 	poser.support_marker = null
+	poser.gun_box = AABB()
 	if w != null:
 		set_club(false)   # a gun in the paws puts the club away
 	poser.armed = w != null or club_model != null
@@ -207,6 +208,7 @@ func set_weapon(w: WeaponInstance) -> void:
 	_gun_two_handed = w.data.two_handed
 	poser.two_handed = w.data.two_handed
 	poser.hold_distance = w.data.hold_distance
+	poser.shouldered = w.data.projectile == WeaponData.ProjectileKind.ROCKET
 	weapon_model = ModelUtil.instantiate(w.data.model_path)
 	if weapon_model == null:
 		weapon_model = _fallback_gun(w.data)
@@ -220,6 +222,8 @@ func set_weapon(w: WeaponInstance) -> void:
 	_match_first_person(weapon_model)
 	muzzle = ModelUtil.find_named(weapon_model, "Muzzle")
 	poser.support_marker = ModelUtil.find_named(weapon_model, "SupportGrip")
+	# its size in the paws, so the poser can keep it out of the critter's face
+	poser.gun_box = weapon_model.transform * ModelUtil.aabb_of(weapon_model)
 	_loaded_round = ModelUtil.find_named(weapon_model, "Rocket")
 
 
@@ -515,8 +519,12 @@ func _update_body_xf() -> void:
 	model.transform = xf * _model_base
 
 
+## Where shots leave from: the muzzle of the gun as if raised to the aim
+## (CritterPoser.raised_holder), even while it's carried lowered.
 func muzzle_position() -> Vector3:
 	if muzzle and is_instance_valid(muzzle):
+		if poser and poser.has_raised and holder:
+			return poser.raised_holder * (holder.global_transform.affine_inverse() * muzzle.global_position)
 		return muzzle.global_position
 	if holder:
 		return holder.global_transform * Vector3(0, 0.04, -0.35 * rig.scale)
@@ -690,10 +698,14 @@ func _build_springs() -> void:
 		springs.set_end_bone(i, chain[chain.size() - 1])
 		springs.set_extend_end_bone(i, true)
 		springs.set_end_bone_length(i, 0.06 * rig.scale)
+		# ears bounce but hold their shape (floppier ones folded over the face
+		# at a run); tails swish and trail without whipping round the legs
+		# (the fox's long brush most of all: soft, it looped under the body at every bound)
 		var is_tail := String(chain_name).begins_with("tail")
-		springs.set_stiffness(i, 1.4 if is_tail else 1.0)
-		springs.set_drag(i, 0.35)
-		springs.set_gravity(i, 0.5 if is_tail else 0.35)
+		var long_tail := is_tail and chain.size() >= 5
+		springs.set_stiffness(i, 4.0 if long_tail else (3.0 if is_tail else 2.6))
+		springs.set_drag(i, 0.7 if long_tail else (0.55 if is_tail else 0.45))
+		springs.set_gravity(i, 0.08 if long_tail else (0.12 if is_tail else 0.15))
 		springs.set_radius(i, 0.015 * rig.scale)
 		i += 1
 
