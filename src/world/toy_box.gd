@@ -44,6 +44,7 @@ var _mat_img: Image
 
 func _init() -> void:
 	drop_vehicle = &"paper_plane"
+	map_id = "toybox"
 	map_title = "Toy Box Bash"
 	music_slot = "match_toybox"
 

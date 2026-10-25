@@ -80,3 +80,21 @@ func test_the_trophy_room_shows_milestones() -> void:
 	await wait_frames(2)
 	check(panel.find_children("*", "Label", true, false).any(func(l): return l.text.contains("Popcorn") and l.is_visible_in_tree()), "showing the milestones")
 	panel.queue_free()
+
+
+func test_a_win_on_each_map_and_a_beaten_nemesis_earn_a_piece() -> void:
+	for pair in [["island", "wear_face:snorkel_mask"], ["cage", "wear_hat:cheese_hat"], ["toybox", "wear_back:windup_key"]]:
+		check(not Workshop.owns(pair[1]), "%s isn't yours yet" % pair[1])
+		StatBook.begin_match(&"bun", pair[0])
+		StatBook.end_match(1, 24, false)
+		check(StatBook.map_wins(pair[0]) == 1, "a win on %s counted" % pair[0])
+		Mastery.check()
+		check(Workshop.owns(pair[1]) and Workshop.earned_only(pair[1]), "a win on %s: the %s (earned, not bought)" % pair)
+	# losing on a map earns nothing
+	StatBook.begin_match(&"bun", "island")
+	StatBook.end_match(5, 24, true)
+	check(StatBook.map_wins("island") == 1, "a loss isn't a win")
+	check(not Workshop.owns("wear_hat:laurel_wreath"), "no laurels yet")
+	Mastery.note_nemesis_beaten()
+	Mastery.check()
+	check(Mastery.progress("nemeses_beaten") == 1 and Workshop.owns("wear_hat:laurel_wreath"), "your Nemesis beaten down: the laurel wreath")

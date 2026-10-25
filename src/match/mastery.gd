@@ -7,8 +7,9 @@ extends RefCounted
 ##
 ## Adding one is adding a row to MILESTONES: `stat` is what it counts (see
 ## progress(): "kills", "heads", "gun_kills:<gun id>", "gun_heads:<gun id>",
-## "wins", "critters_played", "cast_beaten", "max_heat", "signatures",
-## "runs_done", "run_stops", "boons_at_once"), `need` how many, and `reward`
+## "wins", "map_wins:<map id>", "critters_played", "cast_beaten", "max_heat",
+## "signatures", "nemeses_beaten", "runs_done", "run_stops", "boons_at_once"),
+## `need` how many, and `reward`
 ## what it gives:
 ##   {"acorns": n}                      once, when it's reached
 ##   {"look": "category:id"}            a Workshop look, free
@@ -67,6 +68,15 @@ const MILESTONES := [
 		"reward": {"look": "wear_back:fairy_wings"}, "gives": "the fairy wings"},
 	{"id": "dark_horse", "name": "Dark Horse", "text": "Win 2 nemesis hunts.", "stat": "signatures", "need": 2,
 		"reward": {"look": "wear_back:dark_wings"}, "gives": "the dark wings"},
+	# a piece for winning on each map, and one for beating your nemesis
+	{"id": "island_hopper", "name": "Island Hopper", "text": "Win a match on Wildwood Island.", "stat": "map_wins:island", "need": 1,
+		"reward": {"look": "wear_face:snorkel_mask"}, "gives": "the snorkel mask"},
+	{"id": "big_cheese", "name": "The Big Cheese", "text": "Win a match in the Hamster Cage.", "stat": "map_wins:cage", "need": 1,
+		"reward": {"look": "wear_hat:cheese_hat"}, "gives": "the cheese hat"},
+	{"id": "wound_up", "name": "All Wound Up", "text": "Win a match in Toy Box Bash.", "stat": "map_wins:toybox", "need": 1,
+		"reward": {"look": "wear_back:windup_key"}, "gives": "the wind-up key"},
+	{"id": "laurels", "name": "Resting on Your Laurels", "text": "Beat down your Nemesis.", "stat": "nemeses_beaten", "need": 1,
+		"reward": {"look": "wear_hat:laurel_wreath"}, "gives": "the laurel wreath"},
 ]
 
 
@@ -91,6 +101,8 @@ static func progress(stat: String) -> int:
 		return int(StatBook.gun(StringName(stat.get_slice(":", 1))).kills)
 	if stat.begins_with("gun_heads:"):
 		return int(StatBook.gun(StringName(stat.get_slice(":", 1))).heads)
+	if stat.begins_with("map_wins:"):
+		return StatBook.map_wins(stat.get_slice(":", 1))
 	match stat:
 		"kills", "heads":
 			var n := 0.0
@@ -113,11 +125,18 @@ static func progress(stat: String) -> int:
 			return Run.record("best_row")
 		"boons_at_once":
 			return int(_book().get_value("mastery_stats", "boons_at_once", 0))
+		"nemeses_beaten":
+			return int(_book().get_value("mastery_stats", "nemeses_beaten", 0))
 	return 0
 
 
 static func _critters() -> Array:
 	return TrophyPanel.CRITTERS
+
+
+## You beat down a bot that was your Nemesis (for Resting on Your Laurels).
+static func note_nemesis_beaten() -> void:
+	_book().set_value("mastery_stats", "nemeses_beaten", int(_book().get_value("mastery_stats", "nemeses_beaten", 0)) + 1)
 
 
 ## How many boons you've held at once (for Green Thumb).

@@ -4,6 +4,7 @@ extends Node
 
 var out_dir := "/tmp/bbd_finale"
 var map := "island"
+var wear := ""      ## "id,id": Bun wears these (the test profile's wardrobe)
 var game: Node
 var mm: MatchManager
 var _n := 0
@@ -21,6 +22,16 @@ func _ready() -> void:
 	settings.set_value(&"opponents", 1, false)
 	settings.set_value(&"camera_mode", Settings.CameraMode.THIRD_PERSON, false)
 	GameSession.replays_in_tests = true
+	if wear != "":
+		PlayerProfile.reset_for_tests()
+		var owned := []
+		for id in wear.split(","):
+			for cat in Workshop.WARDROBE:
+				if not Workshop._option("%s:%s" % [cat, id]).is_empty():
+					owned.append("%s:%s" % [cat, id])
+		PlayerProfile._book().set_value("workshop", "owned", owned)
+		for item in owned:
+			Workshop.set_look(item.get_slice(":", 0), item.get_slice(":", 1))
 	get_tree().change_scene_to_file("res://scenes/game.tscn")
 	while game == null or game.get("hud") == null:
 		await get_tree().process_frame

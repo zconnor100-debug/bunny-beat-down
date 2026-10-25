@@ -54,6 +54,7 @@ var pods: Array = []
 
 func _init() -> void:
 	drop_vehicle = &"plane"
+	map_id = "cage"
 	map_title = "Hamster Cage"
 	music_slot = "match_cage"
 

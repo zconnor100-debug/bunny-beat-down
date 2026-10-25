@@ -34,6 +34,7 @@ extends RefCounted
 ## size: times the slot's own measure (the eyes' spread, the face, the neck,
 ##   the shoulders, the back);
 ## back: how far behind the top of the skull a hat sits (share of its depth);
+## mid: a pack in the middle of the back (a wind-up key), not hung from the shoulders;
 ## tall: a hat that stands tall by design (a top hat, a chef's hat); the rest
 ##   are squashed a little (to 70 %, at most) so the inside of the crown sits
 ##   on the skull rather than floating over a flat-topped squirrel;
@@ -102,6 +103,11 @@ const PIECES := {
 	"fairy_wings": {"slot": "wings", "two_sided": true},
 	"dark_wings": {"slot": "wings", "size": 1.3, "two_sided": true},
 	"butterfly_wings": {"slot": "wings", "two_sided": true},
+	# earned: a win on each map, and beating your nemesis
+	"snorkel_mask": {"slot": "glasses", "lens": [-0.06, 0.141, 0.085]},
+	"cheese_hat": {"slot": "hat", "sink": 0.95, "tint": "#f2c447"},
+	"windup_key": {"slot": "pack", "roll": 90.0, "yaw": -90.0, "size": 0.85, "mid": true},
+	"laurel_wreath": {"slot": "hat", "sink": 0.5, "fit": 1.05, "hole": [0.0, 0.0], "tall": true},
 }
 
 ## Who wears what: the fur (one of the species' skins) and the pieces, each
@@ -598,9 +604,16 @@ static func _place(f: OutfitFit, id: String, spec: Dictionary, turn: Basis, box:
 			return Transform3D(Basis().scaled(Vector3(k, k * flat, kz)), at)
 		"glasses":
 			# lenses over the eyes: they're about a quarter of the way in from each end
+			# (or a mask's one wide lens, `lens`: [middle x, middle y, half width],
+			# a little wider than the eyes are apart)
+			var mid := Vector2(box.get_center().x, box.get_center().y)
 			k = f.eye_x * size / (w * 0.27)
+			if spec.has("lens"):
+				var lens: Array = spec.lens
+				mid = Vector2(float(lens[0]), float(lens[1]))
+				k = f.eye_x * 1.75 * size / float(lens[2])
 			var front := maxf(f.face_z, f.eye_z) + f.head_d * 0.05
-			at = Vector3(f.head_c.x - box.get_center().x * k, f.eye_y - box.get_center().y * k, front - box.end.z * k)
+			at = Vector3(f.head_c.x - mid.x * k, f.eye_y - mid.y * k, front - box.end.z * k)
 		"monocle":
 			k = f.eye_x * 0.9 * size / w
 			at = Vector3(f.head_c.x - f.eye_x - box.get_center().x * k, f.eye_y - box.get_center().y * k,
@@ -644,6 +657,9 @@ static func _place(f: OutfitFit, id: String, spec: Dictionary, turn: Basis, box:
 			var top := cape_top(f)
 			var y := lerpf(f.hip_y, top, 0.6)
 			k = minf((top - f.hip_y) * 0.85 / maxf(box.size.y, 0.001), minf(f.body_width_at(y), f.shoulder_w) * 0.9 / w) * size
+			if spec.get("mid", false):
+				# (a wind-up key: in the middle of the back, not hung from the shoulders)
+				top = lerpf(f.hip_y, top, 0.75) + box.size.y * k * 0.5
 			var back := minf(f.back_at(top - box.size.y * k * 0.3), f.back_at(top - box.size.y * k * 0.7))
 			at = Vector3(f.head_c.x - box.get_center().x * k, top - box.end.y * k, back + f.head_d * 0.02 - box.end.z * k)
 	return Transform3D(Basis().scaled(Vector3(k, k * float(spec.get("flat", 1.0)), k)), at)

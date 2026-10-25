@@ -38,14 +38,15 @@ const LOOKS := {
 	"wear_hat": {"label": "Hat", "options": [["none", "None", 0], ["flap_beanie", "Ear-flap beanie", 50],
 		["flower_crown", "Flower crown", 60], ["santa_hat", "Santa hat", 70], ["fedora", "Fedora", 80],
 		["witch_hat", "Witch's hat", 90], ["wizard_hat", "Wizard's hat", 110], ["grad_cap", "Mortarboard", -1],
-		["jester_hat", "Jester's cap", -1]]},
+		["jester_hat", "Jester's cap", -1], ["cheese_hat", "Cheese hat", -1], ["laurel_wreath", "Laurel wreath", -1]]},
 	"wear_face": {"label": "Face", "options": [["none", "None", 0], ["heart_glasses", "Heart glasses", 40],
 		["glasses_3d", "3D glasses", 40], ["pixel_shades", "Pixel shades", 75],
-		["star_glasses", "Star glasses", -1]]},
+		["star_glasses", "Star glasses", -1], ["snorkel_mask", "Snorkel mask", -1]]},
 	"wear_neck": {"label": "Neck", "options": [["none", "None", 0], ["sapphire_necklace", "Sapphire necklace", 50],
 		["ring_necklace", "Silver ring necklace", 60]]},
 	"wear_back": {"label": "Back", "options": [["none", "None", 0], ["butterfly_wings", "Butterfly wings", 120],
-		["jetpack", "Jetpack", 150], ["fairy_wings", "Fairy wings", -1], ["dark_wings", "Dark wings", -1]]},
+		["jetpack", "Jetpack", 150], ["fairy_wings", "Fairy wings", -1], ["dark_wings", "Dark wings", -1],
+		["windup_key", "Wind-up key", -1]]},
 }
 
 ## Your wardrobe's slots, in the order they're shown.
@@ -126,6 +127,24 @@ static func set_look(category: String, id: String) -> bool:
 static func look_name(category: String, id: String) -> String:
 	var opt := _option("%s:%s" % [category, id])
 	return opt[1] if not opt.is_empty() else id
+
+
+## A worn piece's name, the way it reads in a sentence ("ear-flap beanie").
+static func piece_name(id: String) -> String:
+	for cat in WARDROBE:
+		for o in LOOKS[cat].options:
+			if o[0] == id:
+				var n := String(o[1])
+				return n if n.substr(0, 2) == "3D" else n[0].to_lower() + n.substr(1)
+	return id.replace("_", " ")
+
+
+## What you're wearing, as a phrase ("wizard's hat and pixel shades"), or "".
+static func outfit_phrase() -> String:
+	var names := outfit().map(func(id): return piece_name(id))
+	if names.size() <= 1:
+		return "" if names.is_empty() else names[0]
+	return ", ".join(names.slice(0, names.size() - 1)) + " and " + names[names.size() - 1]
 
 
 ## What you're wearing: the Outfits piece in each wardrobe slot, skipping

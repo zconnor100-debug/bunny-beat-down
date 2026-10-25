@@ -607,6 +607,7 @@ func _show_end(title: String, sub: String, won: bool, killer: Critter) -> void:
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	row.add_theme_constant_override("separation", 18)
 	v.add_child(row)
+	_end_look(root, won)
 	if not won:
 		row.add_child(UITheme.button("Spectate", func():
 			_spectating = true
@@ -630,6 +631,36 @@ func _show_end(title: String, sub: String, won: bool, killer: Critter) -> void:
 	t.scale = Vector2(0.4, 0.4)
 	var tw := t.create_tween()
 	tw.tween_property(t, "scale", Vector2.ONE, 0.45).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+
+
+## The end shot: you on a little turntable in the corner, in your outfit,
+## holding the gun you ended with (on a screen too narrow for it, nothing).
+func _end_look(root: Control, won: bool) -> void:
+	var view := get_viewport().get_visible_rect().size
+	if view.x < 1100.0:
+		return
+	var p := match_manager.player
+	var card := VBoxContainer.new()
+	card.set_anchors_and_offsets_preset(Control.PRESET_CENTER_LEFT)   # (clear of the health bars below)
+	card.grow_vertical = Control.GROW_DIRECTION_BOTH
+	card.offset_left = 30.0
+	card.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	root.add_child(card)
+	var portrait := CritterPortrait.new(Vector2(240, 280))
+	card.add_child(portrait)
+	var gun := p.current_weapon() if p and is_instance_valid(p) else null
+	portrait.show_player(Workshop.outfit(), gun.data.id if gun else &"carrot_rifle")
+	var look := Workshop.outfit_phrase()
+	var line := ("Dressed to win" if won else "Your look") if look != "" else "Dress up in the Burrow's Workshop"
+	var head := UITheme.label(line, 20, UITheme.CARROT if won else UITheme.CREAM, true)
+	head.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	card.add_child(head)
+	if look != "":
+		var l := UITheme.label(look[0].to_upper() + look.substr(1), 16, Color(UITheme.CREAM, 0.8))
+		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		l.custom_minimum_size.x = 240.0
+		card.add_child(l)
 
 
 func _spectate_next() -> void:

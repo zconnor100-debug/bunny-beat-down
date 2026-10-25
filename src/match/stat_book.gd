@@ -22,8 +22,8 @@ static func _book() -> ConfigFile:
 	return PlayerProfile._book()
 
 
-static func begin_match(critter_id: StringName) -> void:
-	this_match = {"critter": String(critter_id), "guns": {}, "kills": 0, "shots": 0, "hits": 0, "heads": 0,
+static func begin_match(critter_id: StringName, map_id := "") -> void:
+	this_match = {"critter": String(critter_id), "map": map_id, "guns": {}, "kills": 0, "shots": 0, "hits": 0, "heads": 0,
 		"damage": 0.0, "longest": 0.0, "ended": false}
 
 
@@ -80,6 +80,8 @@ static func end_match(placement: int, total: int, beaten: bool) -> void:
 	b.set_value(section, "matches", int(b.get_value(section, "matches", 0)) + 1)
 	if placement == 1:
 		b.set_value(section, "wins", int(b.get_value(section, "wins", 0)) + 1)
+		if String(this_match.get("map", "")) != "":
+			b.set_value("maps", String(this_match.map), map_wins(String(this_match.map)) + 1)
 	var best := int(b.get_value(section, "best", 0))
 	b.set_value(section, "best", placement if best == 0 else mini(best, placement))
 	if beaten:
@@ -87,6 +89,11 @@ static func end_match(placement: int, total: int, beaten: bool) -> void:
 	for key in ["kills", "heads", "damage", "shots", "hits"]:
 		b.set_value(section, key, float(b.get_value(section, key, 0.0)) + float(this_match[key]))
 	PlayerProfile.save()
+
+
+## Matches you've won on a map ("island", "cage", "toybox").
+static func map_wins(map_id: String) -> int:
+	return int(_book().get_value("maps", map_id, 0))
 
 
 ## A gun's lifetime numbers ({kills, shots, hits, heads, damage, longest}).

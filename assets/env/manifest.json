@@ -2718,5 +2718,69 @@
     "density_weight": 1.0,
     "sink_m": 0.0,
     "tris": 2
+  },
+  {
+    "id": "outfit_snorkel_mask",
+    "file": "assets/env/outfit_snorkel_mask/outfit_snorkel_mask.glb",
+    "category": "outfit",
+    "height_m": 0.3,
+    "footprint_radius_m": 0.2,
+    "collision": "none",
+    "collision_radius_m": 0.0,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 1.0,
+    "sink_m": 0.0,
+    "tris": 2940
+  },
+  {
+    "id": "outfit_cheese_hat",
+    "file": "assets/env/outfit_cheese_hat/outfit_cheese_hat.glb",
+    "category": "outfit",
+    "height_m": 0.3,
+    "footprint_radius_m": 0.37,
+    "collision": "none",
+    "collision_radius_m": 0.0,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 1.0,
+    "sink_m": 0.0,
+    "tris": 2939
+  },
+  {
+    "id": "outfit_windup_key",
+    "file": "assets/env/outfit_windup_key/outfit_windup_key.glb",
+    "category": "outfit",
+    "height_m": 0.3,
+    "footprint_radius_m": 0.12,
+    "collision": "none",
+    "collision_radius_m": 0.0,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 1.0,
+    "sink_m": 0.0,
+    "tris": 2940
+  },
+  {
+    "id": "outfit_laurel_wreath",
+    "file": "assets/env/outfit_laurel_wreath/outfit_laurel_wreath.glb",
+    "category": "outfit",
+    "height_m": 0.3,
+    "footprint_radius_m": 0.47,
+    "collision": "none",
+    "collision_radius_m": 0.0,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 1.0,
+    "sink_m": 0.0,
+    "tris": 512
   }
 ]

@@ -739,5 +739,57 @@
     "files": [
       "assets/env/outfit_butterfly_wings/outfit_butterfly_wings.glb"
     ]
+  },
+  {
+    "asset": "Scuba Goggles And Snorkel",
+    "author": "Turtle_Flipper",
+    "author_url": "https://sketchfab.com/milansaman21",
+    "source_url": "https://sketchfab.com/3d-models/scuba-goggles-and-snorkel-6552ed7809cb4eaca6fd3c987165adbb",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "outfit_snorkel_mask: rescaled x1.0954 to critter-world size, grounded and centred; decimated 12914 -> 2940 triangles (seams welded first, no cracks); normal map re-baked from the full-detail source onto the decimated mesh; foliage materials converted to alpha-clip (cut-out) with bled RGBA albedo; textures re-encoded <= 512px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Rogue outfit: snorkel mask (outfit_snorkel_mask)",
+    "files": [
+      "assets/env/outfit_snorkel_mask/outfit_snorkel_mask.glb"
+    ]
+  },
+  {
+    "asset": "Cheese Hat",
+    "author": "Silwerowy",
+    "author_url": "https://sketchfab.com/silwerowy",
+    "source_url": "https://sketchfab.com/3d-models/cheese-hat-f48d39fbb0214ac09ef835cbaf658eed",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "outfit_cheese_hat: rescaled x0.4188 to critter-world size, grounded and centred; decimated 3756 -> 2939 triangles (seams welded first, no cracks); textures re-encoded <= 0px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Rogue outfit: cheese hat (outfit_cheese_hat)",
+    "files": [
+      "assets/env/outfit_cheese_hat/outfit_cheese_hat.glb"
+    ]
+  },
+  {
+    "asset": "wind-up-key",
+    "author": "Mylom",
+    "author_url": "https://sketchfab.com/Mylom",
+    "source_url": "https://sketchfab.com/3d-models/wind-up-key-2ffd153dc9054a5e93f89a27735e0027",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "outfit_windup_key: rescaled x0.0516 to critter-world size, grounded and centred; decimated 9069 -> 2940 triangles (seams welded first, no cracks); normal map re-baked from the full-detail source onto the decimated mesh; textures re-encoded <= 512px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Rogue outfit: wind-up key (outfit_windup_key)",
+    "files": [
+      "assets/env/outfit_windup_key/outfit_windup_key.glb"
+    ]
+  },
+  {
+    "asset": "Gold Laurel Wreath - Lowpoly",
+    "author": "Xen",
+    "author_url": "https://sketchfab.com/xenaa",
+    "source_url": "https://sketchfab.com/3d-models/gold-laurel-wreath-lowpoly-3a8ea8bf9f3a425481c5408b6d4273fd",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "outfit_laurel_wreath: rescaled x0.1402 to critter-world size, grounded and centred; textures re-encoded <= 0px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Rogue outfit: gold laurel wreath (outfit_laurel_wreath)",
+    "files": [
+      "assets/env/outfit_laurel_wreath/outfit_laurel_wreath.glb"
+    ]
   }
 ]

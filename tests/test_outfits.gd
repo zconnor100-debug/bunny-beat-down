@@ -192,3 +192,27 @@ func test_clothes_fit_each_species_snugly() -> void:
 		check(not is_instance_valid(cape) or cape.is_queued_for_deletion(), "%s: and it comes off with the rest" % sp)
 		c.queue_free()
 		await wait_physics(1)
+
+
+func test_rogues_talk_about_what_you_wear() -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 5
+	check(Cast.outfit_line([], "spot", "Bun", rng) == "", "nothing worn: nothing said")
+	var pieces := []
+	for cat in Workshop.WARDROBE:
+		for o in Workshop.LOOKS[cat].options:
+			if o[0] != "none":
+				pieces.append(o[0])
+	for id in Cast.OUTFIT_LINES:
+		check(id == "any" or pieces.has(id), "%s lines are about a wardrobe piece" % id)
+	for id in pieces:
+		check(Cast.OUTFIT_LINES.has(id), "the %s has lines of its own" % id)
+		for event in ["spot", "kill", "lose"]:
+			var said := Cast.outfit_line([id], event, "Bun", rng)
+			check(said != "" and not said.contains("{"), "%s/%s: \"%s\"" % [id, event, said])
+	var any := Cast.pick(Cast.OUTFIT_LINES.any.spot, rng, {"you": "Bun", "piece": Workshop.piece_name("glasses_3d")})
+	check(any.contains("3D glasses") or not any.contains("{piece}"), "a piece by its name: \"%s\"" % any)
+	check(Workshop.piece_name("flap_beanie") == "ear-flap beanie", "names read in a sentence (%s)" % Workshop.piece_name("flap_beanie"))
+	check(KillCam.look_line(true, false, "wizard's hat") == "Dressed to win: your wizard's hat", "the replay notes your outfit when you won")
+	check(KillCam.look_line(false, true, "wizard's hat").begins_with("Beaten down in"), "or went down in it")
+	check(KillCam.look_line(false, false, "wizard's hat") == "" and KillCam.look_line(true, false, "") == "", "and says nothing otherwise")

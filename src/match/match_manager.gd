@@ -173,7 +173,7 @@ func spawn_player(def: CritterDef, skin_id: String) -> Critter:
 	player = _spawn_critter(def, display)
 	player.visual.apply_skin(skin_id)
 	Outfits.dress_player(player)   # (your wardrobe, from the Workshop)
-	StatBook.begin_match(def.id)
+	StatBook.begin_match(def.id, island.map_id if island else "")
 	_apply_perks(player)
 	var pc := PlayerController.new()
 	pc.name = "PlayerController"
@@ -768,6 +768,8 @@ func _on_critter_died(victim: Node, info: DamageInfo) -> void:
 		_note_player_kill(info)
 		StatBook.note_kill(info.weapon_id, player.global_position.distance_to(c.global_position))
 		var heat_was := Cast.heat(c.display_name)
+		if c == nemesis or heat_was >= Cast.HEAT_AT.size():
+			Mastery.note_nemesis_beaten()   # (your Nemesis, hunting you or not)
 		if RivalBook.note_you_beat(c.display_name, String(c.def.id)):
 			revenges += 1
 			Events.rival_news.emit("REVENGE!", "You beat down your rival %s — now %s" % [c.display_name, RivalBook.score(c.display_name)])
@@ -955,8 +957,11 @@ func taunt(c: Critter, event: String) -> void:
 		return
 	_taunted[key] = true
 	var you := String(player.def.display_name)
-	# a radical bot sounds it; otherwise its own voice, or now and then its own line
+	# a radical bot sounds it; otherwise now and then about your outfit, its own
+	# line, or in its own voice
 	var said := Cast.heat_line(c.display_name, event, you, rng) if rng.randf() < 0.75 else ""
+	if said == "" and rng.randf() < Cast.OUTFIT_TAUNT_CHANCE:
+		said = Cast.outfit_line(Workshop.outfit(), event, you, rng)
 	if said == "" and event == "spot" and rng.randf() < 0.4:
 		said = Cast.member(c.display_name).get("says", "")
 	if said == "":

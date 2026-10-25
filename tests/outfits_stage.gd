@@ -95,6 +95,11 @@ func _pieces(which := "") -> void:
 
 
 func _cast(species: String) -> void:
+	# "<species>+bare": in their fur only; "<species>+wear=a,b": in those pieces instead of their own
+	var wear: Array = []
+	if species.contains("+wear="):
+		wear = Array(species.get_slice("+wear=", 1).split(","))
+		species = species.get_slice("+wear=", 0)
 	var bare := species.ends_with("+bare")
 	species = species.trim_suffix("+bare")
 	var ground := StaticBody3D.new()
@@ -135,6 +140,10 @@ func _cast(species: String) -> void:
 				c.visual.apply_skin(String(Outfits.look_of(names[i]).get("skin", "default")))
 			else:
 				Outfits.dress(c, names[i])
+			if not wear.is_empty():
+				Outfits.undress(c.visual)
+				for id in wear:
+					Outfits.wear_piece(c.visual, id)
 			c.process_mode = Node.PROCESS_MODE_DISABLED
 			crits.append(c)
 		await get_tree().process_frame

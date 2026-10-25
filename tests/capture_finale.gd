@@ -1,7 +1,7 @@
 extends SceneTree
 ## Screenshots of a rewind and of the final shot (slow motion, the three
 ## replay angles, the end screen) in a real match (needs a GPU window).
-##   BBD_TEST=1 godot --path . --resolution 1280x720 -s tests/capture_finale.gd -- <out_dir> [map]
+##   BBD_TEST=1 godot --path . --resolution 1280x720 -s tests/capture_finale.gd -- <out_dir> [map] [wardrobe ids,]
 
 
 func _initialize() -> void:
@@ -16,5 +16,7 @@ func _start() -> void:
 		stage.out_dir = a[0]
 	if a.size() > 1:
 		stage.map = a[1]
+	if a.size() > 2:
+		stage.wear = a[2]
 	DirAccess.make_dir_recursive_absolute(stage.out_dir)
 	root.add_child(stage)

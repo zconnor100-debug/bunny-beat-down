@@ -39,6 +39,7 @@ var _events: Array = []           # [t, "fx", pos, dir, cfg] / [t, "sound", key,
 var _cam: Camera3D
 var _ui: CanvasLayer
 var _caption: Label
+var _look: Label                  ## under the caption: what you were wearing, when you're in the shot
 var _flash: ColorRect
 var _skip := false
 var _replay_fx: Array[GPUParticles3D] = []
@@ -232,6 +233,7 @@ func _replay() -> void:
 	var angles := [["THE SHOT", "over %s shoulder" % whose],
 		["THE CARROT" if not shot.is_empty() else "SIDE ON", "riding the carrot" if not shot.is_empty() else "the whole picture"],
 		["THE BEAT DOWN", "%s goes down" % victim.display_name]]
+	_look.text = look_line(shooter != null and shooter.is_player, victim != null and victim.is_player, Workshop.outfit_phrase())
 	for i in 3:
 		if _skip:
 			break
@@ -250,6 +252,18 @@ func _replay() -> void:
 	_ui = null
 	tree.paused = false
 	playing = false
+
+
+## The line under the replay's caption about your outfit: when you took the
+## final shot, or were taken by it, and you're wearing something.
+static func look_line(you_shot: bool, you_fell: bool, outfit: String) -> String:
+	if outfit == "":
+		return ""
+	if you_shot:
+		return "Dressed to win: your %s" % outfit
+	if you_fell:
+		return "Beaten down in your %s" % outfit
+	return ""
 
 
 ## One camera angle: plays its stretch of the recording at its own speed.
@@ -583,6 +597,11 @@ func _build_ui() -> void:
 	_caption.offset_left = 40.0
 	_caption.offset_top = 24.0
 	root.add_child(_caption)
+	_look = UITheme.label("", 22, Color(UITheme.CREAM, 0.85))
+	_look.set_anchors_preset(Control.PRESET_TOP_LEFT)
+	_look.offset_left = 44.0
+	_look.offset_top = 62.0
+	root.add_child(_look)
 	var skip := UITheme.label("Skip: %s" % GameInput.prompt(&"jump"), 22, Color(UITheme.CREAM, 0.7))
 	skip.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
 	skip.grow_horizontal = Control.GROW_DIRECTION_BEGIN

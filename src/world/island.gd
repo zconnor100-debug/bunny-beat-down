@@ -45,6 +45,7 @@ var rng := RandomNumberGenerator.new()
 ## What everyone rides in on (see Dropship), what the map is called, and the
 ## music slot that plays during a match on it.
 var drop_vehicle := &"balloon"
+var map_id := "island"           ## (Settings "map": the key your wins on it are kept under)
 var map_title := "Wildwood Island"
 var music_slot := "match"
 var terrain: Terrain

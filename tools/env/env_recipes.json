@@ -191,6 +191,10 @@
     {"id": "outfit_jetpack", "source": "sf:478fd958ed2c4f85886cd8d16adbdde4", "height_m": 0.3, "max_tris": 3000, "tex": 512, "category": "outfit", "collision": "none", "desc": "jetpack"},
     {"id": "outfit_fairy_wings", "source": "sf:a7e0e35e23684042bb1d647e2426f822", "height_m": 0.3, "max_tris": 3000, "tex": 512, "category": "outfit", "collision": "none", "desc": "fairy wings"},
     {"id": "outfit_dark_wings", "source": "sf:c07e65d3490b48aaa0f2d278e2efaa9b", "exclude": ["^Icosphere"], "height_m": 0.3, "max_tris": 3000, "tex": 512, "category": "outfit", "collision": "none", "desc": "dark feathered wings"},
-    {"id": "outfit_butterfly_wings", "source": "sf:d8c0e2dd562e4892b79cb4d4584b5ecd", "height_m": 0.3, "max_tris": 3000, "tex": 512, "category": "outfit", "collision": "none", "desc": "butterfly wings"}
+    {"id": "outfit_butterfly_wings", "source": "sf:d8c0e2dd562e4892b79cb4d4584b5ecd", "height_m": 0.3, "max_tris": 3000, "tex": 512, "category": "outfit", "collision": "none", "desc": "butterfly wings"},
+    {"id": "outfit_snorkel_mask", "source": "sf:6552ed7809cb4eaca6fd3c987165adbb", "height_m": 0.3, "max_tris": 3000, "tex": 512, "category": "outfit", "collision": "none", "desc": "snorkel mask"},
+    {"id": "outfit_cheese_hat", "source": "sf:f48d39fbb0214ac09ef835cbaf658eed", "height_m": 0.3, "max_tris": 3000, "tex": 512, "category": "outfit", "collision": "none", "desc": "cheese hat"},
+    {"id": "outfit_windup_key", "source": "sf:2ffd153dc9054a5e93f89a27735e0027", "height_m": 0.3, "max_tris": 3000, "tex": 512, "category": "outfit", "collision": "none", "desc": "wind-up key"},
+    {"id": "outfit_laurel_wreath", "source": "sf:3a8ea8bf9f3a425481c5408b6d4273fd", "height_m": 0.3, "max_tris": 3000, "tex": 512, "category": "outfit", "collision": "none", "desc": "gold laurel wreath"}
   ]
 }

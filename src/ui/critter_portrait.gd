@@ -102,12 +102,16 @@ func show_rogue(rogue: String) -> void:
 		Outfits.dress(c, rogue))
 
 
-## You: your critter and skin (Settings), wearing `wear` (Outfits pieces).
-func show_player(wear: Array) -> void:
+## You: your critter and skin (Settings), wearing `wear` (Outfits pieces),
+## holding `gun`.
+func show_player(wear: Array, gun := &"carrot_rifle") -> void:
 	var id := String(Settings.get_value(&"player_character"))
-	_show("you:%s:%s:%s" % [id, Settings.get_value(&"player_skin"), ",".join(wear)], id, func(c: Critter):
+	_show("you:%s:%s:%s:%s" % [id, Settings.get_value(&"player_skin"), ",".join(wear), gun], id, func(c: Critter):
 		c.visual.apply_skin(String(Settings.get_value(&"player_skin")))
-		c.give_weapon(WeaponInstance.new(WeaponDB.get_weapon(&"carrot_rifle"), Rarity.Tier.PRIZE))
+		var w := WeaponDB.get_weapon(gun)
+		if w == null:
+			w = WeaponDB.get_weapon(&"carrot_rifle")
+		c.give_weapon(WeaponInstance.new(w, Rarity.Tier.PRIZE))
 		Outfits.dress_player(c, wear))
 
 

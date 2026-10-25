@@ -138,6 +138,61 @@ const HEAT_LINES := [
 		"kill": ["You made me what I am, {you}.", "This is what you made, {you}. {k}–{w}."],
 		"lose": ["I'll be back. I'm always back.", "{w}. See you next match, {you}."]},
 ]
+## What a bot says about what you're wearing: a line for each piece, or one
+## for any piece ({piece}: its name, "wizard's hat"). By event: spotting you,
+## beating you down, being beaten down by you.
+const OUTFIT_LINES := {
+	"cheese_hat": {"spot": ["Is that... CHEESE on your head, {you}?", "I can smell your hat from here, {you}."],
+		"kill": ["Say cheese, {you}!"], "lose": ["Beaten by a walking cheese board..."]},
+	"snorkel_mask": {"spot": ["A snorkel? There's no water here, {you}!", "Going for a swim, {you}?"],
+		"kill": ["Glub glub, {you}."], "lose": ["Sunk by a snorkeller. Unbelievable."]},
+	"windup_key": {"spot": ["Who wound YOU up, {you}?", "Somebody turn {you}'s key off!"],
+		"kill": ["Wound down at last."], "lose": ["Clockwork. Couldn't stop it."]},
+	"laurel_wreath": {"spot": ["Laurels? You haven't beaten ME, {you}.", "Nice leaves, champ. Let's see you earn them."],
+		"kill": ["Rest on THOSE laurels, {you}."], "lose": ["Fine. Keep the laurels."]},
+	"jester_hat": {"spot": ["Nice hat, clown.", "Jingle all you like, {you}."],
+		"kill": ["Who's the fool now, {you}?"], "lose": ["Beaten by a jester. Hilarious."]},
+	"witch_hat": {"spot": ["Hocus pocus, {you}! Magic THIS away!", "Nice pointy hat, {you}."],
+		"kill": ["No spell for that, was there?"], "lose": ["Witchcraft. That was witchcraft."]},
+	"wizard_hat": {"spot": ["A wizard? Pull a carrot out of THAT, {you}!", "You're a wizard, {you}? Prove it."],
+		"kill": ["Abracadabra. You're gone."], "lose": ["...okay, that was magic."]},
+	"santa_hat": {"spot": ["Is it Christmas, {you}? Here's your present!", "Ho ho NO, {you}."],
+		"kill": ["Coal for you, {you}."], "lose": ["I'm on the naughty list now, aren't I."]},
+	"grad_cap": {"spot": ["Graduated, {you}? Class is in session!", "Fancy cap, smarty."],
+		"kill": ["Lesson one: duck."], "lose": ["Top of the class. Ugh."]},
+	"fedora": {"spot": ["M'lady... M'BEAT DOWN, {you}!", "Nice fedora, detective."],
+		"kill": ["Case closed, {you}."], "lose": ["Tipped my hat to you. Literally."]},
+	"flower_crown": {"spot": ["Pretty flowers, {you}. Pity about the rest.", "Aww, a flower crown!"],
+		"kill": ["Flowers for your burrow, {you}."], "lose": ["Beaten by a daisy..."]},
+	"flap_beanie": {"spot": ["Cold, {you}? I'll warm you up!", "Nice ear flaps, {you}."],
+		"kill": ["Now your ears are cold."], "lose": ["Snug AND deadly. Rude."]},
+	"heart_glasses": {"spot": ["Aww, {you}, do you love me?", "Heart glasses? Adorable. Target acquired."],
+		"kill": ["Heartbreaker, me."], "lose": ["You broke my heart, {you}."]},
+	"glasses_3d": {"spot": ["Ooh, 3D! Watch this carrot come right at you, {you}!", "Enjoying the show, {you}?"],
+		"kill": ["How was it in 3D?"], "lose": ["That one popped off the screen..."]},
+	"pixel_shades": {"spot": ["Deal with it? DEAL WITH THIS, {you}!", "Cool shades, {you}. Too cool."],
+		"kill": ["Dealt with."], "lose": ["Okay. I'm dealing with it."]},
+	"star_glasses": {"spot": ["Seeing stars already, {you}?", "Star glasses! Who do you think you are?"],
+		"kill": ["NOW you're seeing stars."], "lose": ["A star is born. Ugh."]},
+	"sapphire_necklace": {"spot": ["Ooh, shiny! I'm taking that, {you}.", "Nice rock, {you}. Mine now."],
+		"kill": ["Dibs on the sapphire!"], "lose": ["Keep your jewels, then."]},
+	"ring_necklace": {"spot": ["Lovely bling, {you}.", "Is that a ring? Are you proposing, {you}?"],
+		"kill": ["I'll take the ring."], "lose": ["Bling AND aim. Not fair."]},
+	"butterfly_wings": {"spot": ["Float like a butterfly, {you}... drop like one too!", "Pretty wings, {you}!"],
+		"kill": ["Wings clipped."], "lose": ["Stung by a butterfly..."]},
+	"fairy_wings": {"spot": ["Fly away, little fairy!", "A fairy? Make a wish, {you}!"],
+		"kill": ["Wish denied, {you}."], "lose": ["Fairy magic. Has to be."]},
+	"dark_wings": {"spot": ["Edgy wings, {you}. Very scary.", "Ooh, dark wings. I'm SO scared."],
+		"kill": ["Grounded, {you}."], "lose": ["...okay, the wings ARE scary."]},
+	"jetpack": {"spot": ["A JETPACK? Cheater, {you}!", "Nice jetpack, {you}. Does it go?"],
+		"kill": ["Out of fuel, {you}?"], "lose": ["Flew right past me..."]},
+	"any": {"spot": ["Nice {piece}, {you}. Did you lose a bet?", "Love the {piece}, {you}! Hold still.", "Who dressed you, {you}?"],
+		"kill": ["And the {piece} goes flying!", "Nice {piece}. Didn't help, did it?"],
+		"lose": ["Beaten by someone in a {piece}... the shame.", "Okay, the {piece} is growing on me."]},
+}
+## How often a bot talks about your outfit instead of its usual line.
+const OUTFIT_TAUNT_CHANCE := 0.35
+
 ## A bot with a grudge against another one, on spotting it.
 const FEUD_LINES := ["{them}! Remember me?", "We're not done, {them}!", "This is for last time, {them}!", "{them}. Finally.", "Oi, {them}! You owe me!"]
 ## A bot with a grudge against the director (the Briar, the pacing).
@@ -231,6 +286,19 @@ static func heat_line(n: String, event: String, you: String, rng: RandomNumberGe
 		return ""
 	var pick: String = lines[rng.randi() % lines.size()]
 	return pick.format({"you": you, "k": RivalBook.kills_on_you(n), "w": RivalBook.your_kills(n)})
+
+
+## A line about something you're wearing (one of `wear`, piece ids), or ""
+## when you wear nothing: that piece's own lines more often than the general ones.
+static func outfit_line(wear: Array, event: String, you: String, rng: RandomNumberGenerator) -> String:
+	if wear.is_empty():
+		return ""
+	var piece: String = wear[rng.randi() % wear.size()]
+	var own: Array = OUTFIT_LINES.get(piece, {}).get(event, [])
+	var lines: Array = own if not own.is_empty() and rng.randf() < 0.7 else OUTFIT_LINES.any.get(event, [])
+	if lines.is_empty():
+		return ""
+	return pick(lines, rng, {"you": you, "piece": Workshop.piece_name(piece)})
 
 
 static func pick(lines: Array, rng: RandomNumberGenerator, fields := {}) -> String:
