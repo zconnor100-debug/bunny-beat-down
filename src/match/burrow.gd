@@ -105,7 +105,11 @@ static func has_perk(perk: String) -> bool:
 	return equipped().has(perk)
 
 
+## The run modifiers in play: the ones you've switched on, or in a run's
+## match (Run), that stop's own.
 static func modifiers() -> Array:
+	if Run.in_match:
+		return Run.mods()
 	return _book().get_value("burrow", "modifiers", []) as Array
 
 

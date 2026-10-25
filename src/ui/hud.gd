@@ -44,6 +44,11 @@ var _splats: Array = []        # [TextureRect, seconds left, starting alpha]
 var _hit_flash := 0.0
 var _fps: Label
 var _message_t := 0.0
+var _run_label: Label        ## a run's stop: its goal (and once you've made it)
+var _hunt_label: Label       ## the nemesis hunting you: how far, which way
+var _boons_label: Label
+var _boons_key := ""
+const ARROWS := ["↑", "↖", "←", "↙", "↓", "↘", "→", "↗"]
 
 
 func setup(player_: Critter, rig_: CameraRig, mm: MatchManager) -> void:
@@ -78,6 +83,8 @@ func setup(player_: Critter, rig_: CameraRig, mm: MatchManager) -> void:
 	_kills_label = UITheme.label("BEAT DOWNS: 0", 22)
 	tl.add_child(_alive_label)
 	tl.add_child(_kills_label)
+	_run_label = UITheme.label("", 20, UITheme.CARROT_LIGHT)
+	tl.add_child(_run_label)
 
 	# top-centre: Briar timer + messages
 	_storm_label = UITheme.label("", 24)
@@ -87,6 +94,13 @@ func setup(player_: Critter, rig_: CameraRig, mm: MatchManager) -> void:
 	_storm_label.size.x = 600
 	_storm_label.position.x = -300
 	_root.add_child(_storm_label)
+	_hunt_label = UITheme.label("", 24, Color(1.0, 0.4, 0.38), true)
+	_hunt_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_hunt_label.set_anchors_and_offsets_preset(Control.PRESET_CENTER_TOP)
+	_hunt_label.offset_left = -300
+	_hunt_label.offset_right = 300
+	_hunt_label.offset_top = 54
+	_root.add_child(_hunt_label)
 	_message = UITheme.label("", 54, UITheme.CARROT_LIGHT, true)
 	_message.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_message.set_anchors_and_offsets_preset(Control.PRESET_CENTER_TOP)
@@ -152,6 +166,13 @@ func setup(player_: Critter, rig_: CameraRig, mm: MatchManager) -> void:
 	_rewind_label.offset_left = 30
 	_rewind_label.offset_top = -184
 	_root.add_child(_rewind_label)
+	_boons_label = UITheme.label("", 18, Color(1.0, 0.85, 0.55))
+	_boons_label.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT)
+	_boons_label.offset_left = 30
+	_boons_label.offset_top = -214
+	_boons_label.offset_right = 760
+	_boons_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_root.add_child(_boons_label)
 	_rewind_tint = _tint(Color(0.55, 0.85, 1.0, 0.0))
 	if mm and mm.time_keeper:
 		mm.time_keeper.rewound.connect(_on_rewound)
@@ -295,6 +316,29 @@ func _tint(c: Color) -> ColorRect:
 	return r
 
 
+## A run's goal, your boons, and the nemesis hunting you (distance and the
+## way to turn to face it).
+func _update_run_and_hunt() -> void:
+	if match_manager == null:
+		return
+	if not match_manager.run_goal.is_empty():
+		_run_label.text = ("✓ GOAL MET" if match_manager.run_goal_met else "GOAL: %s" % Run.goal_text(match_manager.total)) \
+			+ "   " + "🌰".repeat(Run.helmets())
+		_run_label.add_theme_color_override("font_color", UITheme.LEAF if match_manager.run_goal_met else UITheme.CARROT_LIGHT)
+	var key := str(Boons.held)
+	if key != _boons_key:
+		_boons_key = key
+		_boons_label.text = "" if Boons.held.is_empty() else "🌱 " + Boons.summary()
+	var n := match_manager.nemesis
+	if n and is_instance_valid(n) and n.alive and n.state == Critter.State.GROUND:
+		var to := n.global_position - player.global_position
+		var rel := wrapf(atan2(-to.x, -to.z) - player.look_yaw, -PI, PI)
+		var arrow: String = ARROWS[posmod(roundi(rel / (PI / 4.0)), 8)]
+		_hunt_label.text = "☠ NEMESIS %s  ·  %d m %s" % [n.display_name, roundi(to.length()), arrow]
+	else:
+		_hunt_label.text = ""
+
+
 func show_message(text: String, sub := "", seconds := 3.0) -> void:
 	_message.text = text
 	_sub_message.text = sub
@@ -311,6 +355,7 @@ func _process(delta: float) -> void:
 	if player == null or not is_instance_valid(player):
 		return
 	_kills_label.text = "BEAT DOWNS: %d" % player.kills
+	_update_run_and_hunt()
 	var w := player.current_weapon()
 	if w:
 		if not _tracked.has(w.data.id):
@@ -402,6 +447,8 @@ func _on_critter_died(victim: Node, info: DamageInfo) -> void:
 	if killer and info.weapon_id != &"":
 		var data := WeaponDB.get_weapon(info.weapon_id)
 		how = data.display_name if data else String(info.weapon_id)
+	if info.kind == DamageInfo.Kind.BLEED:
+		how = "thorns"
 	var line: String
 	if killer and killer != v:
 		line = "%s  ▸ %s ▸  %s%s" % [killer.display_name, how, v.display_name, "  ✦" if info.headshot else ""]

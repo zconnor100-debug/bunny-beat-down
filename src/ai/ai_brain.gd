@@ -175,6 +175,8 @@ func _perceive() -> void:
 		var other := c as Critter
 		if other == null or other == me or not other.alive or other.state != Critter.State.GROUND:
 			continue
+		if other.gang != "" and other.gang == me.gang:
+			continue   # (a gang mate: they're out for you together)
 		var to := other.get_chest_position() - eye
 		var d := to.length()
 		if d > range_:
@@ -278,8 +280,9 @@ func _on_shot_heard(shooter: Node, origin: Vector3, _id: StringName) -> void:
 
 
 func _on_damaged(victim: Node, info: DamageInfo) -> void:
-	if victim != me or info.attacker == null or info.attacker == me or not info.attacker is Critter:
-		return
+	if victim != me or info.attacker == null or info.attacker == me or not info.attacker is Critter \
+			or info.kind == DamageInfo.Kind.BLEED:
+		return   # (bleeding doesn't say where the thorns came from)
 	# getting shot says roughly where it came from: turn that way and go and
 	# look (the bot still has to spot the shooter before it fires back)
 	var attacker := info.attacker as Critter

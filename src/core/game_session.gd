@@ -7,3 +7,4 @@ static var replay_seed := 0          ## set by "Rematch (same seed)": the next m
 static var matches_played := 0
 static var wins := 0
 static var replays_in_tests := false ## captures and the trailer want the final-shot replay
+static var open_trail := false        ## back from a run's match: the menu opens the Trail

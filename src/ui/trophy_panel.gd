@@ -24,6 +24,10 @@ func _ready() -> void:
 	v.add_child(_table(["", "Beat-downs", "Accuracy", "Headshots", "Damage", "Longest"], gun_rows()))
 	v.add_child(UITheme.label("Critters", 28, UITheme.CARROT_LIGHT, true))
 	v.add_child(_table(["", "Matches", "Wins", "Best", "Beat-downs", "Per defeat", "Accuracy"], critter_rows()))
+	v.add_child(UITheme.label("Runs: " + Run.records_line(), 21, UITheme.CREAM))
+	var sigs := RivalBook.signatures()
+	v.add_child(UITheme.label("Signature guns won: " + (", ".join(sigs.map(func(b): return RivalBook.signature_gun(b).display_name()))
+		if not sigs.is_empty() else "none yet (win a nemesis hunt)"), 21, UITheme.CREAM))
 	var back := UITheme.button("Back", func(): closed.emit())
 	back.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	v.add_child(back)

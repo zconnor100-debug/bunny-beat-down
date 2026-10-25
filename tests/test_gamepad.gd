@@ -36,6 +36,18 @@ func test_menu_buttons_answer_a_and_b() -> void:
 	await wait_frames(4)
 	check(_focus_text() == "Play", "the title screen starts on Play (focus: %s)" % _focus_text())
 
+	# A run (the Trail): open with A, B comes back to the same button
+	await _pad(JOY_BUTTON_DPAD_DOWN)
+	var run_button := _focus_text()
+	check(run_button in ["A Run", "Continue the run"], "D-pad down moves to the run (focus: %s)" % run_button)
+	await _pad(JOY_BUTTON_A)
+	var trail := menu.find_children("*", "TrailPanel", true, false)
+	var tf := get_viewport().gui_get_focus_owner()
+	check(trail.size() == 1 and tf is Button and trail[0].is_ancestor_of(tf), "A opens the Trail, focus on it (focus: %s)" % tf)
+	await _pad(JOY_BUTTON_B)
+	await wait_frames(1)
+	check(menu.find_children("*", "TrailPanel", true, false).is_empty() and _focus_text() == run_button, "B closes it (focus: %s)" % _focus_text())
+
 	# The Burrow: open with A, B comes back to the same button
 	await _pad(JOY_BUTTON_DPAD_DOWN)
 	check(_focus_text() == "The Burrow", "D-pad down moves to The Burrow (focus: %s)" % _focus_text())
@@ -82,7 +94,7 @@ func test_menu_buttons_answer_a_and_b() -> void:
 	check(_focus_text() == "Settings", "and the pad is back on the Settings button (focus: %s)" % _focus_text())
 
 	# Play: the D-pad steps the opponent count, B goes back
-	for i in 4:
+	for i in 5:
 		await _pad(JOY_BUTTON_DPAD_UP)
 	await _pad(JOY_BUTTON_A)
 	check(_focus_text() == "Drop in!", "A on Play opens the match setup on 'Drop in!' (focus: %s)" % _focus_text())
@@ -100,7 +112,7 @@ func test_menu_buttons_answer_a_and_b() -> void:
 	check(_focus_text() == "Play", "B backs out to Play (focus: %s)" % _focus_text())
 
 	# Credits: opens on Back, B closes it
-	for i in 5:
+	for i in 6:
 		await _pad(JOY_BUTTON_DPAD_DOWN)
 	await _pad(JOY_BUTTON_A)
 	check(menu.find_children("*", "CreditsPanel", true, false).size() == 1, "A on Credits opens them")

@@ -80,6 +80,13 @@ func _draw() -> void:
 			var pulse := 5.0 + sin(Time.get_ticks_msec() * 0.008) * 1.5
 			draw_circle(sp, pulse + 2.0, UITheme.INK)
 			draw_circle(sp, pulse, Rarity.COLORS[Rarity.Tier.GOLDEN])
+	# acorn shrines not yet prayed at (Boons)
+	for n in get_tree().get_nodes_in_group(&"shrines"):
+		if (n as LootCrate).opened:
+			continue
+		var sh := world_to_map(Vector2((n as Node3D).global_position.x, (n as Node3D).global_position.z))
+		draw_circle(sh, 6.0, UITheme.INK)
+		draw_circle(sh, 4.5, AcornShrine.GLOW)
 	if full and island:
 		for p in island.pois:
 			var mp := world_to_map(p.center)

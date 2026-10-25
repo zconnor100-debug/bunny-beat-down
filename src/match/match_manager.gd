@@ -6,6 +6,8 @@ extends Node
 signal phase_changed(phase: Phase)
 signal finished(winner: Critter, player_placement: int)
 signal player_eliminated(placement: int, killer: Critter)
+## A boon draft for the player (an acorn shrine): game.gd shows it (DraftPanel).
+signal boons_offered(choices: Array, title: String)
 
 enum Phase { LOADING, DROPPING, PLAYING, ENDED }
 
@@ -57,6 +59,26 @@ var revenges := 0                    ## rivals the player beat down this match (
 var _taunted: Dictionary = {}       # "name|event" -> true (spot taunts once a match)
 var _supply_t := 0.0
 const SUPPLY_INTERVAL := 75.0
+## Shrines, gangs, the nemesis: rolled on their own generator, so a seed's
+## loot and lobby come out as they always did.
+var extra_rng := RandomNumberGenerator.new()
+var shrines: Array[AcornShrine] = []
+## A gang: a few of the bots you've made radical, dropping in together and
+## out for you (they leave each other alone). Its name, and who's in it.
+var gang_name := ""
+var gang: Array[Critter] = []
+const GANG_NAMES := ["the Thorn Gang", "the Bramble Bunch", "the Muddy Paws", "the Acorn Ring", "the Hedge Mob", "the Burrow Bandits"]
+## The nemesis hunt: your Nemesis (Cast heat 4; in a run's finale, the
+## hottest bot there) hunts you all match, tougher than the rest, and drops
+## its signature gun when you beat it down.
+var nemesis: Critter
+const NEMESIS_EVERY := 20.0         ## seconds between its "where are you?"
+const NEMESIS_HEALTH := 1.5
+var _nemesis_t := 0.0
+var _nemesis_announced := false
+## A run's stop (Run): its goal ({top, kills}) and whether you've made it.
+var run_goal: Dictionary = {}
+var run_goal_met := false
 
 
 func setup(world_root_: Node3D, island_: Island, opponents: int, difficulty: int, seed_: int, pace_ := 1.0) -> void:
@@ -72,6 +94,8 @@ func setup(world_root_: Node3D, island_: Island, opponents: int, difficulty: int
 	WeaponDB.only = &"carrot_rocket_launcher" if Burrow.modifier_on("rocket_party") else &""
 	Projectiles.own_tracer = Projectiles.tracer_color(Workshop.look("tracer"))
 	rng.seed = seed_ * 7 + 1
+	extra_rng.seed = seed_ * 13 + 5
+	Boons.reset(Run.boons() if Run.in_match else {})
 	var moods := Storm.VARIANTS.keys().filter(func(k): return k != "classic")
 	briar_variant = "classic" if rng.randf() < 0.25 else moods[rng.randi() % moods.size()]
 	storm = Storm.new()
@@ -92,6 +116,7 @@ func setup(world_root_: Node3D, island_: Island, opponents: int, difficulty: int
 	AIBrain.player_attack_slots = [1, 2, 3][d]
 	AIBrain.damage_to_player = [0.45, 0.65, 0.85][d]
 	_spawn_loot()
+	_spawn_shrines()
 	var defs := {}
 	for cd in _available_defs():
 		defs[String(cd.id)] = cd
@@ -124,8 +149,11 @@ func setup(world_root_: Node3D, island_: Island, opponents: int, difficulty: int
 		c.defies_director = brain.traits.get("defiant", false)
 		c.add_child(brain)
 		_heat_loadout(c, n, heat)
+		_remembers_you(c, n)
 		if Burrow.modifier_on("stampede"):
 			c.speed_scale = 1.2
+	_form_gang()
+	_choose_nemesis()
 	_choose_bounty()
 	RivalBook.save()
 	total = critters.size() + 1   # + the player, who joins after picking a critter
@@ -149,6 +177,14 @@ func spawn_player(def: CritterDef, skin_id: String) -> Critter:
 	critters.push_front(player)
 	total = critters.size()
 	Events.alive_count_changed.emit(total, total)
+	Boons.apply_all(player)
+	if Run.in_match:
+		var k := Run.keepsake()
+		if k:
+			player.give_weapon(k)
+			player.inventory.add_ammo(k.data.ammo_type, Inventory.AMMO_PICKUP[k.data.ammo_type] * 2)
+		time_keeper.charges = Run.rewinds()
+		run_goal = Run.goal(total)
 	return player
 
 
@@ -204,6 +240,126 @@ func _heat_loadout(c: Critter, n: String, heat: int) -> void:
 		c.armor = 50.0 if heat == 3 else 100.0
 
 
+## What a bot remembers of you: the scars you gave it (it comes back wearing
+## them, and tougher), and the gun it took off you (it's carrying it, in your skin).
+func _remembers_you(c: Critter, n: String) -> void:
+	var scars := RivalBook.scars(n)
+	if not scars.is_empty():
+		c.visual.add_scars(scars)
+		if scars.has("eye_patch"):
+			c.head_guard = 0.75
+		if scars.has("singed"):
+			c.blast_guard = 0.7
+		var limbs := scars.filter(func(x): return String(x).begins_with("arm") or String(x).begins_with("leg")).size()
+		c.max_health += 10.0 * limbs
+		c.health = c.max_health
+	var took := RivalBook.took_gun(n)
+	if not took.is_empty():
+		var w := WeaponInstance.from_dict(took)
+		if w:
+			c.visual.kit = {"skin": String(took.get("skin", "stock"))}
+			c.give_weapon(w)
+			c.switch_to(c.inventory.weapons.find(w))   # (it shows it off)
+			c.inventory.add_ammo(w.data.ammo_type, Inventory.AMMO_PICKUP[w.data.ammo_type] * 2)
+			c.set_meta(&"your_gun", w.display_name())
+
+
+## A gang forms when two or more of the bots here are ones you've made
+## Vengeful or worse (in a run's Grudge Match, any you've made Sore), or
+## your rivals: the three hottest drop in together and hunt you.
+func _form_gang() -> void:
+	var grudge: bool = Run.in_match and Run.current().get("kind", "") == "grudge"
+	var hot := critters.filter(func(c): return c != player and (Cast.heat(c.display_name) >= (1 if grudge else 2) or RivalBook.is_rival(c.display_name)))
+	if hot.size() < 2:
+		return
+	hot.sort_custom(func(a, b): return Cast.heat(a.display_name) > Cast.heat(b.display_name))
+	gang_name = GANG_NAMES[extra_rng.randi() % GANG_NAMES.size()]
+	for c in hot.slice(0, 3):
+		gang.append(c)
+		c.gang = gang_name
+		var brain := c.get_node_or_null("AIBrain") as AIBrain
+		if brain:
+			brain.traits = brain.traits.duplicate()
+			brain.traits["hunts_you"] = true
+		if c.visual.name_tag:
+			c.visual.name_tag.text += "\n" + gang_name
+
+
+## Your Nemesis, if one's here (a run's finale always has one: the hottest bot).
+func _choose_nemesis() -> void:
+	var forced: bool = Run.in_match and Run.current().get("kind", "") == "finale"
+	var best: Critter = null
+	var best_heat := -1.0
+	for c in critters:
+		if c == player:
+			continue
+		var h := Cast.heat(c.display_name) + (0.5 if RivalBook.is_rival(c.display_name) else 0.0) + RivalBook.your_kills(c.display_name) * 0.01
+		if h > best_heat:
+			best_heat = h
+			best = c
+	if best == null or (Cast.heat(best.display_name) < 4 and not forced):
+		return
+	nemesis = best
+	nemesis.max_health *= NEMESIS_HEALTH
+	nemesis.health = nemesis.max_health
+	nemesis.armor = nemesis.max_armor
+	var brain := nemesis.get_node_or_null("AIBrain") as AIBrain
+	if brain:
+		brain.traits = brain.traits.duplicate()
+		brain.traits["hunts_you"] = true
+		brain.traits["no_slot"] = true
+		brain.skill = minf(brain.skill + 0.1, 0.98)
+	if nemesis.visual.name_tag:
+		nemesis.visual.name_tag.text = "☠ NEMESIS %s" % nemesis.display_name + ("\n" + gang_name if nemesis.gang != "" else "")
+		nemesis.visual.name_tag.modulate = Color(1.0, 0.2, 0.25)
+
+
+## The acorn shrines: a few on every map, somewhere out in the open.
+func _spawn_shrines() -> void:
+	var n := 3 if island is HamsterCage or island is ToyBox else 4
+	var keep := island.rng.state
+	island.rng.seed = extra_rng.randi()
+	var spots: Array[Vector3] = []
+	for i in 40:
+		if spots.size() >= n:
+			break
+		var p := island.random_land_point(2.5)
+		if spots.any(func(q): return q.distance_to(p) < island.terrain.island_radius * 0.45):
+			continue
+		p = island.clear_loot_spot(p, Vector3(0.6, 0.5, 0.6))
+		if p == Vector3.INF:
+			continue
+		spots.append(p)
+	island.rng.state = keep
+	for p in spots:
+		var sh := AcornShrine.new()
+		world_root.add_child(sh)
+		sh.global_position = p
+		sh.rotation.y = extra_rng.randf() * TAU
+		sh.used.connect(_on_shrine_used)
+		shrines.append(sh)
+
+
+func _on_shrine_used(by: Critter) -> void:
+	if by == player:
+		offer_boons("The acorn shrine offers a boon")
+
+
+## Offer the player a draft of boons (DraftPanel, via game.gd).
+func offer_boons(title: String) -> void:
+	var choices := Boons.offer(extra_rng, 3)
+	if not choices.is_empty():
+		boons_offered.emit(choices, title)
+
+
+## The player took a boon (or its next level).
+func choose_boon(id: String) -> void:
+	var was := Boons.add(id)
+	if player:
+		Boons.apply_level(player, id, was, Boons.level(id))
+	Events.headline.emit("Boon: %s" % Boons.title(id))
+
+
 ## The bounty: the most radical bot you've made (Vengeful or worse), else
 ## your worst rival, is worth acorns this match.
 func _choose_bounty() -> void:
@@ -237,6 +393,14 @@ func headlines() -> Array:
 	feuds.sort_custom(func(a, b): return a[0] > b[0])
 	for f in feuds.slice(0, 2):
 		out.append("%s has a score to settle with %s." % [f[1], f[2]])
+	if nemesis:
+		out.push_front("NEMESIS HUNT: %s is hunting you. Beat them down for their signature gun." % Cast.title(nemesis.display_name))
+	if gang.size() > 1:
+		out.append("%s %s have ganged up on you, as %s." % [", ".join(gang.slice(0, gang.size() - 1).map(func(c): return c.display_name)),
+			"and " + gang.back().display_name, gang_name])
+	for c in critters:
+		if is_instance_valid(c) and c.has_meta(&"your_gun"):
+			out.append("%s is carrying your %s. Get it back." % [c.display_name, c.get_meta(&"your_gun")])
 	var angry := here.filter(func(n): return RivalBook.director_grudge(n) >= Cast.DEFIANT_AT)
 	if not angry.is_empty():
 		out.append("%s is furious with the director, and won't play by its rules." % angry[0])
@@ -370,6 +534,13 @@ func begin_drop() -> void:
 				spot = Vector3(fc.x, island.terrain.height_at(fc.x, fc.y), fc.y)
 			brain.drop_spot = spot
 			brain.drop_progress = clampf(dropship.progress_nearest(spot) + rng.randf_range(-0.06, 0.03), 0.02, 0.98)
+	if gang.size() > 1:
+		var lead := gang[0].get_node_or_null("AIBrain") as AIBrain
+		for i in range(1, gang.size()):
+			var b := gang[i].get_node_or_null("AIBrain") as AIBrain
+			if lead and b:
+				b.drop_spot = lead.drop_spot + Vector3(extra_rng.randf_range(-4, 4), 0.0, extra_rng.randf_range(-4, 4))
+				b.drop_progress = lead.drop_progress
 	dropship.launch()
 	_set_phase(Phase.DROPPING)
 	# the lobby's news, a line at a time once everyone's aboard
@@ -451,6 +622,8 @@ func _direct(delta: float) -> void:
 			for b in bots.slice(0, 3):
 				(b.get_node("AIBrain") as AIBrain).hunt(player.global_position, 25.0)
 			Events.headline.emit("The bots know where you are.")
+	_hunt_you(delta)
+	_check_run_goal()
 	# camping: sitting in one small spot for a while draws a few hunters
 	_camp_cooldown = maxf(0.0, _camp_cooldown - delta)
 	if _camp_anchor == Vector3.INF or player.global_position.distance_to(_camp_anchor) > CAMP_RADIUS:
@@ -563,9 +736,13 @@ func _on_critter_died(victim: Node, info: DamageInfo) -> void:
 	var killer := info.attacker as Critter
 	if killer and killer != player and killer != c and critters.has(killer):
 		RivalBook.note_bot_kill(killer.display_name, info.weapon_id, killer.global_position.distance_to(c.global_position))
+	if c == nemesis and killer != player:
+		nemesis = null
+		Events.headline.emit("%s was beaten down%s. Your nemesis hunt is off." % [c.display_name, " by %s" % killer.display_name if killer and killer != c else ""])
 	if c == player and killer and killer != player:
 		if RivalBook.note_you_died_to(killer.display_name, String(killer.def.id)):
 			killer.set_meta(&"new_rival", true)
+		_steal_gun(killer)
 		taunt(killer, "kill")
 	elif killer == player and c != player:
 		_note_player_kill(info)
@@ -579,6 +756,13 @@ func _on_critter_died(victim: Node, info: DamageInfo) -> void:
 			Events.rival_news.emit("BOUNTY!", "You beat down %s: +%d acorns" % [c.display_name, bounty])
 		if Burrow.has_perk("adrenaline"):
 			player.health = minf(player.max_health, player.health + 20.0)
+		_boons_on_kill(c)
+		_scar(c, info)
+		if not RivalBook.took_gun(c.display_name).is_empty():
+			RivalBook.clear_took_gun(c.display_name)
+			Events.headline.emit("You got your %s back from %s." % [c.get_meta(&"your_gun", "gun"), c.display_name])
+		if c == nemesis:
+			_nemesis_beaten(c)
 		if Burrow.has_perk("scavenger"):
 			Pickup.spawn(world_root, Pickup.clover_spec(1), c.global_position + Vector3.UP * 0.6, Vector3(0, 3.0, 0))
 		FX.beat_down(c.get_chest_position(), Workshop.look("kill_fx"))
@@ -612,15 +796,120 @@ func _on_critter_died(victim: Node, info: DamageInfo) -> void:
 		finished.emit(winner, player.placement if not player.alive else 1)
 
 
-## Hits, for the trackers: yours (StatBook) and the bots' own (RivalBook).
+## Hits, for the trackers (yours: StatBook; the bots' own: RivalBook) and
+## your boons (Boons: bleeding, Carrot Juice, Bramble Coat's thorns).
 func _on_critter_damaged(victim: Node, info: DamageInfo) -> void:
 	if player == null or not victim is Critter or info.attacker == victim:
 		return
 	var blast := info.kind == DamageInfo.Kind.EXPLOSION
+	var thorns := info.kind == DamageInfo.Kind.BLEED
 	if info.attacker == player:
-		StatBook.note_hit(info.weapon_id, info.amount, info.headshot, blast)
+		if not thorns:
+			StatBook.note_hit(info.weapon_id, info.amount, info.headshot, blast)
+			_boons_on_hit(victim as Critter, info)
 	elif info.attacker is Critter and critters.has(info.attacker):
 		RivalBook.note_bot_hit(info.attacker.display_name, info.weapon_id, info.amount, info.headshot, blast)
+		if victim == player and not thorns and Boons.has("bramble_coat") and (info.attacker as Critter).alive:
+			var back := DamageInfo.make(info.amount * Boons.value("bramble_coat") / 100.0, DamageInfo.Kind.BLEED, player, &"bramble")
+			back.position = (info.attacker as Critter).get_chest_position()
+			(info.attacker as Critter).take_damage(back)
+
+
+func _boons_on_hit(v: Critter, info: DamageInfo) -> void:
+	if Boons.held.is_empty():
+		return
+	var dps := Boons.value("thorny")
+	if info.mutated and Boons.has("briar_shards"):
+		dps = maxf(dps, Boons.SPLINTER_DPS)
+	if dps > 0.0 and v.alive:
+		v.bleed(dps, Boons.BLEED_SECONDS, player, info.weapon_id)
+	if Boons.has("carrot_juice") and player.alive:
+		player.health = minf(player.max_health, player.health + info.amount * Boons.value("carrot_juice") / 100.0)
+
+
+## Your beat-down, for your boons: Splinters, Carrot Frenzy, Second Breakfast.
+func _boons_on_kill(c: Critter) -> void:
+	if Boons.has("splinters"):
+		var reach := Boons.value("splinters")
+		for o in alive_critters():
+			if o != player and o != c and o.global_position.distance_to(c.global_position) <= reach:
+				o.bleed(Boons.SPLINTER_DPS, Boons.BLEED_SECONDS, player, &"bramble")
+	if Boons.has("frenzy"):
+		player.frenzy_t = maxf(player.frenzy_t, Boons.value("frenzy"))
+	if Boons.has("second_breakfast"):
+		player.health = minf(player.max_health, player.health + Boons.DUO_HEAL)
+
+
+## The bot that beat you down takes the gun you were holding (it'll be back
+## with it, until you beat it down again).
+func _steal_gun(killer: Critter) -> void:
+	var held: Array = player.last_weapons
+	var w: WeaponInstance = null
+	if player.current_slot >= 0 and player.current_slot < held.size():
+		w = held[player.current_slot]
+	if w == null:
+		for g in held:
+			if g and (w == null or g.rarity > w.rarity):
+				w = g
+	if w == null or not RivalBook.took_gun(killer.display_name).is_empty():
+		return
+	var d := w.to_dict()
+	d["skin"] = Workshop.look("skin")
+	RivalBook.note_took_gun(killer.display_name, d)
+	player.set_meta(&"stolen", w)
+	Events.headline.emit("%s took your %s. Beat them down to get it back." % [killer.display_name, w.display_name()])
+
+
+## Scars: what you did to a bot when you beat it down, it comes back wearing.
+func _scar(c: Critter, info: DamageInfo) -> void:
+	var got := []
+	if c.visual.dismembered.has(&"head") or info.headshot:
+		got.append("eye_patch")
+	for role in c.visual.dismembered:
+		var r := String(role)
+		if r.ends_with("arm"):
+			got.append("arm_" + r.left(1))
+		elif r.ends_with("leg"):
+			got.append("leg_" + r.left(1))
+	if info.kind == DamageInfo.Kind.EXPLOSION:
+		got.append("singed")
+	var fresh := got.filter(func(sc): return RivalBook.add_scar(c.display_name, sc))
+	if not fresh.is_empty():
+		Events.headline.emit("%s will remember that: %s." % [c.display_name, RivalBook.SCARS[fresh[0]].text])
+
+
+## You won the nemesis hunt: its signature gun drops where it fell.
+func _nemesis_beaten(c: Critter) -> void:
+	nemesis = null
+	var sig := RivalBook.signature_gun(c.display_name)
+	RivalBook.note_signature_won(c.display_name)
+	if sig:
+		Pickup.spawn(Despawner.debris_parent(c), Pickup.weapon_spec(sig), c.global_position + Vector3.UP * 0.8, Vector3(0, 4.0, 0))
+		Events.rival_news.emit("NEMESIS DOWN!", "%s dropped their signature gun: %s (%s)" % [c.display_name, sig.display_name(), Boons.name_of(sig.mutation)])
+
+
+## The nemesis hunt: it knows roughly where you are every NEMESIS_EVERY seconds.
+func _hunt_you(delta: float) -> void:
+	if nemesis == null or not is_instance_valid(nemesis) or not nemesis.alive or player.state != Critter.State.GROUND:
+		return
+	if not _nemesis_announced:
+		_nemesis_announced = true
+		Events.announce.emit("NEMESIS HUNT", "%s is hunting you. Beat them down for their signature gun." % nemesis.display_name)
+	_nemesis_t += delta
+	if _nemesis_t >= NEMESIS_EVERY:
+		_nemesis_t = 0.0
+		var brain := nemesis.get_node_or_null("AIBrain") as AIBrain
+		if brain:
+			brain.hunt(player.global_position + Vector3(extra_rng.randf_range(-8, 8), 0, extra_rng.randf_range(-8, 8)), 18.0)
+
+
+## A run's goal: made it? (Placing in the top N is certain once only N are left.)
+func _check_run_goal() -> void:
+	if run_goal.is_empty() or run_goal_met:
+		return
+	if player.kills >= int(run_goal.kills) or _alive_cache <= int(run_goal.top):
+		run_goal_met = true
+		Events.announce.emit("GOAL MET!", "The run goes on. Every place higher is a bonus.")
 
 
 ## The bots' carrots fired, for their trackers (yours count in Critter._fire).

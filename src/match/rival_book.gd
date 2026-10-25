@@ -10,7 +10,9 @@ extends RefCounted
 ## revenge. Bots also keep grudges against the bots that beat them down, and
 ## against the director (the Briar, the pacing), and count their wins. And
 ## each keeps its own trackers, like yours (StatBook): carrots fired, hits,
-## headshots, damage, beat-downs by gun and its longest beat-down.
+## headshots, damage, beat-downs by gun and its longest beat-down. A bot
+## remembers what you did to it, too: the scars it came back with, the gun
+## it took off you, and whether you won its nemesis hunt (its signature gun).
 ##
 ## Automated test runs use their own file, like Settings.
 
@@ -193,6 +195,74 @@ static func wins(bot: String) -> int:
 
 static func note_win(bot: String) -> void:
 	_book().set_value(bot, "wins", wins(bot) + 1)
+
+
+## Scars a bot carries from the times you beat it down (MatchManager): it
+## comes back wearing them (CritterVisual.add_scars), and wiser for it.
+const SCARS := {
+	"eye_patch": {"text": "an eye patch", "why": "you took its head off", "learned": "its head takes a quarter less damage"},
+	"arm_l": {"text": "a bandaged left arm", "why": "you took its arm off", "learned": "+10 health"},
+	"arm_r": {"text": "a bandaged right arm", "why": "you took its arm off", "learned": "+10 health"},
+	"leg_l": {"text": "a splinted left leg", "why": "you took its leg off", "learned": "+10 health"},
+	"leg_r": {"text": "a splinted right leg", "why": "you took its leg off", "learned": "+10 health"},
+	"singed": {"text": "singed fur", "why": "you blew it up", "learned": "blasts hurt it 30% less"},
+}
+## A nemesis's signature gun has one of these built in (Boons.gun_mutation).
+const SIGNATURE_MUTATIONS := ["piercing", "splitting", "bouncy", "popping"]
+
+
+static func scars(bot: String) -> Array:
+	return (_book().get_value(bot, "scars", []) as Array).duplicate()
+
+
+## Returns true if it's a new scar.
+static func add_scar(bot: String, scar: String) -> bool:
+	var list := scars(bot)
+	if list.has(scar) or not SCARS.has(scar):
+		return false
+	list.append(scar)
+	_book().set_value(bot, "scars", list)
+	return true
+
+
+## The gun it took off you when it beat you down ({} if none): WeaponInstance.to_dict().
+static func took_gun(bot: String) -> Dictionary:
+	return _book().get_value(bot, "took_gun", {})
+
+
+static func note_took_gun(bot: String, gun: Dictionary) -> void:
+	_book().set_value(bot, "took_gun", gun)
+
+
+static func clear_took_gun(bot: String) -> void:
+	if _book().has_section_key(bot, "took_gun"):
+		_book().erase_section_key(bot, "took_gun")
+
+
+## The bot's signature gun: its favourite, Golden, with a mutation built in.
+static func signature_gun(bot: String) -> WeaponInstance:
+	var data := WeaponDB.get_weapon(StringName(Cast.member(bot).get("weapon", "carrot_rifle")))
+	if data == null:
+		return null
+	var w := WeaponInstance.new(data, Rarity.Tier.GOLDEN)
+	w.mutation = SIGNATURE_MUTATIONS[absi(hash(bot)) % SIGNATURE_MUTATIONS.size()]
+	w.signature = bot
+	return w
+
+
+## You won its nemesis hunt and took its signature gun.
+static func note_signature_won(bot: String) -> void:
+	_book().set_value(bot, "signature_won", true)
+	save()
+
+
+static func signature_won(bot: String) -> bool:
+	return _book().get_value(bot, "signature_won", false)
+
+
+## The bots whose signature guns you've won.
+static func signatures() -> Array:
+	return Array(_book().get_sections()).filter(func(b): return signature_won(b))
 
 
 ## The bot's trackers (counted in matches you're in: MatchManager calls in).

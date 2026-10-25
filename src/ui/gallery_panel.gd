@@ -120,6 +120,7 @@ static func card(n: String) -> String:
 	if RivalBook.wins(n) > 0 or RivalBook.bot_kills(n) > 0:
 		lines.append("Won %s  ·  beat down %s" % [_count(RivalBook.wins(n), "match", "matches"), _count(RivalBook.bot_kills(n), "other critter", "other critters")])
 	lines.append_array(tracker_lines(n))
+	lines.append_array(memory_lines(n))
 	var g := RivalBook.grudges(n)
 	if not g.is_empty():
 		var keys := g.keys()
@@ -146,6 +147,24 @@ static func tracker_lines(n: String) -> Array:
 		ids.sort_custom(func(a, b): return int(g[a]) > int(g[b]) if int(g[a]) != int(g[b]) else a < b)
 		out.append("Beat-downs by gun: %s  ·  longest %d m" % [", ".join(ids.slice(0, 3).map(
 			func(id): return "%s %d" % [StatBook.gun_name(StringName(id)), int(g[id])])), roundi(RivalBook.longest(n))])
+	return out
+
+
+## What it remembers of you: its scars (and what it learned from them),
+## the gun it took off you, and its signature gun if you won its nemesis hunt.
+static func memory_lines(n: String) -> Array:
+	var out := []
+	var sc := RivalBook.scars(n)
+	if not sc.is_empty():
+		out.append("Scars: %s. It learned: %s." % [", ".join(sc.map(func(x): return "%s (%s)" % [RivalBook.SCARS[x].text, RivalBook.SCARS[x].why])),
+			"; ".join(sc.map(func(x): return RivalBook.SCARS[x].learned))])
+	var took := RivalBook.took_gun(n)
+	if not took.is_empty():
+		var w := WeaponInstance.from_dict(took)
+		out.append("It has your %s. Beat it down to get it back." % (w.display_name() if w else "gun"))
+	if RivalBook.signature_won(n):
+		var sig := RivalBook.signature_gun(n)
+		out.append("You won its nemesis hunt: %s, with %s." % [sig.display_name(), Boons.name_of(sig.mutation)] if sig else "You won its nemesis hunt.")
 	return out
 
 

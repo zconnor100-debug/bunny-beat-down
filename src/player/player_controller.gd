@@ -269,14 +269,14 @@ func _update_focus() -> void:
 	var best_score := -1.0
 	var eye := critter.get_eye_position()
 	var fwd := -rig.camera.global_basis.z
-	for group in [&"pickups", &"crates"]:
+	for group in [&"pickups", &"crates", &"shrines"]:
 		for n in get_tree().get_nodes_in_group(group):
 			var n3 := n as Node3D
 			if n3 == null:
 				continue
 			if group == &"pickups" and not (n as Pickup).is_weapon():
 				continue
-			if group == &"crates" and (n as LootCrate).opened:
+			if (group == &"crates" or group == &"shrines") and (n as LootCrate).opened:
 				continue
 			var to := n3.global_position + Vector3.UP * 0.3 - eye
 			var d := to.length()
@@ -291,6 +291,8 @@ func _update_focus() -> void:
 	var text := ""
 	if best is Pickup:
 		text = "[%s] Pick up %s" % [_interact_key(), (best as Pickup).label()]
+	elif best is AcornShrine:
+		text = "[Hold %s] Pray at the acorn shrine for a boon" % _interact_key()
 	elif best is LootCrate:
 		var crate := best as LootCrate
 		var key := _interact_key()

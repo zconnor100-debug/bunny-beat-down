@@ -761,7 +761,7 @@ func pop_helmet(impulse: Vector3) -> void:
 	cs.position = Vector3(0, 0.08 * rig.world_scale, 0)
 	body.add_child(cs)
 	var xf := helmet.global_transform
-	get_tree().current_scene.add_child(body)
+	Despawner.debris_parent(self).add_child(body)   # (test runs have no current scene)
 	body.global_transform = Transform3D(xf.basis.orthonormalized(), xf.origin)
 	helmet.reparent(body, true)
 	body.apply_central_impulse(impulse + Vector3.UP * 1.2)
@@ -803,6 +803,142 @@ func dismember(role: StringName, impulse: Vector3) -> void:
 		pop_helmet(impulse * 0.5)
 	if gib:
 		Gore.make_gib_stump(gib, self, idx)
+
+
+# --- scars ----------------------------------------------------------------------------------
+
+const SCAR_CLOTH := Color(0.93, 0.9, 0.82)
+const SCAR_STAIN := Color(0.62, 0.12, 0.1)
+const SCAR_TWIG := Color(0.45, 0.31, 0.18)
+const SCAR_PATCH := Color(0.08, 0.07, 0.07)
+
+
+## The scars a bot came back with (RivalBook.SCARS): an eye patch on a strap,
+## bandages round an arm, a twig splint on a leg. On the bones, so they move
+## (and fly off) with the limb.
+func add_scars(scars: Array) -> void:
+	for scar in scars:
+		match String(scar):
+			"eye_patch":
+				_eye_patch()
+			"arm_l", "arm_r":
+				for part in ["upper_arm", "lower_arm"]:
+					_bandage(StringName("%s_%s" % [String(scar).right(1), part]))
+			"leg_l", "leg_r":
+				_splint(StringName("%s_lower_leg" % String(scar).right(1)))
+
+
+## [attachment, start, end, radius] of a body segment, in the attachment's frame.
+func _scar_part(role: StringName) -> Array:
+	var att: Node3D = attachments.get(role)
+	if att == null or not rig.segments.has(role):
+		return []
+	var seg: Dictionary = rig.segments[role]
+	var inv: Transform3D = (rig.rest[role] as Transform3D).affine_inverse()
+	return [att, inv * (seg["start"] as Vector3), inv * (seg["end"] as Vector3), float(seg["radius"])]
+
+
+func _scar_mesh(mesh: PrimitiveMesh, c: Color, parent: Node3D, xf: Transform3D) -> void:
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = c
+	mat.roughness = 0.9
+	mesh.material = mat
+	var mi := MeshInstance3D.new()
+	mi.name = "Scar"
+	mi.set_meta(&"scar", true)
+	mi.mesh = mesh
+	mi.layers = RENDER_LAYER
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	mi.transform = xf
+	parent.add_child(mi)
+
+
+func _bandage(role: StringName) -> void:
+	var p := _scar_part(role)
+	if p.is_empty():
+		return
+	var a: Vector3 = p[1]
+	var b: Vector3 = p[2]
+	var r: float = p[3]
+	var along := _capsule_xform(a, b)
+	var wrap := CylinderMesh.new()
+	wrap.top_radius = r * 1.3
+	wrap.bottom_radius = r * 1.3
+	wrap.height = a.distance_to(b) * 0.45
+	wrap.radial_segments = 12
+	wrap.rings = 1
+	_scar_mesh(wrap, SCAR_CLOTH, p[0], along)
+	var stain := SphereMesh.new()
+	stain.radius = r * 0.42
+	stain.height = r * 0.4
+	stain.radial_segments = 10
+	stain.rings = 5
+	_scar_mesh(stain, SCAR_STAIN, p[0], Transform3D(along.basis, along.origin + along.basis.x.normalized() * r * 1.18))
+
+
+func _splint(role: StringName) -> void:
+	var p := _scar_part(role)
+	if p.is_empty():
+		return
+	var a: Vector3 = p[1]
+	var b: Vector3 = p[2]
+	var r: float = p[3]
+	var along := _capsule_xform(a, b)
+	for side in [-1.0, 1.0]:
+		var twig := CylinderMesh.new()
+		twig.top_radius = r * 0.2
+		twig.bottom_radius = r * 0.25
+		twig.height = a.distance_to(b)
+		twig.radial_segments = 6
+		twig.rings = 1
+		_scar_mesh(twig, SCAR_TWIG, p[0], Transform3D(along.basis, along.origin + along.basis.x.normalized() * r * 1.25 * side))
+	for t in [0.3, 0.72]:
+		var twine := CylinderMesh.new()
+		twine.top_radius = r * 1.5
+		twine.bottom_radius = r * 1.5
+		twine.height = r * 0.45
+		twine.radial_segments = 10
+		twine.rings = 1
+		_scar_mesh(twine, SCAR_CLOTH, p[0], Transform3D(along.basis, a.lerp(b, t)))
+
+
+func _eye_patch() -> void:
+	var p := _scar_part(&"head")
+	if p.is_empty():
+		return
+	var r: float = p[3]
+	var seg: Dictionary = rig.segments[&"head"]
+	var c: Vector3 = ((seg["start"] as Vector3) + (seg["end"] as Vector3)) * 0.5
+	var inv: Transform3D = (rig.rest[&"head"] as Transform3D).affine_inverse()
+	# models face +Z in skeleton space; the patch goes over the eye on the left
+	# arm's side, on the face itself (found in the mesh: heads aren't round)
+	var side := signf((rig.rest[&"l_upper_arm"] as Transform3D).origin.x) if rig.rest.has(&"l_upper_arm") else 1.0
+	var eye := _face_point(c.x + side * r * 0.42, rig.eye_height, r)
+	if eye == Vector3.INF:
+		eye = Vector3(c.x + side * r * 0.42, rig.eye_height, c.z + r * 0.9)
+	var patch := SphereMesh.new()
+	patch.radius = r * 0.3
+	patch.height = r * 0.16
+	patch.radial_segments = 14
+	patch.rings = 6
+	_scar_mesh(patch, SCAR_PATCH, p[0], inv * Transform3D(Basis(Vector3.RIGHT, PI / 2.0), eye + Vector3(0, 0, r * 0.04)))
+
+
+## The front of the model's surface at (x, y) in skeleton space (the most
+## forward vertex near there), or INF if the mesh has nothing there.
+func _face_point(x: float, y: float, r: float) -> Vector3:
+	var best := Vector3.INF
+	for m in meshes:
+		if m.mesh == null:
+			continue
+		var xf := skeleton.global_transform.affine_inverse() * m.global_transform
+		for si in m.mesh.get_surface_count():
+			var verts: PackedVector3Array = m.mesh.surface_get_arrays(si)[Mesh.ARRAY_VERTEX]
+			for v in verts:
+				var q := xf * v
+				if absf(q.y - y) < r * 0.18 and absf(q.x - x) < r * 0.2 and (best == Vector3.INF or q.z > best.z):
+					best = q
+	return best
 
 
 func _is_ancestor(ancestor: int, idx: int) -> bool:

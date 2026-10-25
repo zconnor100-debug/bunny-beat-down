@@ -216,7 +216,7 @@ func _snapshot() -> Dictionary:
 			continue
 		var guns := []
 		for w in c.inventory.weapons:
-			guns.append(null if w == null else [w.data, w.rarity, w.ammo_in_mag])
+			guns.append(null if w == null else w.pack())
 		critters[c] = {"xf": c.global_transform, "vel": c.velocity, "yaw": c.look_yaw, "pitch": c.look_pitch,
 			"hp": c.health, "armor": c.armor, "state": c.state, "slot": c.current_slot, "guns": guns,
 			"ammo": c.inventory.ammo.duplicate(), "clovers": c.inventory.clovers, "second_wind": c.second_wind}
@@ -307,16 +307,14 @@ func _restore_critter(c: Critter, r: Dictionary) -> void:
 
 
 static func _weapon(g: Array) -> WeaponInstance:
-	var w := WeaponInstance.new(g[0], g[1], false)
-	w.ammo_in_mag = g[2]
-	return w
+	return WeaponInstance.unpack(g)
 
 
 static func _pack(spec: Dictionary) -> Dictionary:
 	var s := spec.duplicate()
 	if s.get("weapon") is WeaponInstance:
 		var w: WeaponInstance = s["weapon"]
-		s["weapon"] = [w.data, w.rarity, w.ammo_in_mag]
+		s["weapon"] = w.pack()
 	return s
 
 

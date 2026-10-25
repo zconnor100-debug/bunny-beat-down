@@ -26,6 +26,10 @@ func _ready() -> void:
 	_build_diorama()
 	_build_ui()
 	Audio.play_music("menu")
+	Run.in_match = false
+	if GameSession.open_trail:   # (back from a run's match)
+		GameSession.open_trail = false
+		_open_trail()
 
 
 func _build_diorama() -> void:
@@ -143,7 +147,7 @@ func _build_ui() -> void:
 	var tag := UITheme.label("One bunny. One acorn helmet. A whole lot of carrots.", 24, UITheme.CREAM)
 	_menu.add_child(tag)
 	_menu.add_child(Control.new())
-	for item in [["Play", _open_play], ["The Burrow", _open_burrow], ["Rogues' Gallery", _open_gallery],
+	for item in [["Play", _open_play], ["Continue the run" if Run.active() else "A Run", _open_trail], ["The Burrow", _open_burrow], ["Rogues' Gallery", _open_gallery],
 			["Trophy Room", _open_trophies], ["Settings", _open_settings], ["Credits", _open_credits], ["Quit", func(): get_tree().quit()]]:
 		var b := UITheme.button(item[0], item[1])
 		b.custom_minimum_size = Vector2(320, 58)
@@ -216,6 +220,15 @@ func _open_trophies() -> void:
 func _open_gallery() -> void:
 	var p := GalleryPanel.new()
 	p.closed.connect(_close_overlay)
+	_show_overlay(p)
+
+
+func _open_trail() -> void:
+	var p := TrailPanel.new()
+	p.closed.connect(func():
+		_close_overlay()
+		(_menu.get_child(4) as Button).text = "Continue the run" if Run.active() else "A Run")
+	p.play_stop.connect(func(): get_tree().change_scene_to_file(GAME_SCENE))
 	_show_overlay(p)
 
 

@@ -42,6 +42,8 @@ var _load_label: Label
 var _pause: CanvasLayer
 var _end: CanvasLayer
 var _offer: CanvasLayer     # "rewind, or accept defeat?" (see TimeKeeper)
+var _draft: CanvasLayer     # a boon draft (an acorn shrine): the match waits
+var _run_result: Dictionary = {}   # a run's stop, once it's over for you (Run.finish_match)
 var _spectating := false
 var _seed := 0
 var _picker: CharacterSelect
@@ -64,6 +66,10 @@ func _ready() -> void:
 	if GameSession.replay_seed > 0:
 		_seed = GameSession.replay_seed   # "Rematch (same seed)"
 		GameSession.replay_seed = 0
+	if Run.in_match:   # a run's stop: its map, and a seed of its own
+		var rs := Run.state()
+		_map = String(Run.current().get("map", "island"))
+		_seed = int(rs.seed) * 31 + int(rs.row) * 7 + int(rs.playing) * 3 + int(rs.stats.matches) * 101 + 1
 	if _seed == 0:
 		_seed = randi_range(1, 999999)
 	GameSession.last_seed = _seed
@@ -117,8 +123,12 @@ func _build_world() -> void:
 	match_manager = MatchManager.new()
 	match_manager.name = "Match"
 	world.add_child(match_manager)
-	match_manager.setup(world, island, int(Settings.get_value(&"opponents")), int(Settings.get_value(&"difficulty")), _seed, 0.5 if GameSession.quick else 1.0)
+	var opponents := int(Settings.get_value(&"opponents"))
+	if Run.in_match:
+		opponents = Run.opponents(opponents)
+	match_manager.setup(world, island, opponents, int(Settings.get_value(&"difficulty")), _seed, 0.5 if GameSession.quick and not Run.in_match else 1.0)
 	match_manager.player_eliminated.connect(_on_player_eliminated)
+	match_manager.boons_offered.connect(_show_draft)
 	match_manager.finished.connect(_on_match_finished)
 	if not Settings.is_test_run():   # (automated matches just let the blow land)
 		match_manager.time_keeper.offered.connect(_offer_rewind)
@@ -159,6 +169,11 @@ func _start() -> void:
 		ambience.volume_db = -10.0 if _map == "island" else -18.0   # (birdsong through an open window)
 		ambience.play()
 	hud.show_message("Press %s to jump!" % GameInput.prompt(&"jump"), "Pick your spot — the %s won't wait." % match_manager.dropship.display_name(), 6.0)
+	if Run.in_match:
+		var stop := Run.current()
+		get_tree().create_timer(6.5).timeout.connect(func():
+			if hud:
+				hud.show_message(String(Run.KINDS[stop.kind].name).to_upper(), "Goal: %s" % Run.goal_text(match_manager.total), 4.5))
 	match_manager.player.state_changed.connect(_on_player_state)
 	GameSession.matches_played += 1
 	if not match_manager.rivals_here.is_empty():
@@ -214,7 +229,12 @@ func _process(_delta: float) -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if match_manager and (match_manager.time_keeper.playing_back or match_manager.kill_cam.playing):
 		return   # (the rewind or the replay owns the screen for now)
-	if _offer:
+	if _draft:
+		if event.is_action_pressed(&"pause") or event.is_action_pressed(&"ui_cancel"):
+			get_viewport().set_input_as_handled()   # (pick one: the match is waiting)
+		else:
+			UITheme.refocus_if_lost(event, get_viewport(), UITheme.first_focusable(_draft))
+	elif _offer:
 		if event.is_action_pressed(&"rewind"):
 			get_viewport().set_input_as_handled()
 			_answer_offer(true)
@@ -410,7 +430,67 @@ func _answer_offer(rewind_it: bool) -> void:
 func _to_menu() -> void:
 	KillCam.reset_time()   # (in case we leave mid slow-motion)
 	get_tree().paused = false
+	if Run.in_match:
+		_finish_run_stop()   # (walking out of a run's match: it counts where you stood)
+		GameSession.open_trail = true
+	Run.in_match = false
 	get_tree().change_scene_to_file(MENU_SCENE)
+
+
+# ---- boons and runs ----------------------------------------------------------------------------
+
+## An acorn shrine's draft: the match waits while you pick.
+func _show_draft(choices: Array, title: String) -> void:
+	if _draft or Settings.is_test_run():
+		return
+	get_tree().paused = true
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	_draft = CanvasLayer.new()
+	_draft.layer = 16
+	_draft.process_mode = Node.PROCESS_MODE_ALWAYS
+	add_child(_draft)
+	var dim := ColorRect.new()
+	dim.color = Color(0.1, 0.07, 0.02, 0.55)
+	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_draft.add_child(dim)
+	var c := CenterContainer.new()
+	c.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_draft.add_child(c)
+	var d := DraftPanel.new()
+	d.heading = title
+	d.choices = choices
+	d.chosen.connect(func(id):
+		match_manager.choose_boon(id)
+		_draft.queue_free()
+		_draft = null
+		get_tree().paused = false
+		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED)
+	c.add_child(d)
+
+
+## The run's stop is over for you: goal, helmets, rewards (Run.finish_match). Once.
+func _finish_run_stop() -> void:
+	if not Run.in_match or not _run_result.is_empty() or match_manager == null or match_manager.player == null:
+		return
+	var p := match_manager.player
+	var won := p.alive and match_manager.phase == MatchManager.Phase.ENDED
+	var placement := p.placement if not p.alive else (1 if won else match_manager.alive_critters().size())
+	var guns: Array = (p.inventory.weapons if p.alive else p.last_weapons).filter(func(w): return w != null and w != p.get_meta(&"stolen", null))
+	_run_result = Run.finish_match(placement, match_manager.total, p.kills, won, guns, match_manager.time_keeper.charges, Boons.held)
+
+
+## The end screen's line about the run.
+func _run_line() -> String:
+	var r := _run_result
+	if r.is_empty():
+		return ""
+	if r.complete:
+		return "RUN COMPLETE! +%d 🌰" % Run.COMPLETE_ACORNS
+	if r.over:
+		return "Goal missed. Your last acorn helmet cracked: the run is over."
+	if r.met:
+		return "Goal made! A boon waits for you on the Trail."
+	return "Goal missed: an acorn helmet cracked (%d left)." % int(r.helmets)
 
 
 # ---- end of match -------------------------------------------------------------------------------------
@@ -506,6 +586,9 @@ func _show_end(title: String, sub: String, won: bool, killer: Critter) -> void:
 		_paid = true
 		_earned = Burrow.reward(1 if won else p.placement, match_manager.total, p.kills, match_manager.revenges) \
 			+ (match_manager.bounty * (2 if Burrow.has_perk("bounty_hunter") else 1) if match_manager.bounty_paid else 0)
+		if Run.in_match and Run.current().get("kind", "") == "golden":
+			_earned *= 2
+		_finish_run_stop()
 		Burrow.add_acorns(_earned)
 	var stats := UITheme.label("Beat downs: %d   •   Damage: %d   •   %s #%d   •   +%d 🌰 (%d in the Burrow)" % [p.kills, roundi(p.damage_dealt), island.map_title, _seed, _earned, Burrow.acorns()], 20, Color(UITheme.CREAM, 0.8))
 	stats.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -515,6 +598,10 @@ func _show_end(title: String, sub: String, won: bool, killer: Critter) -> void:
 	tracker.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	tracker.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	v.add_child(tracker)
+	if Run.in_match:
+		var rl := UITheme.label(_run_line(), 26, UITheme.LEAF if _run_result.get("met", false) else UITheme.BERRY, true)
+		rl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		v.add_child(rl)
 	var row := HBoxContainer.new()
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	row.add_theme_constant_override("separation", 18)
@@ -526,12 +613,17 @@ func _show_end(title: String, sub: String, won: bool, killer: Critter) -> void:
 			if rig.spectate_target == null:
 				_spectate_next()
 			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED))
-	var again := UITheme.button("Play again", func(): get_tree().reload_current_scene())
-	row.add_child(again)
-	row.add_child(UITheme.button("Rematch (same seed)", func():
-		GameSession.replay_seed = _seed
-		get_tree().reload_current_scene()))
-	row.add_child(UITheme.button("Main menu", _to_menu))
+	var again: Button
+	if Run.in_match:
+		again = UITheme.button("Back to the Trail", _to_menu)
+		row.add_child(again)
+	else:
+		again = UITheme.button("Play again", func(): get_tree().reload_current_scene())
+		row.add_child(again)
+		row.add_child(UITheme.button("Rematch (same seed)", func():
+			GameSession.replay_seed = _seed
+			get_tree().reload_current_scene()))
+		row.add_child(UITheme.button("Main menu", _to_menu))
 	again.grab_focus.call_deferred()
 	t.pivot_offset = Vector2(600, 60)
 	t.scale = Vector2(0.4, 0.4)

@@ -113,6 +113,26 @@ const REGROW_RATE := 6.0          ## shield points a second
 var _unhurt_t := 0.0
 ## Glass Cannon: the player deals and takes half as much again.
 static var glass_cannon := false
+## Bleeding (Boons: Thorny Carrots, Splinters): damage a second, for how
+## long, and whose thorns they are (the beat-down is theirs, with that gun).
+var bleed_t := 0.0
+var bleed_dps := 0.0
+var bleed_by: Node = null
+var bleed_weapon: StringName = &""
+var _bleed_acc := 0.0
+var _bleed_tick := 0.0
+const BLEED_TICK := 0.5
+## Carrot Frenzy (Boons): seconds left of firing and running faster.
+var frenzy_t := 0.0
+const FRENZY := 1.3
+## Scars a bot came back with (RivalBook.scars): its head, and blasts, hurt it less.
+var head_guard := 1.0
+var blast_guard := 1.0
+## The gang it drops in with this match (MatchManager: a few bots you've made
+## radical, out for you together); gang mates don't fight each other.
+var gang := ""
+## The guns it was carrying when it went down (a run's keepsake comes from these).
+var last_weapons: Array = []
 var _water_level := -INF
 var _melee_t := -1.0               # seconds into the current swing, -1 when not swinging
 var _melee_struck := false
@@ -239,6 +259,9 @@ func _physics_process(delta: float) -> void:
 		return
 	_hurt_sound_cd = maxf(0.0, _hurt_sound_cd - delta)
 	_unhurt_t += delta
+	frenzy_t = maxf(0.0, frenzy_t - delta)
+	if bleed_t > 0.0:
+		_bleed(delta)
 	if shield_regrow > 0.0 and _unhurt_t > REGROW_AFTER and armor < shield_regrow:
 		armor = minf(shield_regrow, armor + REGROW_RATE * delta)
 	match state:
@@ -282,7 +305,7 @@ func _ground_move(delta: float) -> void:
 		speed *= lerpf(1.0, 0.7, clampf(wade / (h * 0.5), 0.0, 1.0))
 	if w:
 		speed *= w.data.move_speed_scale
-	speed *= slow_factor * speed_scale
+	speed *= slow_factor * speed_scale * (FRENZY if frenzy_t > 0.0 else 1.0)
 	var basis := Basis(Vector3.UP, look_yaw)
 	var wish := basis * Vector3(move_input.x, 0, -move_input.y)
 	if wish.length() > 1.0:
@@ -636,7 +659,7 @@ func _weapon_tick(delta: float) -> void:
 
 func _fire(w: WeaponInstance) -> void:
 	w.ammo_in_mag -= 1
-	_fire_cooldown = w.data.seconds_per_shot()
+	_fire_cooldown = w.data.seconds_per_shot() / (FRENZY if frenzy_t > 0.0 else 1.0)
 	var origin := visual.muzzle_position()
 	var target := aim_point
 	var dir := (target - origin)
@@ -848,7 +871,7 @@ func _melee_strike() -> void:
 
 
 ## A carrot hit one of this critter's hitboxes.
-func receive_shot(shooter: Node, data: WeaponData, dmg: float, pos: Vector3, dir: Vector3, role: StringName) -> void:
+func receive_shot(shooter: Node, data: WeaponData, dmg: float, pos: Vector3, dir: Vector3, role: StringName, mutated := false) -> void:
 	if not alive:
 		return
 	var info := DamageInfo.make(dmg * RigInfo.DAMAGE_SCALE.get(role, 1.0), DamageInfo.Kind.BULLET, shooter, data.id)
@@ -859,7 +882,8 @@ func receive_shot(shooter: Node, data: WeaponData, dmg: float, pos: Vector3, dir
 	info.dismember_power = data.dismember_power
 	if role == &"head":
 		info.headshot = true
-		info.amount *= data.headshot_multiplier
+		info.amount *= data.headshot_multiplier * head_guard
+	info.mutated = mutated
 	take_damage(info)
 
 
@@ -880,9 +904,19 @@ func take_damage(info: DamageInfo) -> void:
 		info.amount *= 1.5
 	if info.kind == DamageInfo.Kind.STORM:
 		info.amount *= briar_scale
+	if info.kind == DamageInfo.Kind.EXPLOSION:
+		info.amount *= blast_guard
+	if info.attacker is Critter and (info.attacker as Critter).is_player and info.attacker != self:
+		if bleed_t > 0.0 and Boons.has("cruel_thorns"):
+			info.amount *= 1.0 + Boons.value("cruel_thorns") / 100.0
+	if is_player and Boons.has("bark_skin") and info.kind != DamageInfo.Kind.STORM and _bleeding_nearby():
+		info.amount *= 0.8
+	if gang != "" and info.attacker is Critter and info.attacker != self and (info.attacker as Critter).gang == gang:
+		info.amount = 0.0   # (gang mates' stray carrots)
 	_unhurt_t = 0.0
 	var dmg := info.amount
-	if info.kind != DamageInfo.Kind.STORM and info.kind != DamageInfo.Kind.FALL and armor > 0.0:
+	var bleeding := info.kind == DamageInfo.Kind.BLEED
+	if info.kind != DamageInfo.Kind.STORM and info.kind != DamageInfo.Kind.FALL and not bleeding and armor > 0.0:
 		var absorbed := minf(armor, dmg)
 		armor -= absorbed
 		dmg -= absorbed
@@ -893,13 +927,13 @@ func take_damage(info: DamageInfo) -> void:
 		last_attacker = info.attacker
 		if info.attacker is Critter:
 			(info.attacker as Critter).damage_dealt += info.amount
-	if info.kind != DamageInfo.Kind.STORM:
+	if info.kind != DamageInfo.Kind.STORM and not bleeding:
 		var strength := clampf(info.amount / 40.0, 0.15, 1.0)
 		FX.blood_hit(info.position if info.position != Vector3.ZERO else get_chest_position(), -info.direction, strength, def.fur_color)
 		visual.poser.flinch(info.direction, strength)
 		if info.kind == DamageInfo.Kind.EXPLOSION:
 			velocity += info.direction * info.impulse * 0.3
-	if _hurt_sound_cd <= 0.0 and health > 0.0:
+	if _hurt_sound_cd <= 0.0 and health > 0.0 and not bleeding:
 		Audio.play_at(&"hurt_squeak", global_position, -2.0, 0.15)
 		_hurt_sound_cd = 0.35
 	damaged.emit(info)
@@ -973,6 +1007,47 @@ func _apply_death_gore(info: DamageInfo) -> void:
 			visual.dismember(info.bone_role, push + Vector3.UP * 1.5)
 
 
+## Start (or top up) bleeding: `dps` for `seconds`, `by` whoever's thorns they are.
+func bleed(dps: float, seconds: float, by: Node, weapon_id: StringName) -> void:
+	if not alive:
+		return
+	bleed_dps = maxf(bleed_dps if bleed_t > 0.0 else 0.0, dps)
+	bleed_t = maxf(bleed_t, seconds)
+	bleed_by = by
+	bleed_weapon = weapon_id
+
+
+func _bleed(delta: float) -> void:
+	bleed_t -= delta
+	_bleed_acc += bleed_dps * delta
+	_bleed_tick += delta
+	if _bleed_tick < BLEED_TICK and bleed_t > 0.0:
+		return
+	_bleed_tick = 0.0
+	var amount := _bleed_acc
+	_bleed_acc = 0.0
+	if bleed_t <= 0.0:
+		bleed_dps = 0.0
+	if amount <= 0.0:
+		return
+	var by := bleed_by if is_instance_valid(bleed_by) else null
+	var info := DamageInfo.make(amount, DamageInfo.Kind.BLEED, by, bleed_weapon)
+	info.position = get_chest_position()
+	info.direction = Vector3.DOWN
+	FX.blood_hit(info.position, Vector3.DOWN, 0.12, def.fur_color)
+	take_damage(info)
+
+
+## Bark Skin (Boons): is anyone within reach bleeding?
+func _bleeding_nearby() -> bool:
+	for n in get_tree().get_nodes_in_group(&"critters"):
+		var c := n as Critter
+		if c and c != self and c.alive and c.bleed_t > 0.0 \
+				and c.global_position.distance_squared_to(global_position) < Boons.BARK_RANGE * Boons.BARK_RANGE:
+			return true
+	return false
+
+
 ## Wet splat on a gory kill (Gore: Full only; plushie stuffing doesn't squelch).
 func _gore_splat() -> void:
 	if Settings.gore == Settings.Gore.BLOOD:
@@ -1000,6 +1075,7 @@ func blast_corpse(pos: Vector3, strength: float) -> void:
 
 
 func _drop_loot() -> void:
+	last_weapons = inventory.weapons.duplicate()
 	var drops: Array = []
 	for i in Inventory.SLOTS:
 		var w: WeaponInstance = inventory.weapons[i]

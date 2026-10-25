@@ -5,9 +5,11 @@
 ![License: MIT](https://img.shields.io/badge/code-MIT-green)
 
 **A whimsical third-person survival roguelike.** One bunny in an acorn helmet
-against up to 49 bots who remember you: rivals with grudges, a Briar in a
-different mood every match, perks that carry over between runs, and three
-rewinds to undo your worst ten seconds. Drop from a picnic-basket hot-air
+against up to 49 bots who remember you: rivals with grudges, a nemesis who
+hunts you and steals your gun, runs down a branching trail of five matches
+with boons that build into something silly (carrots that split, pierce,
+bounce and pop), perks that carry over between runs, and rewinds to undo
+your worst ten seconds. Drop from a picnic-basket hot-air
 balloon onto a procedurally generated forest island (or from a wind-up toy
 plane into a giant hamster cage, or a paper airplane over a kid's bedroom
 floor) and loot carrot guns. Then outlast the
@@ -19,14 +21,14 @@ Built in **Godot 4.6** (GDScript, Jolt physics, Forward+).
 ▶ **[Watch the 30-second trailer](docs/trailer.mp4)** (with sound): a rival
 sneaks up on you, you rewind, and this time you turn around.
 
-▶ **[The Hamster Cage cut](https://github.com/zconnor100-debug/bunny-beat-down/releases/download/v0.5.0/trailer_hamster_cage.mp4)**: up the Hamster
+▶ **[The Hamster Cage cut](https://github.com/zconnor100-debug/bunny-beat-down/releases/download/v0.6.0/trailer_hamster_cage.mp4)**: up the Hamster
 Gym's see-through tubes, a rewind you can watch, and the final shot slowed
-down and replayed. There's also a **[vertical phone cut](https://github.com/zconnor100-debug/bunny-beat-down/releases/download/v0.5.0/trailer_hamster_cage_vertical.mp4)**.
+down and replayed. There's also a **[vertical phone cut](https://github.com/zconnor100-debug/bunny-beat-down/releases/download/v0.6.0/trailer_hamster_cage_vertical.mp4)**.
 
-▶ **[The Toy Box Bash cut](https://github.com/zconnor100-debug/bunny-beat-down/releases/download/v0.5.0/trailer_toybox.mp4)**: a paper-airplane
+▶ **[The Toy Box Bash cut](https://github.com/zconnor100-debug/bunny-beat-down/releases/download/v0.6.0/trailer_toybox.mp4)**: a paper-airplane
 drop, a ride on the toy train, the rewind running the whole train backwards,
 and the final shot replayed from three angles. There's a
-**[vertical phone cut](https://github.com/zconnor100-debug/bunny-beat-down/releases/download/v0.5.0/trailer_toybox_vertical.mp4)** of it too.
+**[vertical phone cut](https://github.com/zconnor100-debug/bunny-beat-down/releases/download/v0.6.0/trailer_toybox_vertical.mp4)** of it too.
 
 ![Trailer: a rival fox creeps up on Bun, a rewind, and revenge](docs/screenshots/trailer.gif)
 
@@ -207,6 +209,42 @@ and the final shot replayed from three angles. There's a
     are, how they fight, the score with you, their wins and grudges, and
     their own trackers (accuracy, headshots, damage, beat-downs by gun and
     their longest beat-down).
+  - **Your Nemesis hunts you.** A bot you've beaten down eight times is your
+    Nemesis: in a lobby it's tougher (half as much health again, full
+    armour), its tag reads ☠ NEMESIS, the HUD shows how far it is and which
+    way, and every 20 seconds it learns roughly where you are. Beat it down
+    and it drops its **signature gun**: its favourite, Golden, with a
+    mutation built in ("Sly's Golden Carrot SMG", with Piercing Carrots).
+  - **Gangs.** When two or more bots you've made Vengeful are in a lobby, the
+    three hottest gang up (*the Thorn Gang*, *the Muddy Paws*...): they drop
+    in together, leave each other alone, hunt you, and the news says so.
+  - **They come back marked.** Shoot a bot's head off and it returns in an
+    eye patch (its head takes a quarter less damage); take an arm and it's
+    bandaged, a leg and it's in a twig splint (tougher each time); blow it up
+    and blasts hurt it less. A bot that beats you down **takes the gun you
+    were holding** and brings it to your next matches, in your skin, until
+    you beat it down and take it back. The Rogues' Gallery remembers all of it.
+- **Runs down the Trail.** *A Run* (main menu) is five stops picked one at a
+  time from a branching map (`Run`, `TrailPanel`): Skirmishes, Grudge Matches
+  (your radical bots, as a gang), Golden Groves (better loot, double acorns,
+  a harder goal), Picnics (no fighting: mend a helmet, find two rewinds or
+  take a boon) and The Big Beat Down at the end, a full lobby with a nemesis
+  hunt. Every stop has its own map, run modifiers and a goal: make the top
+  few, or beat down enough critters. Miss it and one of your three acorn
+  helmets cracks; lose all three and the run is over. Your boons, your
+  rewinds (three for the whole run) and one **keepsake** gun (pocketed at
+  the end of a match) carry from stop to stop, and a run survives quitting
+  the game.
+- **Boons: a build that grows as you go.** Acorn shrines on every map (hold
+  interact to pray; bots walk on by) and every goal you make on the Trail
+  offer one of three boons (`Boons`, `DraftPanel`); picking one again levels
+  it up. Four families: **Bramble** (Thorny Carrots make critters bleed,
+  Bramble Coat hits back, Cruel Thorns, Splinters), **Sugar Rush** (speed,
+  higher jumps, faster reloads, Carrot Frenzy), **Mutations** (Splitting
+  Carrots burst into shards, Piercing Carrots go through critters, Bouncy
+  Carrots ricochet, Popping Carrots go off) and **Deep Roots** (Thick Skin,
+  Carrot Juice heals you, Acorn Shell, Hush). Hold two families and their
+  **duo** can turn up: Briar Shards, Second Breakfast, Ricochet Rush, Bark Skin.
 - **The bots learn you.** They remember where you like to land (and more of
   them head there), and which guns you win with (they fight you at the
   range those guns are worst at). Sit still too long and the nearest bots
@@ -239,7 +277,7 @@ and the final shot replayed from three angles. There's a
   leaves, a carrot shower, hearts). `tests/capture_workshop.gd` renders them
   all.
 - **Rewind.** The game records the last ten seconds of the match, and you
-  get three rewinds a match: press **T** (or pick *Rewind* in the pause
+  get three rewinds a match (on a run, three for the whole run): press **T** (or pick *Rewind* in the pause
   menu), or take one when a killing blow lands, since the game freezes and
   asks "rewind, or accept defeat?" instead of letting you drop. For about a
   second the world runs backwards like an old tape: everyone glides back the
@@ -405,7 +443,7 @@ The full write-up is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
   the same views: 31% fewer triangles on the island, 31% on the Hamster
   Cage, 79% on Toy Box Bash, and a third to two thirds fewer shadow
   triangles.
-- **Tests that play the game.** A headless suite of 111 tests covers:
+- **Tests that play the game.** A headless suite of 118 tests covers:
   - the IK maths, hitboxes, ragdolls and dismemberment;
   - island navigation, the three biomes and the big buildings (a Bun walks
     in through the barn doors; every indoor loot spot is reachable on the
@@ -420,6 +458,11 @@ The full write-up is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
     the trackers (shots, pellets, blasts, headshots and beat-downs counted
     per gun and per critter, the HUD counter, the Trophy Room, and each
     bot's own counts on its Rogues' Gallery card);
+  - the roguelike layer: boon drafts, levels and duos, bleeding, thorns and
+    Carrot Juice in a match, carrots that split, pierce, bounce and pop,
+    acorn shrines, a run down the Trail (goals, helmets, rewards, picnics,
+    the finale and its retry), a nemesis hunt and its signature gun, gangs,
+    scars and your stolen gun, and the Trail and draft screens;
   - the cast (49 characters, each fighting its own way; a full lobby with
     no "Fox 3"), rivals (made, remembered across runs, back in the next
     match, hunting and taunting, revenge), radical bots (each step, their

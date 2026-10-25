@@ -6,6 +6,8 @@ extends Node3D
 ## Every carrot also draws a glowing tracer streak behind it, so you can see
 ## shots fly and tell where they came from.
 ## Carrots that hit something stay stuck in it — trees, crates, and critters.
+## Mutations (your boons, a gun's own: Boons) change what a carrot does when it
+## hits: it splits into shards, goes on through, bounces, or pops.
 
 const MAX_STUCK := 220
 const MAX_LIFE := 3.0
@@ -17,6 +19,15 @@ const TRACER_SECONDS := 0.06         ## a tracer is as long as this much flight
 const TRACER_MAX := 12.0             ## ... but never longer than this (metres)
 const TRACER_ENEMY := Color(1.0, 0.3, 0.04, 1.0)     ## shots at you: hot orange
 const TRACER_OWN := Color(1.0, 0.85, 0.5, 0.5)       ## your own: fainter, out of your way
+## Mutations (Boons)
+const PIERCE_KEEP := 0.7          ## damage left after going through a critter
+const SHARD_DAMAGE := 0.4
+const SHARD_CONE := 25.0          ## degrees
+const BOUNCE_KEEP := 0.8          ## speed left after a bounce
+const RUSH := 1.4                 ## Ricochet Rush: speed after a bounce or pierce
+const RUSH_HIT := 1.25            ## ... and damage
+const POP_RADIUS := 2.2
+const POP_DAMAGE := 16.0
 ## Your own tracers' colour this match (the Workshop's "Your tracers" look).
 static var own_tracer := TRACER_OWN
 
@@ -33,6 +44,13 @@ class Shot:
 	var exclude: Array[RID]
 	var travelled := 0.0
 	var life := 0.0
+	var weapon: WeaponInstance
+	var mut: Dictionary = {}       # Boons.carrot_mutations() keys
+	var pierce_left := 0
+	var bounce_left := 0
+	var shard := false             # a Splitting Carrots shard (it doesn't split again)
+	var pops := false
+	var mutated := false           # a shard, or it pierced or bounced
 
 
 var _shots: Array[Shot] = []
@@ -92,6 +110,7 @@ static func fire(shooter: Node, weapon: WeaponInstance, origin: Vector3, dir: Ve
 	if instance == null:
 		return
 	var data := weapon.data
+	var mut := mutations_for(shooter, weapon)
 	for i in data.pellets:
 		var d := _spread_dir(dir, spread_deg) if data.pellets == 1 else _pattern_dir(dir, spread_deg, i, data.pellets)
 		if data.projectile == WeaponData.ProjectileKind.ROCKET:
@@ -111,9 +130,49 @@ static func fire(shooter: Node, weapon: WeaponInstance, origin: Vector3, dir: Ve
 		s.damage_scale = weapon.damage_scale()
 		s.shooter = shooter
 		s.exclude = exclude
-		instance._shots.append(s)
-		if KillCam.recording and not KillCam.instance.playing:
-			KillCam.instance.note_shot(s)
+		s.weapon = weapon
+		if not mut.is_empty():
+			s.mut = mut
+			s.pierce_left = int(mut.get("pierce", 0))
+			s.bounce_left = int(mut.get("bounce", 0))
+			s.pops = mut.has("pop") and _pops_now(shooter, int(mut["pop"]))
+		instance._add(s)
+
+
+## A carrot joins the ones in flight (and the final-shot replay's record).
+func _add(s: Shot) -> void:
+	_shots.append(s)
+	if KillCam.recording and not KillCam.instance.playing:
+		KillCam.instance.note_shot(s)
+
+
+## What this shooter's carrots do from this gun: your boons, and the gun's
+## own mutation (whoever holds it). Rockets are rockets.
+static func mutations_for(shooter: Node, weapon: WeaponInstance) -> Dictionary:
+	var m := {}
+	if weapon.data.projectile == WeaponData.ProjectileKind.ROCKET:
+		return m
+	if shooter is Critter and (shooter as Critter).is_player:
+		m = Boons.carrot_mutations()
+	if weapon.mutation != "":
+		_merge(m, Boons.gun_mutation(weapon.mutation))
+	return m
+
+
+static func _merge(into: Dictionary, more: Dictionary) -> void:
+	for k in more:
+		if k == "pop":   # (one in n: fewer is more)
+			into[k] = mini(int(into.get(k, 999)), int(more[k]))
+		elif more[k] is bool:
+			into[k] = true
+		else:
+			into[k] = maxi(int(into.get(k, 0)), int(more[k]))
+
+
+static func _pops_now(shooter: Node, every: int) -> bool:
+	if shooter is Critter and (shooter as Critter).is_player:
+		return Boons.next_pops(every)
+	return randi() % maxi(every, 1) == 0
 
 
 ## Rewind (see TimeKeeper): every carrot and rocket in flight vanishes.
@@ -191,6 +250,10 @@ func _physics_process(delta: float) -> void:
 		if hit:
 			s.travelled += s.pos.distance_to(hit.position)
 			s.pos = hit.position
+			if s.bounce_left > 0 and not ((hit.collider as Node).has_meta(&"critter") if hit.collider is Node else false):
+				_bounce(s, hit)
+				i += 1
+				continue
 			if KillCam.recording:
 				KillCam.instance.end_shot(s)
 			_on_hit(s, hit)
@@ -295,21 +358,111 @@ func _on_hit(s: Shot, hit: Dictionary) -> void:
 	if col is Node and (col as Node).has_meta(&"critter"):
 		var critter: Node = (col as Node).get_meta(&"critter")
 		var role: StringName = (col as Node).get_meta(&"role", &"chest")
+		var through := false
 		if is_instance_valid(critter):
 			if col is Area3D:
-				critter.receive_shot(s.shooter, s.data, dmg, hit.position, dir, role)
+				critter.receive_shot(s.shooter, s.data, dmg, hit.position, dir, role, s.mutated)
+				through = _mutate_on_critter(s, hit.position, critter)
 			else:
 				critter.receive_corpse_shot(s.data, hit.position, dir, col)
-		if s.data.projectile == WeaponData.ProjectileKind.BOLT:
+		if s.pops:
+			_pop(s, hit.position)
+		if s.data.projectile == WeaponData.ProjectileKind.BOLT and not through:
 			_stick(hit.position, dir, col as Node3D, 0.5)
 		return
 	if col is RigidBody3D:
 		(col as RigidBody3D).apply_impulse(dir * s.data.impulse * 0.5, hit.position - (col as RigidBody3D).global_position)
+	if s.pops:
+		_pop(s, hit.position + hit.normal * 0.2)
 	var surface: StringName = (col as Node).get_meta(&"surface", &"dirt") if col is Node else &"dirt"
 	FX.impact(hit.position, hit.normal, surface)
 	Audio.play_at(&"carrot_impact_wood" if surface == &"wood" else &"carrot_impact_dirt", hit.position, -8.0)
 	if s.data.projectile == WeaponData.ProjectileKind.BOLT and col is Node3D:
 		_stick(hit.position, dir, col as Node3D, 0.35)
+
+
+## Mutations when a carrot hits a live critter: Piercing Carrots carry on
+## through it (weaker), Splitting Carrots burst into shards that fly on.
+## True if the carrot went on through (so it isn't left stuck in them).
+func _mutate_on_critter(s: Shot, at: Vector3, critter: Node) -> bool:
+	if s.mut.is_empty() or not critter is Critter:
+		return false
+	var rids: Array[RID] = (critter as Critter).visual.hitbox_rids
+	var rush := 1.0 if not s.mut.get("rush", false) else RUSH
+	var through := false
+	if s.pierce_left > 0:
+		var n := _follow(s, rids)
+		n.pos = at + s.vel.normalized() * 0.05
+		n.vel = s.vel * rush
+		n.damage_scale = s.damage_scale * PIERCE_KEEP * (RUSH_HIT if rush > 1.0 else 1.0)
+		n.pierce_left = s.pierce_left - 1
+		n.bounce_left = s.bounce_left
+		_add(n)
+		through = true
+	if s.mut.has("split") and not s.shard:
+		var dir := s.vel.normalized()
+		for k in int(s.mut["split"]):
+			var n := _follow(s, rids)
+			n.pos = at + dir * 0.05
+			n.vel = _spread_dir(dir, SHARD_CONE) * s.vel.length() * 0.8
+			n.damage_scale = s.damage_scale * SHARD_DAMAGE
+			n.shard = true
+			_add(n)
+	return through
+
+
+## A carrot that carries on from another (pierced through, or a shard): the
+## same gun and mutations, and it won't hit the critter it just came out of.
+func _follow(s: Shot, more_exclude: Array[RID]) -> Shot:
+	var n := Shot.new()
+	n.gravity = s.gravity
+	n.data = s.data
+	n.weapon = s.weapon
+	n.shooter = s.shooter
+	n.travelled = s.travelled
+	n.mut = s.mut
+	n.mutated = true
+	var ex: Array[RID] = s.exclude.duplicate()
+	ex.append_array(more_exclude)
+	n.exclude = ex
+	return n
+
+
+## Bouncy Carrots: off the wall or the floor, a little slower (faster with
+## Ricochet Rush).
+func _bounce(s: Shot, hit: Dictionary) -> void:
+	var n: Vector3 = hit.normal
+	var rush: bool = s.mut.get("rush", false)
+	s.vel = s.vel.bounce(n) * (BOUNCE_KEEP * RUSH if rush else BOUNCE_KEEP)
+	if rush:
+		s.damage_scale *= RUSH_HIT
+	s.pos = hit.position + n * 0.03
+	s.bounce_left -= 1
+	s.mutated = true
+	FX.impact(hit.position, n, &"wood")
+	Audio.play_at(&"carrot_impact_wood", hit.position, -12.0, 0.2)
+
+
+## Popping Carrots: a little blast where the carrot lands.
+func _pop(s: Shot, at: Vector3) -> void:
+	s.pops = false
+	var w := WeaponInstance.new(_pop_data(s.data), s.weapon.rarity if s.weapon else 0, false)
+	Explosion.detonate(get_tree(), at, w, s.shooter)
+
+
+static var _pop_datas: Dictionary = {}
+
+static func _pop_data(d: WeaponData) -> WeaponData:
+	if not _pop_datas.has(d.id):
+		var p := WeaponData.new()
+		p.id = d.id
+		p.display_name = d.display_name
+		p.splash_radius = POP_RADIUS
+		p.splash_damage = POP_DAMAGE
+		p.impulse = 5.0
+		p.dismember_power = 0.25
+		_pop_datas[d.id] = p
+	return _pop_datas[d.id]
 
 
 ## Leave the carrot embedded where it hit, parented so it moves with the target.
