@@ -541,6 +541,7 @@ The full write-up is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 **Download and play:** Linux and Windows builds are on the
 **[latest release](https://github.com/zconnor100-debug/bunny-beat-down/releases/latest)**
 (about 400 MB for Linux and 480 MB for Windows; you need a GPU with Vulkan).
+On Windows the whole game is one file, `BunnyBeatDown.exe`.
 
 **Updates are automatic.** Every push that changes the game, once the tests
 pass, is built for Linux and Windows, smoke-tested (a headless drop onto the

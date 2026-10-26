@@ -34,8 +34,9 @@ def main() -> None:
         out.append("")
     out += [
         "### Download and play",
-        "- **Windows:** `BunnyBeatDown-windows-x86_64.zip`. Unzip it and run `BunnyBeatDown.exe`. Windows may warn that it's from an "
-        "unknown publisher (it isn't signed): click **More info → Run anyway**.",
+        "- **Windows:** `BunnyBeatDown-windows-x86_64.zip`. Unzip it and run `BunnyBeatDown.exe`: the whole game is in that one "
+        "file, so you can put it anywhere. Windows may warn that it's from an unknown publisher (it isn't signed): click "
+        "**More info → Run anyway**.",
         "- **Linux:** `BunnyBeatDown-linux-x86_64.tar.xz`. Extract it and run `BunnyBeatDown.x86_64`.",
         "- Already playing? The main menu tells you when there's a newer version, with a button to this page.",
         "",
