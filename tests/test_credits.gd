@@ -4,7 +4,7 @@ extends TestCase
 ## allowed licenses may appear. Fails CI the moment an un-credited model,
 ## texture, sound or font sneaks into assets/.
 
-const ALLOWED := ["CC0 1.0", "CC BY 4.0", "CC BY 3.0", "SIL OFL 1.1", "MIT (project)"]
+const ALLOWED := ["CC0 1.0", "CC BY 4.0", "CC BY 3.0", "SIL OFL 1.1", "Apache 2.0", "MIT (project)"]
 const ASSET_EXT := ["glb", "gltf", "ogg", "mp3", "wav", "hdr", "exr", "ttf", "otf", "jpg", "png", "webp"]
 
 

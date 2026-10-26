@@ -43,7 +43,7 @@ func _ready() -> void:
 
 
 func _setup_buses() -> void:
-	for bus_name in [&"Music", &"SFX"]:
+	for bus_name in [&"Music", &"SFX", &"Voice"]:   # (Voice: the rogues talking, RogueVoice)
 		if AudioServer.get_bus_index(bus_name) == -1:
 			AudioServer.add_bus()
 			var idx := AudioServer.bus_count - 1
@@ -65,6 +65,7 @@ func _apply_volumes() -> void:
 	_set_bus_linear(&"Master", Settings.get_value(&"master_volume"))
 	_set_bus_linear(&"Music", Settings.get_value(&"music_volume"))
 	_set_bus_linear(&"SFX", Settings.get_value(&"sfx_volume"))
+	_set_bus_linear(&"Voice", Settings.get_value(&"voice_volume"))
 
 
 func _set_bus_linear(bus_name: StringName, v: float) -> void:

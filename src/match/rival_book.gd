@@ -318,9 +318,15 @@ static func _add(bot: String, key: String, by: float) -> void:
 
 ## A line in the bot's own voice for an event: "spot", "kill" or "lose".
 static func line(bot: String, event: String, you: String, rng: RandomNumberGenerator = null) -> String:
-	var lines: Array = PERSONALITIES[personality_of(bot)][event]
-	var pick: String = lines[(rng.randi() if rng else randi()) % lines.size()]
-	return pick.format({"you": you, "k": kills_on_you(bot), "w": your_kills(bot)})
+	return String(line_say(bot, event, you, rng).text)
+
+
+## The same as something said (Cast.say: text, key, fields).
+static func line_say(bot: String, event: String, you: String, rng: RandomNumberGenerator = null) -> Dictionary:
+	var voice := personality_of(bot)
+	var lines: Array = PERSONALITIES[voice][event]
+	var i := (rng.randi() if rng else randi()) % lines.size()
+	return Cast.say("p.%s.%s.%d" % [voice, event, i], lines[i], {"you": you, "k": kills_on_you(bot), "w": your_kills(bot)})
 
 
 ## "3–1 against you" style score from your side.

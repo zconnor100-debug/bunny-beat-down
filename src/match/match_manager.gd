@@ -437,7 +437,7 @@ func feud(c: Critter, other: Critter) -> void:
 		return
 	_feuded[key] = true
 	_feud_t = _clock
-	Events.taunt.emit(c, Cast.pick(Cast.FEUD_LINES, rng, {"them": other.display_name}))
+	_say(c, Cast.pick_say(Cast.FEUD_LINES, "f", rng, {"them": other.display_name}))
 
 
 func _available_defs() -> Array[CritterDef]:
@@ -585,7 +585,7 @@ func _on_briar_moves(shrinking: bool) -> void:
 		if not sore.is_empty():
 			var c: Critter = sore[rng.randi() % sore.size()]
 			_director_said[c.display_name] = true
-			Events.taunt.emit(c, Cast.pick(Cast.DIRECTOR_LINES, rng))
+			_say(c, Cast.pick_say(Cast.DIRECTOR_LINES, "d", rng))
 	_was_shrinking = shrinking
 
 
@@ -673,7 +673,7 @@ func flush_out_player() -> Array[Critter]:
 			brain.hunt(player.global_position + Vector3(rng.randf_range(-6, 6), 0, rng.randf_range(-6, 6)))
 			hunters.append(c)
 	if not hunters.is_empty():
-		Events.taunt.emit(hunters[0], "Somebody's been sitting still... coming for you, %s!" % player.def.display_name)
+		_say(hunters[0], Cast.say("hunt", Cast.HUNT_LINE, {"you": player.def.display_name}))
 	return hunters
 
 
@@ -959,14 +959,22 @@ func taunt(c: Critter, event: String) -> void:
 	var you := String(player.def.display_name)
 	# a radical bot sounds it; otherwise now and then about your outfit, its own
 	# line, or in its own voice
-	var said := Cast.heat_line(c.display_name, event, you, rng) if rng.randf() < 0.75 else ""
-	if said == "" and rng.randf() < Cast.OUTFIT_TAUNT_CHANCE:
-		said = Cast.outfit_line(Workshop.outfit(), event, you, rng)
-	if said == "" and event == "spot" and rng.randf() < 0.4:
-		said = Cast.member(c.display_name).get("says", "")
-	if said == "":
-		said = RivalBook.line(c.display_name, event, you, rng)
-	Events.taunt.emit(c, said)
+	var said := Cast.heat_say(c.display_name, event, you, rng) if rng.randf() < 0.75 else {}
+	if said.is_empty() and rng.randf() < Cast.OUTFIT_TAUNT_CHANCE:
+		said = Cast.outfit_say(Workshop.outfit(), event, you, rng)
+	if said.is_empty() and event == "spot" and rng.randf() < 0.4:
+		var own := String(Cast.member(c.display_name).get("says", ""))
+		if own != "":
+			said = Cast.say("says", own)
+	if said.is_empty():
+		said = RivalBook.line_say(c.display_name, event, you, rng)
+	_say(c, said)
+
+
+## A bot says something: on screen (HUD, a speech bubble) and out loud.
+func _say(c: Critter, said: Dictionary) -> void:
+	Events.taunt.emit(c, String(said.text))
+	RogueVoice.speak(c, said)
 
 
 func alive_critters() -> Array[Critter]:

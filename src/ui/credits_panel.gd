@@ -16,6 +16,7 @@ const SECTIONS := {
 	"outfits": "Rogue outfits: hats, glasses, capes and the rest",
 	"weapons_props": "Carrot Guns & Props",
 	"audio": "Sound & Music",
+	"voices": "Rogue voices",
 	"fonts": "Fonts",
 }
 

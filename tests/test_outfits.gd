@@ -204,14 +204,14 @@ func test_rogues_talk_about_what_you_wear() -> void:
 			if o[0] != "none":
 				pieces.append(o[0])
 	for id in Cast.OUTFIT_LINES:
-		check(id == "any" or pieces.has(id), "%s lines are about a wardrobe piece" % id)
+		check(pieces.has(id), "%s lines are about a wardrobe piece" % id)
 	for id in pieces:
 		check(Cast.OUTFIT_LINES.has(id), "the %s has lines of its own" % id)
 		for event in ["spot", "kill", "lose"]:
 			var said := Cast.outfit_line([id], event, "Bun", rng)
 			check(said != "" and not said.contains("{"), "%s/%s: \"%s\"" % [id, event, said])
-	var any := Cast.pick(Cast.OUTFIT_LINES.any.spot, rng, {"you": "Bun", "piece": Workshop.piece_name("glasses_3d")})
-	check(any.contains("3D glasses") or not any.contains("{piece}"), "a piece by its name: \"%s\"" % any)
+	var said := Cast.outfit_say(["cheese_hat"], "kill", "Bun", rng)
+	check(said.key == "o.cheese_hat.kill.0" and said.text == "Say cheese, Bun!", "each line has its key, for its voice (%s)" % said.key)
 	check(Workshop.piece_name("flap_beanie") == "ear-flap beanie", "names read in a sentence (%s)" % Workshop.piece_name("flap_beanie"))
 	check(KillCam.look_line(true, false, "wizard's hat") == "Dressed to win: your wizard's hat", "the replay notes your outfit when you won")
 	check(KillCam.look_line(false, true, "wizard's hat").begins_with("Beaten down in"), "or went down in it")

@@ -269,6 +269,19 @@ The third map follows the cage's pattern (`ToyBox extends Island`,
   rival: `MatchManager` puts up to three rivals in every match, their
   `AIBrain` scores the player as a preferred target and skips the
   "attack slot" queue, and `Events.taunt` drives the HUD's speech bubbles.
+- **Voices.** Every line a bot says is picked as `Cast.say` (text, a key
+  naming the template, the fields that fill it), shown, and spoken by
+  **`RogueVoice`** from the bot's head. `tests/export_lines.gd` writes every
+  template to `tools/voices/lines.json`; `tools/voices/build_voices.py`
+  (Kokoro-82M on the GPU, ~12 minutes for the whole cast) gives each rogue a
+  voice of its own (two voice packs blended, pitched for its species by a
+  resample, paced for its personality: `tools/voices/cast_voices.json`) and
+  renders every line as parts: words, your name ("Bun!" with the
+  punctuation it ends on), other rogues' names, numbers 0–60 for scores; a
+  line's plan stitches them back together at run time. Each rogue's clips
+  are one Ogg file (16 kHz, ~0.8 MB) with an index in
+  `assets/voices/voices.json`; `test_voices` checks every rogue can say
+  every line with every name.
 - **`PlayerProfile`** remembers the player's landings and beat-downs by
   weapon. `MatchManager` acts as a small director: some bots drop at your
   favourite landmark, `AIBrain.player_style` shifts the bots' preferred

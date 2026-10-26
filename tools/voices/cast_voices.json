@@ -1,0 +1,492 @@
+{
+  "Captain Carrot": {
+    "packs": [
+      "am_puck",
+      "am_eric"
+    ],
+    "blend": 0.8,
+    "lang": "a",
+    "pitch": 1.1,
+    "tempo": 1.039
+  },
+  "Vex": {
+    "packs": [
+      "af_nicole",
+      "af_river"
+    ],
+    "blend": 0.58,
+    "lang": "a",
+    "pitch": 1.085,
+    "tempo": 0.923
+  },
+  "Bunnicula": {
+    "packs": [
+      "am_onyx",
+      "am_michael"
+    ],
+    "blend": 0.57,
+    "lang": "a",
+    "pitch": 1.194,
+    "tempo": 0.964
+  },
+  "Lop-Eared Larry": {
+    "packs": [
+      "am_liam",
+      "am_puck"
+    ],
+    "blend": 0.72,
+    "lang": "a",
+    "pitch": 1.146,
+    "tempo": 1.18
+  },
+  "Snickerdoodle": {
+    "packs": [
+      "af_jessica",
+      "af_heart"
+    ],
+    "blend": 0.77,
+    "lang": "a",
+    "pitch": 1.111,
+    "tempo": 1.128
+  },
+  "Cottontail Kate": {
+    "packs": [
+      "af_river",
+      "af_kore"
+    ],
+    "blend": 0.65,
+    "lang": "a",
+    "pitch": 1.146,
+    "tempo": 0.846
+  },
+  "Hops McGee": {
+    "packs": [
+      "am_fenrir",
+      "am_puck"
+    ],
+    "blend": 0.63,
+    "lang": "a",
+    "pitch": 1.207,
+    "tempo": 1.123
+  },
+  "Nutsy": {
+    "packs": [
+      "am_puck",
+      "am_eric"
+    ],
+    "blend": 0.67,
+    "lang": "a",
+    "pitch": 1.363,
+    "tempo": 1.091
+  },
+  "Acorn Al": {
+    "packs": [
+      "am_santa",
+      "am_michael"
+    ],
+    "blend": 0.64,
+    "lang": "a",
+    "pitch": 1.35,
+    "tempo": 0.949
+  },
+  "Sir Scamper": {
+    "packs": [
+      "bm_george",
+      "bm_fable"
+    ],
+    "blend": 0.79,
+    "lang": "b",
+    "pitch": 1.447,
+    "tempo": 0.936
+  },
+  "Hazel": {
+    "packs": [
+      "af_sky",
+      "af_nicole"
+    ],
+    "blend": 0.79,
+    "lang": "a",
+    "pitch": 1.275,
+    "tempo": 0.918
+  },
+  "Twitch": {
+    "packs": [
+      "am_echo",
+      "am_puck"
+    ],
+    "blend": 0.73,
+    "lang": "a",
+    "pitch": 1.384,
+    "tempo": 1.135
+  },
+  "Kernel": {
+    "packs": [
+      "am_michael",
+      "am_adam"
+    ],
+    "blend": 0.6,
+    "lang": "a",
+    "pitch": 1.458,
+    "tempo": 0.88
+  },
+  "Bushytail Betty": {
+    "packs": [
+      "af_heart",
+      "af_aoede"
+    ],
+    "blend": 0.69,
+    "lang": "a",
+    "pitch": 1.338,
+    "tempo": 1.094
+  },
+  "Sly": {
+    "packs": [
+      "am_echo",
+      "am_liam"
+    ],
+    "blend": 0.84,
+    "lang": "a",
+    "pitch": 1.034,
+    "tempo": 0.898
+  },
+  "Vixen Vera": {
+    "packs": [
+      "af_bella",
+      "af_jessica"
+    ],
+    "blend": 0.67,
+    "lang": "a",
+    "pitch": 1.031,
+    "tempo": 1.092
+  },
+  "Fennick": {
+    "packs": [
+      "am_eric",
+      "am_fenrir"
+    ],
+    "blend": 0.83,
+    "lang": "a",
+    "pitch": 0.99,
+    "tempo": 1.148
+  },
+  "Foxy Roxy": {
+    "packs": [
+      "af_aoede",
+      "af_heart"
+    ],
+    "blend": 0.83,
+    "lang": "a",
+    "pitch": 1.044,
+    "tempo": 1.124
+  },
+  "Sir Reynard": {
+    "packs": [
+      "bm_lewis",
+      "bm_daniel"
+    ],
+    "blend": 0.69,
+    "lang": "b",
+    "pitch": 0.978,
+    "tempo": 0.932
+  },
+  "Ember": {
+    "packs": [
+      "af_nova",
+      "af_bella"
+    ],
+    "blend": 0.66,
+    "lang": "a",
+    "pitch": 1.005,
+    "tempo": 1.163
+  },
+  "Duchess": {
+    "packs": [
+      "af_kore",
+      "af_alloy"
+    ],
+    "blend": 0.61,
+    "lang": "a",
+    "pitch": 1.038,
+    "tempo": 0.985
+  },
+  "Bandit Bill": {
+    "packs": [
+      "am_adam",
+      "am_eric"
+    ],
+    "blend": 0.63,
+    "lang": "a",
+    "pitch": 1.066,
+    "tempo": 1.11
+  },
+  "Trash Panda": {
+    "packs": [
+      "am_puck",
+      "am_liam"
+    ],
+    "blend": 0.69,
+    "lang": "a",
+    "pitch": 1.087,
+    "tempo": 1.118
+  },
+  "Rocco": {
+    "packs": [
+      "am_fenrir",
+      "am_eric"
+    ],
+    "blend": 0.62,
+    "lang": "a",
+    "pitch": 1.115,
+    "tempo": 1.136
+  },
+  "Masky": {
+    "packs": [
+      "am_liam",
+      "am_echo"
+    ],
+    "blend": 0.78,
+    "lang": "a",
+    "pitch": 1.127,
+    "tempo": 0.943
+  },
+  "Dumpster Dot": {
+    "packs": [
+      "af_aoede",
+      "af_river"
+    ],
+    "blend": 0.78,
+    "lang": "a",
+    "pitch": 1.08,
+    "tempo": 0.89
+  },
+  "Grimsby": {
+    "packs": [
+      "am_michael",
+      "am_onyx"
+    ],
+    "blend": 0.76,
+    "lang": "a",
+    "pitch": 1.126,
+    "tempo": 0.982
+  },
+  "Lady Garbage": {
+    "packs": [
+      "bf_emma",
+      "bf_isabella"
+    ],
+    "blend": 0.62,
+    "lang": "b",
+    "pitch": 1.034,
+    "tempo": 0.926
+  },
+  "Croaker": {
+    "packs": [
+      "am_onyx",
+      "am_santa"
+    ],
+    "blend": 0.71,
+    "lang": "a",
+    "pitch": 0.852,
+    "tempo": 0.979
+  },
+  "Lily Pad Lou": {
+    "packs": [
+      "af_kore",
+      "af_aoede"
+    ],
+    "blend": 0.77,
+    "lang": "a",
+    "pitch": 0.869,
+    "tempo": 0.837
+  },
+  "Hopscotch": {
+    "packs": [
+      "af_jessica",
+      "af_heart"
+    ],
+    "blend": 0.73,
+    "lang": "a",
+    "pitch": 0.869,
+    "tempo": 1.067
+  },
+  "Sir Toadsworth": {
+    "packs": [
+      "bm_daniel",
+      "bm_fable"
+    ],
+    "blend": 0.68,
+    "lang": "b",
+    "pitch": 0.823,
+    "tempo": 0.95
+  },
+  "Puddles": {
+    "packs": [
+      "af_sky",
+      "af_sarah"
+    ],
+    "blend": 0.6,
+    "lang": "a",
+    "pitch": 0.863,
+    "tempo": 1.148
+  },
+  "Bog Boss": {
+    "packs": [
+      "am_puck",
+      "am_fenrir"
+    ],
+    "blend": 0.58,
+    "lang": "a",
+    "pitch": 0.845,
+    "tempo": 1.161
+  },
+  "Gulp": {
+    "packs": [
+      "am_eric",
+      "am_puck"
+    ],
+    "blend": 0.69,
+    "lang": "a",
+    "pitch": 0.856,
+    "tempo": 1.046
+  },
+  "Chompers": {
+    "packs": [
+      "am_eric",
+      "am_fenrir"
+    ],
+    "blend": 0.59,
+    "lang": "a",
+    "pitch": 0.96,
+    "tempo": 1.127
+  },
+  "Dam Dan": {
+    "packs": [
+      "am_santa",
+      "am_onyx"
+    ],
+    "blend": 0.69,
+    "lang": "a",
+    "pitch": 0.956,
+    "tempo": 0.931
+  },
+  "Buck Toothington": {
+    "packs": [
+      "bm_fable",
+      "bm_lewis"
+    ],
+    "blend": 0.64,
+    "lang": "b",
+    "pitch": 0.945,
+    "tempo": 0.973
+  },
+  "Timber": {
+    "packs": [
+      "am_adam",
+      "am_michael"
+    ],
+    "blend": 0.63,
+    "lang": "a",
+    "pitch": 0.924,
+    "tempo": 0.86
+  },
+  "Lodge Lady": {
+    "packs": [
+      "af_river",
+      "af_sky"
+    ],
+    "blend": 0.7,
+    "lang": "a",
+    "pitch": 0.998,
+    "tempo": 0.936
+  },
+  "Gnawman": {
+    "packs": [
+      "am_puck",
+      "am_liam"
+    ],
+    "blend": 0.73,
+    "lang": "a",
+    "pitch": 0.982,
+    "tempo": 1.171
+  },
+  "Dr. Splash": {
+    "packs": [
+      "am_puck",
+      "am_adam"
+    ],
+    "blend": 0.81,
+    "lang": "a",
+    "pitch": 0.939,
+    "tempo": 1.067
+  },
+  "Squeaks": {
+    "packs": [
+      "am_liam",
+      "am_puck"
+    ],
+    "blend": 0.59,
+    "lang": "a",
+    "pitch": 1.548,
+    "tempo": 1.139
+  },
+  "Cheeks McGee": {
+    "packs": [
+      "am_adam",
+      "am_puck"
+    ],
+    "blend": 0.75,
+    "lang": "a",
+    "pitch": 1.498,
+    "tempo": 1.09
+  },
+  "Nibbler": {
+    "packs": [
+      "af_heart",
+      "af_aoede"
+    ],
+    "blend": 0.66,
+    "lang": "a",
+    "pitch": 1.342,
+    "tempo": 1.124
+  },
+  "Pudge": {
+    "packs": [
+      "am_fenrir",
+      "am_eric"
+    ],
+    "blend": 0.56,
+    "lang": "a",
+    "pitch": 1.498,
+    "tempo": 1.087
+  },
+  "Whisker Biscuit": {
+    "packs": [
+      "af_river",
+      "af_aoede"
+    ],
+    "blend": 0.78,
+    "lang": "a",
+    "pitch": 1.363,
+    "tempo": 0.856
+  },
+  "Turbo": {
+    "packs": [
+      "am_puck",
+      "am_eric"
+    ],
+    "blend": 0.81,
+    "lang": "a",
+    "pitch": 1.627,
+    "tempo": 1.151
+  },
+  "Wheelie": {
+    "packs": [
+      "bm_george",
+      "bm_fable"
+    ],
+    "blend": 0.74,
+    "lang": "b",
+    "pitch": 1.607,
+    "tempo": 0.917
+  }
+}

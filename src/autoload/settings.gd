@@ -23,6 +23,7 @@ const DEFAULTS := {
 	"master_volume": 0.85,
 	"music_volume": 0.6,
 	"sfx_volume": 0.9,
+	"voice_volume": 0.9,            # the rogues' voices (RogueVoice)
 	"quality": 2,                   # 0 low, 1 medium, 2 high, 3 ultra
 	"show_fps": false,
 	"opponents": 23,

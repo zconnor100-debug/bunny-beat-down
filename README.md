@@ -202,8 +202,10 @@ and the final shot replayed from three angles. There's a
   - A bot that has beaten you down twice becomes your **rival**: it's always
     in your next matches (with a purple "⚔ RIVAL" name tag), it hunts you,
     and it taunts you in its own voice, in speech bubbles and the kill feed
-    ("Didn't see me, did you? 3–1."). Beat it and the game calls it
-    **revenge**.
+    ("Didn't see me, did you? 3–1.") and **out loud**: all 49 rogues have a
+    voice of their own (synthesized with Kokoro TTS: hamsters squeak, frogs
+    croak, the nobles are British, the hotheads gabble), and they comment
+    on what you're wearing. Beat it and the game calls it **revenge**.
   - Beat the same bot down again and again and it **turns radical**: Sore,
     Vengeful, Unhinged, then your Nemesis. Its name tag says so; it picks
     fights from further off and stops running away, comes looking for you,

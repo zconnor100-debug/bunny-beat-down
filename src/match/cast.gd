@@ -138,15 +138,14 @@ const HEAT_LINES := [
 		"kill": ["You made me what I am, {you}.", "This is what you made, {you}. {k}–{w}."],
 		"lose": ["I'll be back. I'm always back.", "{w}. See you next match, {you}."]},
 ]
-## What a bot says about what you're wearing: a line for each piece, or one
-## for any piece ({piece}: its name, "wizard's hat"). By event: spotting you,
-## beating you down, being beaten down by you.
+## What a bot says about what you're wearing: lines for each piece, by event:
+## spotting you, beating you down, being beaten down by you.
 const OUTFIT_LINES := {
 	"cheese_hat": {"spot": ["Is that... CHEESE on your head, {you}?", "I can smell your hat from here, {you}."],
 		"kill": ["Say cheese, {you}!"], "lose": ["Beaten by a walking cheese board..."]},
 	"snorkel_mask": {"spot": ["A snorkel? There's no water here, {you}!", "Going for a swim, {you}?"],
 		"kill": ["Glub glub, {you}."], "lose": ["Sunk by a snorkeller. Unbelievable."]},
-	"windup_key": {"spot": ["Who wound YOU up, {you}?", "Somebody turn {you}'s key off!"],
+	"windup_key": {"spot": ["Who wound YOU up, {you}?", "Somebody turn your key off, {you}!"],
 		"kill": ["Wound down at last."], "lose": ["Clockwork. Couldn't stop it."]},
 	"laurel_wreath": {"spot": ["Laurels? You haven't beaten ME, {you}.", "Nice leaves, champ. Let's see you earn them."],
 		"kill": ["Rest on THOSE laurels, {you}."], "lose": ["Fine. Keep the laurels."]},
@@ -186,12 +185,12 @@ const OUTFIT_LINES := {
 		"kill": ["Grounded, {you}."], "lose": ["...okay, the wings ARE scary."]},
 	"jetpack": {"spot": ["A JETPACK? Cheater, {you}!", "Nice jetpack, {you}. Does it go?"],
 		"kill": ["Out of fuel, {you}?"], "lose": ["Flew right past me..."]},
-	"any": {"spot": ["Nice {piece}, {you}. Did you lose a bet?", "Love the {piece}, {you}! Hold still.", "Who dressed you, {you}?"],
-		"kill": ["And the {piece} goes flying!", "Nice {piece}. Didn't help, did it?"],
-		"lose": ["Beaten by someone in a {piece}... the shame.", "Okay, the {piece} is growing on me."]},
 }
 ## How often a bot talks about your outfit instead of its usual line.
 const OUTFIT_TAUNT_CHANCE := 0.35
+
+## A bot sent after you for sitting still too long.
+const HUNT_LINE := "Somebody's been sitting still... coming for you, {you}!"
 
 ## A bot with a grudge against another one, on spotting it.
 const FEUD_LINES := ["{them}! Remember me?", "We're not done, {them}!", "This is for last time, {them}!", "{them}. Finally.", "Oi, {them}! You owe me!"]
@@ -278,27 +277,46 @@ static func traits_for(n: String) -> Dictionary:
 
 ## A line for a radical bot, or "" while it's calm.
 static func heat_line(n: String, event: String, you: String, rng: RandomNumberGenerator) -> String:
+	return String(heat_say(n, event, you, rng).get("text", ""))
+
+
+## The same as something said (see say()), or {} while it's calm.
+static func heat_say(n: String, event: String, you: String, rng: RandomNumberGenerator) -> Dictionary:
 	var t := heat(n)
 	if t == 0:
-		return ""
+		return {}
 	var lines: Array = HEAT_LINES[t].get(event, [])
 	if lines.is_empty():
-		return ""
-	var pick: String = lines[rng.randi() % lines.size()]
-	return pick.format({"you": you, "k": RivalBook.kills_on_you(n), "w": RivalBook.your_kills(n)})
+		return {}
+	return pick_say(lines, "h.%d.%s" % [t, event], rng, {"you": you, "k": RivalBook.kills_on_you(n), "w": RivalBook.your_kills(n)})
 
 
 ## A line about something you're wearing (one of `wear`, piece ids), or ""
-## when you wear nothing: that piece's own lines more often than the general ones.
+## when you wear nothing.
 static func outfit_line(wear: Array, event: String, you: String, rng: RandomNumberGenerator) -> String:
+	return String(outfit_say(wear, event, you, rng).get("text", ""))
+
+
+static func outfit_say(wear: Array, event: String, you: String, rng: RandomNumberGenerator) -> Dictionary:
 	if wear.is_empty():
-		return ""
+		return {}
 	var piece: String = wear[rng.randi() % wear.size()]
-	var own: Array = OUTFIT_LINES.get(piece, {}).get(event, [])
-	var lines: Array = own if not own.is_empty() and rng.randf() < 0.7 else OUTFIT_LINES.any.get(event, [])
+	var lines: Array = OUTFIT_LINES.get(piece, {}).get(event, [])
 	if lines.is_empty():
-		return ""
-	return pick(lines, rng, {"you": you, "piece": Workshop.piece_name(piece)})
+		return {}
+	return pick_say(lines, "o.%s.%s" % [piece, event], rng, {"you": you})
+
+
+## Something a bot says: the text shown, which line it is (`key`: RogueVoice
+## plays that line in the bot's own voice) and what fills its blanks.
+static func say(key: String, template: String, fields := {}) -> Dictionary:
+	return {"text": template.format(fields), "key": key, "fields": fields}
+
+
+## One of `lines` at random, as said (its key: `prefix`.index).
+static func pick_say(lines: Array, prefix: String, rng: RandomNumberGenerator, fields := {}) -> Dictionary:
+	var i := rng.randi() % lines.size()
+	return say("%s.%d" % [prefix, i], lines[i], fields)
 
 
 static func pick(lines: Array, rng: RandomNumberGenerator, fields := {}) -> String:

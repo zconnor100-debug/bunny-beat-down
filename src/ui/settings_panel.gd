@@ -31,6 +31,7 @@ func _ready() -> void:
 	_slider("Master volume", &"master_volume", 0.0, 1.0, 0.05)
 	_slider("Music volume", &"music_volume", 0.0, 1.0, 0.05)
 	_slider("Effects volume", &"sfx_volume", 0.0, 1.0, 0.05)
+	_slider("Voice volume", &"voice_volume", 0.0, 1.0, 0.05)
 	_check("Show FPS", &"show_fps")
 	_check("Check for updates", &"check_updates")
 	var back := UITheme.button("Back", func(): closed.emit())

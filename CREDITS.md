@@ -317,6 +317,12 @@ notices are available in-game under Credits → Engine licenses.
 | ["Divertimento K131"](https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1100533) | [Kevin MacLeod](https://incompetech.com) | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) | Music: match_toybox (Mozart's Divertimento arranged for bells, chimes, harp and celesta, 138 bpm: the bright tinkle of a music box in the toy chest.)<br>*"Divertimento K131" Kevin MacLeod (incompetech.com), Licensed under Creative Commons: By Attribution 4.0 License http://creativecommons.org/licenses/by/4.0/* | None -- official MP3 from incompetech.com; audio unmodified (file renamed). |
 | ["Fiddles McGinty"](https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1400051) | [Kevin MacLeod](https://incompetech.com) | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) | Music: victory (Driving Celtic folk-rock reel (174 bpm, D major; uilleann pipes, recorder, guitar, bass, rock backbeat) that hits full tilt from the first bar: a cool, triumphant woodland-festival victory lap. victory_fanfare is written in its key and locked to its beat grid, so the rock sting plays straight into it.)<br>*"Fiddles McGinty" Kevin MacLeod (incompetech.com), Licensed under Creative Commons: By Attribution 4.0 License http://creativecommons.org/licenses/by/4.0/* | None -- official MP3 from incompetech.com; audio unmodified (file renamed). |
 
+## Rogue voices
+
+| Asset | Author | License | Used for | Changes |
+|---|---|---|---|---|
+| [The rogues' voices (every taunt, 49 rogues)](https://huggingface.co/hexgrad/Kokoro-82M) | [Synthesized with Kokoro-82M by hexgrad](https://huggingface.co/hexgrad) | [Apache 2.0](https://www.apache.org/licenses/LICENSE-2.0) | Rogues speaking their taunts out loud | Each rogue's lines spoken by tools/voices/build_voices.py in a voice of its own: two Kokoro voice packs blended, pitched for its kind of critter and paced for its personality (tools/voices/cast_voices.json), trimmed, levelled and packed into one Ogg Vorbis file per rogue |
+
 ## Fonts
 
 | Asset | Author | License | Used for | Changes |
