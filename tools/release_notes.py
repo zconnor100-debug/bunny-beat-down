@@ -34,10 +34,12 @@ def main() -> None:
         out.append("")
     out += [
         "### Download and play",
-        "- **Windows:** `BunnyBeatDown-windows-x86_64.zip`. Unzip it and run `BunnyBeatDown.exe`: the whole game is in that one "
-        "file, so you can put it anywhere. Windows may warn that it's from an unknown publisher (it isn't signed): click "
-        "**More info → Run anyway**.",
-        "- **Linux:** `BunnyBeatDown-linux-x86_64.tar.xz`. Extract it and run `BunnyBeatDown.x86_64`.",
+        "- **Windows:** `BunnyBeatDown-Setup-windows-x86_64.exe` (recommended). Run it: it installs the game and puts a "
+        "**Bunny Beat Down** shortcut on your desktop and in the Start menu (uninstall from Settings → Apps). Windows may "
+        "warn that it's from an unknown publisher (it isn't signed): click **More info → Run anyway**. Or take "
+        "`BunnyBeatDown-windows-x86_64.zip`: one `BunnyBeatDown.exe` to put anywhere, no install.",
+        "- **Linux:** `BunnyBeatDown-linux-x86_64.tar.xz`. Extract it and run `./install.sh` in the `BunnyBeatDown` folder "
+        "for a desktop launcher and a menu entry (or just run `BunnyBeatDown.x86_64`).",
         "- Already playing? The main menu tells you when there's a newer version, with a button to this page.",
         "",
         f"Every release: {REPO}/releases · the source: {REPO}",

@@ -541,7 +541,12 @@ The full write-up is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 **Download and play:** Linux and Windows builds are on the
 **[latest release](https://github.com/zconnor100-debug/bunny-beat-down/releases/latest)**
 (about 400 MB for Linux and 480 MB for Windows; you need a GPU with Vulkan).
-On Windows the whole game is one file, `BunnyBeatDown.exe`.
+On Windows, run `BunnyBeatDown-Setup-windows-x86_64.exe`: it installs the game
+(no admin rights needed) and puts a Bunny Beat Down shortcut on the desktop
+and in the Start menu, with an uninstaller in Settings → Apps; or take the
+zip, which is the whole game in one `BunnyBeatDown.exe`. On Linux, extract
+the tarball and run `./install.sh` in the `BunnyBeatDown` folder for a
+desktop launcher and a menu entry (`tools/installer/`).
 
 **Graphics and screens.** Settings has five quality tiers (Low to **Epic**:
 screen-space reflections from Ultra; volumetric light shafts, finer LODs,

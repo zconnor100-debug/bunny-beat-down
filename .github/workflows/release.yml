@@ -94,14 +94,27 @@ jobs:
           BBD_TEST=1 timeout 300 build/linux/BunnyBeatDown.x86_64 --headless -- --smoke-test --map island | tee smoke.log
           grep -q "SMOKE TEST PASS" smoke.log
 
-      - name: Package
+      - name: Package (Windows installer and zip, Linux folder with its launcher script)
         if: steps.v.outputs.release == 'yes'
         run: |
-          (cd build/linux && XZ_OPT="-6 -T0" tar -cJf ../../BunnyBeatDown-linux-x86_64.tar.xz BunnyBeatDown.x86_64 BunnyBeatDown.pck)
-          # (Windows: the game is inside the .exe, embed_pck, so a copy of just the
-          # .exe dragged out of the zip still runs)
+          # Linux: a BunnyBeatDown folder; its install.sh adds the menu entry and
+          # the desktop launcher (tried here in a throwaway home first)
+          mkdir -p pkg/BunnyBeatDown
+          cp build/linux/BunnyBeatDown.x86_64 build/linux/BunnyBeatDown.pck pkg/BunnyBeatDown/
+          cp tools/installer/install-linux.sh pkg/BunnyBeatDown/install.sh
+          cp icon.png pkg/BunnyBeatDown/bunny-beat-down.png
+          mkdir -p /tmp/fakehome/Desktop
+          HOME=/tmp/fakehome bash pkg/BunnyBeatDown/install.sh
+          test -f /tmp/fakehome/Desktop/bunny-beat-down.desktop
+          (cd pkg && XZ_OPT="-6 -T0" tar -cJf ../BunnyBeatDown-linux-x86_64.tar.xz BunnyBeatDown)
+          # Windows: the installer (desktop + Start menu shortcuts, an uninstaller),
+          # and the portable zip (the game is inside the .exe, embed_pck, so a
+          # copy of just the .exe still runs)
+          sudo apt-get install -y -qq nsis > /dev/null
+          makensis -V2 -DVERSION="${{ steps.v.outputs.version }}" -DEXE="$PWD/build/windows/BunnyBeatDown.exe" \
+            -DOUT="$PWD/BunnyBeatDown-Setup-windows-x86_64.exe" tools/installer/windows.nsi
           (cd build/windows && zip -q -9 ../../BunnyBeatDown-windows-x86_64.zip BunnyBeatDown.exe)
-          ls -la *.tar.xz *.zip
+          ls -la *.tar.xz *.zip *.exe
 
       - name: Keep the builds for the next jobs
         if: steps.v.outputs.release == 'yes'
@@ -111,12 +124,15 @@ jobs:
           path: |
             BunnyBeatDown-linux-x86_64.tar.xz
             BunnyBeatDown-windows-x86_64.zip
+            BunnyBeatDown-Setup-windows-x86_64.exe
           retention-days: 2
           compression-level: 0
 
   windows:
-    # the Windows build, started on Windows: just the .exe out of the zip (the
-    # game is inside it), headless, dropping in and landing like the Linux one
+    # the Windows build, started on Windows: the installer run silently (it
+    # must leave a desktop shortcut), the installed game dropping in and
+    # landing headless like the Linux one, then uninstalled; and the portable
+    # .exe out of the zip
     needs: build
     if: needs.build.outputs.release == 'yes'
     runs-on: windows-latest
@@ -125,13 +141,27 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: builds
-      - name: Smoke test the Windows build
+      - name: Install with the installer (silently) and check the shortcuts
         shell: pwsh
         run: |
-          Expand-Archive BunnyBeatDown-windows-x86_64.zip -DestinationPath win
-          Get-ChildItem win
+          $p = Start-Process -FilePath ".\BunnyBeatDown-Setup-windows-x86_64.exe" -ArgumentList "/S" -PassThru -Wait
+          Write-Host "installer exit: $($p.ExitCode)"
+          $dir = Join-Path $env:LOCALAPPDATA "Programs\Bunny Beat Down"
+          $desk = [Environment]::GetFolderPath("Desktop")
+          $menu = Join-Path ([Environment]::GetFolderPath("Programs")) "Bunny Beat Down"
+          Get-ChildItem $dir
+          foreach ($f in @("$dir\BunnyBeatDown.exe", "$dir\Uninstall.exe", "$desk\Bunny Beat Down.lnk", "$menu\Bunny Beat Down.lnk")) {
+            if (-not (Test-Path $f)) { throw "missing after install: $f" }
+          }
+          $lnk = (New-Object -ComObject WScript.Shell).CreateShortcut("$desk\Bunny Beat Down.lnk")
+          Write-Host "desktop shortcut -> $($lnk.TargetPath) (icon $($lnk.IconLocation))"
+          if ($lnk.TargetPath -ne "$dir\BunnyBeatDown.exe") { throw "the desktop shortcut points somewhere else" }
+          "WIN=$dir\BunnyBeatDown.exe" | Out-File -FilePath $env:GITHUB_ENV -Append
+      - name: Smoke test the installed game
+        shell: pwsh
+        run: |
           $env:BBD_TEST = "1"
-          $p = Start-Process -FilePath "win\BunnyBeatDown.exe" -ArgumentList "--headless", "--", "--smoke-test", "--map", "island" `
+          $p = Start-Process -FilePath $env:WIN -ArgumentList "--headless", "--", "--smoke-test", "--map", "island" `
             -PassThru -NoNewWindow -RedirectStandardOutput smoke.log -RedirectStandardError smoke_err.log
           if (-not $p.WaitForExit(900000)) { $p.Kill(); Write-Host "timed out" }
           # (what it printed, and the game's own log in its user folder, in case
@@ -145,6 +175,17 @@ jobs:
             }
           }
           if (-not $passed) { throw "The Windows build didn't pass its smoke test" }
+      - name: Uninstall, and the portable zip
+        shell: pwsh
+        run: |
+          $dir = Join-Path $env:LOCALAPPDATA "Programs\Bunny Beat Down"
+          Start-Process -FilePath "$dir\Uninstall.exe" -ArgumentList "/S", "_?=$dir" -Wait
+          $desk = [Environment]::GetFolderPath("Desktop")
+          if (Test-Path "$desk\Bunny Beat Down.lnk") { throw "the uninstaller left the desktop shortcut" }
+          if (Test-Path "$dir\BunnyBeatDown.exe") { throw "the uninstaller left the game" }
+          Expand-Archive BunnyBeatDown-windows-x86_64.zip -DestinationPath win
+          if (-not (Test-Path "win\BunnyBeatDown.exe")) { throw "the zip has no BunnyBeatDown.exe" }
+          Write-Host "uninstalled cleanly; the zip holds $((Get-ChildItem win).Name -join ', ')"
 
   publish:
     needs: [build, windows]
@@ -167,4 +208,4 @@ jobs:
           V="${{ needs.build.outputs.version }}"
           python3 tools/release_notes.py "$V" "${{ needs.build.outputs.previous }}" > notes.md
           gh release create "v$V" --target "$SHA" --title "Bunny Beat Down v$V" --notes-file notes.md --latest \
-            BunnyBeatDown-linux-x86_64.tar.xz BunnyBeatDown-windows-x86_64.zip docs/trailer*.mp4
+            BunnyBeatDown-Setup-windows-x86_64.exe BunnyBeatDown-windows-x86_64.zip BunnyBeatDown-linux-x86_64.tar.xz docs/trailer*.mp4
