@@ -263,3 +263,27 @@ func test_necklaces_go_round_the_neck() -> void:
 				"%s: the %s is round the neck (%.2f..%.2f; shoulders %.2f, chest %.2f)" % [sp, id, box.position.y, box.end.y, f.shoulder_y, f.chest_y])
 		c.queue_free()
 		await wait_physics(1)
+
+
+func test_a_hugging_bandana_lies_on_the_face() -> void:
+	# (Squeaks' and Nibbler's bandanas stood out in front of their round faces like a beak)
+	var c := spawn_critter("res://data/critters/hamster.tres", Vector3(0, 0.1, 0))
+	await wait_physics(2)
+	Outfits.dress(c, "Squeaks")
+	await wait_physics(1)
+	var f := OutfitFit.of(c.visual)
+	# (in the head's rest pose, where OutfitFit measured the face: it's idling)
+	var to_rest: Transform3D = (c.visual.rig.rest[&"head"] as Transform3D) * c.visual.attachments[&"head"].global_transform.affine_inverse()
+	var worst := -INF
+	for piece in c.visual.outfit:
+		if not String(piece.name).contains("bandana_mask"):
+			continue
+		for mi in ModelUtil.find_all(piece, "MeshInstance3D"):
+			var xf := to_rest * (mi as MeshInstance3D).global_transform
+			for s in mi.mesh.get_surface_count():
+				for p: Vector3 in mi.mesh.surface_get_arrays(s)[Mesh.ARRAY_VERTEX]:
+					var q := xf * p
+					worst = maxf(worst, q.z - f.front_at(q.y))
+	check(worst > -INF, "Squeaks wears a bandana over his mouth")
+	check(worst < f.head_d * 0.1, "nowhere more than a little in front of his face: %.3f" % worst)
+	c.queue_free()

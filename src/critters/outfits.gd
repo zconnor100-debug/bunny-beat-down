@@ -43,6 +43,8 @@ extends RefCounted
 ##   height its rim is at, where a chin strap hangs below it;
 ## flat: squash it to this share of its height (a band as thin as a band);
 ## two_sided: draw both faces (a cape's inside shows from the front);
+## hug: a mask's cloth laid against the face and down the neck instead of
+##   standing out in front (on a hamster's round face, a beak);
 ## tint: its colour when the look doesn't give one (a model that came pale).
 const PIECES := {
 	"captain_hat": {"slot": "hat", "sink": 0.55},
@@ -177,9 +179,9 @@ const LOOKS := {
 	"Gnawman": {"skin": "chocolate", "wear": [["bucket_hat", "#8a9a70"], ["sunglasses", "", {"size": 1.15}]]},
 	"Dr. Splash": {"skin": "bubblegum", "wear": [["goggles", "", {"up": 0.07}], ["cape", "#c03030"]]},
 	# hamsters
-	"Squeaks": {"skin": "default", "wear": [["bandana_mask", "#e8c640", {"grow": 1.12, "up": 0.02}], ["backpack", "", {"fwd": 0.45, "tilt": -12.0}]]},
+	"Squeaks": {"skin": "default", "wear": [["bandana_mask", "#e8c640", {"grow": 1.12, "up": 0.02, "hug": true}], ["backpack", "", {"fwd": 0.45, "tilt": -12.0}]]},
 	"Cheeks McGee": {"skin": "panda", "wear": ["trucker_blue", "sunglasses"]},
-	"Nibbler": {"skin": "dove", "wear": [["bandana_mask", "#c0302a", {"grow": 1.25, "up": 0.02}]]},
+	"Nibbler": {"skin": "dove", "wear": [["bandana_mask", "#c0302a", {"grow": 1.25, "up": 0.02, "hug": true}]]},
 	"Pudge": {"skin": "black_bear", "wear": ["fez", ["bow_tie", "#c0302a"]]},
 	"Whisker Biscuit": {"skin": "cotton_candy", "wear": [["chef_hat", "", {"up": -0.07}]]},
 	"Turbo": {"skin": "turbo_tee", "wear": [["trucker_red", "", {"tilt": 8.0}], "goggles"]},
@@ -279,7 +281,7 @@ static func wear_piece(v: CritterVisual, id: String, tint := Color.WHITE, adjust
 			_finish(v, cape, spec, tint)
 		return cape
 	if slot == "mask":
-		_wrap(v, m, xf, fit, id)
+		_wrap(v, m, xf, fit, id, spec.get("hug", false))
 	var ear: PackedInt32Array = v.rig.chains.get(&"ear_r", PackedInt32Array())
 	if slot == "earring" and ear.size() > 0:
 		# pierced through the ear itself, near its root, so it swings with it
@@ -562,9 +564,12 @@ static func _drape_mesh(v: CritterVisual, m: Node3D, xf: Transform3D, f: OutfitF
 ## (sized to the snout, on a big head its loop would leave them hanging in
 ## the air behind): every vertex behind the middle of the head goes no
 ## further back, and no further out to the side, than the critter does
-## there. The bent meshes are made once per model.
-static func _wrap(v: CritterVisual, m: Node3D, xf: Transform3D, f: OutfitFit, id: String) -> void:
-	var key := v.def.resolved_model() + ":" + id
+## there. `hug`: and every vertex in front goes no further forward than the
+## face (and below it the neck), so the cloth lies on it. The bent meshes are
+## made once per model.
+static func _wrap(v: CritterVisual, m: Node3D, xf: Transform3D, f: OutfitFit, id: String, hug := false) -> void:
+	# (per fit, too: two hamsters can wear one bandana at different sizes)
+	var key := v.def.resolved_model() + ":" + id + (":hug" if hug else "") + ":%d" % hash(xf)
 	for g in ModelUtil.find_all(m, "MeshInstance3D"):
 		var mi := g as MeshInstance3D
 		if mi.mesh == null:
@@ -583,6 +588,8 @@ static func _wrap(v: CritterVisual, m: Node3D, xf: Transform3D, f: OutfitFit, id
 						p.z = maxf(p.z, f.back_at(p.y) - f.head_d * 0.03)
 						var half := maxf(f.body_width_at(p.y), f.head_width_at(p.y)) * 0.5 + f.head_d * 0.03
 						p.x = f.head_c.x + clampf(p.x - f.head_c.x, -half, half)
+					elif hug:
+						p.z = minf(p.z, f.front_at(p.y) + f.head_d * 0.04)
 					vs[i] = back_to * p
 				arr[Mesh.ARRAY_VERTEX] = vs
 				mesh.add_surface_from_arrays(mi.mesh.surface_get_primitive_type(si), arr)
