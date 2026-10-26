@@ -52,7 +52,8 @@ FEMALE = {"Vex", "Snickerdoodle", "Cottontail Kate", "Hazel", "Bushytail Betty",
 # used: the D and F packs sound robotic. The best men's packs are C+
 # (American) and C (British); the women's go up to A.
 GRADES = {"af_heart": "A", "af_bella": "A-", "af_nicole": "B-", "bf_emma": "B-", "af_aoede": "C+", "af_kore": "C+",
-          "af_sarah": "C+", "am_fenrir": "C+", "am_michael": "C+", "am_puck": "C+", "bm_george": "C", "bm_fable": "C"}
+          "af_sarah": "C+", "am_fenrir": "C+", "am_michael": "C+", "am_puck": "C+", "bm_george": "C", "bm_fable": "C",
+          "ff_siwis": "B-"}   # (French: blended in for an accent)
 # packs that suit each personality (American; nobles are British)
 PACKS = {
     "hothead": {"m": ["am_fenrir", "am_puck"], "f": ["af_bella", "af_sarah", "af_heart"]},
@@ -67,6 +68,14 @@ PACKS = {
 SPECIES_PITCH = {"hamster": 1.55, "squirrel": 1.4, "bandit_bunny": 1.15, "raccoon": 1.1, "fox": 1.0,
                  "beaver": 0.95, "frog": 0.82}
 FEMALE_PITCH = 0.7    # (a female voice starts higher: it moves this share as far)
+# how a line is said where Kokoro misreads it as written (speech only: the
+# text on screen stays as it is); [word](/phonemes/) spells out a word's sound
+SAY_AS = [
+    ("amateurs", "[amateurs](/ˈæməʧəɹz/)"),                     # (Masky: not "ama-terz")
+    ("Patience. Everyone", "Patience... Everyone"),               # (Dumpster Dot: a beat after it)
+    ("Can I... sorry!", "Can I... Sorry!"),                       # (Puddles: the apology its own sentence)
+    ("wah! Oh", "[Wah](/wˈɑ/)! Oh"),                              # (Twitch: not "why")
+]
 TEMPO = {"hothead": 1.12, "sneak": 0.92, "showoff": 1.08, "grump": 0.95, "scaredy": 1.16, "prankster": 1.1,
          "noble": 0.95, "zen": 0.86}
 
@@ -124,6 +133,8 @@ class Voice:
         self.up, self.down = f.numerator, f.denominator
 
     def say(self, text: str) -> np.ndarray:
+        for written, said in SAY_AS:
+            text = text.replace(written, said)
         chunks = [np.asarray(audio, dtype=np.float32) for _, _, audio in self.pipe(text, voice=self.pack, speed=self.speed)
                   if audio is not None]
         x = np.concatenate(chunks) if chunks else np.zeros(1, np.float32)
@@ -225,7 +236,10 @@ def main() -> None:
     names_needed = L.names_said(templates)
 
     from kokoro import KPipeline  # (slow to import: after the cheap checks)
-    pipes = {lang: KPipeline(lang_code=lang, repo_id="hexgrad/Kokoro-82M") for lang in ("a", "b")}
+    # (a design's "lang" picks how its words are pronounced: "a" American, "b"
+    # British, "f" French for an accent, whatever its packs' own language)
+    langs = {"a", "b"} | {d["lang"] for d in designs.values()}
+    pipes = {lang: KPipeline(lang_code=lang, repo_id="hexgrad/Kokoro-82M") for lang in sorted(langs)}
     only = {s.strip() for s in args.only.split(",") if s.strip()}
     OUT.mkdir(parents=True, exist_ok=True)
     bank_path = OUT / "voices.json"

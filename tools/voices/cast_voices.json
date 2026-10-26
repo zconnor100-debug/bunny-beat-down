@@ -6,8 +6,8 @@
     ],
     "blend": 0.8,
     "lang": "a",
-    "pitch": 1.1,
-    "tempo": 1.039
+    "pitch": 1.04,
+    "tempo": 1.0
   },
   "Vex": {
     "packs": [
@@ -31,13 +31,13 @@
   },
   "Lop-Eared Larry": {
     "packs": [
-      "am_puck",
-      "am_michael"
+      "am_michael",
+      "am_fenrir"
     ],
-    "blend": 0.72,
+    "blend": 0.8,
     "lang": "a",
-    "pitch": 1.146,
-    "tempo": 1.18
+    "pitch": 1.06,
+    "tempo": 0.98
   },
   "Snickerdoodle": {
     "packs": [
@@ -51,13 +51,13 @@
   },
   "Cottontail Kate": {
     "packs": [
-      "af_kore",
-      "af_nicole"
+      "af_heart",
+      "af_bella"
     ],
-    "blend": 0.65,
+    "blend": 0.7,
     "lang": "a",
-    "pitch": 1.146,
-    "tempo": 0.846
+    "pitch": 1.06,
+    "tempo": 0.8
   },
   "Hops McGee": {
     "packs": [
@@ -67,7 +67,7 @@
     "blend": 0.63,
     "lang": "a",
     "pitch": 1.207,
-    "tempo": 1.123
+    "tempo": 0.92
   },
   "Nutsy": {
     "packs": [
@@ -76,8 +76,8 @@
     ],
     "blend": 0.67,
     "lang": "a",
-    "pitch": 1.363,
-    "tempo": 1.091
+    "pitch": 1.2,
+    "tempo": 0.9
   },
   "Acorn Al": {
     "packs": [
@@ -86,8 +86,8 @@
     ],
     "blend": 0.64,
     "lang": "a",
-    "pitch": 1.35,
-    "tempo": 0.949
+    "pitch": 1.22,
+    "tempo": 0.85
   },
   "Sir Scamper": {
     "packs": [
@@ -116,17 +116,17 @@
     ],
     "blend": 0.73,
     "lang": "a",
-    "pitch": 1.384,
-    "tempo": 1.135
+    "pitch": 1.22,
+    "tempo": 0.95
   },
   "Kernel": {
     "packs": [
       "am_michael",
-      "am_puck"
+      "am_fenrir"
     ],
-    "blend": 0.6,
+    "blend": 0.7,
     "lang": "a",
-    "pitch": 1.458,
+    "pitch": 1.22,
     "tempo": 0.88
   },
   "Bushytail Betty": {
@@ -147,7 +147,7 @@
     "blend": 0.84,
     "lang": "a",
     "pitch": 1.034,
-    "tempo": 0.898
+    "tempo": 0.84
   },
   "Vixen Vera": {
     "packs": [
@@ -171,10 +171,10 @@
   },
   "Foxy Roxy": {
     "packs": [
-      "af_sarah",
-      "af_aoede"
+      "af_bella",
+      "af_heart"
     ],
-    "blend": 0.83,
+    "blend": 0.6,
     "lang": "a",
     "pitch": 1.044,
     "tempo": 1.124
@@ -191,23 +191,23 @@
   },
   "Ember": {
     "packs": [
-      "af_bella",
-      "af_heart"
+      "af_sarah",
+      "af_bella"
     ],
-    "blend": 0.66,
+    "blend": 0.5,
     "lang": "a",
-    "pitch": 1.005,
+    "pitch": 0.9,
     "tempo": 1.163
   },
   "Duchess": {
     "packs": [
-      "af_kore",
-      "af_sarah"
+      "bf_emma",
+      "af_heart"
     ],
-    "blend": 0.61,
-    "lang": "a",
-    "pitch": 1.038,
-    "tempo": 0.985
+    "blend": 0.65,
+    "lang": "b",
+    "pitch": 0.93,
+    "tempo": 0.9
   },
   "Bandit Bill": {
     "packs": [
@@ -217,7 +217,7 @@
     "blend": 0.63,
     "lang": "a",
     "pitch": 1.066,
-    "tempo": 1.11
+    "tempo": 0.9
   },
   "Trash Panda": {
     "packs": [
@@ -227,7 +227,7 @@
     "blend": 0.69,
     "lang": "a",
     "pitch": 1.087,
-    "tempo": 1.118
+    "tempo": 1.04
   },
   "Rocco": {
     "packs": [
@@ -237,14 +237,14 @@
     "blend": 0.62,
     "lang": "a",
     "pitch": 1.115,
-    "tempo": 1.136
+    "tempo": 0.88
   },
   "Masky": {
     "packs": [
       "am_fenrir",
       "am_michael"
     ],
-    "blend": 0.78,
+    "blend": 0.85,
     "lang": "a",
     "pitch": 1.127,
     "tempo": 0.943
@@ -257,7 +257,7 @@
     "blend": 0.78,
     "lang": "a",
     "pitch": 1.08,
-    "tempo": 0.89
+    "tempo": 0.85
   },
   "Grimsby": {
     "packs": [
@@ -267,7 +267,7 @@
     "blend": 0.76,
     "lang": "a",
     "pitch": 1.126,
-    "tempo": 0.982
+    "tempo": 0.9
   },
   "Lady Garbage": {
     "packs": [
@@ -277,7 +277,7 @@
     "blend": 0.62,
     "lang": "b",
     "pitch": 1.034,
-    "tempo": 0.926
+    "tempo": 0.86
   },
   "Croaker": {
     "packs": [
@@ -307,7 +307,7 @@
     "blend": 0.73,
     "lang": "a",
     "pitch": 0.869,
-    "tempo": 1.067
+    "tempo": 0.97
   },
   "Sir Toadsworth": {
     "packs": [
@@ -316,7 +316,7 @@
     ],
     "blend": 0.68,
     "lang": "b",
-    "pitch": 0.823,
+    "pitch": 0.93,
     "tempo": 0.95
   },
   "Puddles": {
@@ -327,7 +327,7 @@
     "blend": 0.6,
     "lang": "a",
     "pitch": 0.863,
-    "tempo": 1.148
+    "tempo": 0.95
   },
   "Bog Boss": {
     "packs": [
@@ -337,24 +337,24 @@
     "blend": 0.58,
     "lang": "a",
     "pitch": 0.845,
-    "tempo": 1.161
+    "tempo": 0.98
   },
   "Gulp": {
     "packs": [
-      "am_puck",
-      "am_fenrir"
+      "am_michael",
+      "am_puck"
     ],
-    "blend": 0.69,
+    "blend": 0.75,
     "lang": "a",
-    "pitch": 0.856,
-    "tempo": 1.046
+    "pitch": 0.93,
+    "tempo": 1.0
   },
   "Chompers": {
     "packs": [
-      "am_puck",
-      "am_fenrir"
+      "am_fenrir",
+      "am_michael"
     ],
-    "blend": 0.59,
+    "blend": 0.8,
     "lang": "a",
     "pitch": 0.96,
     "tempo": 1.127
@@ -401,20 +401,20 @@
   },
   "Gnawman": {
     "packs": [
-      "am_puck",
-      "am_michael"
+      "am_michael",
+      "ff_siwis"
     ],
-    "blend": 0.73,
+    "blend": 0.6,
     "lang": "a",
     "pitch": 0.982,
-    "tempo": 1.171
+    "tempo": 0.95
   },
   "Dr. Splash": {
     "packs": [
-      "am_fenrir",
-      "am_puck"
+      "am_michael",
+      "am_fenrir"
     ],
-    "blend": 0.81,
+    "blend": 0.7,
     "lang": "a",
     "pitch": 0.939,
     "tempo": 1.067
@@ -436,7 +436,7 @@
     ],
     "blend": 0.75,
     "lang": "a",
-    "pitch": 1.498,
+    "pitch": 1.25,
     "tempo": 1.09
   },
   "Nibbler": {
@@ -457,7 +457,7 @@
     "blend": 0.56,
     "lang": "a",
     "pitch": 1.498,
-    "tempo": 1.087
+    "tempo": 0.98
   },
   "Whisker Biscuit": {
     "packs": [
@@ -476,7 +476,7 @@
     ],
     "blend": 0.81,
     "lang": "a",
-    "pitch": 1.627,
+    "pitch": 1.35,
     "tempo": 1.151
   },
   "Wheelie": {
@@ -484,9 +484,9 @@
       "bm_george",
       "bm_fable"
     ],
-    "blend": 0.74,
+    "blend": 0.9,
     "lang": "b",
-    "pitch": 1.607,
-    "tempo": 0.917
+    "pitch": 1.3,
+    "tempo": 0.88
   }
 }

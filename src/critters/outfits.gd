@@ -43,6 +43,19 @@ extends RefCounted
 ##   height its rim is at, where a chin strap hangs below it;
 ## flat: squash it to this share of its height (a band as thin as a band);
 ## two_sided: draw both faces (a cape's inside shows from the front);
+## fold: a necklace laid flat: what's in front of the neck hangs down the chest
+##   (its pendant on the chest, facing forward); pendants ("pendant" slot)
+##   are always pressed onto the chest and their ends round the neck;
+## thick: a fine chain made this much (of the head's height) thicker;
+## lay: nothing further out in front than the critter is (a chain on the chest);
+## hide: material names of parts left off (a shako's chin strap a frog has no
+##   chin for);
+## inset: a pack's own straps (this share of its depth) sunk into the back,
+##   and it leans with the back, so it's worn against it;
+## eye: "left" for a monocle on the left eye;
+## swing: [material, degrees]: that part (a chin strap) swung back under the
+##   chin, hinged where it hangs from;
+## on: a species' own touches, as a look's: {"beaver": {"grow": 0.85}};
 ## hug: a mask's cloth laid against the face and down the neck instead of
 ##   standing out in front (on a hamster's round face, a beak);
 ## tint: its colour when the look doesn't give one (a model that came pale).
@@ -73,7 +86,7 @@ const PIECES := {
 	"viking_helmet": {"slot": "hat", "sink": 0.9, "yaw": 90.0},
 	"pirate_hat": {"slot": "hat", "sink": 0.8},
 	"wizard_hat": {"slot": "hat", "tall": true, "sink": 0.6, "hole": [0.0, 0.0], "hole_w": 0.22},
-	"knight_helmet": {"slot": "hat", "to_chin": true, "fit": 1.12},
+	"knight_helmet": {"slot": "hat", "to_chin": true, "fit": 1.12, "yaw": 22.5},   # (the model's front facet, the cross, is turned one facet over)
 	"chef_hat": {"slot": "hat", "tall": true, "sink": 0.7, "fit": 0.95},
 	"sunglasses": {"slot": "glasses"},
 	"aviators": {"slot": "glasses"},
@@ -83,44 +96,45 @@ const PIECES := {
 	"headband": {"slot": "band", "flat": 1.0, "fit": 1.0, "tint": "#2f5fd0"},
 	"bow_tie": {"slot": "bow"},
 	"scarf": {"slot": "collar", "flat": 0.6},
-	"bead_necklace": {"slot": "collar", "fit": 1.15, "yaw": 90.0, "pitch": 25.0, "hole": [0.3, 0.0], "hole_w": 1.45},
+	"bead_necklace": {"slot": "collar", "fit": 1.15, "yaw": 90.0, "hole": [0.3, 0.0], "hole_w": 1.45, "flat": 0.5, "fold": true},
 	"medal": {"slot": "medal"},
 	"cape": {"slot": "cape", "two_sided": true},
-	"backpack": {"slot": "pack", "yaw": 90.0},
+	"backpack": {"slot": "pack", "yaw": 90.0, "inset": 0.22},
 	# yours only (the Workshop's wardrobe: no rogue wears these)
-	"witch_hat": {"slot": "hat", "tall": true, "sink": 0.7, "hole_w": 0.17},
-	"santa_hat": {"slot": "hat", "sink": 0.9},
+	"witch_hat": {"slot": "hat", "tall": true, "sink": 0.7, "hole_w": 0.17, "on": {"beaver": {"up": 0.1}}},
+	"santa_hat": {"slot": "hat", "sink": 0.9, "yaw": 180.0, "on": {"beaver": {"grow": 0.82, "up": 0.08}}},
 	"grad_cap": {"slot": "hat", "sink": 0.7, "hole": [0.0, 0.0], "hole_w": 0.45, "tint": "#23232b"},
-	"fedora": {"slot": "hat", "sink": 0.7, "hole": [0.0, 0.0], "hole_w": 0.34},
-	"flower_crown": {"slot": "hat", "tall": true, "sink": 0.45, "fit": 1.1, "hole": [0.0, 0.0], "hole_w": 0.72},
-	"jester_hat": {"slot": "hat", "tall": true, "sink": 0.7, "hole": [0.0, 0.0], "hole_w": 0.38},
-	"flap_beanie": {"slot": "hat", "sink": 1.0, "rim": 0.13},
-	"heart_glasses": {"slot": "glasses", "tint": "#ff6fae"},
+	"fedora": {"slot": "hat", "sink": 0.7, "hole": [0.0, 0.0], "hole_w": 0.34, "on": {"beaver": {"grow": 0.88}}},
+	"flower_crown": {"slot": "hat", "tall": true, "sink": 0.45, "fit": 1.1, "hole": [0.0, 0.0], "hole_w": 0.72,
+		"on": {"beaver": {"grow": 0.8, "up": 0.12}}},
+	"jester_hat": {"slot": "hat", "tall": true, "sink": 0.7, "hole": [0.0, 0.0], "hole_w": 0.38, "on": {"beaver": {"grow": 1.25, "fwd": -0.12, "up": 0.1}}},
+	"flap_beanie": {"slot": "hat", "sink": 1.0, "rim": 0.13, "on": {"beaver": {"up": -0.16}}},
+	"heart_glasses": {"slot": "glasses", "tint": "#ff6fae", "on": {"beaver": {"size": 1.45, "up": 0.05}}},
 	"star_glasses": {"slot": "glasses", "size": 1.1},
-	"glasses_3d": {"slot": "glasses"},
-	"pixel_shades": {"slot": "glasses", "yaw": 90.0},
-	"sapphire_necklace": {"slot": "collar", "yaw": 90.0, "roll": 30.0, "hole": [0.32, 0.0045], "fit": 1.06, "rim": 0.15, "flat": 0.35},
-	"ring_necklace": {"slot": "collar", "fit": 1.2, "flat": 0.45, "rim": 0.21},
-	"jetpack": {"slot": "pack"},
-	"fairy_wings": {"slot": "wings", "two_sided": true},
-	"dark_wings": {"slot": "wings", "size": 1.3, "two_sided": true},
-	"butterfly_wings": {"slot": "wings", "two_sided": true},
+	"glasses_3d": {"slot": "glasses", "on": {"beaver": {"size": 1.3}}},
+	"pixel_shades": {"slot": "glasses", "yaw": 90.0, "on": {"beaver": {"size": 1.3}}},
+	"sapphire_necklace": {"slot": "collar", "yaw": 90.0, "hole": [0.32, 0.0045], "fit": 1.06, "rim": 0.15, "flat": 0.3, "fold": true},
+	"ring_necklace": {"slot": "collar", "fit": 1.2, "flat": 0.45, "rim": 0.21, "thick": 0.03, "lay": true},
+	"jetpack": {"slot": "pack", "size": 1.8},
+	"fairy_wings": {"slot": "wings", "size": 1.4, "two_sided": true},
+	"dark_wings": {"slot": "wings", "size": 1.7, "two_sided": true},
+	"butterfly_wings": {"slot": "wings", "size": 1.4, "two_sided": true},
 	# earned: a win on each map, and beating your nemesis
-	"snorkel_mask": {"slot": "glasses", "lens": [-0.06, 0.141, 0.085]},
+	"snorkel_mask": {"slot": "glasses", "lens": [-0.06, 0.141, 0.085], "on": {"beaver": {"fwd": 0.12}}},
 	"cheese_hat": {"slot": "hat", "sink": 0.95, "tint": "#f2c447"},
-	"windup_key": {"slot": "pack", "roll": 90.0, "yaw": -90.0, "size": 0.85, "mid": true},
+	"windup_key": {"slot": "pack", "roll": 90.0, "yaw": -90.0, "size": 1.2, "mid": true},
 	# the costume notes (2026-10-25)
 	"ninja_headband": {"slot": "band", "flat": 1.0, "fit": 1.0},
 	"eyelashes": {"slot": "lashes", "roll": 180.0},
 	"earring": {"slot": "earring"},
-	"shoulder_pads": {"slot": "shoulders", "yaw": 90.0, "size": 1.35},
+	"shoulder_pads": {"slot": "shoulders", "yaw": 90.0, "size": 1.35, "on": {"bandit_bunny": {"fwd": -0.12, "up": 0.06}}},
 	"jewel_necklace": {"slot": "pendant", "size": 1.25},
 	"neckerchief": {"slot": "collar", "rim": 0.25, "max_h": 0.9},
 	# the bandana's model worn cowboy-style: its loop round the neck, the
 	# triangle down the front (spec "model": another piece's model and shape)
 	"neck_bandana": {"slot": "collar", "model": "bandana_mask", "rim": 0.27, "fit": 1.05, "max_h": 0.5},
 	"mustache": {"slot": "mustache"},
-	"laurel_wreath": {"slot": "hat", "sink": 0.5, "fit": 1.05, "hole": [0.0, 0.0], "tall": true},
+	"laurel_wreath": {"slot": "hat", "sink": 0.5, "fit": 1.05, "hole": [0.0, 0.0], "tall": true, "yaw": 90.0},
 }
 
 ## Who wears what: the fur (one of the species' skins) and the pieces, each
@@ -129,31 +143,31 @@ const LOOKS := {
 	# Each piece: "id", or ["id", "#tint"], or ["id", "#tint" or "", {a rogue's
 	# own touches: see wear_piece}]. Game Notes 37-77 (2026-10-25) tuned these.
 	# bandit bunnies (hooded: their extras are on the body, not the head)
-	"Captain Carrot": {"skin": "wild_hare", "wear": [["captain_hat", "", {"grow": 1.18}], ["medal", "", {"size": 1.6}],
+	"Captain Carrot": {"skin": "wild_hare", "wear": [["captain_hat", "", {"grow": 1.18, "fwd": 0.08, "tilt": -8.0}], ["medal", "", {"size": 1.6}],
 		["shoulder_pads", "#d8b040"]]},
-	"Vex": {"skin": "shadow", "wear": [["bandana_mask", "#5d7a3a", {"grow": 1.3, "up": -0.04}], ["ninja_headband", "", {"up": 0.06}],
+	"Vex": {"skin": "shadow", "wear": [["bandana_mask", "#5d7a3a", {"grow": 1.3, "up": -0.04, "fwd": -0.05}], ["ninja_headband", "", {"up": 0.02}],
 		"earring"]},
 	"Bunnicula": {"skin": "frost", "wear": [["cape", "#2a1a2e"], ["bow_tie", "#8a1a24"], ["earring", "#c8c8d0"]]},
-	"Lop-Eared Larry": {"skin": "default", "wear": [["beanie", "#d8a23a", {"fwd": 0.12, "grow": 1.08}], "backpack"]},
+	"Lop-Eared Larry": {"skin": "default", "wear": [["beanie", "#d8a23a", {"fwd": 0.12, "grow": 1.16}], "backpack"]},
 	"Snickerdoodle": {"skin": "toxic", "wear": ["party_hat", "sunglasses", ["shoulder_pads", "#e0569a"]]},
 	"Cottontail Kate": {"skin": "default", "wear": [["shoulder_pads", "#f2efe6"], ["earring", ""]]},
 	"Hops McGee": {"skin": "wild_hare", "wear": [["viking_helmet", "", {"fwd": 0.08}], "shoulder_pads"]},
 	# squirrels (Kernel's the model: big hats a size up, eyes in their sockets)
-	"Nutsy": {"skin": "default", "wear": [["headband", "#ffd23a", {"flat": 0.6}], ["neck_bandana", "#3a7fd6"]]},
+	"Nutsy": {"skin": "default", "wear": [["headband", "#ffd23a", {"flat": 0.6}], ["bandana_mask", "#3a7fd6", {"grow": 1.3}]]},
 	"Acorn Al": {"skin": "grey", "wear": [["trucker_red", "", {"up": 0.1}], ["backpack", "", {"size": 1.35}]]},
-	"Sir Scamper": {"skin": "fox_squirrel", "wear": [["cavalier_hat", "", {"hole": [-0.07, 0.0], "two_sided": true}], ["cape", "#8a2a32"]]},
+	"Sir Scamper": {"skin": "fox_squirrel", "wear": [["cavalier_hat", "", {"hole": [-0.07, 0.0], "two_sided": true, "side": 0.05}], ["cape", "#8a2a32"]]},
 	"Hazel": {"skin": "default", "wear": [["robin_hat", "", {"grow": 1.4, "up": 0.1}]]},
 	"Twitch": {"skin": "blueberry", "wear": [["goggles", "", {"up": 0.05}]]},
 	"Kernel": {"skin": "black", "wear": [["straw_hat", "", {"up": 0.03, "grow": 1.14}]]},
-	"Bushytail Betty": {"skin": "fox_squirrel", "wear": [["beanie", "#e07a3a"], ["aviators", "", {"deep": 0.72}]]},
+	"Bushytail Betty": {"skin": "fox_squirrel", "wear": [["beanie", "#e07a3a"], ["aviators", "", {"deep": 0.72, "fwd": 0.14, "size": 1.15, "up": -0.04}]]},
 	# foxes
 	"Sly": {"skin": "silver", "wear": [["deerstalker", "", {"turn": -7.0, "grow": 1.06}]]},
-	"Vixen Vera": {"skin": "default", "wear": ["aviators", ["jewel_necklace", "", {"size": 2.6}]]},
+	"Vixen Vera": {"skin": "default", "wear": ["aviators", ["jewel_necklace", "", {"size": 1.7}]]},
 	"Fennick": {"skin": "fennec", "wear": [["trucker_yellow", "", {"fwd": -0.07}]]},
 	"Foxy Roxy": {"skin": "kitsune", "wear": ["sunglasses", ["bow_tie", "#e0569a"]]},
-	"Sir Reynard": {"skin": "default", "wear": [["top_hat", "#5a4a62"], "monocle", ["bow_tie", "#1c1c22"]]},
+	"Sir Reynard": {"skin": "default", "wear": [["top_hat", "#5a4a62"], ["monocle", "", {"size": 1.2}], ["bow_tie", "#1c1c22"]]},
 	"Ember": {"skin": "default", "wear": ["goggles", ["neckerchief", "#d8452a"]]},
-	"Duchess": {"skin": "arctic", "wear": [["bearskin", "", {"flat": 2.3, "up": 0.13}], ["cape", "#5b3a8a", {"size": 1.3}]]},
+	"Duchess": {"skin": "arctic", "wear": [["bearskin", "", {"flat": 2.3, "up": 0.05, "fwd": -0.1, "swing": ["bearskinhat_1_gold", 50.0]}], ["cape", "#5b3a8a", {"size": 1.3}]]},
 	# raccoons
 	"Bandit Bill": {"skin": "default", "wear": [["pirate_hat", "", {"fwd": 0.07}]]},
 	"Trash Panda": {"skin": "cinnamon", "wear": [["bucket_hat", "", {"fwd": 0.08, "grow": 1.12}], ["backpack", "", {"size": 1.3}]]},
@@ -166,25 +180,26 @@ const LOOKS := {
 	"Croaker": {"skin": "toad_chaps", "wear": [["cowboy_hat", "", {"fwd": -0.06}]]},
 	"Lily Pad Lou": {"skin": "tree_frog", "wear": [["bucket_hat", "#a8c890", {"fwd": -0.06, "tilt": 7.0, "grow": 1.1}]]},
 	"Hopscotch": {"skin": "poison_dart", "wear": [["propeller_hat", "", {"fwd": -0.08, "tilt": 8.0}]]},
-	"Sir Toadsworth": {"skin": "golden", "wear": [["top_hat", "#26262c", {"grow": 1.1}], "mustache", "monocle", "bow_tie"]},
+	"Sir Toadsworth": {"skin": "golden", "wear": [["top_hat", "#26262c", {"grow": 1.1}], ["mustache", "", {"fwd": -0.03}], ["monocle", "", {"eye": "left", "fwd": -0.18, "side": -0.04}], "bow_tie"]},
 	"Puddles": {"skin": "default", "wear": [["beanie", "#3b6fb5", {"fwd": -0.06}]]},
-	"Bog Boss": {"skin": "default", "wear": [["band_hat", "", {"up": 0.08}]]},
-	"Gulp": {"skin": "default", "wear": [["sunglasses", "", {"size": 0.8}], "medal"]},
+	"Bog Boss": {"skin": "default", "wear": [["band_hat", "", {"up": 0.12, "fwd": -0.25, "tilt": 10.0, "hide": ["hat_1_chinstrap", "hat_1_peak", "hat_1_trim"]}]]},
+	"Gulp": {"skin": "default", "wear": [["sunglasses", "", {"size": 0.8, "up": 0.06, "fwd": -0.06}], "medal"]},
 	# beavers
-	"Chompers": {"skin": "default", "wear": [["knight_helmet", "", {"grow": 1.3, "fwd": 0.08}]]},
+	"Chompers": {"skin": "default", "wear": [["knight_helmet", "", {"grow": 1.42, "fwd": 0.08, "up": 0.03}]]},
 	"Dam Dan": {"skin": "default", "wear": ["hard_hat"]},
-	"Buck Toothington": {"skin": "honey", "wear": [["mountie_hat", "", {"grow": 1.18, "up": 0.08}], ["monocle", "", {"size": 1.5}]]},
+	"Buck Toothington": {"skin": "honey", "wear": [["mountie_hat", "", {"grow": 1.18, "up": 0.08}], ["monocle", "", {"size": 1.5, "up": -0.07, "side": 0.03}]]},
 	"Timber": {"skin": "lumberjack", "wear": [["beanie", "#b33a2a", {"fwd": 0.06}]]},
 	"Lodge Lady": {"skin": "default", "wear": [["beret", "#7a4a2a"], "backpack"]},
 	"Gnawman": {"skin": "chocolate", "wear": [["bucket_hat", "#8a9a70"], ["sunglasses", "", {"size": 1.15}]]},
 	"Dr. Splash": {"skin": "bubblegum", "wear": [["goggles", "", {"up": 0.07}], ["cape", "#c03030"]]},
 	# hamsters
-	"Squeaks": {"skin": "default", "wear": [["bandana_mask", "#e8c640", {"grow": 1.12, "up": 0.02, "hug": true}], ["backpack", "", {"fwd": 0.45, "tilt": -12.0}]]},
+	"Squeaks": {"skin": "default", "wear": [["bandana_mask", "#e8c640", {"grow": 1.25, "up": 0.02, "hug": true}],
+		["backpack", "", {"inset": 0.0, "fwd": 0.45, "tilt": -12.0}]]},   # (the look the owner approved: deeper in a round back)
 	"Cheeks McGee": {"skin": "panda", "wear": ["trucker_blue", "sunglasses"]},
-	"Nibbler": {"skin": "dove", "wear": [["bandana_mask", "#c0302a", {"grow": 1.25, "up": 0.02, "hug": true}]]},
+	"Nibbler": {"skin": "dove", "wear": [["bandana_mask", "#c0302a", {"grow": 1.35, "up": 0.02, "hug": true}]]},
 	"Pudge": {"skin": "black_bear", "wear": ["fez", ["bow_tie", "#c0302a"]]},
 	"Whisker Biscuit": {"skin": "cotton_candy", "wear": [["chef_hat", "", {"up": -0.07}]]},
-	"Turbo": {"skin": "turbo_tee", "wear": [["trucker_red", "", {"tilt": 8.0}], "goggles"]},
+	"Turbo": {"skin": "turbo_tee", "wear": [["trucker_red", "", {"tilt": 14.0, "fwd": -0.06}], "goggles"]},
 	"Wheelie": {"skin": "dove", "wear": [["top_hat", "#2e2e36"], ["bow_tie", "#d8b040"]]},
 }
 
@@ -245,18 +260,25 @@ static func dress(c: Critter, rogue: String) -> void:
 ## a rogue's own touches (LOOKS: ["piece", "#tint", {...}]): any PIECES key
 ## for this wearer only (sink, fit, size, two_sided...), and nudges after it's
 ## fitted: fwd / up (shares of the head's depth / height, or the chest's for
-## pieces on the body), grow (bigger about its middle), tilt (degrees, front
-## up), turn (degrees, to its left) and deep (front to back, about its front).
+## pieces on the body), side (a share of the head's, or the shoulders', width:
+## to its left), grow (bigger about its middle), tilt (degrees, front up),
+## turn (degrees, to its left) and deep (front to back, about its front).
 static func wear_piece(v: CritterVisual, id: String, tint := Color.WHITE, adjust := {}) -> Node3D:
 	var spec: Dictionary = PIECES.get(id, {})
 	if spec.is_empty():
 		return null
+	# (the piece's own touches for this species, under the rogue's own)
+	var own: Dictionary = spec.get("on", {}).get(String(v.def.id), {})
+	if not own.is_empty():
+		adjust = own.merged(adjust, true)
 	spec = spec.merged(adjust, true)
 	if tint == Color.WHITE and spec.has("tint"):
 		tint = Color(spec.tint)
 	var m := ModelUtil.instantiate(model_path(id))
 	if m == null:
 		return null
+	if spec.has("hide"):
+		_hide_parts(m, id, spec.hide)
 	var fit := OutfitFit.of(v)
 	var slot: String = spec.slot
 	var role := &"head" if ON_HEAD.has(slot) else &"chest"
@@ -282,6 +304,16 @@ static func wear_piece(v: CritterVisual, id: String, tint := Color.WHITE, adjust
 		return cape
 	if slot == "mask":
 		_wrap(v, m, xf, fit, id, spec.get("hug", false))
+	if spec.get("fold", false):
+		_reshape(v, m, xf, id, "fold", _folded.bind(fit))
+	if slot == "pendant":
+		_reshape(v, m, xf, id, "press", _pressed.bind(fit))
+	if spec.has("thick"):
+		_reshape(v, m, xf, id, "thick%s" % spec.thick, _thickened.bind(fit.head_h * float(spec.thick)))
+	if spec.get("lay", false):
+		_reshape(v, m, xf, id, "lay", _laid.bind(fit))
+	if spec.has("swing"):
+		_swing_part(m, id, String(spec.swing[0]), float(spec.swing[1]))
 	var ear: PackedInt32Array = v.rig.chains.get(&"ear_r", PackedInt32Array())
 	if slot == "earring" and ear.size() > 0:
 		# pierced through the ear itself, near its root, so it swings with it
@@ -445,6 +477,9 @@ static func _drape_mesh(v: CritterVisual, m: Node3D, xf: Transform3D, f: OutfitF
 	# the model's surfaces, in skeleton space
 	var surfaces := []   # [arrays, material, primitive]
 	var lo := INF
+	# (over a tail at the hips: the part below the top of the tail lies back
+	# along it instead of the tail poking through; not squashed to fit above it)
+	var hem := (f.tail_top if f.tail_top > 0.0 else f.tail_y) + f.head_h * 0.02 if f.cape_over_tail and f.tail_y > 0.0 else -INF
 	for g in ModelUtil.find_all(m, "MeshInstance3D"):
 		var mi := g as MeshInstance3D
 		if mi.mesh == null:
@@ -456,6 +491,10 @@ static func _drape_mesh(v: CritterVisual, m: Node3D, xf: Transform3D, f: OutfitF
 			var vs: PackedVector3Array = arr[Mesh.ARRAY_VERTEX]
 			for i in vs.size():
 				vs[i] = to_skel * vs[i]
+				if hem > -INF and vs[i].y < hem:
+					# (below the top of the tail: laid back along it, as cloth over a log)
+					var d := hem - vs[i].y
+					vs[i] = Vector3(vs[i].x, hem - d * 0.12, vs[i].z - d * 0.99)
 				lo = minf(lo, vs[i].y)
 			arr[Mesh.ARRAY_VERTEX] = vs
 			if arr[Mesh.ARRAY_NORMAL] != null:
@@ -614,6 +653,196 @@ static func _under(n: Node3D, root: Node3D) -> Transform3D:
 	return t
 
 
+## Reshape a piece in the critter's frame: `fn` gets every vertex and normal
+## of every mesh in it ([PackedVector3Array, PackedVector3Array], skeleton
+## space) and returns them moved. Made once per model, piece and fit.
+static func _reshape(v: CritterVisual, m: Node3D, xf: Transform3D, id: String, tag: String, fn: Callable) -> void:
+	var key := "%s:%s:%s:%d" % [v.def.resolved_model(), id, tag, hash(xf)]
+	var mis: Array = ModelUtil.find_all(m, "MeshInstance3D").filter(func(g): return (g as MeshInstance3D).mesh != null)
+	if not _reshaped.has(key):
+		var pts := PackedVector3Array()
+		var nrm := PackedVector3Array()
+		var all := []   # per mesh: its surfaces' arrays
+		for g in mis:
+			var mi := g as MeshInstance3D
+			var to_skel := xf * _under(mi, m)
+			var nb := to_skel.basis.inverse().transposed()
+			var surfs := []
+			for si in mi.mesh.get_surface_count():
+				var arr := mi.mesh.surface_get_arrays(si)
+				var vs: PackedVector3Array = arr[Mesh.ARRAY_VERTEX]
+				var ns: Variant = arr[Mesh.ARRAY_NORMAL]
+				for i in vs.size():
+					pts.append(to_skel * vs[i])
+					nrm.append((nb * (ns as PackedVector3Array)[i]).normalized() if ns != null else Vector3.ZERO)
+				surfs.append(arr)
+			all.append(surfs)
+		var moved: Array = fn.call(pts, nrm)
+		var out_pts: PackedVector3Array = moved[0]
+		var out_nrm: PackedVector3Array = moved[1]
+		var made := []
+		var at := 0
+		for j in mis.size():
+			var mi := mis[j] as MeshInstance3D
+			var back_to := (xf * _under(mi, m)).affine_inverse()
+			var nb := back_to.basis.inverse().transposed()
+			var mesh := ArrayMesh.new()
+			for si in all[j].size():
+				var arr: Array = all[j][si]
+				var vs: PackedVector3Array = arr[Mesh.ARRAY_VERTEX]
+				var ns: Variant = arr[Mesh.ARRAY_NORMAL]
+				for i in vs.size():
+					vs[i] = back_to * out_pts[at + i]
+					if ns != null:
+						(ns as PackedVector3Array)[i] = (nb * out_nrm[at + i]).normalized()
+				at += vs.size()
+				arr[Mesh.ARRAY_VERTEX] = vs
+				if ns != null:
+					arr[Mesh.ARRAY_NORMAL] = ns
+				mesh.add_surface_from_arrays(mi.mesh.surface_get_primitive_type(si), arr)
+				mesh.surface_set_material(si, mi.mesh.surface_get_material(si))
+			made.append(mesh)
+		_reshaped[key] = made
+	var made: Array = _reshaped[key]
+	for j in mis.size():
+		(mis[j] as MeshInstance3D).mesh = made[j]
+
+
+static var _reshaped := {}   # model:piece:how:fit -> the piece's meshes, reshaped
+
+
+## A necklace laid flat round the neck: what sticks out in front of the neck
+## folds down onto the chest (a pendant hangs on it, facing forward).
+static func _folded(pts: PackedVector3Array, nrm: PackedVector3Array, f: OutfitFit) -> Array:
+	var gap := f.head_d * 0.03
+	var base := INF   # (its underside, so a pendant keeps its thickness when it's folded)
+	for p in pts:
+		if p.z > f.front_at(p.y) + gap:
+			base = minf(base, p.y)
+	var down := Basis(Vector3.RIGHT, PI / 2.0)   # (forward turns to down, up to forward)
+	for i in pts.size():
+		var p := pts[i]
+		var edge := f.front_at(p.y) + gap
+		if p.z <= edge:
+			continue
+		var y := p.y - (p.z - edge)
+		pts[i] = Vector3(p.x, y, f.front_at(y) + gap + maxf(p.y - base, 0.0))
+		nrm[i] = down * nrm[i]
+	return [pts, nrm]
+
+
+## A pendant necklace pressed onto the chest: each bit of it (a grid across it,
+## so a curved one flattens too) as far forward as the critter is there,
+## keeping its thickness, and its ends round the sides of the neck.
+static func _pressed(pts: PackedVector3Array, nrm: PackedVector3Array, f: OutfitFit) -> Array:
+	var gap := f.head_d * 0.02
+	var lo := Vector2(INF, INF)
+	var hi := Vector2(-INF, -INF)
+	for p in pts:
+		lo = Vector2(minf(lo.x, p.x), minf(lo.y, p.y))
+		hi = Vector2(maxf(hi.x, p.x), maxf(hi.y, p.y))
+	const NX := 10
+	const NY := 16
+	var span := (hi - lo).max(Vector2(0.001, 0.001))
+	var cell := func(p: Vector3) -> int:
+		return clampi(int((p.y - lo.y) / span.y * NY), 0, NY) * (NX + 1) + clampi(int((p.x - lo.x) / span.x * NX), 0, NX)
+	var back := {}   # cell -> its back (the furthest back of it)
+	for p in pts:
+		var c: int = cell.call(p)
+		back[c] = minf(back.get(c, INF), p.z)
+	for i in pts.size():
+		var p := pts[i]
+		p.z += f.front_at(p.y) + gap - float(back[cell.call(p)])
+		var half := maxf(f.body_width_at(p.y), f.neck_w) * 0.5 + gap
+		var off := p.x - f.head_c.x
+		if absf(off) > half:
+			p.z -= absf(off) - half
+			p.x = f.head_c.x + signf(off) * half
+		pts[i] = p
+	return [pts, nrm]
+
+
+## Laid on the critter: nothing further out in front than the critter is at
+## that height (a little room for fur).
+static func _laid(pts: PackedVector3Array, nrm: PackedVector3Array, f: OutfitFit) -> Array:
+	for i in pts.size():
+		pts[i].z = minf(pts[i].z, f.front_at(pts[i].y) + f.head_d * 0.04)
+	return [pts, nrm]
+
+
+## A fine chain made thicker: every vertex pushed out along its normal.
+static func _thickened(pts: PackedVector3Array, nrm: PackedVector3Array, by: float) -> Array:
+	for i in pts.size():
+		pts[i] += nrm[i] * by
+	return [pts, nrm]
+
+
+## Leave parts of a model off (by material name): the meshes made once.
+static func _hide_parts(m: Node3D, id: String, names: Array) -> void:
+	for g in ModelUtil.find_all(m, "MeshInstance3D"):
+		var mi := g as MeshInstance3D
+		if mi.mesh == null:
+			continue
+		var key := "%s:%s:%s" % [id, m.get_path_to(mi), ",".join(names)]
+		if not _trimmed.has(key):
+			var mesh := ArrayMesh.new()
+			for si in mi.mesh.get_surface_count():
+				var mat := mi.mesh.surface_get_material(si)
+				if mat and names.has(mat.resource_name):
+					continue
+				mesh.add_surface_from_arrays(mi.mesh.surface_get_primitive_type(si), mi.mesh.surface_get_arrays(si))
+				mesh.surface_set_material(mesh.get_surface_count() - 1, mat)
+			_trimmed[key] = mesh
+		mi.mesh = _trimmed[key]
+
+
+static var _trimmed := {}   # piece:node:names -> its mesh without those parts
+
+
+## Swing one part of a model (by material) about the top of it, its bottom
+## going back: a chin strap swung back under the chin. Model space (+Z its
+## front, as turned); the meshes made once.
+static func _swing_part(m: Node3D, id: String, part: String, degrees: float) -> void:
+	for g in ModelUtil.find_all(m, "MeshInstance3D"):
+		var mi := g as MeshInstance3D
+		if mi.mesh == null:
+			continue
+		var key := "%s:%s:%s:%s" % [id, m.get_path_to(mi), part, degrees]
+		if not _swung.has(key):
+			var to_m := _under(mi, m)
+			var back_to := to_m.affine_inverse()
+			var mesh := ArrayMesh.new()
+			for si in mi.mesh.get_surface_count():
+				var arr := mi.mesh.surface_get_arrays(si)
+				var mat := mi.mesh.surface_get_material(si)
+				if mat and mat.resource_name == part:
+					var vs: PackedVector3Array = arr[Mesh.ARRAY_VERTEX]
+					var top := -INF
+					var hinge_z := 0.0
+					for p in vs:
+						var q := to_m * p
+						if q.y > top:
+							top = q.y
+							hinge_z = q.z
+					var pivot := Vector3(0.0, top, hinge_z)
+					var r := Basis(Vector3.RIGHT, deg_to_rad(degrees))
+					for i in vs.size():
+						vs[i] = back_to * (pivot + r * (to_m * vs[i] - pivot))
+					arr[Mesh.ARRAY_VERTEX] = vs
+					if arr[Mesh.ARRAY_NORMAL] != null:
+						var ns: PackedVector3Array = arr[Mesh.ARRAY_NORMAL]
+						for i in ns.size():
+							ns[i] = (back_to.basis * (r * (to_m.basis * ns[i]))).normalized()
+						arr[Mesh.ARRAY_NORMAL] = ns
+				mesh.add_surface_from_arrays(mi.mesh.surface_get_primitive_type(si), arr)
+				mesh.surface_set_material(si, mat)
+			_swung[key] = mesh
+		mi.mesh = _swung[key]
+
+
+static var _swung := {}   # piece:node:part:degrees -> its mesh with that part swung
+
+
 ## A rogue's nudges to a fitted piece (see wear_piece).
 static func _nudge(xf: Transform3D, box: AABB, f: OutfitFit, on_head: bool, a: Dictionary) -> Transform3D:
 	var mid := xf * box.get_center()
@@ -622,7 +851,8 @@ static func _nudge(xf: Transform3D, box: AABB, f: OutfitFit, on_head: bool, a: D
 	var turn := Basis(Vector3.UP, deg_to_rad(float(a.get("turn", 0.0)))) * Basis(Vector3.RIGHT, deg_to_rad(-float(a.get("tilt", 0.0))))
 	var grow := float(a.get("grow", 1.0))
 	var about := Transform3D(turn.scaled(Vector3.ONE * grow), mid - (turn.scaled(Vector3.ONE * grow)) * mid)
-	var shift := Vector3(0, float(a.get("up", 0.0)) * height, float(a.get("fwd", 0.0)) * depth)
+	var width := f.head_w if on_head else f.shoulder_w
+	var shift := Vector3(float(a.get("side", 0.0)) * width, float(a.get("up", 0.0)) * height, float(a.get("fwd", 0.0)) * depth)
 	var out := Transform3D(Basis.IDENTITY, shift) * about * xf
 	if a.has("deep"):
 		# shorter (or longer) front to back, about its front: glasses' arms
@@ -714,6 +944,8 @@ static func _place(f: OutfitFit, id: String, spec: Dictionary, turn: Basis, box:
 			var hd := absf(turn.x.z) * float(shape.get("w", w)) + absf(turn.z.z) * float(shape.get("d", box.size.z))
 			var deep := f.front_at(seat) - f.back_at(seat)
 			var kz := clampf(deep * float(spec.get("fit", 1.04)) * size / maxf(hd, 0.001), k * (0.8 if slot == "hat" else 0.7), k * (1.0 if slot == "hat" else 1.3))
+			if spec.get("to_chin", false):
+				kz = k   # (a helmet over the whole head: as deep as it's wide, or a long snout comes out the front)
 			if slot == "mask":
 				# its front on the front of the muzzle; the cloth no lower than just
 				# under the chin
@@ -761,7 +993,8 @@ static func _place(f: OutfitFit, id: String, spec: Dictionary, turn: Basis, box:
 			# eye, as wide as the eye
 			k = f.eye_x * 1.25 * f.glasses_size * size / w
 			var ring := Vector2(box.get_center().x, box.end.y - w * 0.5)
-			at = Vector3(f.head_c.x - f.eye_x - ring.x * k, f.eye_y - ring.y * k, f.eye_z + f.head_d * 0.03 - box.end.z * k)
+			var eye_x := f.eye_x if spec.get("eye", "right") == "left" else -f.eye_x   # (its right eye is -x)
+			at = Vector3(f.head_c.x + eye_x - ring.x * k, f.eye_y - ring.y * k, f.eye_z + f.head_d * 0.03 - box.end.z * k)
 		"lashes":
 			# along the top of each eye's lid, a little to the outside (a pair:
 			# their middles about 0.4 of the model's width out each side)
@@ -814,6 +1047,8 @@ static func _place(f: OutfitFit, id: String, spec: Dictionary, turn: Basis, box:
 				wide = maxf(wide, f.body_width_at(lerpf(top, f.hip_y, i / 5.0)) * 1.05)
 			k = wide * size / w
 			var ky := minf(k, (top - bottom) / maxf(box.size.y, 0.001))
+			if f.cape_over_tail:
+				ky = maxf(ky, k * 0.75)   # (not crushed flat on top of a tail at the hips: it drapes down over it)
 			at = Vector3(f.head_c.x - box.get_center().x * k, top - box.end.y * ky, f.back_at(top) + f.head_d * 0.03 - box.end.z * k)
 			return Transform3D(Basis().scaled(Vector3(k, ky, k)), at)
 		"wings":
@@ -829,6 +1064,20 @@ static func _place(f: OutfitFit, id: String, spec: Dictionary, turn: Basis, box:
 				# (a wind-up key: in the middle of the back, not hung from the shoulders)
 				top = lerpf(f.hip_y, top, 0.75) + box.size.y * k * 0.5
 			var back := minf(f.back_at(top - box.size.y * k * 0.3), f.back_at(top - box.size.y * k * 0.7))
+			if float(spec.get("inset", 0.0)) > 0.0:
+				# worn against the back: its own straps sunk into it, and it leans as
+				# the back does between its top and bottom (a round hamster's back
+				# slopes away at the top)
+				var hk := box.size.y * k
+				var hi := f.back_at(top - hk * 0.15)
+				var lo := f.back_at(top - hk * 0.85)
+				var lean := atan2(hi - lo, hk * 0.7)   # (+: its top tips in, toward the body)
+				at = Vector3(f.head_c.x - box.get_center().x * k, top - box.end.y * k,
+					(hi + lo) * 0.5 + f.head_d * 0.02 - (box.end.z - float(spec.inset) * box.size.z) * k)
+				var placed := Transform3D(Basis().scaled(Vector3.ONE * k), at)
+				var pivot := placed * Vector3(box.get_center().x, box.get_center().y, box.end.z - float(spec.inset) * box.size.z)
+				var r := Basis(Vector3.RIGHT, lean)
+				return Transform3D(r, pivot - r * pivot) * placed
 			at = Vector3(f.head_c.x - box.get_center().x * k, top - box.end.y * k, back + f.head_d * 0.02 - box.end.z * k)
 	return Transform3D(Basis().scaled(Vector3(k, k * float(spec.get("flat", 1.0)), k)), at)
 

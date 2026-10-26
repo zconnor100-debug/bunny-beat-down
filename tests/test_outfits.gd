@@ -93,6 +93,18 @@ func _box_in(v: CritterVisual, piece: Node3D, role: StringName) -> AABB:
 	return box
 
 
+## Every vertex of a piece, in the role bone's rest frame (where OutfitFit measures).
+func _points_in(v: CritterVisual, piece: Node3D, role: StringName) -> Array:
+	var to_rest: Transform3D = (v.rig.rest[role] as Transform3D) * (v.attachments[role] as Node3D).global_transform.affine_inverse()
+	var pts := []
+	for mi in ModelUtil.find_all(piece, "MeshInstance3D"):
+		var xf := to_rest * (mi as MeshInstance3D).global_transform
+		for si in (mi as MeshInstance3D).mesh.get_surface_count():
+			for q: Vector3 in (mi as MeshInstance3D).mesh.surface_get_arrays(si)[Mesh.ARRAY_VERTEX]:
+				pts.append(xf * q)
+	return pts
+
+
 func _bodies_holding(prefix: String) -> Array:
 	var out := []
 	for n in get_tree().root.find_children("*", "RigidBody3D", true, false):
@@ -258,11 +270,38 @@ func test_necklaces_go_round_the_neck() -> void:
 		await wait_physics(2)
 		var f := OutfitFit.of(c.visual)
 		for id in ["sapphire_necklace", "ring_necklace"]:
-			var box := _box_in(c.visual, Outfits.wear_piece(c.visual, id), &"chest")
-			check(box.end.y > f.shoulder_y and box.position.y > f.chest_y - f.head_h * 0.1,
-				"%s: the %s is round the neck (%.2f..%.2f; shoulders %.2f, chest %.2f)" % [sp, id, box.position.y, box.end.y, f.shoulder_y, f.chest_y])
+			var piece := Outfits.wear_piece(c.visual, id)
+			var box := _box_in(c.visual, piece, &"chest")
+			check(box.end.y > f.shoulder_y and box.position.y > f.hip_y,
+				"%s: the %s is round the neck (%.2f..%.2f; shoulders %.2f, hips %.2f)" % [sp, id, box.position.y, box.end.y, f.shoulder_y, f.hip_y])
+			_check_on_chest(c.visual, piece, "%s: the %s" % [sp, id])
 		c.queue_free()
 		await wait_physics(1)
+	# the rogues' own: Vixen Vera's jewels, Lady Garbage's beads
+	for n in ["Vixen Vera", "Lady Garbage"]:
+		var c := spawn_critter("res://data/critters/%s.tres" % Cast.member(n).species, Vector3(0, 0.1, 0))
+		await wait_physics(2)
+		Outfits.dress(c, n)
+		for piece in c.visual.outfit:
+			if String(piece.name).ends_with("necklace"):
+				_check_on_chest(c.visual, piece, "%s's %s" % [n, piece.name])
+		c.queue_free()
+		await wait_physics(1)
+
+
+## (Game Notes 109, 121: what hangs below the shoulders lies on the chest, not
+## in the air in front of it: its back no further out than a little)
+func _check_on_chest(v: CritterVisual, piece: Node3D, what: String) -> void:
+	var f := OutfitFit.of(v)
+	var backs := {}   # height (2 cm slices) -> the back of the piece there
+	for q in _points_in(v, piece, &"chest"):
+		if q.y < f.shoulder_y:
+			var b := snappedf(q.y, 0.02)
+			backs[b] = minf(backs.get(b, INF), q.z)
+	var out := -INF
+	for b in backs:
+		out = maxf(out, backs[b] - f.front_at(b))
+	check(backs.is_empty() or out < f.head_d * 0.1, "%s lies on the chest (%.3f in front of it)" % [what, out])   # (empty: all of it round the neck)
 
 
 func test_a_hugging_bandana_lies_on_the_face() -> void:

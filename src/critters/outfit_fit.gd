@@ -51,6 +51,7 @@ var hat_size := 1.0             ## hats this much bigger, sitting lower (rig.jso
 var glasses_size := 1.0         ## glasses this much bigger (rig.json "glasses_size": big cartoon eyes, a fox's or a beaver's)
 var cape_over_tail := false     ## rig.json "cape_over_tail": a cape ends on top of the tail (a squirrel's sticks straight out behind)
 var tail_y := -1.0              ## where a big tail (a fox's, a squirrel's) leaves the body; -1: none
+var tail_top := -1.0            ## rig.json "tail_top": the top of a thick tail, where a cape lies on it; -1: tail_y
 var _head_rows := PackedFloat32Array()   # skull breadth at ROWS heights, neck to crown
 var _lo := 0.0                            # the body outline's heights: hips to crown
 var _hi := 1.0
@@ -262,6 +263,7 @@ func _measure(v: CritterVisual) -> void:
 	hat_size = float(rig.data.get("hat_size", 1.0))
 	glasses_size = float(rig.data.get("glasses_size", 1.0))
 	cape_over_tail = bool(rig.data.get("cape_over_tail", false))
+	tail_top = float(rig.data.get("tail_top", -1.0))
 	eye_r = float(rig.data.get("eye_r", eye_x * 0.45))
 	# the back with the tail, from the ground up: what a cape drapes over
 	trunk_tris.append_array(tail_tris)

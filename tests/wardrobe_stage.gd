@@ -74,7 +74,12 @@ func _run() -> void:
 
 
 ## Every wardrobe piece on four heads, up close (front three-quarters).
+## "pieces:a,b@beaver,fox": just those pieces, on those species.
 func _pieces(only := "") -> void:
+	var species := ["bun", "fox", "raccoon", "hamster"]
+	if only.contains("@"):
+		species = Array(only.get_slice("@", 1).split(","))
+		only = only.get_slice("@", 0)
 	var p := CritterPortrait.new(Vector2(500, 500))
 	var layer := _panel(p)
 	var ids := []
@@ -82,7 +87,7 @@ func _pieces(only := "") -> void:
 		for o in Workshop.LOOKS[cat].options:
 			if o[0] != "none" and (only == "" or Array(only.split(",")).has(o[0])):
 				ids.append(o[0])
-	for sp in ["bun", "fox", "raccoon", "hamster"]:
+	for sp in species:
 		Settings.set_value(&"player_character", sp, false)
 		for id in ids:
 			p.show_player([id])

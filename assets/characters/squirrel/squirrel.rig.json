@@ -6,8 +6,9 @@
   "eye_height": 0.703,
   "eyes": [0.1259, 0.6475, 0.14],
   "cape_over_tail": true,
+  "tail_top": 0.415,
   "eye_r": 0.045,
-  "eye_bulge": {"material": "Material.004", "to": [0.114, 0.65, 0.108], "scale": 1.08},
+  "eye_bulge": {"material": "Material.004", "to": [0.135, 0.635, 0.105], "scale": 1.3},
   "hat_size": 1.2,
   "rest_pose": "T",
   "bones": {
