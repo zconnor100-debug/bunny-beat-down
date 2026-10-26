@@ -30,5 +30,12 @@
     "albedo": {
       "frog-peasant": "skins/golden_albedo.jpg"
     }
+  },
+  {
+    "id": "toad_chaps",
+    "name": "Toad in Chaps",
+    "albedo": {
+      "frog-peasant": "skins/toad_chaps_albedo.jpg"
+    }
   }
 ]

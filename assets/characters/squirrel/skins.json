@@ -3,35 +3,39 @@
     "id": "default",
     "name": "Classic",
     "albedo": {
-      "Material.003": "skins/default_fur.jpg"
+      "Material.004": "skins/eyes_whites.jpg"
     }
   },
   {
     "id": "grey",
     "name": "Grey",
     "albedo": {
-      "Material.003": "skins/grey_fur.jpg"
+      "Material.003": "skins/grey_fur.jpg",
+      "Material.004": "skins/eyes_whites.jpg"
     }
   },
   {
     "id": "black",
     "name": "Black",
     "albedo": {
-      "Material.003": "skins/black_fur.jpg"
+      "Material.003": "skins/black_fur.jpg",
+      "Material.004": "skins/eyes_whites.jpg"
     }
   },
   {
     "id": "fox_squirrel",
     "name": "Fox Squirrel",
     "albedo": {
-      "Material.003": "skins/fox_squirrel_fur.jpg"
+      "Material.003": "skins/fox_squirrel_fur.jpg",
+      "Material.004": "skins/eyes_whites.jpg"
     }
   },
   {
     "id": "blueberry",
     "name": "Blueberry",
     "albedo": {
-      "Material.003": "skins/blueberry_fur.jpg"
+      "Material.003": "skins/blueberry_fur.jpg",
+      "Material.004": "skins/eyes_whites.jpg"
     }
   }
 ]

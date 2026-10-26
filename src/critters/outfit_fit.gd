@@ -24,9 +24,10 @@ var head_d := 0.2               ## depth of the skull (z)
 var head_h := 0.2               ## from the neck joint to the crown
 var crown_y := 1.0              ## top of the skull, in the middle
 var crown_z := 0.0              ## where the top of the skull is, front to back
-var eye_x := 0.05               ## how far each eye is from the middle
+var eye_x := 0.05               ## how far each eye is from the middle (x = 0: the model's own middle)
+var eye_r := 0.03               ## an eye's radius (rig.json "eye_r")
 var eye_y := 0.85
-var eye_z := 0.1                ## the front of the face at the eyes
+var eye_z := 0.1                ## the front of the eyes (rig.json eyes[2]; else the face in front of them)
 var brow_y := 0.9               ## just over the eyes (as far down as a hat comes)
 var bridge_z := 0.1             ## the front of the face between the eyes
 var face_z := 0.1               ## the front of whatever glasses have to clear
@@ -47,6 +48,8 @@ var shoulder_w := 0.3           ## from shoulder joint to shoulder joint, plus t
 var hip_y := 0.4
 var hat_stretch := 1.0          ## hats this much taller (rig.json "hat_stretch": a beaver's head is a tall egg)
 var hat_size := 1.0             ## hats this much bigger, sitting lower (rig.json "hat_size": a squirrel's big head suits a big hat)
+var glasses_size := 1.0         ## glasses this much bigger (rig.json "glasses_size": big cartoon eyes, a fox's or a beaver's)
+var cape_over_tail := false     ## rig.json "cape_over_tail": a cape ends on top of the tail (a squirrel's sticks straight out behind)
 var tail_y := -1.0              ## where a big tail (a fox's, a squirrel's) leaves the body; -1: none
 var _head_rows := PackedFloat32Array()   # skull breadth at ROWS heights, neck to crown
 var _lo := 0.0                            # the body outline's heights: hips to crown
@@ -222,6 +225,10 @@ func _measure(v: CritterVisual) -> void:
 	var r := head_h * 0.1
 	brow_y = minf(eye_y + r, crown_y)
 	eye_z = maxf(_front_near(head, mid.x + eye_x, eye_y, r), _front_near(head, mid.x - eye_x, eye_y, r))
+	if eyes is Array and eyes.size() > 2:
+		# the eye's own front (rig.json "eyes" [x, y, z]): a fox's snout reaches
+		# far in front of its eyes at their height, and glasses go on the eyes
+		eye_z = float(eyes[2])
 	bridge_z = _front_near(head, mid.x, eye_y + r * 0.5, r)
 	face_z = maxf(eye_z, bridge_z)
 	face_w = maxf(_width_at(trunk, eye_y, head_h * 0.05), eye_x * 2.6)
@@ -253,6 +260,9 @@ func _measure(v: CritterVisual) -> void:
 	chest_back = back_at(chest_y)
 	hat_stretch = float(rig.data.get("hat_stretch", 1.0))
 	hat_size = float(rig.data.get("hat_size", 1.0))
+	glasses_size = float(rig.data.get("glasses_size", 1.0))
+	cape_over_tail = bool(rig.data.get("cape_over_tail", false))
+	eye_r = float(rig.data.get("eye_r", eye_x * 0.45))
 	# the back with the tail, from the ground up: what a cape drapes over
 	trunk_tris.append_array(tail_tris)
 	for row: Array in _sections(trunk_tris, 0.0, _hi, mid.x, head_w * 0.5):

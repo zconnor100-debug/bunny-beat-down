@@ -101,6 +101,8 @@ func build(critter_: Node3D, def_: CritterDef) -> bool:
 
 	# mitten paws get knuckles, so they can close on a handle too
 	PawKnuckles.apply(self)
+	# deep-set eyeballs brought out where they can be seen (rig.json eye_bulge)
+	EyeBulge.apply(self)
 
 	holder = Node3D.new()
 	holder.name = "WeaponHolder"

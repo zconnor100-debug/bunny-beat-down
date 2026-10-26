@@ -65,14 +65,14 @@
     ]
   },
   {
-    "asset": "Artist Beret",
-    "author": "shimtimultimedia",
-    "author_url": "https://sketchfab.com/shimtimultimedia",
-    "source_url": "https://sketchfab.com/3d-models/artist-beret-656b9aeef87b42d298bc6d3bb1a61c35",
+    "asset": "Beret Hat",
+    "author": "PatelDev",
+    "author_url": "https://sketchfab.com/PatelDev",
+    "source_url": "https://sketchfab.com/3d-models/beret-hat-c48b9fb0530f4e11b0bb0352752afb46",
     "license": "CC BY 4.0",
     "license_url": "https://creativecommons.org/licenses/by/4.0/",
-    "changes": "outfit_beret: rescaled x1.8455 to critter-world size, grounded and centred; textures re-encoded <= 0px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
-    "used_for": "Rogue outfit: artist's beret (outfit_beret)",
+    "changes": "outfit_beret: rescaled x0.3312 to critter-world size, grounded and centred; textures re-encoded <= 0px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Rogue outfit: beret (outfit_beret)",
     "files": [
       "assets/env/outfit_beret/outfit_beret.glb"
     ]
@@ -403,16 +403,17 @@
     ]
   },
   {
-    "asset": "Sweat Band For Gorilla Tag Fan Game NO TEXTURES",
-    "author": "bluemonkez",
-    "author_url": "https://sketchfab.com/bluemonke10",
-    "source_url": "https://sketchfab.com/3d-models/sweat-band-for-gorilla-tag-fan-game-no-textures-99178c593c12413fab594caa2056b17c",
+    "asset": "Naruto Headband",
+    "author": "Blue Speedster",
+    "author_url": "https://sketchfab.com/wolvehunt12",
+    "source_url": "https://sketchfab.com/3d-models/naruto-headband-1414a824bb0741799d0c5ef87e84a493",
     "license": "CC BY 4.0",
     "license_url": "https://creativecommons.org/licenses/by/4.0/",
-    "changes": "outfit_headband: ring made thinner (x0.4 its thickness); rescaled x1.2156 to critter-world size, grounded and centred; textures re-encoded <= 0px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
-    "used_for": "Rogue outfit: sweatband headband (outfit_headband)",
+    "changes": "outfit_headband: separated loose part(s) [0, 1, 4, 5, 6, 7] of the source mesh; rescaled x0.0275 to critter-world size, grounded and centred; textures re-encoded <= 512px (JPEG colour/ORM, PNG normals) | outfit_ninja_headband: rescaled x0.0258 to critter-world size, grounded and centred; decimated 4384 -> 2940 triangles (seams welded first, no cracks); textures re-encoded <= 512px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Rogue outfit: cloth headband (tied at the back) (outfit_headband), ninja headband (outfit_ninja_headband)",
     "files": [
-      "assets/env/outfit_headband/outfit_headband.glb"
+      "assets/env/outfit_headband/outfit_headband.glb",
+      "assets/env/outfit_ninja_headband/outfit_ninja_headband.glb"
     ]
   },
   {
@@ -790,6 +791,84 @@
     "used_for": "Rogue outfit: gold laurel wreath (outfit_laurel_wreath)",
     "files": [
       "assets/env/outfit_laurel_wreath/outfit_laurel_wreath.glb"
+    ]
+  },
+  {
+    "asset": "Eyelashes",
+    "author": "wilkinsportmusic",
+    "author_url": "https://sketchfab.com/wilkinsportmusic",
+    "source_url": "https://sketchfab.com/3d-models/eyelashes-4847cfe4931945718742622c4913cecf",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "outfit_eyelashes: rescaled x29.3424 to critter-world size, grounded and centred; textures re-encoded <= 0px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Rogue outfit: eyelashes (outfit_eyelashes)",
+    "files": [
+      "assets/env/outfit_eyelashes/outfit_eyelashes.glb"
+    ]
+  },
+  {
+    "asset": "Hoop Earring Gold",
+    "author": "PolyDavid",
+    "author_url": "https://sketchfab.com/PolyDavid",
+    "source_url": "https://sketchfab.com/3d-models/hoop-earring-gold-c18c47bd615a4313a79959fa00e3313a",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "outfit_earring: kept sub-object(s) Object_4; rescaled x0.0358 to critter-world size, grounded and centred; textures re-encoded <= 512px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Rogue outfit: gold hoop earring (outfit_earring)",
+    "files": [
+      "assets/env/outfit_earring/outfit_earring.glb"
+    ]
+  },
+  {
+    "asset": "Metal shoulder pads",
+    "author": "Aelcrit",
+    "author_url": "https://sketchfab.com/Aelcrit",
+    "source_url": "https://sketchfab.com/3d-models/metal-shoulder-pads-bfb83be927d44d3082a9b9af391b4be2",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "outfit_shoulder_pads: rescaled x0.3201 to critter-world size, grounded and centred; textures re-encoded <= 256px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Rogue outfit: metal shoulder pads (outfit_shoulder_pads)",
+    "files": [
+      "assets/env/outfit_shoulder_pads/outfit_shoulder_pads.glb"
+    ]
+  },
+  {
+    "asset": "FREE Low Poly Ruby & Diamond Gold Necklace",
+    "author": "Axinovium",
+    "author_url": "https://sketchfab.com/Axinovium",
+    "source_url": "https://sketchfab.com/3d-models/free-low-poly-ruby-diamond-gold-necklace-b7ece6c0d8764b9dbba3b49d9974794f",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "outfit_jewel_necklace: rescaled x0.2507 to critter-world size, grounded and centred; decimated 3428 -> 2940 triangles (seams welded first, no cracks); textures re-encoded <= 512px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Rogue outfit: ruby and diamond necklace (outfit_jewel_necklace)",
+    "files": [
+      "assets/env/outfit_jewel_necklace/outfit_jewel_necklace.glb"
+    ]
+  },
+  {
+    "asset": "Neckerchief",
+    "author": "hectopod",
+    "author_url": "https://sketchfab.com/hectopod",
+    "source_url": "https://sketchfab.com/3d-models/neckerchief-d5c94ab29a3342b1bde11702c5b8e968",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "outfit_neckerchief: rescaled x1.1612 to critter-world size, grounded and centred; decimated 18068 -> 2940 triangles (seams welded first, no cracks); normal map re-baked from the full-detail source onto the decimated mesh; textures re-encoded <= 512px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Rogue outfit: neckerchief (outfit_neckerchief)",
+    "files": [
+      "assets/env/outfit_neckerchief/outfit_neckerchief.glb"
+    ]
+  },
+  {
+    "asset": "Mustache Free Model (Bigote)",
+    "author": "Enrique Poppe",
+    "author_url": "https://sketchfab.com/depa_96",
+    "source_url": "https://sketchfab.com/3d-models/mustache-free-model-bigote-3697959ccd3d464fb60e892b48ffff3f",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "outfit_mustache: rescaled x0.0016 to critter-world size, grounded and centred; textures re-encoded <= 0px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Rogue outfit: curly mustache (outfit_mustache)",
+    "files": [
+      "assets/env/outfit_mustache/outfit_mustache.glb"
     ]
   }
 ]

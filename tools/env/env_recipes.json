@@ -140,7 +140,7 @@
     {"id": "outfit_gent_top_hat", "source": "sf:a7e96eae73684e46b624142d0c230509", "height_m": 0.3, "max_tris": 3000, "tex": 512, "category": "outfit", "collision": "none", "desc": "gentleman's top hat with monocle and moustache"},
     {"id": "outfit_crown", "source": "sf:fe698c2b67d54695bfa49b890a9c7250", "height_m": 0.3, "max_tris": 3000, "tex": 512, "category": "outfit", "collision": "none", "desc": "little gold crown"},
     {"id": "outfit_cowboy_hat", "source": "sf:16c504d81f5843c3985d7f208c27b79a", "height_m": 0.3, "max_tris": 3000, "tex": 512, "category": "outfit", "collision": "none", "desc": "cowboy hat"},
-    {"id": "outfit_beret", "source": "sf:656b9aeef87b42d298bc6d3bb1a61c35", "height_m": 0.3, "max_tris": 3000, "tex": 512, "category": "outfit", "collision": "none", "desc": "artist's beret"},
+    {"id": "outfit_beret", "source": "sf:c48b9fb0530f4e11b0bb0352752afb46", "height_m": 0.3, "max_tris": 3000, "tex": 512, "category": "outfit", "collision": "none", "desc": "beret"},
     {"id": "outfit_bucket_hat", "source": "sf:24985764343240ecbc680545c13c28d1", "height_m": 0.3, "max_tris": 3000, "tex": 512, "category": "outfit", "collision": "none", "desc": "bucket hat"},
     {"id": "outfit_cavalier_hat", "source": "sf:8dc244d4e06a4e868c6efa796cdcfcf6", "height_m": 0.3, "max_tris": 3000, "tex": 512, "category": "outfit", "collision": "none", "desc": "cavalier hat"},
     {"id": "outfit_fez", "source": "sf:a24e4ca4b3fc4e6a9f3bfad6940c3f25", "height_m": 0.3, "max_tris": 3000, "tex": 512, "category": "outfit", "collision": "none", "desc": "tall fez"},
@@ -166,7 +166,7 @@
     {"id": "outfit_monocle", "source": "sf:6e21c0394d0443b58ddef39d26f7ea47", "height_m": 0.3, "max_tris": 3000, "tex": 512, "category": "outfit", "collision": "none", "desc": "monocle"},
     {"id": "outfit_goggles", "source": "sf:95367f12085743f096f0679abc0701a2", "height_m": 0.3, "max_tris": 3000, "tex": 512, "category": "outfit", "collision": "none", "desc": "aviator goggles"},
     {"id": "outfit_bandana_mask", "source": "sf:1d39e7ae6b5748acb2ffddf420893f5a", "height_m": 0.3, "max_tris": 3000, "tex": 512, "category": "outfit", "collision": "none", "desc": "bandana mask"},
-    {"id": "outfit_headband", "source": "sf:99178c593c12413fab594caa2056b17c", "thin_ring": 0.4, "height_m": 0.3, "max_tris": 3000, "tex": 512, "category": "outfit", "collision": "none", "desc": "sweatband headband"},
+    {"id": "outfit_headband", "source": "sf:1414a824bb0741799d0c5ef87e84a493", "loose_parts": [0, 1, 4, 5, 6, 7], "height_m": 0.3, "max_tris": 3000, "tex": 512, "category": "outfit", "collision": "none", "desc": "cloth headband (tied at the back)"},
     {"id": "outfit_bow_tie", "source": "sf:9e1b78768e4447f4befbcc2211bfe1d0", "height_m": 0.3, "max_tris": 3000, "tex": 512, "category": "outfit", "collision": "none", "desc": "bow tie"},
     {"id": "outfit_scarf", "source": "sf:99251059433d454a983ebc74981f0871", "height_m": 0.3, "max_tris": 3000, "tex": 512, "category": "outfit", "collision": "none", "desc": "scarf"},
     {"id": "outfit_medal", "source": "sf:8d2b7074affb44dd84a82c1515980540", "height_m": 0.3, "max_tris": 3000, "tex": 512, "category": "outfit", "collision": "none", "desc": "medal on a ribbon"},
@@ -195,6 +195,13 @@
     {"id": "outfit_snorkel_mask", "source": "sf:6552ed7809cb4eaca6fd3c987165adbb", "height_m": 0.3, "max_tris": 3000, "tex": 512, "category": "outfit", "collision": "none", "desc": "snorkel mask"},
     {"id": "outfit_cheese_hat", "source": "sf:f48d39fbb0214ac09ef835cbaf658eed", "height_m": 0.3, "max_tris": 3000, "tex": 512, "category": "outfit", "collision": "none", "desc": "cheese hat"},
     {"id": "outfit_windup_key", "source": "sf:2ffd153dc9054a5e93f89a27735e0027", "height_m": 0.3, "max_tris": 3000, "tex": 512, "category": "outfit", "collision": "none", "desc": "wind-up key"},
-    {"id": "outfit_laurel_wreath", "source": "sf:3a8ea8bf9f3a425481c5408b6d4273fd", "height_m": 0.3, "max_tris": 3000, "tex": 512, "category": "outfit", "collision": "none", "desc": "gold laurel wreath"}
+    {"id": "outfit_laurel_wreath", "source": "sf:3a8ea8bf9f3a425481c5408b6d4273fd", "height_m": 0.3, "max_tris": 3000, "tex": 512, "category": "outfit", "collision": "none", "desc": "gold laurel wreath"},
+    {"id": "outfit_ninja_headband", "source": "sf:1414a824bb0741799d0c5ef87e84a493", "height_m": 0.3, "max_tris": 3000, "tex": 512, "category": "outfit", "collision": "none", "desc": "ninja headband"},
+    {"id": "outfit_eyelashes", "source": "sf:4847cfe4931945718742622c4913cecf", "height_m": 0.3, "max_tris": 3000, "tex": 512, "category": "outfit", "collision": "none", "desc": "eyelashes"},
+    {"id": "outfit_earring", "source": "sf:c18c47bd615a4313a79959fa00e3313a", "objects": ["^Object_4$"], "height_m": 0.3, "max_tris": 3000, "tex": 512, "category": "outfit", "collision": "none", "desc": "gold hoop earring"},
+    {"id": "outfit_shoulder_pads", "source": "sf:bfb83be927d44d3082a9b9af391b4be2", "height_m": 0.3, "max_tris": 3000, "tex": 512, "category": "outfit", "collision": "none", "desc": "metal shoulder pads"},
+    {"id": "outfit_jewel_necklace", "source": "sf:b7ece6c0d8764b9dbba3b49d9974794f", "height_m": 0.3, "max_tris": 3000, "tex": 512, "category": "outfit", "collision": "none", "desc": "ruby and diamond necklace"},
+    {"id": "outfit_neckerchief", "source": "sf:d5c94ab29a3342b1bde11702c5b8e968", "exclude": ["^body"], "height_m": 0.3, "max_tris": 3000, "tex": 512, "category": "outfit", "collision": "none", "desc": "neckerchief"},
+    {"id": "outfit_mustache", "source": "sf:3697959ccd3d464fb60e892b48ffff3f", "height_m": 0.3, "max_tris": 3000, "tex": 512, "category": "outfit", "collision": "none", "desc": "curly mustache"}
   ]
 }

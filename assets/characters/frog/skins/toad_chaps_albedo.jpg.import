@@ -2,8 +2,8 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dudil8286pshc"
-path.s3tc="res://.godot/imported/default_fur.jpg-0b49f4eff097da4b3956e4ce57be3eb2.s3tc.ctex"
+uid="uid://5twgmjksp7bg"
+path.s3tc="res://.godot/imported/toad_chaps_albedo.jpg-efe28f5bc6f990ca36473d9314057096.s3tc.ctex"
 metadata={
 "imported_formats": ["s3tc_bptc"],
 "vram_texture": true
@@ -11,8 +11,8 @@ metadata={
 
 [deps]
 
-source_file="res://assets/characters/squirrel/skins/default_fur.jpg"
-dest_files=["res://.godot/imported/default_fur.jpg-0b49f4eff097da4b3956e4ce57be3eb2.s3tc.ctex"]
+source_file="res://assets/characters/frog/skins/toad_chaps_albedo.jpg"
+dest_files=["res://.godot/imported/toad_chaps_albedo.jpg-efe28f5bc6f990ca36473d9314057096.s3tc.ctex"]
 
 [params]
 

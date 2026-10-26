@@ -166,22 +166,38 @@ def join(objs: list):
 
 def pick_loose_parts(obj, picks: list[int]):
     """Split into loose parts, rank by bounding-box volume (largest = 0), keep picks."""
-    with_objects([obj], obj, bpy.ops.object.mode_set, mode="EDIT")
-    bpy.ops.mesh.select_all(action="SELECT")
-    bpy.ops.mesh.separate(type="LOOSE")
-    bpy.ops.object.mode_set(mode="OBJECT")
-    parts = [o for o in bpy.context.scene.objects if o.type == "MESH"]
+    import bmesh
+    me = obj.data
+    bm = bmesh.new()
+    bm.from_mesh(me)
+    bm.verts.ensure_lookup_table()
+    comp_of, comps = {}, []
+    for v in bm.verts:
+        if v.index in comp_of:
+            continue
+        stack, members = [v], []
+        comp_of[v.index] = len(comps)
+        while stack:
+            x = stack.pop()
+            members.append(x)
+            for e in x.link_edges:
+                y = e.other_vert(x)
+                if y.index not in comp_of:
+                    comp_of[y.index] = len(comps)
+                    stack.append(y)
+        comps.append(members)
 
-    def vol(o):
-        v = verts(o)
-        ext = v.max(0) - v.min(0)
+    def vol(members):
+        co = np.array([tuple(obj.matrix_world @ m.co) for m in members])
+        ext = co.max(0) - co.min(0)
         return float(ext[0] * ext[1] * ext[2] + 1e-12)
-    parts.sort(key=vol, reverse=True)
-    keep = [parts[i] for i in picks]
-    for o in parts:
-        if o not in keep:
-            bpy.data.objects.remove(o, do_unlink=True)
-    return join(keep)
+    order = sorted(range(len(comps)), key=lambda i: vol(comps[i]), reverse=True)
+    keep = {order[i] for i in picks if i < len(order)}
+    bmesh.ops.delete(bm, geom=[v for v in bm.verts if comp_of[v.index] not in keep], context="VERTS")
+    bm.to_mesh(me)
+    bm.free()
+    me.update()
+    return obj
 
 
 # ------------------------------------------------------------------- geometry

@@ -48,8 +48,8 @@ func _fits() -> void:
 		c.process_mode = Node.PROCESS_MODE_DISABLED
 		await get_tree().process_frame
 		var f := OutfitFit.of(c.visual)
-		print("FIT %s chin %.3f crown %.3f/%.3f head w%.3f d%.3f h%.3f c%s eye x%.3f y%.3f z%.3f face z%.3f w%.3f muzzle y%.3f z%.3f w%.3f neck y%.3f w%.3f front %.3f chest y%.3f w%.3f f%.3f b%.3f shoulder y%.3f w%.3f hip %.3f" % [
-			sp, f.chin_y, f.crown_y, f.crown_z, f.head_w, f.head_d, f.head_h, f.head_c, f.eye_x, f.eye_y, f.eye_z, f.face_z, f.face_w,
+		print("FIT %s tail %.3f chin %.3f crown %.3f/%.3f head w%.3f d%.3f h%.3f c%s eye x%.3f y%.3f z%.3f face z%.3f w%.3f muzzle y%.3f z%.3f w%.3f neck y%.3f w%.3f front %.3f chest y%.3f w%.3f f%.3f b%.3f shoulder y%.3f w%.3f hip %.3f" % [
+			sp, f.tail_y, f.chin_y, f.crown_y, f.crown_z, f.head_w, f.head_d, f.head_h, f.head_c, f.eye_x, f.eye_y, f.eye_z, f.face_z, f.face_w,
 			f.muzzle_y, f.muzzle_z, f.muzzle_w, f.neck_y, f.neck_w, f.neck_front, f.chest_y, f.chest_w, f.chest_front, f.chest_back,
 			f.shoulder_y, f.shoulder_w, f.hip_y])
 		var rows := []
@@ -144,6 +144,22 @@ func _cast(species: String) -> void:
 				Outfits.undress(c.visual)
 				for id in wear:
 					Outfits.wear_piece(c.visual, id)
+			if OS.has_environment("BBD_EYEMARK"):
+				# (red balls where OutfitFit thinks the eyes are)
+				var f0 := OutfitFit.of(c.visual)
+				for sgn in [-1.0, 1.0]:
+					var ball := MeshInstance3D.new()
+					var sm := SphereMesh.new()
+					sm.radius = 0.012
+					sm.height = 0.024
+					var mat := StandardMaterial3D.new()
+					mat.albedo_color = Color(1, 0, 0)
+					mat.no_depth_test = true
+					sm.material = mat
+					ball.mesh = sm
+					var at := Vector3(sgn * f0.eye_x, f0.eye_y, f0.eye_z)
+					ball.transform = (c.visual.rig.rest[&"head"] as Transform3D).affine_inverse() * Transform3D(Basis.IDENTITY, at)
+					c.visual.attachments[&"head"].add_child(ball)
 			c.process_mode = Node.PROCESS_MODE_DISABLED
 			crits.append(c)
 		await get_tree().process_frame
@@ -165,7 +181,7 @@ func _cast(species: String) -> void:
 				await _snap("rogue_%s_%s" % [c.display_name.replace(" ", "_").replace(".", ""), view[0]])
 			# and the whole of it, from behind and the side (packs, capes, wings)
 			var mid := c.global_position + Vector3.UP * f.crown_y * s * 0.55
-			var whole := f.crown_y * s * 1.15
+			var whole := f.crown_y * s * (1.15 if not OS.has_environment("BBD_WIDE") else 2.2)
 			for view in [["bodyback", Vector3(-0.45, 0.25, 1.0)], ["bodyside", Vector3(1.0, 0.1, 0.2)]]:
 				cam.global_position = mid + (view[1] as Vector3).normalized() * whole * 2.0
 				cam.look_at(mid, Vector3.UP)

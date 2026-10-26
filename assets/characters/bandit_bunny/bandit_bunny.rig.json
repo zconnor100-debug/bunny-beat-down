@@ -4,7 +4,8 @@
   "species": "rabbit",
   "head_top": 0.95,
   "eye_height": 0.81,
-  "eyes": [0.0614, 0.799],
+  "eyes": [0.0614, 0.799, 0.092],
+  "eye_r": 0.03,
   "rest_pose": "A",
   "bones": {
     "hips": "DEF_Hip",

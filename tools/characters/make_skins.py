@@ -17,6 +17,9 @@
 #     OKLCh (perceptual lightness / chroma / hue) and by 3D procedural
 #     patterns (noise patches, ellipsoid blobs). Selectors are soft (0..1
 #     ramps) and regions are claimed in order (first match wins, softly).
+#   * A SKIN may also "paint" on top: [{"where": selector, "set": colour}]
+#     in order (a T-shirt by bones, a print as a "polygon" pattern on the
+#     front), each recoloured the same way.
 #   * A SKIN maps regions to new colours ("set" keys are region names or
 #     globs such as "fur*"; the last matching key wins, so a pattern
 #     sub-region can follow its parent unless a skin overrides it; regions
@@ -171,6 +174,20 @@ def pattern(pt, ctx):
             P[..., 0] = np.abs(P[..., 0]) * (1.0 if c[0] >= 0 else -1.0)
         d = np.sqrt((((P - c) / rad) ** 2).sum(axis=-1))
         r = np.clip((1.0 + pt.get("soft", 0.25) - d) / pt.get("soft", 0.25), 0.0, 1.0)
+    elif pt["type"] == "polygon":
+        # a flat shape on the front (a chest print): texels whose (x, y) is in
+        # the polygon and that face forward (z above "min")
+        pts = np.array(pt["points"], float)
+        x, y = P[..., 0], P[..., 1]
+        inside = np.zeros(x.shape, bool)
+        j = len(pts) - 1
+        for i in range(len(pts)):
+            xi, yi = pts[i]
+            xj, yj = pts[j]
+            cross = ((yi > y) != (yj > y)) & (x < (xj - xi) * (y - yi) / (yj - yi + 1e-12) + xi)
+            inside ^= cross
+            j = i
+        r = (inside & (P[..., 2] > pt.get("min", -1e9))).astype(float)
     elif pt["type"] == "stripes":
         # bands along an axis (rings on a tail): period / duty in metres
         ax = {"x": 0, "y": 1, "z": 2}[pt["axis"]]
@@ -275,13 +292,20 @@ for img_i, prims in groups.items():
                     key = k
             if key is not None:
                 matched[rname] = key
-        if not matched:
+        paints = [pa for pa in skin.get("paint", []) if pa.get("texture", label) == label]
+        if not matched and not paints:
             continue                                  # skin leaves this texture alone
         for key in dict.fromkeys(matched.values()):
             group = [r for r, k in matched.items() if k == key]
             w_all = sum(masks[r] for r in group)
             tgt = recolour(lab, np.where(covered, w_all, 0.0), skin["set"][key])
             new = new + (tgt - new) * w_all[..., None]
+        # paint on top (a T-shirt, chaps, a print): any selector, in order
+        for pa in paints:
+            m = np.where(covered, select(pa.get("where", {}), ctx), 0.0)
+            if m.sum() > 0:
+                tgt = recolour(lab, m, pa["set"])
+                new = new + (tgt - new) * m[..., None]
         out = sm.oklab_to_srgb(new)
         # refill the bleed padding from the nearest recoloured texel
         out = sm.dilate_fill(out, covered, rast["tri"] >= 0)
@@ -310,6 +334,11 @@ for s in RECIPE["skins"]:
         entries.append({"id": s["id"], "name": s["name"], "albedo": outputs[s["id"]]})
     elif s["id"] in existing:
         entries.append(existing[s["id"]])
+# textures every skin uses whatever its fur (recipe "extra_albedo": e.g. the
+# squirrel's eyeballs, redrawn with whites)
+for e in entries:
+    for mat, tex in RECIPE.get("extra_albedo", {}).items():
+        e.setdefault("albedo", {})[mat] = tex
 with open(path, "w") as f:
     json.dump(entries, f, indent=2)
     f.write("\n")

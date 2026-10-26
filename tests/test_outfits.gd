@@ -50,10 +50,11 @@ func test_pieces_sit_where_they_belong_on_every_species() -> void:
 			"%s: the hat sits on the crown (bottom %.3f, eyes %.3f, crown %.3f)" % [sp, hat_box.position.y, f.eye_y, f.crown_y])
 		var specs_box := _box_in(c.visual, specs, &"head")
 		check(absf(specs_box.get_center().y - f.eye_y) < f.head_h * 0.15, "%s: the glasses are at the eyes" % sp)
-		check(specs_box.end.z > f.face_z, "%s: and in front of them" % sp)
+		check(specs_box.end.z > f.eye_z, "%s: and in front of them" % sp)
 		var pack_box := _box_in(c.visual, pack, &"chest")
 		check(pack_box.get_center().z < f.chest_back + f.head_d * 0.2, "%s: the pack is on the back" % sp)
-		check(c.visual.outfit.size() == 3, "%s: three pieces worn" % sp)
+		check(c.visual.outfit.size() == 4, "%s: three pieces worn, the pack with its straps" % sp)
+		check(c.visual.outfit.any(func(o): return String(o.name).ends_with("_straps")), "%s: straps over the shoulders" % sp)
 		c.queue_free()
 		await wait_physics(1)
 
@@ -63,7 +64,7 @@ func test_a_headshot_knocks_the_hat_off() -> void:
 	await wait_physics(2)
 	Outfits.dress(c, "Sir Reynard")
 	var worn := c.visual.outfit.size()
-	check(worn == 2, "Sir Reynard wears a top hat and a monocle (%d pieces)" % worn)
+	check(worn == 3, "Sir Reynard wears a top hat, a monocle and a bow tie (%d pieces)" % worn)
 	var info := DamageInfo.make(500.0, DamageInfo.Kind.BULLET, null, &"carrot_sniper")
 	info.headshot = true
 	info.bone_role = &"head"
@@ -72,7 +73,8 @@ func test_a_headshot_knocks_the_hat_off() -> void:
 	c.take_damage(info)
 	await wait_physics(10)
 	check(not c.alive, "beaten down")
-	check(c.visual.outfit.is_empty(), "the hat and monocle are knocked off (%d left on)" % c.visual.outfit.size())
+	check(c.visual.outfit.size() == 1 and String(c.visual.outfit[0].name).contains("bow_tie"),
+		"the hat and monocle are knocked off, the bow tie stays (%d left on)" % c.visual.outfit.size())
 	var flying := get_tree().get_nodes_in_group(&"debris").size() + _bodies_holding("Outfit_").size()
 	check(flying >= 1, "and fly about as debris")
 

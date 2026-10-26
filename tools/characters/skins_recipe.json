@@ -110,37 +110,30 @@
 
   "squirrel": {
     "textures": {"Material.003": "fur"},
+    "extra_albedo": {"Material.004": "skins/eyes_whites.jpg"},
     "regions": [
-      {"name": "eye_socket", "where": {"material": ["Material.003"], "patterns": [{"type": "blob", "center": [0.117, 0.703, 0.07], "radius": [0.043, 0.043, 0.048], "soft": 0.25, "mirror": true}]}},
       {"name": "keep_white", "where": {"color": {"L": [0.88, 1.0], "C": [0.0, 0.06], "blur": 0}}},
       {"name": "fur_dark", "where": {"color": {"L": [0.0, 0.42], "soft": {"L": 0.06}}}},
       {"name": "fur_light", "where": {"color": {"L": [0.74, 0.9], "h": [52, 90], "soft": {"L": 0.04, "h": 6}}}},
       {"name": "fur", "where": {"color": {"C": [0.06, 1.0], "h": [15, 90]}}}
     ],
     "skins": [
-      {"id": "default", "name": "Classic", "set": {
-        "eye_socket": {"L": 0.07, "C": 0.01, "h": 35}
-      }},
       {"id": "grey", "name": "Grey", "set": {
-        "eye_socket": {"L": 0.07, "C": 0.01, "h": 250},
         "fur": {"L": 0.6, "C": 0.012, "h": 250},
         "fur_light": {"L": 0.88, "C": 0.01, "h": 80},
         "fur_dark": {"L": 0.3, "C": 0.01, "h": 250}
       }},
       {"id": "black", "name": "Black", "set": {
-        "eye_socket": {"L": 0.07, "C": 0.01, "h": 40},
         "fur": {"L": 0.28, "C": 0.015, "h": 40},
         "fur_light": {"L": 0.4, "C": 0.02, "h": 50},
         "fur_dark": {"L": 0.14, "C": 0.008}
       }},
       {"id": "fox_squirrel", "name": "Fox Squirrel", "set": {
-        "eye_socket": {"L": 0.07, "C": 0.01, "h": 45},
         "fur": {"L": 0.56, "C": 0.045, "h": 60},
         "fur_light": {"L": 0.72, "C": 0.13, "h": 60},
         "fur_dark": {"L": 0.28, "C": 0.04, "h": 50}
       }},
       {"id": "blueberry", "name": "Blueberry", "set": {
-        "eye_socket": {"L": 0.07, "C": 0.01, "h": 270},
         "fur": {"L": 0.58, "C": 0.14, "h": 262},
         "fur_light": {"L": 0.84, "C": 0.07, "h": 310},
         "fur_dark": {"L": 0.28, "C": 0.08, "h": 270}
@@ -245,7 +238,8 @@
         "skin_*": {"L": 0.84, "C": 0.17, "h": 92},
         "skin_orange": {"L": 0.66, "C": 0.17, "h": 58},
         "armor": {"L": 0.42, "C": 0.06, "h": 70}
-      }}
+      }},
+      {"id": "toad_chaps", "name": "Toad in Chaps", "set": {"skin_*": {"L": 0.52, "C": 0.055, "h": 70}, "skin_warts": {"L": 0.36, "C": 0.05, "h": 55}, "skin_orange": {"L": 0.6, "C": 0.08, "h": 72}, "armor": {"L": 0.36, "C": 0.05, "h": 62}}, "paint": [{"where": {"bones": ["^thigh_.*$", "^leg_.*$", "^thigh_stretch_.$", "^leg_stretch_.$"]}, "set": {"L": 0.36, "C": 0.06, "h": 58, "contrast": 0.7, "dev": 0.2}}]}
     ]
   },
 
@@ -319,7 +313,8 @@
       {"id": "cotton_candy", "name": "Cotton Candy", "set": {
         "fur*": {"L": 0.82, "C": 0.1, "h": 350},
         "fur_light": {"L": 0.88, "C": 0.08, "h": 230}
-      }}
+      }},
+      {"id": "turbo_tee", "name": "Turbo Tee", "set": {}, "paint": [{"where": {"bones": ["^(Torso_bajo|Torso_alto|L_brazo|R_brazo|Cuello)$"]}, "set": {"L": 0.86, "C": 0.17, "h": 98, "contrast": 0.6}}, {"where": {"patterns": [{"type": "polygon", "min": -0.1, "points": [[-0.115, 0.49], [-0.03, 0.37], [-0.065, 0.37], [-0.02, 0.25], [-0.125, 0.395], [-0.085, 0.395], [-0.15, 0.49]]}]}, "set": {"L": 0.5, "C": 0.2, "h": 262, "contrast": 0.4}}]}
     ]
   }
 

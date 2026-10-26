@@ -4,7 +4,10 @@
   "species": "squirrel",
   "head_top": 0.9,
   "eye_height": 0.703,
-  "eyes": [0.1259, 0.6475],
+  "eyes": [0.1259, 0.6475, 0.14],
+  "cape_over_tail": true,
+  "eye_r": 0.045,
+  "eye_bulge": {"material": "Material.004", "to": [0.114, 0.65, 0.108], "scale": 1.08},
   "hat_size": 1.2,
   "rest_pose": "T",
   "bones": {

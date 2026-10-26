@@ -1892,7 +1892,7 @@
     "file": "assets/env/outfit_beret/outfit_beret.glb",
     "category": "outfit",
     "height_m": 0.3,
-    "footprint_radius_m": 0.25,
+    "footprint_radius_m": 0.27,
     "collision": "none",
     "collision_radius_m": 0.0,
     "scale_range": [
@@ -1901,7 +1901,7 @@
     ],
     "density_weight": 1.0,
     "sink_m": 0.0,
-    "tris": 972
+    "tris": 2176
   },
   {
     "id": "outfit_bucket_hat",
@@ -2308,7 +2308,7 @@
     "file": "assets/env/outfit_headband/outfit_headband.glb",
     "category": "outfit",
     "height_m": 0.3,
-    "footprint_radius_m": 0.38,
+    "footprint_radius_m": 0.28,
     "collision": "none",
     "collision_radius_m": 0.0,
     "scale_range": [
@@ -2317,7 +2317,7 @@
     ],
     "density_weight": 1.0,
     "sink_m": 0.0,
-    "tris": 1152
+    "tris": 1376
   },
   {
     "id": "outfit_bow_tie",
@@ -2782,5 +2782,117 @@
     "density_weight": 1.0,
     "sink_m": 0.0,
     "tris": 512
+  },
+  {
+    "id": "outfit_ninja_headband",
+    "file": "assets/env/outfit_ninja_headband/outfit_ninja_headband.glb",
+    "category": "outfit",
+    "height_m": 0.3,
+    "footprint_radius_m": 0.27,
+    "collision": "none",
+    "collision_radius_m": 0.0,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 1.0,
+    "sink_m": 0.0,
+    "tris": 2940
+  },
+  {
+    "id": "outfit_eyelashes",
+    "file": "assets/env/outfit_eyelashes/outfit_eyelashes.glb",
+    "category": "outfit",
+    "height_m": 0.3,
+    "footprint_radius_m": 1.07,
+    "collision": "none",
+    "collision_radius_m": 0.0,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 1.0,
+    "sink_m": 0.0,
+    "tris": 114
+  },
+  {
+    "id": "outfit_earring",
+    "file": "assets/env/outfit_earring/outfit_earring.glb",
+    "category": "outfit",
+    "height_m": 0.3,
+    "footprint_radius_m": 0.15,
+    "collision": "none",
+    "collision_radius_m": 0.0,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 1.0,
+    "sink_m": 0.0,
+    "tris": 1200
+  },
+  {
+    "id": "outfit_shoulder_pads",
+    "file": "assets/env/outfit_shoulder_pads/outfit_shoulder_pads.glb",
+    "category": "outfit",
+    "height_m": 0.3,
+    "footprint_radius_m": 0.6,
+    "collision": "none",
+    "collision_radius_m": 0.0,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 1.0,
+    "sink_m": 0.0,
+    "tris": 792
+  },
+  {
+    "id": "outfit_jewel_necklace",
+    "file": "assets/env/outfit_jewel_necklace/outfit_jewel_necklace.glb",
+    "category": "outfit",
+    "height_m": 0.3,
+    "footprint_radius_m": 0.15,
+    "collision": "none",
+    "collision_radius_m": 0.0,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 1.0,
+    "sink_m": 0.0,
+    "tris": 2940
+  },
+  {
+    "id": "outfit_neckerchief",
+    "file": "assets/env/outfit_neckerchief/outfit_neckerchief.glb",
+    "category": "outfit",
+    "height_m": 0.3,
+    "footprint_radius_m": 0.12,
+    "collision": "none",
+    "collision_radius_m": 0.0,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 1.0,
+    "sink_m": 0.0,
+    "tris": 2940
+  },
+  {
+    "id": "outfit_mustache",
+    "file": "assets/env/outfit_mustache/outfit_mustache.glb",
+    "category": "outfit",
+    "height_m": 0.3,
+    "footprint_radius_m": 0.47,
+    "collision": "none",
+    "collision_radius_m": 0.0,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 1.0,
+    "sink_m": 0.0,
+    "tris": 1264
   }
 ]

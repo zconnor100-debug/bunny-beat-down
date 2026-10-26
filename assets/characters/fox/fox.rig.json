@@ -4,7 +4,9 @@
   "species": "fox",
   "head_top": 1.15,
   "eye_height": 1.095,
-  "eyes": [0.0742, 1.0825],
+  "eyes": [0.0742, 1.0825, 0.2],
+  "eye_r": 0.04,
+  "glasses_size": 1.6,
   "rest_pose": "T",
   "bones": {
     "hips": "Pelvis",

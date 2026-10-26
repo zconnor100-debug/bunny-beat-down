@@ -30,5 +30,12 @@
     "albedo": {
       "Hamster": "skins/cotton_candy_albedo.jpg"
     }
+  },
+  {
+    "id": "turbo_tee",
+    "name": "Turbo Tee",
+    "albedo": {
+      "Hamster": "skins/turbo_tee_albedo.jpg"
+    }
   }
 ]
