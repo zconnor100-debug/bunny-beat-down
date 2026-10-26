@@ -244,6 +244,27 @@ def lch(lab):
     return L, np.hypot(a, b), (np.degrees(np.arctan2(b, a)) + 360.0) % 360.0
 
 
+def fill_background(img, known):
+    """Every texel that is not `known` (outside the UV islands) takes the
+    value of the nearest known texel, however far, so texture filtering and
+    mip-maps never pull the background colour into a seam."""
+    out = img.copy()
+    have = known.copy()
+    H, W = have.shape
+    while not have.all():
+        grew = False
+        for dy, dx in ((0, 1), (0, -1), (1, 0), (-1, 0)):
+            take = ~have & np.roll(have, (dy, dx), axis=(0, 1))
+            if take.any():
+                ys, xs = np.nonzero(take)
+                out[ys, xs] = out[(ys - dy) % H, (xs - dx) % W]
+                have[ys, xs] = True
+                grew = True
+        if not grew:
+            break
+    return out
+
+
 def dilate_fill(img, known, target, iters=12):
     """Copy values from `known` texels into nearby `target` texels that are not
     known (the bleed padding around UV islands), nearest-first."""

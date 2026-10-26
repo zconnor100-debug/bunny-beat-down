@@ -20,6 +20,10 @@ const GOLD_SHADER := preload("res://src/fx/golden.gdshader")
 const ENEMY_RIM_SHADER := preload("res://src/fx/enemy_rim.gdshader")
 const NAME_TAG_RANGE := 45.0
 static var name_tag_range_scale := 1.0     ## the Hawk Eye perk doubles it
+## Name tags keep their size on screen this close, and shrink further off (to
+## NAME_TAG_MIN_SCALE) so a far-away critter isn't hidden under its own name.
+const NAME_TAG_FULL_SIZE := 10.0
+const NAME_TAG_MIN_SCALE := 0.35
 
 static var _enemy_rim: ShaderMaterial
 
@@ -147,6 +151,7 @@ func _process(delta: float) -> void:
 		_loaded_round.visible = Critter.round_chambered(critter)
 	_update_trick(delta)
 	_update_body_xf()
+	_size_name_tag()
 
 
 func set_first_person(on: bool) -> void:
@@ -331,6 +336,7 @@ func set_enemy_highlight(display_name: String, rival := false, heat := 0) -> voi
 		name_tag.modulate = Color(1.0, 0.42, 0.3)
 		name_tag.outline_modulate = Color(0.1, 0.03, 0.02, 0.9)
 		name_tag.no_depth_test = false
+		name_tag.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM   # (a second line, the gang, goes up, not over the critter)
 		name_tag.visibility_range_end = NAME_TAG_RANGE * name_tag_range_scale
 		name_tag.visibility_range_end_margin = 4.0
 		name_tag.visibility_range_fade_mode = GeometryInstance3D.VISIBILITY_RANGE_FADE_SELF
@@ -373,16 +379,33 @@ func say(text: String, seconds := 3.5) -> void:
 func reveal_name_tag(seconds: float) -> void:
 	if name_tag == null:
 		return
+	if _reveal_tween and _reveal_tween.is_valid():
+		_reveal_tween.kill()
+	else:
+		_tag_color = name_tag.modulate   # (its own colour: heat, rival, nemesis)
 	name_tag.visibility_range_end = 0.0   # 0 = no limit
 	name_tag.modulate = Color(1.0, 0.25, 0.2)
-	if _reveal_tween:
-		_reveal_tween.kill()
 	_reveal_tween = create_tween()
 	_reveal_tween.tween_interval(seconds)
 	_reveal_tween.tween_callback(func():
 		if name_tag:
-			name_tag.visibility_range_end = NAME_TAG_RANGE
-			name_tag.modulate = Color(1.0, 0.42, 0.3))
+			name_tag.visibility_range_end = NAME_TAG_RANGE * name_tag_range_scale
+			name_tag.modulate = _tag_color)
+
+
+var _tag_color := Color(1.0, 0.42, 0.3)
+
+
+## Full size up close; past NAME_TAG_FULL_SIZE it shrinks with distance (more
+## slowly than the critter does, so it stays readable).
+func _size_name_tag() -> void:
+	if name_tag == null or not name_tag.visible:
+		return
+	var cam := get_viewport().get_camera_3d()
+	if cam == null:
+		return
+	var d := cam.global_position.distance_to(name_tag.global_position)
+	name_tag.scale = Vector3.ONE * clampf(pow(NAME_TAG_FULL_SIZE / maxf(d, 0.01), 0.6), NAME_TAG_MIN_SCALE, 1.0)
 
 
 func clear_enemy_highlight() -> void:

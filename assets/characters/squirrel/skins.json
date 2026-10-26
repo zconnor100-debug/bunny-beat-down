@@ -3,6 +3,7 @@
     "id": "default",
     "name": "Classic",
     "albedo": {
+      "Material.003": "skins/default_fur.jpg",
       "Material.004": "skins/eyes_whites.jpg"
     }
   },

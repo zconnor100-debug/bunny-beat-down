@@ -118,6 +118,7 @@
       {"name": "fur", "where": {"color": {"C": [0.06, 1.0], "h": [15, 90]}}}
     ],
     "skins": [
+      {"id": "default", "name": "Classic", "set": {}},
       {"id": "grey", "name": "Grey", "set": {
         "fur": {"L": 0.6, "C": 0.012, "h": 250},
         "fur_light": {"L": 0.88, "C": 0.01, "h": 80},

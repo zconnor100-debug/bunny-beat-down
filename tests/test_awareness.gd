@@ -58,6 +58,29 @@ func test_enemies_get_rim_light_and_name_tag() -> void:
 	check(c.visual.meshes[0].material_overlay == null and c.visual.name_tag == null, "corpses lose the highlight")
 
 
+func test_far_name_tags_shrink_and_grow_upward() -> void:
+	# (Game Note 79: a far-off critter was hidden under its own name tag)
+	var cam := Camera3D.new()
+	add_child(cam)
+	cam.global_position = Vector3(0, 1.6, 0)
+	cam.current = true
+	var near := spawn_critter(TEST_DEF, Vector3(0, 0.1, -6))
+	var far := spawn_critter(TEST_DEF, Vector3(0, 0.1, -40))
+	await wait_physics(2)
+	near.visual.set_enemy_highlight("Sly")
+	far.visual.set_enemy_highlight("Nutsy")
+	await wait_frames(2)
+	check_near(near.visual.name_tag.scale.x, 1.0, 0.001, "up close it keeps its full size")
+	check(far.visual.name_tag.scale.x < 0.55, "40 m off it's smaller: %.2f" % far.visual.name_tag.scale.x)
+	check(far.visual.name_tag.scale.x >= CritterVisual.NAME_TAG_MIN_SCALE, "but never too small to read")
+	check(far.visual.name_tag.vertical_alignment == VERTICAL_ALIGNMENT_BOTTOM, "a second line (a gang) goes up, not over the critter")
+	far.visual.name_tag.modulate = Color(0.85, 0.45, 1.0)
+	far.visual.reveal_name_tag(0.05)
+	await wait_frames(2)
+	await get_tree().create_timer(0.15).timeout
+	check(far.visual.name_tag.modulate.is_equal_approx(Color(0.85, 0.45, 1.0)), "after a reveal it goes back to its own colour")
+
+
 func test_trapped_critter_is_rescued() -> void:
 	# a navmesh over the arena, then a tight box of walls around a critter
 	var region := NavigationRegion3D.new()

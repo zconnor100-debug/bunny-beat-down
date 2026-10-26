@@ -49,8 +49,9 @@ def main():
             if skins:
                 changes += (" Recoloured skin variants (%s): the base-colour texture recoloured per region "
                             "(fur, markings, clothing) in the OKLab colour space, keeping the original "
-                            "painted shading and detail; some with painted-on clothes (a T-shirt with a "
-                            "lightning bolt, chaps) or redrawn eyes." % ", ".join(e["name"] for e in skins))
+                            "painted shading and detail, and the gaps between the texture's pieces filled "
+                            "from their edges so no seams show; some with painted-on clothes (a T-shirt with "
+                            "a lightning bolt, chaps) or redrawn eyes." % ", ".join(e["name"] for e in skins))
                 files.append(rel + "skins.json")
                 files += sorted({rel + p for e in skins for p in e["albedo"].values()})
         out.append({

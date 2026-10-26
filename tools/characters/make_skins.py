@@ -31,8 +31,11 @@
 #     survives without blown highlights), colour deviations rotated with the
 #     hue and scaled with the chroma. Fur strands, folds and painted
 #     shadows therefore survive the recolour.
-#   * Texture bleed padding around UV islands is refilled from the nearest
-#     recoloured texel so mip-mapping does not show old colours at seams.
+#   * Texture bleed padding around UV islands, and the rest of the
+#     background between them, is refilled from the nearest recoloured texel
+#     so mip-mapping does not show old colours (or a white background) at
+#     seams. A recipe skin "default" with nothing to "set" writes the GLB's
+#     own texture padded so (a model whose islands sit on white).
 #   * Vertex colours (the bandit's material multiplies them) are left alone:
 #     they act as baked shading on top of whatever albedo the skin provides.
 import fnmatch
@@ -293,7 +296,7 @@ for img_i, prims in groups.items():
             if key is not None:
                 matched[rname] = key
         paints = [pa for pa in skin.get("paint", []) if pa.get("texture", label) == label]
-        if not matched and not paints:
+        if not matched and not paints and skin["id"] != "default":
             continue                                  # skin leaves this texture alone
         for key in dict.fromkeys(matched.values()):
             group = [r for r, k in matched.items() if k == key]
@@ -307,8 +310,8 @@ for img_i, prims in groups.items():
                 tgt = recolour(lab, m, pa["set"])
                 new = new + (tgt - new) * m[..., None]
         out = sm.oklab_to_srgb(new)
-        # refill the bleed padding from the nearest recoloured texel
-        out = sm.dilate_fill(out, covered, rast["tri"] >= 0)
+        # refill the bleed padding and the background from the nearest recoloured texel
+        out = sm.fill_background(out, covered)
         name = "%s_%s.jpg" % (skin["id"], label)
         sm.encode_jpeg(out, os.path.join(OUT_DIR, name), quality=RECIPE.get("quality", 90))
         for m in mats:
