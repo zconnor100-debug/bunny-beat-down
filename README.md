@@ -544,8 +544,9 @@ The full write-up is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 On Windows the whole game is one file, `BunnyBeatDown.exe`.
 
 **Updates are automatic.** Every push that changes the game, once the tests
-pass, is built for Linux and Windows, smoke-tested (a headless drop onto the
-island) and published as a new release by
+pass, is built for Linux and Windows, smoke-tested on each (a headless drop
+onto the island: the Linux build on Linux, the Windows .exe on a Windows
+runner) and published, only if both pass, as a new release by
 [`.github/workflows/release.yml`](.github/workflows/release.yml), so the link
 above always has the newest build. Versions only go up (`tools/release_version.py`:
 v0.6.1, then v0.6.1.1, v0.6.1.2, ... until the next line in `project.godot`),

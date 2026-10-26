@@ -48,16 +48,21 @@ NUM_MAX = 60          # scores read out up to here (RogueVoice.NUM_MAX)
 FEMALE = {"Vex", "Snickerdoodle", "Cottontail Kate", "Hazel", "Bushytail Betty", "Vixen Vera", "Foxy Roxy",
           "Ember", "Duchess", "Dumpster Dot", "Lady Garbage", "Lily Pad Lou", "Hopscotch", "Puddles",
           "Lodge Lady", "Nibbler", "Whisker Biscuit"}
+# Kokoro's own grades for its English packs (VOICES.md). Only the high ones are
+# used: the D and F packs sound robotic. The best men's packs are C+
+# (American) and C (British); the women's go up to A.
+GRADES = {"af_heart": "A", "af_bella": "A-", "af_nicole": "B-", "bf_emma": "B-", "af_aoede": "C+", "af_kore": "C+",
+          "af_sarah": "C+", "am_fenrir": "C+", "am_michael": "C+", "am_puck": "C+", "bm_george": "C", "bm_fable": "C"}
 # packs that suit each personality (American; nobles are British)
 PACKS = {
-    "hothead": {"m": ["am_fenrir", "am_puck", "am_eric"], "f": ["af_nova", "af_jessica", "af_bella"]},
-    "sneak": {"m": ["am_echo", "am_liam"], "f": ["af_nicole", "af_sky", "af_river"]},
-    "showoff": {"m": ["am_puck", "am_adam", "am_eric"], "f": ["af_bella", "af_heart", "af_jessica"]},
-    "grump": {"m": ["am_onyx", "am_santa", "am_michael"], "f": ["af_kore", "af_alloy"]},
-    "scaredy": {"m": ["am_liam", "am_echo", "am_puck"], "f": ["af_sky", "af_sarah", "af_nicole"]},
-    "prankster": {"m": ["am_puck", "am_eric", "am_liam"], "f": ["af_jessica", "af_heart", "af_aoede"]},
-    "noble": {"m": ["bm_george", "bm_lewis", "bm_daniel", "bm_fable"], "f": ["bf_emma", "bf_isabella", "bf_alice"]},
-    "zen": {"m": ["am_michael", "am_adam", "am_echo"], "f": ["af_river", "af_aoede", "af_kore"]},
+    "hothead": {"m": ["am_fenrir", "am_puck"], "f": ["af_bella", "af_sarah", "af_heart"]},
+    "sneak": {"m": ["am_michael", "am_fenrir"], "f": ["af_nicole", "af_kore"]},
+    "showoff": {"m": ["am_puck", "am_fenrir"], "f": ["af_bella", "af_heart", "af_aoede"]},
+    "grump": {"m": ["am_michael", "am_fenrir"], "f": ["af_kore", "af_sarah"]},
+    "scaredy": {"m": ["am_puck", "am_michael"], "f": ["af_sarah", "af_nicole", "af_aoede"]},
+    "prankster": {"m": ["am_puck", "am_michael"], "f": ["af_heart", "af_aoede", "af_sarah"]},
+    "noble": {"m": ["bm_george", "bm_fable"], "f": ["bf_emma"]},
+    "zen": {"m": ["am_michael", "am_puck"], "f": ["af_kore", "af_aoede", "af_nicole"]},
 }
 SPECIES_PITCH = {"hamster": 1.55, "squirrel": 1.4, "bandit_bunny": 1.15, "raccoon": 1.1, "fox": 1.0,
                  "beaver": 0.95, "frog": 0.82}
@@ -199,6 +204,9 @@ def main() -> None:
     for n, d in fresh.items():
         designs.setdefault(n, d)
     design_path.write_text(json.dumps(designs, indent=2) + "\n")
+    low = {n: d["packs"] for n, d in designs.items() if any(pk not in GRADES for pk in d["packs"])}
+    if low:
+        sys.exit("voices cast with low-grade packs (recast them: delete their entries): %s" % low)
 
     # the plans: every template's parts, words as shared segment ids
     global segs_text, names_needed

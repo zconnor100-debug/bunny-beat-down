@@ -1,8 +1,8 @@
 name: release
 
 # Every push to main that changes the game, once the tests pass, becomes a
-# release: Linux and Windows builds, smoke-tested, published on GitHub with
-# notes. /releases/latest always has the newest build, and the game's main
+# release: Linux and Windows builds, each smoke-tested on its own system (a
+# Windows runner starts the .exe), published on GitHub with notes. /releases/latest always has the newest build, and the game's main
 # menu tells players when there's one newer than theirs (src/ui/update_check.gd).
 # Versions: tools/release_version.py (v0.6.1, then v0.6.1.1, v0.6.1.2, ...).
 
@@ -21,13 +21,17 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  release:
+  build:
     if: github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push')
     runs-on: ubuntu-latest
     timeout-minutes: 90
     env:
       GODOT_VERSION: 4.6.2
       SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
+    outputs:
+      release: ${{ steps.v.outputs.release }}
+      version: ${{ steps.v.outputs.version }}
+      previous: ${{ steps.v.outputs.previous }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -99,12 +103,68 @@ jobs:
           (cd build/windows && zip -q -9 ../../BunnyBeatDown-windows-x86_64.zip BunnyBeatDown.exe)
           ls -la *.tar.xz *.zip
 
-      - name: Publish
+      - name: Keep the builds for the next jobs
         if: steps.v.outputs.release == 'yes'
+        uses: actions/upload-artifact@v4
+        with:
+          name: builds
+          path: |
+            BunnyBeatDown-linux-x86_64.tar.xz
+            BunnyBeatDown-windows-x86_64.zip
+          retention-days: 2
+          compression-level: 0
+
+  windows:
+    # the Windows build, started on Windows: just the .exe out of the zip (the
+    # game is inside it), headless, dropping in and landing like the Linux one
+    needs: build
+    if: needs.build.outputs.release == 'yes'
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: builds
+      - name: Smoke test the Windows build
+        shell: pwsh
+        run: |
+          Expand-Archive BunnyBeatDown-windows-x86_64.zip -DestinationPath win
+          Get-ChildItem win
+          $env:BBD_TEST = "1"
+          $p = Start-Process -FilePath "win\BunnyBeatDown.exe" -ArgumentList "--headless", "--", "--smoke-test", "--map", "island" `
+            -PassThru -NoNewWindow -RedirectStandardOutput smoke.log -RedirectStandardError smoke_err.log
+          if (-not $p.WaitForExit(900000)) { $p.Kill(); Write-Host "timed out" }
+          # (what it printed, and the game's own log in its user folder, in case
+          # a GUI .exe's output didn't reach the pipe)
+          $logs = @("smoke.log", "smoke_err.log") + (Get-ChildItem "$env:APPDATA\Godot\app_userdata" -Recurse -Filter godot*.log -ErrorAction SilentlyContinue | ForEach-Object FullName)
+          $passed = $false
+          foreach ($l in $logs) {
+            if (Test-Path $l) {
+              Write-Host "== $l"; Get-Content $l -Tail 40
+              if (Select-String -Path $l -Pattern "SMOKE TEST PASS" -Quiet) { $passed = $true }
+            }
+          }
+          if (-not $passed) { throw "The Windows build didn't pass its smoke test" }
+
+  publish:
+    needs: [build, windows]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ env.SHA }}
+          fetch-depth: 0
+      - uses: actions/download-artifact@v4
+        with:
+          name: builds
+      - name: Publish
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          V="${{ steps.v.outputs.version }}"
-          python3 tools/release_notes.py "$V" "${{ steps.v.outputs.previous }}" > notes.md
+          V="${{ needs.build.outputs.version }}"
+          python3 tools/release_notes.py "$V" "${{ needs.build.outputs.previous }}" > notes.md
           gh release create "v$V" --target "$SHA" --title "Bunny Beat Down v$V" --notes-file notes.md --latest \
             BunnyBeatDown-linux-x86_64.tar.xz BunnyBeatDown-windows-x86_64.zip docs/trailer*.mp4

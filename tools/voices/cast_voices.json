@@ -2,7 +2,7 @@
   "Captain Carrot": {
     "packs": [
       "am_puck",
-      "am_eric"
+      "am_fenrir"
     ],
     "blend": 0.8,
     "lang": "a",
@@ -12,7 +12,7 @@
   "Vex": {
     "packs": [
       "af_nicole",
-      "af_river"
+      "af_kore"
     ],
     "blend": 0.58,
     "lang": "a",
@@ -21,8 +21,8 @@
   },
   "Bunnicula": {
     "packs": [
-      "am_onyx",
-      "am_michael"
+      "am_michael",
+      "am_fenrir"
     ],
     "blend": 0.57,
     "lang": "a",
@@ -31,8 +31,8 @@
   },
   "Lop-Eared Larry": {
     "packs": [
-      "am_liam",
-      "am_puck"
+      "am_puck",
+      "am_michael"
     ],
     "blend": 0.72,
     "lang": "a",
@@ -41,8 +41,8 @@
   },
   "Snickerdoodle": {
     "packs": [
-      "af_jessica",
-      "af_heart"
+      "af_heart",
+      "af_aoede"
     ],
     "blend": 0.77,
     "lang": "a",
@@ -51,8 +51,8 @@
   },
   "Cottontail Kate": {
     "packs": [
-      "af_river",
-      "af_kore"
+      "af_kore",
+      "af_nicole"
     ],
     "blend": 0.65,
     "lang": "a",
@@ -72,7 +72,7 @@
   "Nutsy": {
     "packs": [
       "am_puck",
-      "am_eric"
+      "am_fenrir"
     ],
     "blend": 0.67,
     "lang": "a",
@@ -81,7 +81,7 @@
   },
   "Acorn Al": {
     "packs": [
-      "am_santa",
+      "am_fenrir",
       "am_michael"
     ],
     "blend": 0.64,
@@ -101,7 +101,7 @@
   },
   "Hazel": {
     "packs": [
-      "af_sky",
+      "af_kore",
       "af_nicole"
     ],
     "blend": 0.79,
@@ -111,7 +111,7 @@
   },
   "Twitch": {
     "packs": [
-      "am_echo",
+      "am_michael",
       "am_puck"
     ],
     "blend": 0.73,
@@ -122,7 +122,7 @@
   "Kernel": {
     "packs": [
       "am_michael",
-      "am_adam"
+      "am_puck"
     ],
     "blend": 0.6,
     "lang": "a",
@@ -131,8 +131,8 @@
   },
   "Bushytail Betty": {
     "packs": [
-      "af_heart",
-      "af_aoede"
+      "af_aoede",
+      "af_sarah"
     ],
     "blend": 0.69,
     "lang": "a",
@@ -141,8 +141,8 @@
   },
   "Sly": {
     "packs": [
-      "am_echo",
-      "am_liam"
+      "am_michael",
+      "am_fenrir"
     ],
     "blend": 0.84,
     "lang": "a",
@@ -152,7 +152,7 @@
   "Vixen Vera": {
     "packs": [
       "af_bella",
-      "af_jessica"
+      "af_aoede"
     ],
     "blend": 0.67,
     "lang": "a",
@@ -161,8 +161,8 @@
   },
   "Fennick": {
     "packs": [
-      "am_eric",
-      "am_fenrir"
+      "am_fenrir",
+      "am_puck"
     ],
     "blend": 0.83,
     "lang": "a",
@@ -171,8 +171,8 @@
   },
   "Foxy Roxy": {
     "packs": [
-      "af_aoede",
-      "af_heart"
+      "af_sarah",
+      "af_aoede"
     ],
     "blend": 0.83,
     "lang": "a",
@@ -181,8 +181,8 @@
   },
   "Sir Reynard": {
     "packs": [
-      "bm_lewis",
-      "bm_daniel"
+      "bm_fable",
+      "bm_george"
     ],
     "blend": 0.69,
     "lang": "b",
@@ -191,8 +191,8 @@
   },
   "Ember": {
     "packs": [
-      "af_nova",
-      "af_bella"
+      "af_bella",
+      "af_heart"
     ],
     "blend": 0.66,
     "lang": "a",
@@ -202,7 +202,7 @@
   "Duchess": {
     "packs": [
       "af_kore",
-      "af_alloy"
+      "af_sarah"
     ],
     "blend": 0.61,
     "lang": "a",
@@ -211,8 +211,8 @@
   },
   "Bandit Bill": {
     "packs": [
-      "am_adam",
-      "am_eric"
+      "am_fenrir",
+      "am_puck"
     ],
     "blend": 0.63,
     "lang": "a",
@@ -222,7 +222,7 @@
   "Trash Panda": {
     "packs": [
       "am_puck",
-      "am_liam"
+      "am_michael"
     ],
     "blend": 0.69,
     "lang": "a",
@@ -231,8 +231,8 @@
   },
   "Rocco": {
     "packs": [
-      "am_fenrir",
-      "am_eric"
+      "am_puck",
+      "am_fenrir"
     ],
     "blend": 0.62,
     "lang": "a",
@@ -241,8 +241,8 @@
   },
   "Masky": {
     "packs": [
-      "am_liam",
-      "am_echo"
+      "am_fenrir",
+      "am_michael"
     ],
     "blend": 0.78,
     "lang": "a",
@@ -252,7 +252,7 @@
   "Dumpster Dot": {
     "packs": [
       "af_aoede",
-      "af_river"
+      "af_kore"
     ],
     "blend": 0.78,
     "lang": "a",
@@ -262,7 +262,7 @@
   "Grimsby": {
     "packs": [
       "am_michael",
-      "am_onyx"
+      "am_fenrir"
     ],
     "blend": 0.76,
     "lang": "a",
@@ -272,7 +272,7 @@
   "Lady Garbage": {
     "packs": [
       "bf_emma",
-      "bf_isabella"
+      "bf_emma"
     ],
     "blend": 0.62,
     "lang": "b",
@@ -281,8 +281,8 @@
   },
   "Croaker": {
     "packs": [
-      "am_onyx",
-      "am_santa"
+      "am_fenrir",
+      "am_michael"
     ],
     "blend": 0.71,
     "lang": "a",
@@ -291,7 +291,7 @@
   },
   "Lily Pad Lou": {
     "packs": [
-      "af_kore",
+      "af_nicole",
       "af_aoede"
     ],
     "blend": 0.77,
@@ -301,8 +301,8 @@
   },
   "Hopscotch": {
     "packs": [
-      "af_jessica",
-      "af_heart"
+      "af_heart",
+      "af_aoede"
     ],
     "blend": 0.73,
     "lang": "a",
@@ -311,7 +311,7 @@
   },
   "Sir Toadsworth": {
     "packs": [
-      "bm_daniel",
+      "bm_george",
       "bm_fable"
     ],
     "blend": 0.68,
@@ -321,8 +321,8 @@
   },
   "Puddles": {
     "packs": [
-      "af_sky",
-      "af_sarah"
+      "af_sarah",
+      "af_nicole"
     ],
     "blend": 0.6,
     "lang": "a",
@@ -331,8 +331,8 @@
   },
   "Bog Boss": {
     "packs": [
-      "am_puck",
-      "am_fenrir"
+      "am_fenrir",
+      "am_puck"
     ],
     "blend": 0.58,
     "lang": "a",
@@ -341,8 +341,8 @@
   },
   "Gulp": {
     "packs": [
-      "am_eric",
-      "am_puck"
+      "am_puck",
+      "am_fenrir"
     ],
     "blend": 0.69,
     "lang": "a",
@@ -351,7 +351,7 @@
   },
   "Chompers": {
     "packs": [
-      "am_eric",
+      "am_puck",
       "am_fenrir"
     ],
     "blend": 0.59,
@@ -361,8 +361,8 @@
   },
   "Dam Dan": {
     "packs": [
-      "am_santa",
-      "am_onyx"
+      "am_michael",
+      "am_fenrir"
     ],
     "blend": 0.69,
     "lang": "a",
@@ -372,7 +372,7 @@
   "Buck Toothington": {
     "packs": [
       "bm_fable",
-      "bm_lewis"
+      "bm_george"
     ],
     "blend": 0.64,
     "lang": "b",
@@ -381,7 +381,7 @@
   },
   "Timber": {
     "packs": [
-      "am_adam",
+      "am_puck",
       "am_michael"
     ],
     "blend": 0.63,
@@ -391,8 +391,8 @@
   },
   "Lodge Lady": {
     "packs": [
-      "af_river",
-      "af_sky"
+      "af_nicole",
+      "af_kore"
     ],
     "blend": 0.7,
     "lang": "a",
@@ -402,7 +402,7 @@
   "Gnawman": {
     "packs": [
       "am_puck",
-      "am_liam"
+      "am_michael"
     ],
     "blend": 0.73,
     "lang": "a",
@@ -411,8 +411,8 @@
   },
   "Dr. Splash": {
     "packs": [
-      "am_puck",
-      "am_adam"
+      "am_fenrir",
+      "am_puck"
     ],
     "blend": 0.81,
     "lang": "a",
@@ -421,7 +421,7 @@
   },
   "Squeaks": {
     "packs": [
-      "am_liam",
+      "am_michael",
       "am_puck"
     ],
     "blend": 0.59,
@@ -431,8 +431,8 @@
   },
   "Cheeks McGee": {
     "packs": [
-      "am_adam",
-      "am_puck"
+      "am_puck",
+      "am_fenrir"
     ],
     "blend": 0.75,
     "lang": "a",
@@ -441,8 +441,8 @@
   },
   "Nibbler": {
     "packs": [
-      "af_heart",
-      "af_aoede"
+      "af_aoede",
+      "af_sarah"
     ],
     "blend": 0.66,
     "lang": "a",
@@ -452,7 +452,7 @@
   "Pudge": {
     "packs": [
       "am_fenrir",
-      "am_eric"
+      "am_puck"
     ],
     "blend": 0.56,
     "lang": "a",
@@ -461,7 +461,7 @@
   },
   "Whisker Biscuit": {
     "packs": [
-      "af_river",
+      "af_kore",
       "af_aoede"
     ],
     "blend": 0.78,
@@ -472,7 +472,7 @@
   "Turbo": {
     "packs": [
       "am_puck",
-      "am_eric"
+      "am_fenrir"
     ],
     "blend": 0.81,
     "lang": "a",
