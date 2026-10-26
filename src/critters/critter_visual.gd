@@ -62,6 +62,7 @@ var outfit: Array[Node3D] = []       ## a rogue's outfit pieces (Outfits), ridin
 var trick: JumpTrick
 var _model_base := Transform3D.IDENTITY
 var _glider: Node3D
+var _glider_path := ""
 var _gun_two_handed := true
 var _tilt := Vector3.ZERO          # glider lean: rotation axis * angle (this node's frame)
 var _glide_t := 0.0
@@ -449,8 +450,11 @@ func _update_trick(delta: float) -> void:
 ## The dandelion-seed parachute held overhead while gliding in from the balloon.
 func set_glider(on: bool) -> void:
 	if on and _glider == null:
-		var choices: Array = GLIDER_VARIANTS.filter(func(p): return ResourceLoader.exists(p))
-		var path: String = choices.pick_random() if not choices.is_empty() else GLIDER_MODEL
+		if _glider_path == "":
+			# (one glider a drop: opened again, it's the same one)
+			var choices: Array = GLIDER_VARIANTS.filter(func(p): return ResourceLoader.exists(p))
+			_glider_path = choices.pick_random() if not choices.is_empty() else GLIDER_MODEL
+		var path := _glider_path
 		_glider = ModelUtil.instantiate(path)
 		if _glider == null:
 			return

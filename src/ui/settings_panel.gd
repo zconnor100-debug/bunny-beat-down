@@ -9,39 +9,70 @@ var _grid: GridContainer
 
 func _ready() -> void:
 	theme = UITheme.theme()
-	custom_minimum_size = Vector2(820, 0)
+	custom_minimum_size = Vector2(900, 0)
 	var v := VBoxContainer.new()
-	v.add_theme_constant_override("separation", 18)
+	v.add_theme_constant_override("separation", 14)
 	add_child(v)
 	var title := UITheme.label("Settings", 52, UITheme.CARROT_LIGHT, true)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(title)
+	# (scrolls on a short screen; the focused option is kept in view for pads)
+	var scroll := ScrollContainer.new()
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.follow_focus = true
+	scroll.custom_minimum_size = Vector2(0, clampf(get_viewport().get_visible_rect().size.y - 330.0, 280.0, 680.0))
+	v.add_child(scroll)
 	_grid = GridContainer.new()
 	_grid.columns = 2
+	_grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_grid.add_theme_constant_override("h_separation", 30)
 	_grid.add_theme_constant_override("v_separation", 12)
-	v.add_child(_grid)
+	scroll.add_child(_grid)
+	_section("Controls")
 	_slider("Mouse sensitivity", &"mouse_sensitivity", 0.03, 0.4, 0.01)
 	_slider("Aim-down-sights sensitivity", &"aim_sensitivity_scale", 0.3, 1.0, 0.05)
 	_check("Invert look", &"invert_y")
 	_slider("Field of view", &"fov", 60.0, 110.0, 1.0)
 	_option("Camera", &"camera_mode", ["Third person", "First person"])
+	_section("Graphics")
+	_option("Graphics quality", &"quality", Graphics.TIER_NAMES)
+	_option("Anti-aliasing", &"anti_aliasing", Graphics.AA_NAMES)
+	_option("Resolution scaling", &"upscaling", Graphics.UPSCALE_NAMES)
+	_option("Graphics API (restart)", &"graphics_api", Graphics.API_NAMES)
+	_section("Display")
+	_option("Window", &"window_mode", Graphics.WINDOW_NAMES)
+	_option("Screen shape", &"screen_shape", Graphics.SHAPE_NAMES)
+	_option("HUD width", &"hud_width", Graphics.HUD_NAMES)
+	_option("Super-ultrawide view", &"widescreen_fov", Graphics.WIDE_FOV_NAMES)
+	_option("V-Sync", &"vsync", Graphics.VSYNC_NAMES)
+	_option("Frame rate cap", &"max_fps", Graphics.FPS_NAMES)
+	_check("Show FPS", &"show_fps")
+	_section("Game")
 	_option("Gore", &"gore", ["Full (blood & limbs)", "Plushie (stuffing)", "Off"])
-	_option("Graphics quality", &"quality", ["Low", "Medium", "High", "Ultra"])
+	_check("Check for updates", &"check_updates")
+	_section("Audio")
 	_slider("Master volume", &"master_volume", 0.0, 1.0, 0.05)
 	_slider("Music volume", &"music_volume", 0.0, 1.0, 0.05)
 	_slider("Effects volume", &"sfx_volume", 0.0, 1.0, 0.05)
 	_slider("Voice volume", &"voice_volume", 0.0, 1.0, 0.05)
-	_check("Show FPS", &"show_fps")
-	_check("Check for updates", &"check_updates")
 	var back := UITheme.button("Back", func(): closed.emit())
 	back.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	v.add_child(back)
-	var note := UITheme.label("Graphics quality applies to the next match.", 16, Color(UITheme.CREAM, 0.7))
+	var note := UITheme.label("Graphics options apply at once; the quality's foliage and sky from the next match, the graphics API "
+		+ "after a restart.\nRunning on %s" % Graphics.running_on(), 16, Color(UITheme.CREAM, 0.7))
 	note.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	note.custom_minimum_size = Vector2(860, 0)
 	v.add_child(note)
 	# pads and keyboards start on the first option (D-pad ← → changes it)
 	UITheme.first_focusable(_grid).grab_focus.call_deferred()
+
+
+## A heading across both columns.
+func _section(text: String) -> void:
+	var l := UITheme.label(text.to_upper(), 20, UITheme.CARROT_LIGHT, true)
+	_grid.add_child(l)
+	_grid.add_child(Control.new())
 
 
 func _unhandled_input(event: InputEvent) -> void:

@@ -13,6 +13,7 @@ var rig: CameraRig
 var match_manager: MatchManager
 
 var _root: Control
+var _screen: Control   # (full-screen effects, under _root)
 var _overlay: HUDOverlay
 var _alive_label: Label
 var _kills_label: Label
@@ -56,24 +57,35 @@ func setup(player_: Critter, rig_: CameraRig, mm: MatchManager) -> void:
 	rig = rig_
 	match_manager = mm
 	layer = 5
+	# full-screen effects (tints, blood, the crosshair and scope overlay) span
+	# the whole screen; the readouts sit in _root, which on a wide screen can
+	# be kept to a 21:9 or 16:9 column (Settings hud_width)
+	_screen = Control.new()
+	_screen.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_screen.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_screen.theme = UITheme.theme()
+	add_child(_screen)
 	_root = Control.new()
 	_root.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_root.theme = UITheme.theme()
 	add_child(_root)
+	get_viewport().size_changed.connect(_fit_width)
+	Settings.changed.connect(func(key): if key == &"hud_width": _fit_width())
+	_fit_width()
 
 	_storm_tint = _tint(Color(0.45, 0.1, 0.6, 0.0))
 	_hurt_tint = _tint(Color(0.7, 0.0, 0.05, 0.0))
 	_blood = Control.new()
 	_blood.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_blood.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_root.add_child(_blood)
+	_screen.add_child(_blood)
 
 	_overlay = HUDOverlay.new()
 	_overlay.hud = self
 	_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_root.add_child(_overlay)
+	_screen.add_child(_overlay)
 
 	# top-left: alive + kills
 	var tl := VBoxContainer.new()
@@ -307,12 +319,24 @@ func _on_rewound() -> void:
 	Audio.play(&"glider_open", -2.0, 0.0)
 
 
+## The readouts kept to a column as wide as Settings hud_width asks (on a
+## screen wider than that; full width otherwise).
+func _fit_width() -> void:
+	if _root == null or not is_inside_tree():
+		return
+	var view := get_viewport().get_visible_rect().size
+	var aspect: float = Graphics.HUD_ASPECT[clampi(int(Settings.get_value(&"hud_width")), 0, Graphics.HUD_ASPECT.size() - 1)]
+	var side := maxf(0.0, (view.x - aspect * view.y) * 0.5) if aspect > 0.0 else 0.0
+	_root.offset_left = side
+	_root.offset_right = -side
+
+
 func _tint(c: Color) -> ColorRect:
 	var r := ColorRect.new()
 	r.color = c
 	r.set_anchors_preset(Control.PRESET_FULL_RECT)
 	r.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_root.add_child(r)
+	_screen.add_child(r)
 	return r
 
 
@@ -657,8 +681,8 @@ class HUDOverlay:
 				var dir := Vector2.from_angle(ang - PI / 2)
 				var tip := c + dir * 184.0
 				draw_colored_polygon(PackedVector2Array([tip, c + dir * 160.0 + dir.orthogonal() * 16.0, c + dir * 160.0 - dir.orthogonal() * 16.0]), col)
-		# vitals
-		var bx := 30.0
+		# vitals (in the HUD's column on a wide screen: hud_width)
+		var bx := 30.0 + hud._root.offset_left
 		var by := size.y - 110.0
 		var w := 360.0
 		_bar(Vector2(bx, by), w, 22.0, p.armor / p.max_armor, UITheme.ACORN, "SHIELD %d" % roundi(p.armor), font)
@@ -677,8 +701,8 @@ class HUDOverlay:
 		var ty := size.y - 300.0
 		for t in _toasts:
 			var a: float = clampf(t[1] / 0.5, 0.0, 1.0)
-			draw_string_outline(font, Vector2(30, ty), t[0], HORIZONTAL_ALIGNMENT_LEFT, -1, 20, 5, Color(0, 0, 0, 0.8 * a))
-			draw_string(font, Vector2(30, ty), t[0], HORIZONTAL_ALIGNMENT_LEFT, -1, 20, Color(UITheme.CREAM, a))
+			draw_string_outline(font, Vector2(30 + hud._root.offset_left, ty), t[0], HORIZONTAL_ALIGNMENT_LEFT, -1, 20, 5, Color(0, 0, 0, 0.8 * a))
+			draw_string(font, Vector2(30 + hud._root.offset_left, ty), t[0], HORIZONTAL_ALIGNMENT_LEFT, -1, 20, Color(UITheme.CREAM, a))
 			ty -= 26.0
 
 	var _boxes: Dictionary = {}

@@ -155,6 +155,41 @@ func test_legs_hang_under_the_glider() -> void:
 	check(body_up < -0.2, "the body leans with it (%.2f)" % body_up)
 
 
+func test_let_go_of_the_glider_to_drop_faster_and_open_it_again() -> void:
+	var c := spawn_critter(BUN, Vector3(30, 0.1, 30), 0.0)
+	await wait_physics(3)
+	c.begin_freefall(Vector3(30, 140, 30), Vector3.ZERO)
+	c.want_jump = true
+	await wait_physics(3)
+	check(c.state == Critter.State.GLIDING and c.has_glided, "the glider is open")
+	var glider := c.visual._glider_path
+	await wait_physics(30)
+	var gliding_fall := -c.velocity.y
+	c.want_jump = true
+	await wait_physics(2)
+	check(c.state == Critter.State.FREEFALL, "Jump while gliding lets go of it")
+	await wait_physics(60)
+	check(-c.velocity.y > gliding_fall * 2.0, "and drops faster (%.1f m/s, gliding %.1f)" % [-c.velocity.y, gliding_fall])
+	check(c._height_above_ground() > Critter.AUTO_GLIDE_HEIGHT or c.state == Critter.State.FREEFALL,
+		"it doesn't snap open again at the usual height once you've let go")
+	c.want_jump = true
+	await wait_physics(2)
+	check(c.state == Critter.State.GLIDING and c.visual._glider_path == glider, "Jump opens the same glider again")
+	# let go once more, and it still opens by itself just above the ground
+	await wait_physics(int(Critter.GLIDER_TOGGLE * 60) + 2)
+	c.want_jump = true
+	await wait_physics(2)
+	var lowest := INF
+	for i in 400:
+		await wait_physics(1)
+		if c.state == Critter.State.FREEFALL:
+			lowest = minf(lowest, c._height_above_ground())
+		if c.state != Critter.State.FREEFALL:
+			break
+	check(c.state == Critter.State.GLIDING or c.state == Critter.State.GROUND, "it opened before the ground")
+	check(lowest >= Critter.LAST_CALL_HEIGHT - 3.0, "no lower than the last call (%.1f m)" % lowest)
+
+
 func test_paws_hold_the_glider_handle() -> void:
 	for id in ["hamster", "frog", "fox"]:
 		var c := spawn_critter("res://data/critters/%s.tres" % id, Vector3(30, 0.1, 30), 0.0)

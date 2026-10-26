@@ -32,6 +32,7 @@ const TIPS := [
 ]
 
 var quality := 2
+var _told_let_go := false   # (the glider tip: once a match)
 var island: Island
 var match_manager: MatchManager
 var rig: CameraRig
@@ -213,7 +214,14 @@ func _on_player_state(s: int) -> void:
 	match s:
 		Critter.State.FREEFALL:
 			rig.spectate_target = null
-			hud.show_message("Wheee!", "%s to pop your dandelion glider" % GameInput.prompt(&"jump"), 3.0)
+			if match_manager.player.has_glided:
+				hud.show_message("Dropping fast!", "%s to open your glider again" % GameInput.prompt(&"jump"), 2.0)
+			else:
+				hud.show_message("Wheee!", "%s to pop your dandelion glider" % GameInput.prompt(&"jump"), 3.0)
+		Critter.State.GLIDING:
+			if not _told_let_go:
+				_told_let_go = true
+				hud.show_message("", "%s to let go and drop faster" % GameInput.prompt(&"jump"), 2.5)
 		Critter.State.GROUND:
 			if match_manager.phase == MatchManager.Phase.DROPPING or match_manager.phase == MatchManager.Phase.PLAYING:
 				hud.show_message("Find a carrot gun!", "Crates and glowing loot have the good stuff", 3.0)

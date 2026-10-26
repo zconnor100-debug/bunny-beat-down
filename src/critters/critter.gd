@@ -19,6 +19,10 @@ const GLIDE_FALL := 4.5
 const GLIDE_SPEED := 11.0
 const FREEFALL_STEER := 14.0
 const AUTO_GLIDE_HEIGHT := 28.0
+## Once you've opened the glider, you can let go of it (Jump) to drop faster
+## and open it again (Jump) any time; it only opens by itself this low.
+const LAST_CALL_HEIGHT := 12.0
+const GLIDER_TOGGLE := 0.35        ## seconds between letting go and opening again
 const CORPSE_LIFETIME := 75.0
 ## Where a critter waits to board the drop vehicle: far below every map, so
 ## it can't fall out of the world or get in anyone's way meanwhile.
@@ -58,6 +62,8 @@ var want_sprint := false
 var want_crouch := false
 var want_prone := false            ## lie down and crawl (players only)
 var want_jump := false             ## edge-triggered; consumed on use
+var has_glided := false            ## opened the glider this drop (so it can be let go of and opened again)
+var _glider_t := 0.0
 var want_melee := false            ## edge-triggered: swing the club
 
 var inventory := Inventory.new()
@@ -479,12 +485,17 @@ func _on_touchdown() -> void:
 func _air_drop_move(delta: float) -> void:
 	var basis := Basis(Vector3.UP, look_yaw)
 	var wish := basis * Vector3(move_input.x, 0, -move_input.y)
+	_glider_t -= delta
+	var height := _height_above_ground()
 	if state == State.FREEFALL:
 		velocity.y = maxf(velocity.y - _gravity * delta, -FREEFALL_TERMINAL)
 		var hv := Vector3(velocity.x, 0, velocity.z).move_toward(wish * FREEFALL_STEER, 20.0 * delta)
 		velocity.x = hv.x
 		velocity.z = hv.z
-		if want_jump or _height_above_ground() < AUTO_GLIDE_HEIGHT:
+		# open it (Jump), or it opens by itself: lower down once you've had it open
+		if (want_jump and _glider_t <= 0.0) or height < (LAST_CALL_HEIGHT if has_glided else AUTO_GLIDE_HEIGHT):
+			has_glided = true
+			_glider_t = GLIDER_TOGGLE
 			_set_state(State.GLIDING)
 			Audio.play_at(&"glider_open", global_position)
 	else:
@@ -492,6 +503,13 @@ func _air_drop_move(delta: float) -> void:
 		var hv := Vector3(velocity.x, 0, velocity.z).move_toward(wish * GLIDE_SPEED, 10.0 * delta)
 		velocity.x = hv.x
 		velocity.z = hv.z
+		# let go of it (Jump) to drop faster, while there's room to open it again
+		if want_jump and _glider_t <= 0.0 and height > LAST_CALL_HEIGHT + 4.0:
+			_glider_t = GLIDER_TOGGLE
+			_set_state(State.FREEFALL)
+			var whoosh := Audio.play_at(&"glider_open", global_position, -6.0, 0.0)
+			if whoosh:
+				whoosh.pitch_scale = 0.7   # (the same flap, lower: folding up)
 	want_jump = false
 	move_and_slide()
 	if _slide_off_slippery():
@@ -602,6 +620,9 @@ func begin_freefall(at: Vector3, initial_velocity: Vector3) -> void:
 	velocity = initial_velocity
 	visible = true
 	process_mode = Node.PROCESS_MODE_INHERIT
+	has_glided = false
+	_glider_t = 0.0
+	visual._glider_path = ""   # (a new drop, perhaps a different glider)
 	_set_state(State.FREEFALL)
 	visual.physics_tick(global_transform, true)
 

@@ -24,7 +24,16 @@ const DEFAULTS := {
 	"music_volume": 0.6,
 	"sfx_volume": 0.9,
 	"voice_volume": 0.9,            # the rogues' voices (RogueVoice)
-	"quality": 2,                   # 0 low, 1 medium, 2 high, 3 ultra
+	"quality": 2,                   # 0 low, 1 medium, 2 high, 3 ultra, 4 epic (Graphics)
+	"anti_aliasing": 0,             # Graphics.AA_NAMES (0: the quality tier's own)
+	"upscaling": 0,                 # Graphics.UPSCALE_NAMES (FSR 2, supersampling)
+	"window_mode": 0,               # Graphics.WINDOW_NAMES
+	"vsync": 0,                     # on, off, adaptive
+	"max_fps": 0,                   # Graphics.FPS_CAPS index (0: unlimited)
+	"hud_width": 0,                 # full width, or a 21:9 / 16:9 column on wide screens (HUD)
+	"screen_shape": 0,              # fill the screen, or standard 16:9 / ultrawide 21:9 with bars (Graphics.SHAPE_NAMES)
+	"widescreen_fov": 1,            # past 21:9, see no wider (Graphics.fov_for)
+	"graphics_api": 0,              # Vulkan, Direct3D 12, Compatibility: next start (Graphics.write_api_override)
 	"show_fps": false,
 	"opponents": 23,
 	"difficulty": Difficulty.NORMAL,
@@ -43,6 +52,16 @@ func _init() -> void:
 	path = TEST_PATH if is_test_run() else REAL_PATH
 	_values = DEFAULTS.duplicate()
 	load_settings()
+
+
+func _ready() -> void:
+	# graphics options take effect as they change (the graphics API: next start)
+	changed.connect(func(key: StringName):
+		if key in Graphics.LIVE_KEYS:
+			Graphics.apply_all()
+		elif key == &"graphics_api":
+			Graphics.write_api_override(int(get_value(key))))
+	Graphics.apply_display.call_deferred()
 
 
 static func is_test_run() -> bool:

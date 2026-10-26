@@ -356,7 +356,7 @@ func flush_batches(quality: int) -> void:
 		var cat: String = e.get("category")
 		mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		var reach := {"grass": 75.0, "flower": 110.0, "bush": 170.0, "reed": 150.0, "lily": 90.0}.get(cat, 100.0) as float
-		var scale_ := [0.55, 0.8, 1.0, 1.35][clampi(quality, 0, 3)] as float
+		var scale_ := [0.55, 0.8, 1.0, 1.35, 1.6][clampi(quality, 0, 4)] as float
 		mmi.visibility_range_end = reach * scale_
 		mmi.visibility_range_end_margin = 12.0
 		mmi.visibility_range_fade_mode = GeometryInstance3D.VISIBILITY_RANGE_FADE_SELF

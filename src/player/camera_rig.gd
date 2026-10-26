@@ -169,7 +169,8 @@ func _process(delta: float) -> void:
 		listener.global_transform = Transform3D(Basis(Vector3.UP, yaw), ear_src.global_position + Vector3.UP * eye_h)
 	var w := target.current_weapon()
 	var fov_scale := lerpf(1.0, w.data.aim_fov_scale if w else 0.85, _aim_blend)
-	camera.fov = Settings.fov * fov_scale
+	var view := get_viewport().get_visible_rect().size
+	camera.fov = Graphics.fov_for(Settings.fov * fov_scale, view.x / maxf(view.y, 1.0))   # (super-ultrawide: see Graphics)
 	_update_viewmodel(delta, w)
 
 

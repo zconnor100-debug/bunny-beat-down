@@ -543,6 +543,18 @@ The full write-up is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 (about 400 MB for Linux and 480 MB for Windows; you need a GPU with Vulkan).
 On Windows the whole game is one file, `BunnyBeatDown.exe`.
 
+**Graphics and screens.** Settings has five quality tiers (Low to **Epic**:
+screen-space reflections from Ultra; volumetric light shafts, finer LODs,
+denser foliage and ultra-soft shadows on Epic), a choice of anti-aliasing
+(FXAA, SMAA, TAA, MSAA up to 8× with SMAA, FSR 2 native AA), resolution
+scaling (FSR 2 Quality/Balanced/Performance or 150% supersampling), window
+mode, V-Sync and a frame-rate cap. For wide screens: the **screen shape**
+(fill the screen, or standard 16:9 / ultrawide 21:9 with black bars), a HUD
+kept to a 16:9 or 21:9 column, and a field of view that stops stretching
+past 21:9. If a GPU draws things wrongly, **Graphics API** switches to
+Direct3D 12 or the Compatibility renderer (after a restart); the settings
+screen says which API and GPU the game is running on.
+
 **Updates are automatic.** Every push that changes the game, once the tests
 pass, is built for Linux and Windows, smoke-tested on each (a headless drop
 onto the island: the Linux build on Linux, the Windows .exe on a Windows

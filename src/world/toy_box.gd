@@ -371,7 +371,7 @@ func _water_disc(c: Vector3, r: float) -> void:
 # ---- toys everywhere --------------------------------------------------------------------------
 
 func _scatter_toys(quality: int) -> void:
-	var density: float = [0.35, 0.6, 1.0, 1.4][clampi(quality, 0, 3)]
+	var density: float = [0.35, 0.6, 1.0, 1.4, 1.75][clampi(quality, 0, 4)]
 	# [builder, count, spacing radius, biome weights it likes (floor, spill, pillows)]
 	var solids := [
 		[func(): return ToyProps.letter_block(rng, rng.randf_range(3.2, 4.5)), 38, 3.4, Vector3(1.0, 0.4, 0.4)],

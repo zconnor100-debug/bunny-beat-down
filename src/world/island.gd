@@ -477,7 +477,7 @@ func _solid_ok(p: Vector2, poi_margin: float) -> bool:
 
 
 func _scatter_ground_cover(quality: int) -> void:
-	var density: float = [0.35, 0.6, 1.0, 1.4][clampi(quality, 0, 3)]
+	var density: float = [0.35, 0.6, 1.0, 1.4, 1.75][clampi(quality, 0, 4)]
 	var area := PI * terrain.island_radius * terrain.island_radius
 	var counts := {"grass": int(area / 8.0 * density), "flower": int(area / 50.0 * density), "bush": int(area / 85.0 * density)}
 	for cat in counts:
@@ -508,7 +508,7 @@ func _scatter_ground_cover(quality: int) -> void:
 func _scatter_swamp(quality: int) -> void:
 	if _swamp_cells.is_empty():
 		return
-	var density: float = [0.35, 0.6, 1.0, 1.4][clampi(quality, 0, 3)]
+	var density: float = [0.35, 0.6, 1.0, 1.4, 1.75][clampi(quality, 0, 4)]
 	var reed := SwampPlants.entry("reed")
 	var lilies := [SwampPlants.entry("pad"), SwampPlants.entry("pad"), SwampPlants.entry("flower")]
 	var clump := FastNoiseLite.new()

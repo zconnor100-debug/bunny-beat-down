@@ -468,7 +468,7 @@ func _drips(bottle: Node3D) -> void:
 # ---- ground cover and food everywhere ---------------------------------------------------------
 
 func _scatter_cage(quality: int) -> void:
-	var density: float = [0.35, 0.6, 1.0, 1.4][clampi(quality, 0, 3)]
+	var density: float = [0.35, 0.6, 1.0, 1.4, 1.75][clampi(quality, 0, 4)]
 	# solid food and toys: [builder, count, spacing radius, biome weights it likes (bed, lagoon, winter)]
 	var solids := [
 		[func(): return CageProps.sunflower_seed(rng, rng.randf_range(1.8, 2.8)), 170, 1.6, Vector3(1.0, 0.1, 0.0)],

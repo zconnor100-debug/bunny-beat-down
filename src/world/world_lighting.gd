@@ -1,6 +1,7 @@
 class_name WorldLighting
 extends Node3D
-## Sun, HDRI sky and post-processing, scaled by the quality setting.
+## Sun, HDRI sky and post-processing, scaled by the quality setting (the
+## tiers' effects, anti-aliasing and resolution: Graphics).
 ## (Only distance fog is used: height fog blanks the viewport on some
 ## NVIDIA/Vulkan drivers with Godot 4.6.)
 
@@ -57,15 +58,14 @@ func build(quality: int) -> void:
 	env.fog_density = 0.0016
 	env.fog_sun_scatter = 0.25
 	env.fog_aerial_perspective = 0.5
-	env.ssao_enabled = quality >= 1
 	env.ssao_radius = 1.2
 	env.ssao_intensity = 1.2
 	env.ssao_sharpness = 0.8
-	env.ssil_enabled = quality >= 3
 	env.sdfgi_enabled = false
 	env.adjustment_enabled = true
 	env.adjustment_saturation = 1.08
 	env.adjustment_contrast = 1.03
+	Graphics.apply_environment(env)   # (SSAO, SSIL, reflections, volumetric light by tier)
 	we.environment = env
 	add_child(we)
 
@@ -77,21 +77,13 @@ func build(quality: int) -> void:
 	sun.shadow_enabled = true
 	sun.shadow_blur = 1.0
 	sun.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS
-	sun.directional_shadow_max_distance = [80.0, 140.0, 220.0, 320.0][clampi(quality, 0, 3)]
+	sun.directional_shadow_max_distance = [80.0, 140.0, 220.0, 320.0, 420.0][clampi(quality, 0, 4)]
+	sun.light_volumetric_fog_energy = 1.4   # (Epic's light shafts)
 	sun.directional_shadow_split_1 = 0.05
 	sun.directional_shadow_split_2 = 0.16
 	sun.directional_shadow_split_3 = 0.42
 	# (a wide sun disc means noisy PCSS penumbras without TAA to smooth them)
 	sun.light_angular_distance = 0.25
 	add_child(sun)
-	var vp := get_viewport()
-	if vp:
-		vp.msaa_3d = [Viewport.MSAA_DISABLED, Viewport.MSAA_2X, Viewport.MSAA_2X, Viewport.MSAA_4X][clampi(quality, 0, 3)]
-		# SMAA on top of MSAA smooths what MSAA misses: specular sparkle on
-		# bumpy ground, thin twigs and leaf-card edges (the "grainy" look)
-		vp.screen_space_aa = Viewport.SCREEN_SPACE_AA_FXAA if quality == 0 else Viewport.SCREEN_SPACE_AA_SMAA
-		vp.use_taa = false
-		# how many pixels a mesh's simpler LOD may be off by before the finer
-		# one is drawn: lower qualities trade a little distant detail for speed
-		vp.mesh_lod_threshold = [4.0, 2.0, 1.0, 1.0][clampi(quality, 0, 3)]
-		RenderingServer.directional_shadow_atlas_set_size([2048, 4096, 4096, 8192][clampi(quality, 0, 3)], true)
+	Graphics.apply_global()
+	Graphics.apply_viewport(get_viewport())
