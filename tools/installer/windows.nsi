@@ -9,6 +9,11 @@
 ; uninstaller in Settings > Apps. Installing a newer version over an older one
 ; just replaces the game. Saves and settings live in %APPDATA%\Godot and are
 ; never touched, not even by the uninstaller.
+;
+; Right-click the desktop icon: "Update Bunny Beat Down" (a verb on shortcuts
+; that applies to this one only, by name; on Windows 11 under "Show more
+; options") runs update.ps1, which installs the newest release over this one.
+; The Start menu folder has an "Update Bunny Beat Down" shortcut too.
 
 Unicode true
 !include "MUI2.nsh"
@@ -24,6 +29,11 @@ Unicode true
 !endif
 !define APP "Bunny Beat Down"
 !define KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\BunnyBeatDown"
+!define VERB "Software\Classes\lnkfile\shell\BunnyBeatDownUpdate"
+!define UPDATE_ARGS '-NoProfile -ExecutionPolicy Bypass -File "$INSTDIR\update.ps1"'
+!ifndef UPDATER
+  !define UPDATER "update-windows.ps1"
+!endif
 !ifndef ICON
   !define ICON "bunny-beat-down.ico"   ; (makensis runs in this folder)
 !endif
@@ -65,13 +75,22 @@ Section "Install"
   SetOutPath "$INSTDIR"
   File "/oname=BunnyBeatDown.exe" "${EXE}"
   File "/oname=bunny-beat-down.ico" "${ICON}"
+  File "/oname=update.ps1" "${UPDATER}"
   WriteUninstaller "$INSTDIR\Uninstall.exe"
 
   ; the desktop launcher and the Start menu
   CreateShortcut "$DESKTOP\${APP}.lnk" "$INSTDIR\BunnyBeatDown.exe" "" "$INSTDIR\bunny-beat-down.ico" 0 SW_SHOWNORMAL "" "Play ${APP}"
   CreateDirectory "$SMPROGRAMS\${APP}"
   CreateShortcut "$SMPROGRAMS\${APP}\${APP}.lnk" "$INSTDIR\BunnyBeatDown.exe" "" "$INSTDIR\bunny-beat-down.ico" 0
+  CreateShortcut "$SMPROGRAMS\${APP}\Update ${APP}.lnk" "powershell.exe" '${UPDATE_ARGS}' "$INSTDIR\bunny-beat-down.ico" 0
   CreateShortcut "$SMPROGRAMS\${APP}\Uninstall ${APP}.lnk" "$INSTDIR\Uninstall.exe"
+
+  ; right-click the desktop icon: "Update Bunny Beat Down" (only on shortcuts named ${APP})
+  WriteRegStr HKCU "${VERB}" "" "Update ${APP}"
+  WriteRegStr HKCU "${VERB}" "MUIVerb" "Update ${APP}"
+  WriteRegStr HKCU "${VERB}" "Icon" "$INSTDIR\bunny-beat-down.ico"
+  WriteRegStr HKCU "${VERB}" "AppliesTo" 'System.ItemNameDisplay:="${APP}" OR System.FileName:="${APP}.lnk"'
+  WriteRegStr HKCU "${VERB}\command" "" 'powershell.exe ${UPDATE_ARGS}'
 
   ; Settings > Apps
   WriteRegStr HKCU "Software\${APP}" "InstallDir" "$INSTDIR"
@@ -92,6 +111,8 @@ Section "Uninstall"
   RMDir /r "$SMPROGRAMS\${APP}"
   Delete "$INSTDIR\BunnyBeatDown.exe"
   Delete "$INSTDIR\bunny-beat-down.ico"
+  Delete "$INSTDIR\update.ps1"
+  DeleteRegKey HKCU "${VERB}"
   Delete "$INSTDIR\Uninstall.exe"
   RMDir "$INSTDIR"
   DeleteRegKey HKCU "${KEY}"

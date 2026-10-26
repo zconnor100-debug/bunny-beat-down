@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Bunny Beat Down for Linux: put it in your applications menu and a launcher
-# on your desktop (Bun in his acorn helmet as the icon). Packed into the Linux
+# on your desktop (Bun in his acorn helmet as the icon), with "Update Bunny
+# Beat Down" when you right-click it (update.sh). Packed into the Linux
 # download by the release workflow; run it from the folder you extracted:
 #   ./install.sh            add the menu entry and desktop launcher
 #   ./install.sh --remove   take them away again (the game folder stays)
@@ -11,9 +12,11 @@ APPS="${XDG_DATA_HOME:-$HOME/.local/share}/applications"
 ICONS="${XDG_DATA_HOME:-$HOME/.local/share}/icons/hicolor/512x512/apps"
 DESKTOP_DIR="$(xdg-user-dir DESKTOP 2>/dev/null || echo "$HOME/Desktop")"
 ENTRY="bunny-beat-down.desktop"
+SCRIPTS="${XDG_DATA_HOME:-$HOME/.local/share}/nautilus/scripts"
+UPDATER="$HERE/update.sh"
 
 if [ "${1:-}" = "--remove" ]; then
-  rm -f "$APPS/$ENTRY" "$DESKTOP_DIR/$ENTRY" "$ICONS/bunny-beat-down.png"
+  rm -f "$APPS/$ENTRY" "$DESKTOP_DIR/$ENTRY" "$ICONS/bunny-beat-down.png" "$SCRIPTS/Update Bunny Beat Down"
   echo "Removed Bunny Beat Down from the menu and the desktop."
   exit 0
 fi
@@ -24,6 +27,7 @@ if [ ! -f "$EXEC" ]; then
   exit 1
 fi
 chmod +x "$EXEC"
+[ -f "$UPDATER" ] && chmod +x "$UPDATER"
 mkdir -p "$APPS" "$ICONS"
 cp "$HERE/bunny-beat-down.png" "$ICONS/bunny-beat-down.png"
 cat > "$APPS/$ENTRY" <<DESK
@@ -41,8 +45,21 @@ Categories=Game;ActionGame;
 Keywords=bunny;roguelike;battle royale;carrot;
 StartupNotify=true
 StartupWMClass=Bunny Beat Down
+Actions=update;
+
+[Desktop Action update]
+Name=Update Bunny Beat Down
+Exec="$UPDATER"
 DESK
 chmod +x "$APPS/$ENTRY"
+# right-click "Update Bunny Beat Down": in the menu and the dock (the launcher's
+# action above) and, on the GNOME desktop, under Scripts
+mkdir -p "$SCRIPTS"
+cat > "$SCRIPTS/Update Bunny Beat Down" <<SCRIPT
+#!/usr/bin/env bash
+exec "$UPDATER"
+SCRIPT
+chmod +x "$SCRIPTS/Update Bunny Beat Down"
 if [ -d "$DESKTOP_DIR" ]; then
   cp "$APPS/$ENTRY" "$DESKTOP_DIR/$ENTRY"
   chmod +x "$DESKTOP_DIR/$ENTRY"

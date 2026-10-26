@@ -102,10 +102,15 @@ jobs:
           mkdir -p pkg/BunnyBeatDown
           cp build/linux/BunnyBeatDown.x86_64 build/linux/BunnyBeatDown.pck pkg/BunnyBeatDown/
           cp tools/installer/install-linux.sh pkg/BunnyBeatDown/install.sh
+          cp tools/installer/update-linux.sh pkg/BunnyBeatDown/update.sh
           cp icon.png pkg/BunnyBeatDown/bunny-beat-down.png
+          echo "${{ steps.v.outputs.version }}" > pkg/BunnyBeatDown/version.txt
           mkdir -p /tmp/fakehome/Desktop
           HOME=/tmp/fakehome bash pkg/BunnyBeatDown/install.sh
           test -f /tmp/fakehome/Desktop/bunny-beat-down.desktop
+          grep -q "Desktop Action update" /tmp/fakehome/Desktop/bunny-beat-down.desktop
+          test -x "/tmp/fakehome/.local/share/nautilus/scripts/Update Bunny Beat Down"
+          bash pkg/BunnyBeatDown/update.sh --check pkg/BunnyBeatDown
           (cd pkg && XZ_OPT="-6 -T0" tar -cJf ../BunnyBeatDown-linux-x86_64.tar.xz BunnyBeatDown)
           # Windows: the installer (desktop + Start menu shortcuts, an uninstaller),
           # and the portable zip (the game is inside the .exe, embed_pck, so a
@@ -156,6 +161,13 @@ jobs:
           $lnk = (New-Object -ComObject WScript.Shell).CreateShortcut("$desk\Bunny Beat Down.lnk")
           Write-Host "desktop shortcut -> $($lnk.TargetPath) (icon $($lnk.IconLocation))"
           if ($lnk.TargetPath -ne "$dir\BunnyBeatDown.exe") { throw "the desktop shortcut points somewhere else" }
+          # right-click on the desktop icon: "Update Bunny Beat Down", as the shell lists it
+          $item = (New-Object -ComObject Shell.Application).Namespace($desk).ParseName("Bunny Beat Down.lnk")
+          $verbs = @($item.Verbs() | ForEach-Object { $_.Name })
+          Write-Host "desktop icon menu: $($verbs -join ' | ')"
+          if (-not ($verbs | Where-Object { $_ -like "*Update Bunny Beat Down*" })) { throw "no Update on the desktop icon's menu" }
+          if (-not (Test-Path "$menu\Update Bunny Beat Down.lnk")) { throw "no Update in the Start menu" }
+          if (-not (Test-Path "$dir\update.ps1")) { throw "no update.ps1" }
           "WIN=$dir\BunnyBeatDown.exe" | Out-File -FilePath $env:GITHUB_ENV -Append
       - name: Smoke test the installed game
         shell: pwsh
@@ -175,6 +187,26 @@ jobs:
             }
           }
           if (-not $passed) { throw "The Windows build didn't pass its smoke test" }
+      - name: Update (an older install brought up to the newest release)
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BBD_TEST: "1"
+        run: |
+          $dir = Join-Path $env:LOCALAPPDATA "Programs\Bunny Beat Down"
+          $key = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\BunnyBeatDown"
+          powershell -NoProfile -ExecutionPolicy Bypass -File "$dir\update.ps1" -CheckOnly
+          $latest = (gh release view --repo "${{ github.repository }}" --json tagName -q .tagName).TrimStart("v")
+          $assets = @(gh release view --repo "${{ github.repository }}" --json assets -q ".assets[].name")
+          if ($assets -contains "BunnyBeatDown-Setup-windows-x86_64.exe") {
+            Set-ItemProperty $key -Name DisplayVersion -Value "0.0.1"   # (pretend it's old)
+            powershell -NoProfile -ExecutionPolicy Bypass -File "$dir\update.ps1"
+            $now = (Get-ItemProperty $key).DisplayVersion
+            Write-Host "after the update: $now (latest release $latest)"
+            if ($now -ne $latest) { throw "the update didn't install $latest" }
+          } else {
+            Write-Host "(the latest release, $latest, has no installer to update to yet)"
+          }
       - name: Uninstall, and the portable zip
         shell: pwsh
         run: |

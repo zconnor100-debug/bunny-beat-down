@@ -543,10 +543,14 @@ The full write-up is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 (about 400 MB for Linux and 480 MB for Windows; you need a GPU with Vulkan).
 On Windows, run `BunnyBeatDown-Setup-windows-x86_64.exe`: it installs the game
 (no admin rights needed) and puts a Bunny Beat Down shortcut on the desktop
-and in the Start menu, with an uninstaller in Settings → Apps; or take the
+and in the Start menu, with an uninstaller in Settings → Apps. Right-click
+that desktop icon → "Update Bunny Beat Down" (on Windows 11 under "Show more
+options", or from the Start menu) to install the newest release over it;
+or take the
 zip, which is the whole game in one `BunnyBeatDown.exe`. On Linux, extract
 the tarball and run `./install.sh` in the `BunnyBeatDown` folder for a
-desktop launcher and a menu entry (`tools/installer/`).
+desktop launcher and a menu entry; right-click it → "Update Bunny Beat Down"
+(on the GNOME desktop under Scripts) to update (`tools/installer/`).
 
 **Graphics and screens.** Settings has five quality tiers (Low to **Epic**:
 screen-space reflections from Ultra; volumetric light shafts, finer LODs,

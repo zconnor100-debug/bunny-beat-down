@@ -35,7 +35,8 @@ def main() -> None:
     out += [
         "### Download and play",
         "- **Windows:** `BunnyBeatDown-Setup-windows-x86_64.exe` (recommended). Run it: it installs the game and puts a "
-        "**Bunny Beat Down** shortcut on your desktop and in the Start menu (uninstall from Settings → Apps). Windows may "
+        "**Bunny Beat Down** shortcut on your desktop and in the Start menu (uninstall from Settings → Apps). To update later, "
+        "right-click the desktop icon → **Update Bunny Beat Down** (on Windows 11: Show more options first). Windows may "
         "warn that it's from an unknown publisher (it isn't signed): click **More info → Run anyway**. Or take "
         "`BunnyBeatDown-windows-x86_64.zip`: one `BunnyBeatDown.exe` to put anywhere, no install.",
         "- **Linux:** `BunnyBeatDown-linux-x86_64.tar.xz`. Extract it and run `./install.sh` in the `BunnyBeatDown` folder "
