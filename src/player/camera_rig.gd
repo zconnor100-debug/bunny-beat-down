@@ -9,6 +9,8 @@ const TP_DISTANCE := 2.5
 const TP_AIM_DISTANCE := 1.35
 const TP_SHOULDER := 0.55
 const DROP_DISTANCE := 7.0
+const OUTFIT_FADE := 0.8          ## how see-through your own outfit goes over the crosshair
+const OUTFIT_FADE_MARGIN := 36.0  ## pixels round the crosshair kept clear
 
 var target: Critter
 var yaw := 0.0
@@ -172,6 +174,41 @@ func _process(delta: float) -> void:
 	var view := get_viewport().get_visible_rect().size
 	camera.fov = Graphics.fov_for(Settings.fov * fov_scale, view.x / maxf(view.y, 1.0))   # (super-ultrawide: see Graphics)
 	_update_viewmodel(delta, w)
+	_fade_outfit(delta)
+
+
+## Your own outfit fades away where it would hide the crosshair (a
+## mortarboard on a raccoon's big head, seen over its shoulder), and comes
+## back when it's clear of it.
+func _fade_outfit(delta: float) -> void:
+	var v := target.visual if target else null
+	if v == null or v.outfit.is_empty():
+		return
+	var centre := get_viewport().get_visible_rect().size * 0.5
+	for piece in v.outfit:
+		if not is_instance_valid(piece) or not piece.is_inside_tree():
+			continue
+		var want := OUTFIT_FADE if _fp_blend < 0.5 and _screen_rect(piece).grow(OUTFIT_FADE_MARGIN).has_point(centre) else 0.0
+		for g in ModelUtil.find_all(piece, "GeometryInstance3D"):
+			var gi := g as GeometryInstance3D
+			gi.transparency = move_toward(gi.transparency, want, delta * 5.0)
+
+
+## Where a node's meshes are on screen (an empty rect if behind the camera).
+func _screen_rect(n: Node) -> Rect2:
+	var out := Rect2()
+	var first := true
+	for g in ModelUtil.find_all(n, "VisualInstance3D"):
+		var vi := g as VisualInstance3D
+		var box := vi.global_transform * vi.get_aabb()
+		for i in 8:
+			var p := box.get_endpoint(i)
+			if camera.is_position_behind(p):
+				continue
+			var s := camera.unproject_position(p)
+			out = Rect2(s, Vector2.ZERO) if first else out.expand(s)
+			first = false
+	return out
 
 
 ## The world point under the crosshair (what shots converge on).

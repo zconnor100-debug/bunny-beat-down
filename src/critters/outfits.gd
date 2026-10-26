@@ -97,8 +97,8 @@ const PIECES := {
 	"star_glasses": {"slot": "glasses", "size": 1.1},
 	"glasses_3d": {"slot": "glasses"},
 	"pixel_shades": {"slot": "glasses", "yaw": 90.0},
-	"sapphire_necklace": {"slot": "pendant", "yaw": 90.0, "roll": 90.0},
-	"ring_necklace": {"slot": "collar", "fit": 1.2},
+	"sapphire_necklace": {"slot": "collar", "yaw": 90.0, "roll": 30.0, "hole": [0.32, 0.0045], "fit": 1.06, "rim": 0.15, "flat": 0.35},
+	"ring_necklace": {"slot": "collar", "fit": 1.2, "flat": 0.45, "rim": 0.21},
 	"jetpack": {"slot": "pack"},
 	"fairy_wings": {"slot": "wings", "two_sided": true},
 	"dark_wings": {"slot": "wings", "size": 1.3, "two_sided": true},
@@ -782,8 +782,8 @@ static func _place(f: OutfitFit, id: String, spec: Dictionary, turn: Basis, box:
 			k = maxf(f.neck_w, f.head_w * 0.55) * 0.5 * size / w
 			at = Vector3(f.head_c.x - box.get_center().x * k, y - box.get_center().y * k, f.front_at(y) + f.head_d * 0.01 - box.position.z * k)
 		"pendant":
-			# a necklace that hangs flat down the chest from under the chin
-			var top := minf(lerpf(f.shoulder_y, minf(f.neck_y, f.chin_y), 0.55), f.chin_y - f.head_h * 0.05)
+			# a necklace that hangs flat at the front of the neck, from under the chin
+			var top := minf(lerpf(f.shoulder_y, minf(f.neck_y, f.chin_y), 0.9), f.chin_y - f.head_h * 0.03)
 			k = maxf(maxf(f.body_width_at(top), f.neck_w), f.head_w * 0.6) * 0.6 * size / w
 			var front := -INF
 			for i in 4:

@@ -218,3 +218,48 @@ func test_rogues_talk_about_what_you_wear() -> void:
 	check(KillCam.look_line(true, false, "wizard's hat") == "Dressed to win: your wizard's hat", "the replay notes your outfit when you won")
 	check(KillCam.look_line(false, true, "wizard's hat").begins_with("Beaten down in"), "or went down in it")
 	check(KillCam.look_line(false, false, "wizard's hat") == "" and KillCam.look_line(true, false, "") == "", "and says nothing otherwise")
+
+
+func test_your_outfit_never_hides_the_crosshair() -> void:
+	# a raccoon (the biggest head) in a mortarboard, seen over its shoulder
+	var you := spawn_critter("res://data/critters/raccoon.tres", Vector3(0, 0.1, 0), 0.0)
+	var rig := CameraRig.new()
+	add_child(rig)
+	rig.set_target(you)
+	rig.first_person = false
+	rig.yaw = 0.0
+	rig.pitch = -0.35   # (looking down a little: the hat's in the way)
+	await wait_physics(3)
+	var hat := Outfits.wear_piece(you.visual, "grad_cap")
+	var specs := Outfits.wear_piece(you.visual, "heart_glasses")
+	for i in 40:
+		await wait_frames(1)
+	var centre := rig.get_viewport().get_visible_rect().size * 0.5
+	var over := rig._screen_rect(hat).grow(CameraRig.OUTFIT_FADE_MARGIN).has_point(centre)
+	var faded := (ModelUtil.find_all(hat, "GeometryInstance3D")[0] as GeometryInstance3D).transparency
+	if over:
+		check(faded > 0.5, "the hat over the crosshair fades out (%.2f)" % faded)
+	else:
+		check(faded == 0.0, "a hat clear of the crosshair stays solid (%.2f)" % faded)
+	var g := ModelUtil.find_all(specs, "GeometryInstance3D")[0] as GeometryInstance3D
+	check(g.transparency == 0.0 or rig._screen_rect(specs).grow(CameraRig.OUTFIT_FADE_MARGIN).has_point(centre),
+		"only what's in the way fades")
+	rig.pitch = 0.6   # (looking up: the hat drops out of the way)
+	for i in 40:
+		await wait_frames(1)
+	if not rig._screen_rect(hat).grow(CameraRig.OUTFIT_FADE_MARGIN).has_point(centre):
+		check((ModelUtil.find_all(hat, "GeometryInstance3D")[0] as GeometryInstance3D).transparency < 0.05, "and comes back once it's clear")
+	rig.queue_free()
+
+
+func test_necklaces_go_round_the_neck() -> void:
+	for sp in ["bun", "fox", "raccoon", "hamster"]:
+		var c := spawn_critter("res://data/critters/%s.tres" % sp, Vector3(0, 0.1, 0))
+		await wait_physics(2)
+		var f := OutfitFit.of(c.visual)
+		for id in ["sapphire_necklace", "ring_necklace"]:
+			var box := _box_in(c.visual, Outfits.wear_piece(c.visual, id), &"chest")
+			check(box.end.y > f.shoulder_y and box.position.y > f.chest_y - f.head_h * 0.1,
+				"%s: the %s is round the neck (%.2f..%.2f; shoulders %.2f, chest %.2f)" % [sp, id, box.position.y, box.end.y, f.shoulder_y, f.chest_y])
+		c.queue_free()
+		await wait_physics(1)
