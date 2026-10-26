@@ -12,7 +12,9 @@ extends SceneTree
 ## for the tall phone cut, record at --resolution 1080x1920.
 ## The 30-second phone reel is recorded a map at a time ("reel island", "reel
 ## cage", "reel toybox": tests/trailer_reel_stage.gd) and cut together by
-## tools/make_reel.py.
+## tools/make_reel.py. "The Hunt" phone cut is the same, a map at a time
+## ("hunt island", "hunt cage", "hunt toybox": tests/trailer_hunt_stage.gd),
+## cut by tools/make_hunt_trailer.py.
 
 
 func _initialize() -> void:
@@ -25,4 +27,6 @@ func _start() -> void:
 	var stage := "res://tests/trailer_cage_stage.gd" if a.has("cage") else ("res://tests/trailer_toybox_stage.gd" if a.has("toybox") else "res://tests/trailer_stage.gd")
 	if a.has("reel"):
 		stage = "res://tests/trailer_reel_stage.gd"   # (the phone reel: "reel island|cage|toybox")
+	if a.has("hunt"):
+		stage = "res://tests/trailer_hunt_stage.gd"   # (the hunt: "hunt island|cage|toybox")
 	root.add_child(load(stage).new())

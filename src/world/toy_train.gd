@@ -145,11 +145,13 @@ func _check_bonks() -> void:
 		info.position = c.get_chest_position()
 		info.direction = fwd
 		info.impulse = 14.0
-		c.take_damage(info)
 		var side := fwd.cross(Vector3.UP).normalized()
 		if side.dot(c.global_position - cars[0].global_position) < 0.0:
 			side = -side
+		# (thrown before the hit lands, so one the train finishes off flies as a
+		# ragdoll too, instead of folding up in front of the engine)
 		c.velocity = fwd * SPEED * 0.8 + side * 9.0 + Vector3.UP * 7.0
+		c.take_damage(info)
 		Audio.play_at(&"melee_hit", c.global_position, 2.0, 0.1)
 
 

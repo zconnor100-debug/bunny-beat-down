@@ -82,6 +82,28 @@ func test_ragdoll_falls_to_ground() -> void:
 	check(head.y > -0.2, "ragdoll did not fall through the floor (y=%.2f)" % head.y)
 
 
+func test_a_squirrels_tail_goes_with_its_ragdoll() -> void:
+	# (its tail and hip bones are roots of their own beside the pelvis: the body
+	# flew off without them and the skin stretched across the floor between)
+	var c := spawn_critter("res://data/critters/squirrel.tres", Vector3(0, 0.1, 0))
+	await wait_physics(3)
+	var skel := c.visual.skeleton
+	var tail: int = c.visual.rig.chains[&"tail"][0]
+	var gap := func() -> float:
+		return (skel.global_transform * skel.get_bone_global_pose(tail).origin).distance_to(c.visual.bone_world_position(&"hips"))
+	var before: float = gap.call()
+	var info := DamageInfo.make(500.0, DamageInfo.Kind.BULLET, null)
+	info.direction = Vector3(0, 0.3, -1).normalized()
+	info.impulse = 30.0
+	info.bone_role = &"chest"
+	info.position = c.get_chest_position()
+	c.take_damage(info)
+	await wait_physics(60)
+	await wait_frames(2)
+	check(c.visual.bone_world_position(&"hips").distance_to(Vector3(0, 0.5, 0)) > 0.2, "the body was thrown")
+	check(absf(gap.call() - before) < 0.1, "the tail stayed on it (%.2f m from the hips, %.2f before)" % [gap.call(), before])
+
+
 func test_dismember_spawns_gib_and_hides_limb() -> void:
 	Settings.set_value(&"gore", Settings.Gore.BLOOD, false)
 	var c := spawn_critter(TEST_DEF, Vector3(0, 0.1, 0))

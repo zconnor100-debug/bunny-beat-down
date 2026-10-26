@@ -18,7 +18,13 @@ gore, and floppy physics ears are included.
 
 Built in **Godot 4.6** (GDScript, Jolt physics, Forward+).
 
-▶ **[The new 30-second trailer](docs/trailer_1080p.mp4)** in 1080p (with sound;
+▶ **[The Hunt](docs/trailer_hunt_phone.mp4)**, a 30-second phone trailer (with
+sound): Bun is the quarry of a hunting party of the Cast's nobles across all
+three maps (Buck Toothington sounds the "Tally-ho!", Sir Reynard wants you to
+keep running, it's terribly sporting), and the quarry bites back: a rocket,
+a golden shotgun and the toy train, the ragdolls in slow motion.
+
+▶ **[The 30-second trailer](docs/trailer_1080p.mp4)** in 1080p (with sound;
 also [cut for phones](docs/trailer_phone.mp4)):
 30-critter brawls on all three maps, the toy train ploughing through a
 battle, a rocket into a huddle in slow motion, carrots that split and pop, a

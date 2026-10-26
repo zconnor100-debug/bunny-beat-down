@@ -19,6 +19,7 @@ const SHAKY := 0.04            ## the hand-held wobble of the action cameras (ra
 
 var out_dir := ""
 var map := "island"
+var opponents := 40            ## bots in the match (tests/trailer_hunt_stage.gd wants every rogue)
 var game: Node
 var mm: MatchManager
 var bun: Critter
@@ -159,7 +160,7 @@ func _fade_title(to: float, seconds: float) -> void:
 func _run() -> void:
 	var settings: Node = get_tree().root.get_node("Settings")
 	settings.set_value(&"quality", 2, false)
-	settings.set_value(&"opponents", 40, false)
+	settings.set_value(&"opponents", opponents, false)
 	settings.set_value(&"difficulty", 1, false)
 	settings.set_value(&"seed", SEEDS[map], false)
 	settings.set_value(&"map", map, false)

@@ -152,6 +152,8 @@ func _process(delta: float) -> void:
 	_update_trick(delta)
 	_update_body_xf()
 	_size_name_tag()
+	if ragdolled and not _loose.is_empty():
+		_follow_loose_bones()
 
 
 func set_first_person(on: bool) -> void:
@@ -781,12 +783,56 @@ func go_ragdoll(velocity: Vector3) -> void:
 		(area as Area3D).collision_layer = 0
 	for pb in physical_bones.values():
 		(pb as PhysicalBone3D).collision_layer = Layers.RAGDOLL
+	_note_loose_bones()
 	phys_sim.active = true
 	phys_sim.physical_bones_start_simulation()
 	for pb in physical_bones.values():
 		(pb as PhysicalBone3D).linear_velocity = velocity
 	if holder:
 		holder.visible = false
+
+
+## Bones hanging straight off the skeleton's root rather than off the body, or
+## roots of their own (a squirrel's tail, and the two hip bones its thighs hang
+## from, are three more roots beside its pelvis), aren't moved by the ragdoll:
+## the body flew off and left them where it stood, the skin stretched across
+## the floor between. At death each one's place on the hips is kept, and from
+## then on it's put back there every frame (_follow_loose_bones), so it goes
+## with the body. (The skeleton itself isn't changed: the ragdoll can't take
+## bones changing parents under it.)
+func _note_loose_bones() -> void:
+	var hips: int = rig.bone.get(&"hips", -1)
+	if hips < 0:
+		return
+	var above := {}   # (the bones the hips hang from)
+	var a := skeleton.get_bone_parent(hips)
+	while a >= 0:
+		above[a] = true
+		a = skeleton.get_bone_parent(a)
+	var parts := {}
+	for pb: PhysicalBone3D in physical_bones.values():
+		parts[skeleton.find_bone(pb.bone_name)] = true
+	var hg := skeleton.get_bone_global_pose(hips)
+	for b in skeleton.get_bone_count():
+		var parent := skeleton.get_bone_parent(b)
+		if b == hips or above.has(b) or parts.has(b) or not (parent < 0 or above.has(parent)):
+			continue
+		_loose[b] = hg.affine_inverse() * skeleton.get_bone_global_pose(b)
+	_loose_hips = hips
+
+
+func _follow_loose_bones() -> void:
+	var hg := current_bone_global(_loose_hips)
+	for b: int in _loose:
+		var g: Transform3D = hg * _loose[b]
+		var parent := skeleton.get_bone_parent(b)
+		var local := g if parent < 0 else current_bone_global(parent).affine_inverse() * g
+		skeleton.set_bone_pose_position(b, local.origin)
+		skeleton.set_bone_pose_rotation(b, local.basis.get_rotation_quaternion())
+
+
+var _loose := {}   # bone -> where it sat on the hips at death
+var _loose_hips := -1
 
 
 func push_bone(role: StringName, impulse: Vector3, at: Vector3) -> void:
