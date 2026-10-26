@@ -27,6 +27,8 @@ func _ready() -> void:
 	_build_ui()
 	Audio.play_music("menu")
 	Run.in_match = false
+	if args.has(GraphicsTest.ARG):   # (restarted into another graphics API from the check)
+		_open_graphics_test.call_deferred()
 	if GameSession.open_trail:   # (back from a run's match)
 		GameSession.open_trail = false
 		_open_trail()
@@ -222,8 +224,26 @@ func _close_overlay() -> void:
 
 func _open_settings() -> void:
 	var p := SettingsPanel.new()
+	p.allow_test = true
 	p.closed.connect(_close_overlay)
+	p.test_graphics.connect(_open_graphics_test)
 	_show_overlay(p)
+
+
+## The graphics check (GraphicsTest), over everything; back to Settings after.
+func _open_graphics_test() -> void:
+	if _overlay:
+		_overlay.queue_free()
+		_overlay = null
+	_menu.visible = false
+	var layer := CanvasLayer.new()
+	layer.layer = 20
+	add_child(layer)
+	var test := GraphicsTest.new()
+	layer.add_child(test)
+	test.closed.connect(func():
+		layer.queue_free()
+		_open_settings())
 
 
 func _open_burrow() -> void:

@@ -3,6 +3,9 @@ extends PanelContainer
 ## Every player-facing option, bound straight to the Settings autoload.
 
 signal closed
+signal test_graphics   ## "Test graphics" pressed (offered when allow_test: the main menu opens GraphicsTest)
+
+var allow_test := false
 
 var _grid: GridContainer
 
@@ -39,6 +42,11 @@ func _ready() -> void:
 	_option("Anti-aliasing", &"anti_aliasing", Graphics.AA_NAMES)
 	_option("Resolution scaling", &"upscaling", Graphics.UPSCALE_NAMES)
 	_option("Graphics API (restart)", &"graphics_api", Graphics.API_NAMES)
+	if allow_test:
+		_row_label("See how it all looks")
+		var test := UITheme.button("Test graphics", func(): test_graphics.emit())
+		test.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+		_grid.add_child(test)
 	_section("Display")
 	_option("Window", &"window_mode", Graphics.WINDOW_NAMES)
 	_option("Screen shape", &"screen_shape", Graphics.SHAPE_NAMES)
