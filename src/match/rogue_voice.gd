@@ -15,6 +15,9 @@ extends AudioStreamPlayer3D
 const BANK := "res://assets/voices/voices.json"
 const MAX_AT_ONCE := 4          ## voices playing at once (the rest go unsaid)
 const NUM_MAX := 60             ## scores past this are read as this (tools/voices NUM_MAX)
+const LOUDER_DB := 4.0          ## over the clips' own level (the Voice bus limits the peaks: Audio)
+const CARRY := 22.0             ## metres a voice keeps its full loudness to (unit_size; a shot's is 6)
+const HEARD_TO := 150.0         ## metres a voice is heard to at all
 
 static var _bank: Dictionary = {}
 static var _loaded := false
@@ -49,9 +52,13 @@ static func speak(c: Critter, said: Dictionary) -> RogueVoice:
 	var v := RogueVoice.new()
 	v.stream = stream
 	v.bus = &"Voice"
-	v.unit_size = 9.0
-	v.max_distance = 70.0
-	v.attenuation_filter_cutoff_hz = 7000.0
+	# loud, and carrying: a taunt from across the field still reads over the
+	# gunfire, only a little muffled by the distance
+	v.volume_db = LOUDER_DB
+	v.unit_size = CARRY
+	v.max_distance = HEARD_TO
+	v.attenuation_filter_cutoff_hz = 12000.0
+	v.attenuation_filter_db = -10.0
 	v._parts = parts
 	c.visual.add_child(v)
 	v.position = Vector3(0, c.visual.rig.world_head_top if c.visual.rig else 1.2, 0)

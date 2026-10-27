@@ -54,3 +54,31 @@ func test_a_rogue_says_it_from_where_it_stands() -> void:
 	nobody.display_name = "Squirrel 7"
 	check(RogueVoice.speak(nobody, said) == null, "a critter that isn't a rogue says nothing")
 	check(AudioServer.get_bus_index(&"Voice") >= 0, "the Voice bus exists (its volume: Settings voice_volume)")
+
+
+func test_a_taunt_carries_across_the_field_over_the_gunfire() -> void:
+	make_arena()
+	var c := spawn_critter("res://data/critters/squirrel.tres", Vector3.ZERO)
+	c.display_name = "Nutsy"
+	await wait_physics(2)
+	var v := RogueVoice.speak(c, Cast.say("says", String(Cast.member("Nutsy").says)))
+	check(v != null, "Nutsy speaks")
+	# inverse-distance falloff: how much quieter it is 40 m off, against a shot there
+	var at40 := linear_to_db(v.unit_size / 40.0) + v.volume_db
+	var shot40 := linear_to_db(6.0 / 40.0)
+	check(at40 > -3.0 and at40 > shot40 + 10.0, "40 m off a taunt is still loud (%.1f dB, a shot %.1f dB)" % [at40, shot40])
+	check(v.max_distance >= 140.0 and v.attenuation_filter_cutoff_hz >= 10000.0, "and heard, not mumbled, as far as the gunfire carries")
+	var voice := AudioServer.get_bus_index(&"Voice")
+	var limited := false
+	for i in AudioServer.get_bus_effect_count(voice):
+		limited = limited or AudioServer.get_bus_effect(voice, i) is AudioEffectHardLimiter
+	check(limited, "played hot, the Voice bus limits its peaks")
+	var sfx := AudioServer.get_bus_index(&"SFX")
+	var ducks := false
+	for i in AudioServer.get_bus_effect_count(sfx):
+		var e := AudioServer.get_bus_effect(sfx, i)
+		ducks = ducks or (e is AudioEffectCompressor and (e as AudioEffectCompressor).sidechain == &"Voice")
+	check(ducks, "the sound effects dip under a rogue talking")
+	v.stop()
+	v.queue_free()
+	await wait_frames(2)

@@ -49,6 +49,23 @@ func _setup_buses() -> void:
 			var idx := AudioServer.bus_count - 1
 			AudioServer.set_bus_name(idx, bus_name)
 			AudioServer.set_bus_send(idx, &"Master")
+	# the rogues' voices are played hot (RogueVoice.LOUDER_DB): a limiter keeps
+	# them from clipping, and the sound effects dip a few dB under a rogue
+	# talking, so a taunt isn't lost in the gunfire
+	var voice := AudioServer.get_bus_index(&"Voice")
+	if AudioServer.get_bus_effect_count(voice) == 0:
+		var limit := AudioEffectHardLimiter.new()
+		limit.ceiling_db = -0.5
+		AudioServer.add_bus_effect(voice, limit)
+	var sfx := AudioServer.get_bus_index(&"SFX")
+	if AudioServer.get_bus_effect_count(sfx) == 0:
+		var duck := AudioEffectCompressor.new()
+		duck.sidechain = &"Voice"
+		duck.threshold = -24.0
+		duck.ratio = 1.6
+		duck.attack_us = 2000.0
+		duck.release_ms = 300.0
+		AudioServer.add_bus_effect(sfx, duck)
 	# sounds behind the listener go through a low-pass, so front/back is audible
 	# (stereo panning alone can't tell them apart)
 	if AudioServer.get_bus_index(&"SFXBehind") == -1:
