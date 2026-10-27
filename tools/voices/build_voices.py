@@ -279,8 +279,14 @@ def main() -> None:
 
 
 def write_credits(files: list[Path]) -> None:
-    entry = {
-        "asset": "The rogues' voices (every taunt, %d rogues)" % len(files),
+    path = ROOT / "assets" / "credits" / "voices.json"
+    path.write_text(json.dumps([kokoro_credit(files)], indent=2) + "\n")
+    print("WROTE", path)
+
+
+def kokoro_credit(files: list[Path]) -> dict:
+    return {
+        "asset": "The rogues' voices (every taunt, %d rogue%s)" % (len(files), "" if len(files) == 1 else "s"),
         "author": "Synthesized with Kokoro-82M by hexgrad",
         "author_url": "https://huggingface.co/hexgrad",
         "source_url": "https://huggingface.co/hexgrad/Kokoro-82M",
@@ -292,9 +298,6 @@ def write_credits(files: list[Path]) -> None:
         "used_for": "Rogues speaking their taunts out loud",
         "files": [str(f.relative_to(ROOT)) for f in files] + ["assets/voices/voices.json"],
     }
-    path = ROOT / "assets" / "credits" / "voices.json"
-    path.write_text(json.dumps([entry], indent=2) + "\n")
-    print("WROTE", path)
 
 
 if __name__ == "__main__":

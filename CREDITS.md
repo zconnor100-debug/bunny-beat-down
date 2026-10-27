@@ -327,7 +327,8 @@ notices are available in-game under Credits → Engine licenses.
 
 | Asset | Author | License | Used for | Changes |
 |---|---|---|---|---|
-| [The rogues' voices (every taunt, 49 rogues)](https://huggingface.co/hexgrad/Kokoro-82M) | [Synthesized with Kokoro-82M by hexgrad](https://huggingface.co/hexgrad) | [Apache 2.0](https://www.apache.org/licenses/LICENSE-2.0) | Rogues speaking their taunts out loud | Each rogue's lines spoken by tools/voices/build_voices.py in a voice of its own: two Kokoro voice packs blended, pitched for its kind of critter and paced for its personality (tools/voices/cast_voices.json), trimmed, levelled and packed into one Ogg Vorbis file per rogue |
+| [The rogues' voices (every taunt, 18 rogues)](https://huggingface.co/maya-research/maya1) | [Synthesized with Maya1 by Maya Research](https://huggingface.co/maya-research) | [Apache 2.0](https://www.apache.org/licenses/LICENSE-2.0) | Rogues speaking their taunts out loud | Each rogue's lines spoken by tools/voices/build_voices_maya.py in a voice designed for it from a written description (tools/voices/maya_voices.json), held steady by two anchor sentences in that voice (tools/voices/anchors/), the best of several takes kept (checked with Whisper and Chatterbox's voice encoder), trimmed, levelled and packed into one Ogg Vorbis file per rogue |
+| [The rogues' voices (every taunt, 31 rogues)](https://huggingface.co/hexgrad/Kokoro-82M) | [Synthesized with Kokoro-82M by hexgrad](https://huggingface.co/hexgrad) | [Apache 2.0](https://www.apache.org/licenses/LICENSE-2.0) | Rogues speaking their taunts out loud | Each rogue's lines spoken by tools/voices/build_voices.py in a voice of its own: two Kokoro voice packs blended, pitched for its kind of critter and paced for its personality (tools/voices/cast_voices.json), trimmed, levelled and packed into one Ogg Vorbis file per rogue |
 
 ## Fonts
 
