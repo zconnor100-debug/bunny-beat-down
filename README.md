@@ -143,6 +143,14 @@ and the final shot replayed from three angles. There's a
   stowed for the swing and comes straight back). Each swing winds up over the
   shoulder and whips down across the body, connecting the moment the club
   passes chest height, and hits whoever is in front of you. Bots brawl with bare paws and bash point-blank with a gun out.
+- **Carrot grenades**: stubby round carrots with a pin in them. Hold Y (X or
+  the middle mouse button) and the arc shows where it will come down, with a
+  ring as wide as the blast; let go and the left paw winds back over the
+  shoulder and lobs it, up to about 25 m. It bounces, thuds off critters,
+  rolls to a stop, blinks faster and faster and goes off 2.4 s after the
+  throw: falloff damage and a big shove that blows survivors back. You start
+  with two and carry up to four (crates and the floor have more); bots start
+  with one or two and lob them at anyone dug in behind cover.
 
   | Critter | Club |
   |---|---|
@@ -617,6 +625,7 @@ python3 tools/compress_textures.py && godot --headless --import
 | Club swing (any time) | F, or LMB with empty paws | R3, or B / RT with empty paws |
 | Switch weapon / drop it | 1-3, mouse wheel / G | LB / RB / D-pad ← |
 | Heal (lucky clover) | H | D-pad ↓ |
+| Carrot grenade: hold to aim its arc, let go to throw | X or middle mouse (hold) | Y (hold) |
 | First / third person | V | Back, or L3 + R3 together |
 | Swap shoulder | Q | D-pad → |
 | Map | M (hold) | D-pad ↑ |
@@ -626,7 +635,7 @@ python3 tools/compress_textures.py && godot --headless --import
 | Menus: move / select / back | Arrows / Enter / Esc | D-pad / A / B |
 | Character picker: critter / skin / spin | ← → / ↑ ↓ / drag | D-pad ← → / D-pad ↑ ↓ / right stick |
 
-On-screen prompts follow whichever you used last (“[Y] Pick up” vs “[E] Pick up”).
+On-screen prompts follow whichever you used last (“[X] Pick up” vs “[E] Pick up”).
 On a gamepad a light aim assist helps: when the crosshair passes within 2 m of
 an opponent you can see, the stick slows a little and the aim drifts onto them.
 Pads with back buttons (an 8BitDo Ultimate's L4 / R4): map them to L3 / R3 and

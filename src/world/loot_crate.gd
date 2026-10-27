@@ -134,6 +134,8 @@ func open(by: Node) -> void:
 		specs.append(Pickup.clover_spec(rng.randi_range(1, 2)))
 	if rng.randf() < 0.35 or supply or open_time > 0.0:
 		specs.append(Pickup.armor_spec(50.0))
+	if rng.randf() < 0.4 or supply:
+		specs.append(Pickup.grenade_spec(rng.randi_range(1, 2)))
 	var more := extra_weapons + (1 if supply else 0)
 	for i in more:
 		var w2 := WeaponInstance.new(WeaponDB.random_weapon(rng), Rarity.roll(weights, rng))

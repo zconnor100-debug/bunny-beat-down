@@ -7,7 +7,8 @@ extends Node
 ## reloads otherwise; A only jumps; B swings your club when your paws are empty; R3 swings it
 ## any time (the gun is stowed for the swing); L3 + R3 together flips first /
 ## third person. Crouch is a toggle: once to crouch, again to lie down and
-## crawl, a third time (or jump, or sprint) to stand.
+## crawl, a third time (or jump, or sprint) to stand. Hold Y (X / the middle
+## mouse button) to aim a carrot grenade along its arc; let go to throw it.
 
 signal interact_hint_changed(text: String)
 
@@ -35,6 +36,8 @@ var _latch_before := false         # (undone if that click was half of an L3 + R
 var _pad_pressed_at := {}          # button -> msec of its last press (for chords)
 var _pending_melee := -1.0         # seconds until a pad R3 swing (it may yet be a chord)
 var assist_target: Critter = null  ## who the aim assist is helping with (HUD / tests)
+var readying_grenade := false      ## the grenade button's held: the arc shows, letting go throws
+var _arc: ThrowArc
 
 
 func _ready() -> void:
@@ -79,6 +82,10 @@ func _unhandled_input(event: InputEvent) -> void:
 		critter.cycle_weapon(-1)
 	elif event.is_action_pressed(&"heal"):
 		critter.use_clover()
+	elif event.is_action_pressed(&"grenade"):
+		readying_grenade = critter.can_throw()
+		if not readying_grenade and critter.inventory.grenades <= 0:
+			Audio.play(&"dry_fire", -8.0)
 	elif event.is_action_pressed(&"melee"):
 		# a pad R3 waits a beat: with L3 it's the camera chord, not a swing
 		_swing(CHORD_WAIT if event is InputEventJoypadButton else 0.0)
@@ -109,6 +116,7 @@ func _physics_process(delta: float) -> void:
 		critter.move_input = Vector2.ZERO
 		critter.want_fire = false
 		critter.want_aim = false
+		_put_grenade_away()
 		return
 	# gamepad look
 	var look := Input.get_vector(&"look_left", &"look_right", &"look_down", &"look_up")
@@ -151,6 +159,7 @@ func _physics_process(delta: float) -> void:
 		critter.want_jump = true
 		_jump_buffer = 0.0
 	critter.aim_point = rig.aim_point(critter.visual.hitbox_rids)
+	_update_grenade()
 	_update_focus()
 	# treasure chests: keep unlocking while interact (X on a pad) is held
 	var holding := Input.is_action_pressed(&"interact")
@@ -261,6 +270,32 @@ func _on_shot(shooter: Node, _origin: Vector3, weapon_id: StringName) -> void:
 		var k := 0.55 if rig.aiming else 1.0
 		rig.pitch = clampf(rig.pitch + deg_to_rad(data.recoil_pitch_deg) * 0.35 * k, deg_to_rad(-80), deg_to_rad(80))
 		rig.yaw += deg_to_rad(data.recoil_yaw_deg) * randf_range(-0.35, 0.35) * k
+
+
+## While the grenade button's held, the arc shows where it'll come down; let
+## go and it's thrown along exactly that arc.
+func _update_grenade() -> void:
+	if not readying_grenade:
+		return
+	if not critter.can_throw():
+		_put_grenade_away()
+		return
+	var vel := critter.throw_velocity()
+	if Input.is_action_pressed(&"grenade"):
+		if _arc == null:
+			_arc = ThrowArc.new()
+			critter.add_child(_arc)
+		var pts := Grenade.arc(critter.get_world_3d().direct_space_state, critter.throw_origin(), vel, critter.visual.hitbox_rids)
+		_arc.show_arc(pts, Grenade.data().splash_radius)
+	else:
+		_put_grenade_away()
+		critter.throw_grenade(vel)
+
+
+func _put_grenade_away() -> void:
+	readying_grenade = false
+	if _arc:
+		_arc.hide_arc()
 
 
 ## Finds the weapon pickup or crate the player is looking at.

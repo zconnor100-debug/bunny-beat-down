@@ -1,9 +1,13 @@
 class_name WeaponDB
-## Loads every WeaponData in res://data/weapons once and hands them out.
+## Loads every WeaponData in res://data/weapons once and hands them out (the
+## carrot guns: loot). Thrown things (res://data/throwables: the carrot
+## grenade) are looked up by id too, but are never a gun on the floor.
 
 const DIR := "res://data/weapons"
+const THROWN_DIR := "res://data/throwables"
 
 static var _all: Array[WeaponData] = []
+static var _thrown: Array[WeaponData] = []
 
 
 static func all() -> Array[WeaponData]:
@@ -21,7 +25,20 @@ static func get_weapon(id: StringName) -> WeaponData:
 	for w in all():
 		if w.id == id:
 			return w
+	for w in thrown():
+		if w.id == id:
+			return w
 	return null
+
+
+static func thrown() -> Array[WeaponData]:
+	if _thrown.is_empty():
+		for f in ResourceLoader.list_directory(THROWN_DIR):
+			if f.ends_with(".tres"):
+				var w: WeaponData = load(THROWN_DIR.path_join(f))
+				if w:
+					_thrown.append(w)
+	return _thrown
 
 
 ## Every random gun is this one (Rocket Party, a run modifier), unless empty.

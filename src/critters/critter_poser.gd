@@ -119,6 +119,7 @@ var reload_progress := -1.0   ## 0..1 while reloading, -1 otherwise
 var club := false             ## holding the species' melee club instead of a gun
 var prone := 0.0              ## 0 up … 1 lying on the belly (CritterVisual tips the model)
 var melee := -1.0             ## 0..1 through a club swing, -1 otherwise
+var throw := -1.0             ## 0..1 through a grenade throw (the left paw), -1 otherwise
 var recoil := 0.0             ## 0..1, decays in CritterVisual
 var trick_tuck := 0.0         ## +1 tuck limbs in (flips, rolls), -1 stretch out (leaps)
 var trick_active := false     ## mid-trick: stop tracking the aim, the body is spinning
@@ -546,6 +547,16 @@ func _process_modification_with_delta(delta: float) -> void:
 			var free := _free_paw(side, shoulder, arm_len, S, hop_reach, breath, rise, fall, land, fk)
 			target = free[0]
 			pole = free[1]
+		if throw >= 0.0 and side == &"l" and not gliding:
+			# a grenade throw: the left paw lets go, winds back over the shoulder,
+			# then whips forward and up past the head (it leaves the paw at about 0.42)
+			var tw := smoothstep(0.0, 0.18, throw) * (1.0 - smoothstep(0.7, 1.0, throw))
+			var wound := shoulder - a * 0.45 * arm_len + UP * 0.6 * arm_len + RIGHT * sgn * 0.2 * arm_len
+			var flung := shoulder + a * 0.95 * arm_len + UP * 0.35 * arm_len
+			target = target.lerp(wound.lerp(flung, smoothstep(0.3, 0.52, throw)), tw)
+			pole = pole.lerp(shoulder + RIGHT * sgn * 0.6 * S - UP * 0.15 * S - a * 0.25 * S, tw)
+			if tw > 0.3:
+				held.erase(side)
 		_two_bone(up_i, lo_i, hand_i, l1, l2, target, pole)
 		_close_paw(side, hand_i, held.get(side, []), 1.0 if gliding else 0.22)
 		_measure_grip(side, lo_i, hand_i, held.get(side, []), S)

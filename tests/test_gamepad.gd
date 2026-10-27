@@ -172,3 +172,28 @@ func _button_event(button: JoyButton) -> InputEventJoypadButton:
 	var e := InputEventJoypadButton.new()
 	e.button_index = button
 	return e
+
+
+func test_the_gallery_card_reads_on_with_the_right_stick() -> void:
+	var g := GalleryPanel.new()
+	add_child(g)
+	await wait_frames(2)
+	var first := get_viewport().gui_get_focus_owner()
+	# (a card longer than its box: a rogue with a lot of history)
+	g._detail.text = "\n".join(range(60).map(func(i): return "A long memory, line %d." % i))
+	await wait_frames(3)
+	var bar: VScrollBar = g._card_scroll.get_v_scroll_bar()
+	check(bar.max_value > bar.page, "the card is longer than its box (%.0f > %.0f)" % [bar.max_value, bar.page])
+	check(g._more.modulate.a > 0.5, "and says there's more below")
+	await _stick(JOY_AXIS_RIGHT_Y, 1.0)
+	await wait_frames(20)
+	await _stick(JOY_AXIS_RIGHT_Y, 0.0)
+	check(g._card_scroll.scroll_vertical > 40, "the right stick reads on down the card (%d)" % g._card_scroll.scroll_vertical)
+	check(get_viewport().gui_get_focus_owner() == first, "and leaves the list where it was")
+	bar.value = bar.max_value
+	await wait_frames(2)
+	check(g._more.modulate.a < 0.5, "at the bottom, nothing more below")
+	g._show("Sly")
+	await wait_frames(2)
+	check(g._card_scroll.scroll_vertical == 0, "the next card starts at its top")
+	g.queue_free()

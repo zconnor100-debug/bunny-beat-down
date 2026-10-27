@@ -35,6 +35,10 @@ const MELEE_REACH := 0.85         ## from the chest, per metre of the critter's 
 const MELEE_KEEP := 3.0           ## bare paws: the club stays out this long after a swing
 const QUICK_KEEP := 0.2           ## gun out: the club goes back this soon after the swing
 const PRONE_SPEED := 0.28         ## crawling, as a share of walking speed
+const THROW_TIME := 0.55          ## one grenade throw: wind-up, release, follow-through
+const THROW_RELEASE := 0.42       ## share of the throw when the grenade leaves the paw
+const THROW_SPEED := 20.0         ## m/s out of the paw: about 25 m on the flat, lobbed at 45°
+const THROW_LOFT := 0.17          ## rad thrown above where you look (a lob, not a fastball)
 
 @export var def: CritterDef
 
@@ -65,6 +69,9 @@ var want_jump := false             ## edge-triggered; consumed on use
 var has_glided := false            ## opened the glider this drop (so it can be let go of and opened again)
 var _glider_t := 0.0
 var want_melee := false            ## edge-triggered: swing the club
+var _throw_t := -1.0               # seconds into a grenade throw (-1: not throwing)
+var _throw_vel := Vector3.ZERO     # what it's thrown at (zero: where we look, as it leaves the paw)
+var _held_grenade: Node3D          # the grenade in the left paw, wound back
 
 var inventory := Inventory.new()
 var current_slot := 0
@@ -277,6 +284,7 @@ func _physics_process(delta: float) -> void:
 			_ground_move(delta)
 	_weapon_tick(delta)
 	_melee_tick(delta)
+	_throw_tick(delta)
 	_update_facing(delta)
 	_update_visual(delta)
 	if state == State.GROUND:
@@ -827,6 +835,9 @@ func reset_actions() -> void:
 	want_fire = false
 	want_jump = false
 	want_melee = false
+	_throw_t = -1.0
+	_drop_held_grenade()
+	visual.poser.throw = -1.0
 
 
 func _melee_tick(delta: float) -> void:
@@ -854,6 +865,76 @@ func _melee_tick(delta: float) -> void:
 		if _club_out <= 0.0:
 			visual.set_club(false)
 	visual.poser.melee = _melee_t / MELEE_TIME if _melee_t >= 0.0 else -1.0
+
+
+# ---- grenades ---------------------------------------------------------------------------
+
+func can_throw() -> bool:
+	return alive and inventory.grenades > 0 and _throw_t < 0.0 and state == State.GROUND and not swimming and _prone < 0.2
+
+
+func is_throwing() -> bool:
+	return _throw_t >= 0.0
+
+
+## Where a grenade leaves the paw (and the aiming arc starts): up by the left
+## shoulder, a little in front.
+func throw_origin() -> Vector3:
+	var d := look_direction()
+	var flat := Vector3(d.x, 0.0, d.z).normalized() if absf(d.y) < 0.99 else -global_basis.z
+	var h := eye_height()
+	return get_eye_position() + Vector3.UP * h * 0.08 + flat * h * 0.25 + flat.cross(Vector3.UP) * -h * 0.15
+
+
+## The velocity a grenade leaves the paw with, thrown where we look (lofted a
+## little above it, plus some of our own run); `power` < 1 lobs it shorter.
+func throw_velocity(power := 1.0) -> Vector3:
+	var d := look_direction()
+	var right := d.cross(Vector3.UP)
+	right = right.normalized() if right.length_squared() > 0.0001 else global_basis.x
+	return d.rotated(right, THROW_LOFT) * THROW_SPEED * power + Vector3(velocity.x, 0.0, velocity.z) * 0.5
+
+
+## Pull the pin and wind up: the grenade leaves the left paw THROW_RELEASE
+## into the throw, at `vel` (or, zero, where we're looking by then).
+func throw_grenade(vel := Vector3.ZERO) -> bool:
+	if not can_throw():
+		return false
+	inventory.grenades -= 1
+	inventory.changed.emit()
+	_throw_t = 0.0
+	_throw_vel = vel
+	_reload_timer = -1.0   # (the left paw's needed for the throw)
+	Audio.play_at(&"dry_fire", global_position, -4.0, 0.1)   # the pin
+	var paw: Node3D = visual.attachments.get(&"l_hand")
+	if paw:
+		_held_grenade = Grenade.make_model()
+		paw.add_child(_held_grenade)
+		_held_grenade.scale = Vector3.ONE / maxf(paw.global_basis.get_scale().x, 0.001)
+	if is_player:
+		StatBook.note_shot(&"carrot_grenade")
+	return true
+
+
+func _throw_tick(delta: float) -> void:
+	if _throw_t < 0.0:
+		return
+	var was := _throw_t
+	_throw_t += delta
+	if was < THROW_TIME * THROW_RELEASE and _throw_t >= THROW_TIME * THROW_RELEASE:
+		_drop_held_grenade()
+		var parent: Node = Projectiles.instance if Projectiles.instance and Projectiles.instance.is_inside_tree() else Despawner.debris_parent(self)
+		Grenade.spawn(parent, self, throw_origin(), _throw_vel if _throw_vel != Vector3.ZERO else throw_velocity(), visual.hitbox_rids)
+		Audio.play_at(&"melee_swing", global_position, -5.0, 0.15)
+	if _throw_t >= THROW_TIME:
+		_throw_t = -1.0
+	visual.poser.throw = _throw_t / THROW_TIME if _throw_t >= 0.0 else -1.0
+
+
+func _drop_held_grenade() -> void:
+	if is_instance_valid(_held_grenade):
+		_held_grenade.queue_free()
+	_held_grenade = null
 
 
 ## The club connects: everyone within reach in front of us takes a hit on the
@@ -982,6 +1063,11 @@ func take_damage(info: DamageInfo) -> void:
 
 
 func _die(info: DamageInfo) -> void:
+	if _throw_t >= 0.0 and is_instance_valid(_held_grenade):
+		# beaten down with the pin out: it drops, live, where we fell
+		Grenade.spawn(Despawner.debris_parent(self), self, _held_grenade.global_position, velocity * 0.5 + Vector3.UP, visual.hitbox_rids)
+	_throw_t = -1.0
+	_drop_held_grenade()
 	alive = false
 	health = 0.0
 	_set_state(State.DEAD)

@@ -1,7 +1,7 @@
 class_name Pickup
 extends RigidBody3D
-## Loot lying in the world. Ammo, clovers and armor are scooped up by walking
-## over them; weapons need the interact key (or an AI deciding it wants them).
+## Loot lying in the world. Ammo, clovers, carrot grenades and armor are
+## scooped up by walking over them; weapons need the interact key (or an AI deciding it wants them).
 ## Rare loot gets a coloured light beam so it reads from across a clearing;
 ## lucky clovers are huge (half a critter tall) and glow green, and shield
 ## acorns are just as big and glow orange.
@@ -45,6 +45,10 @@ static func clover_spec(n: int) -> Dictionary:
 
 static func armor_spec(amount: float) -> Dictionary:
 	return {"type": "armor", "amount": amount}
+
+
+static func grenade_spec(n: int) -> Dictionary:
+	return {"type": "grenade", "amount": n}
 
 
 static func spawn(parent: Node, spec_: Dictionary, pos: Vector3, vel := Vector3.ZERO) -> Pickup:
@@ -115,6 +119,8 @@ func label() -> String:
 			return "%d Lucky Clover%s" % [spec["amount"], "" if spec["amount"] == 1 else "s"]
 		"armor":
 			return "Acorn Shield (+%d)" % int(spec["amount"])
+		"grenade":
+			return "%d Carrot Grenade%s" % [spec["amount"], "" if spec["amount"] == 1 else "s"]
 	return "?"
 
 
@@ -180,6 +186,18 @@ func try_collect(critter: Critter) -> bool:
 				return false
 			queue_free()
 			return true
+		"grenade":
+			var left := critter.inventory.add_grenades(spec["amount"])
+			if left == spec["amount"]:
+				return false
+			_note_taken(critter, Pickup.grenade_spec(spec["amount"] - left))
+			Audio.play_at(&"pickup_ammo", global_position, -3.0)
+			Events.item_picked_up.emit(critter, label())
+			if left > 0:
+				spec["amount"] = left
+				return false
+			queue_free()
+			return true
 		"armor":
 			if critter.armor >= critter.max_armor:
 				return false
@@ -202,6 +220,16 @@ func _note_taken(critter: Critter, what: Dictionary) -> void:
 func _make_model() -> Node3D:
 	if spec.get("type") == "armor":
 		return AcornShield.make()
+	if spec.get("type") == "grenade":
+		# a little pile of them, drawn big (like the guns lying about) to spot them
+		var pile := Node3D.new()
+		for i in int(spec.get("amount", 1)):
+			var g := Grenade.make_model()
+			g.scale = Vector3.ONE * 1.8
+			g.position = Vector3(0.2 * i - 0.1 * (int(spec.get("amount", 1)) - 1), 0.0, 0.0)
+			g.rotation.y = 0.7 * i
+			pile.add_child(g)
+		return pile
 	var path := ""
 	match spec.get("type"):
 		"weapon":

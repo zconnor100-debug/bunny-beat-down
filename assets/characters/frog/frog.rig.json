@@ -6,6 +6,8 @@
   "eye_height": 0.81,
   "eyes": [0.066, 0.7922, 0.222],
   "eye_r": 0.04,
+  "glasses_eyes": [0.085, 0.815, 0.172],
+  "glasses_tilt": 22,
   "rest_pose": "T",
   "bones": {
     "hips": "root_x",

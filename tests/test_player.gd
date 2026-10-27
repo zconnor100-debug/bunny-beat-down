@@ -107,3 +107,27 @@ func test_treasure_chest_needs_a_held_unlock() -> void:
 			best = maxi(best, (p as Pickup).rarity_tier())
 	check(get_tree().get_nodes_in_group(&"pickups").size() + scooped[0] >= before + 4, "chest spills plenty of loot")
 	check(weapons >= 2 and best >= Rarity.Tier.PRIZE, "two guns, Prize tier or better (%d guns, best tier %d)" % [weapons, best])
+
+
+func test_hold_to_aim_a_grenade_let_go_to_throw() -> void:
+	player.inventory.grenades = 2
+	var e := InputEventAction.new()
+	e.action = &"grenade"
+	e.pressed = true
+	Input.parse_input_event(e)
+	await wait_physics(4)
+	check(pc.readying_grenade, "holding the grenade button readies a throw")
+	check(pc._arc != null and pc._arc.visible, "and shows the arc")
+	check(not player.is_throwing() and player.inventory.grenades == 2, "nothing's thrown yet")
+	var r := InputEventAction.new()
+	r.action = &"grenade"
+	r.pressed = false
+	Input.parse_input_event(r)
+	await wait_physics(2)
+	check(player.is_throwing() and player.inventory.grenades == 1, "letting go throws one")
+	check(not pc._arc.visible, "and the arc goes away")
+	await wait_physics(int(Critter.THROW_TIME * Engine.physics_ticks_per_second) + 2)
+	check(get_tree().get_nodes_in_group(&"grenades").size() == 1, "it's on its way")
+	player.inventory.grenades = 0
+	await _press(&"grenade")
+	check(not pc.readying_grenade, "with none left, nothing to ready")

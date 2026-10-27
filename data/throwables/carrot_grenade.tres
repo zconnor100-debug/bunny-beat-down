@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="WeaponData" format=3]
+
+[ext_resource type="Script" path="res://src/weapons/weapon_data.gd" id="1_wd"]
+
+[resource]
+script = ExtResource("1_wd")
+id = &"carrot_grenade"
+display_name = "Carrot Grenade"
+blurb = "A stubby round carrot with a pin in it. Lob it, count to two, enjoy the coleslaw."
+icon_color = Color(0.95, 0.5, 0.12, 1)
+projectile_speed = 20.0
+projectile_gravity = 1.0
+impulse = 42.0
+dismember_power = 0.8
+splash_radius = 6.0
+splash_damage = 80.0
+camera_shake = 0.3
+ai_preferred_range = 16.0
+ai_max_range = 24.0
+ai_min_range = 8.0
+loot_weight = 0.0

@@ -113,6 +113,7 @@ var _target_vis := 1.0            # how much of the target is showing (0..1)
 var _alert_pos := Vector3.INF     # where a shot that hit us came from (roughly)
 var _alert_t := -100.0
 var _bursting := false
+var _grenade_cd := randf_range(4.0, 10.0)   # seconds before it'll think about a grenade
 var _burst_t := 0.0
 ## Loot we couldn't reach (behind rocks, on a roof…): ignored for a while.
 var _unreachable: Dictionary = {}   # node -> clock time it can be tried again
@@ -657,6 +658,18 @@ func _fight(delta: float) -> void:
 		me.want_melee = true
 		return
 
+	# --- a carrot grenade, for someone dug in behind cover (or standing still) in lobbing range
+	_grenade_cd -= delta
+	if _grenade_cd <= 0.0 and me.can_throw() and _clock - _last_seen_t < 3.0 and (not target.is_player or _may_shoot_player()):
+		var chance := 0.5 if not visible else (0.2 if target.velocity.length() < 1.5 else 0.04)
+		if randf() < chance * lerpf(0.6, 1.2, skill) * _t("grenade", 1.0) * delta:
+			var at := target.global_position if visible else _last_seen_pos - Vector3.UP * 0.5
+			var lob := _lob(me.throw_origin(), at)
+			_grenade_cd = randf_range(3.0, 6.0)
+			if lob != Vector3.ZERO and me.throw_grenade(lob):
+				_grenade_cd = randf_range(9.0, 16.0)
+				return
+
 	# --- shooting
 	var reaction := lerpf(0.75, 0.22, skill)
 	var on_target := me.look_direction().angle_to(want) < deg_to_rad(4.0 if w.data.pellets == 1 else 9.0)
@@ -676,6 +689,27 @@ func _fight(delta: float) -> void:
 			# tap the trigger: press on one tick, release on the next
 			_fire_toggle = not _fire_toggle
 			me.want_fire = _fire_toggle and randf() < lerpf(0.12, 0.35, skill)
+
+
+## The throw that lobs a grenade from `from` down onto `at`: up at about 40°
+## (over cover), as hard as it takes, a little off by skill. Zero when `at`
+## is too close (inside its own blast) or further than a throw can reach.
+func _lob(from: Vector3, at: Vector3) -> Vector3:
+	var flat := Vector3(at.x - from.x, 0.0, at.z - from.z)
+	var dx := flat.length()
+	var dy := at.y - from.y
+	var data := Grenade.data()
+	if dx < data.ai_min_range or dx > data.ai_max_range:
+		return Vector3.ZERO
+	var g := data.projectile_gravity * float(ProjectSettings.get_setting("physics/3d/default_gravity", 16.0))
+	var angle := deg_to_rad(40.0) + randf_range(-0.08, 0.08) * (1.0 - skill)
+	var drop := dx * tan(angle) - dy
+	if drop <= 0.1:
+		return Vector3.ZERO
+	var v := sqrt(g * dx * dx / (2.0 * pow(cos(angle), 2.0) * drop)) * (1.0 + randf_range(-0.1, 0.1) * (1.0 - skill))
+	if v > Critter.THROW_SPEED:
+		return Vector3.ZERO
+	return (flat / dx * cos(angle) + Vector3.UP * sin(angle)) * v
 
 
 ## Bare paws and someone close: run straight at them and swing the club.

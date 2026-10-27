@@ -50,7 +50,7 @@ func test_pieces_sit_where_they_belong_on_every_species() -> void:
 			"%s: the hat sits on the crown (bottom %.3f, eyes %.3f, crown %.3f)" % [sp, hat_box.position.y, f.eye_y, f.crown_y])
 		var specs_box := _box_in(c.visual, specs, &"head")
 		check(absf(specs_box.get_center().y - f.eye_y) < f.head_h * 0.15, "%s: the glasses are at the eyes" % sp)
-		check(specs_box.end.z > f.eye_z, "%s: and in front of them" % sp)
+		check(specs_box.end.z > f.glasses_eyes.z, "%s: and in front of them (%.3f, the eyes' front %.3f)" % [sp, specs_box.end.z, f.glasses_eyes.z])
 		var pack_box := _box_in(c.visual, pack, &"chest")
 		check(pack_box.get_center().z < f.chest_back + f.head_d * 0.2, "%s: the pack is on the back" % sp)
 		check(c.visual.outfit.size() == 4, "%s: three pieces worn, the pack with its straps" % sp)

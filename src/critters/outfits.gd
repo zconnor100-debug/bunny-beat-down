@@ -183,7 +183,7 @@ const LOOKS := {
 	"Sir Toadsworth": {"skin": "golden", "wear": [["top_hat", "#26262c", {"grow": 1.1}], ["mustache", "", {"fwd": -0.03}], ["monocle", "", {"eye": "left", "fwd": -0.18, "side": -0.04}], "bow_tie"]},
 	"Puddles": {"skin": "default", "wear": [["beanie", "#3b6fb5", {"fwd": -0.06}]]},
 	"Bog Boss": {"skin": "default", "wear": [["band_hat", "", {"up": 0.12, "fwd": -0.25, "tilt": 10.0, "hide": ["hat_1_chinstrap", "hat_1_peak", "hat_1_trim"]}]]},
-	"Gulp": {"skin": "default", "wear": [["sunglasses", "", {"size": 0.8, "up": 0.06, "fwd": -0.06}], "medal"]},
+	"Gulp": {"skin": "default", "wear": [["sunglasses", "", {"size": 0.85}], "medal"]},
 	# beavers
 	"Chompers": {"skin": "default", "wear": [["knight_helmet", "", {"grow": 1.42, "fwd": 0.08, "up": 0.03}]]},
 	"Dam Dan": {"skin": "default", "wear": ["hard_hat"]},
@@ -970,24 +970,31 @@ static func _place(f: OutfitFit, id: String, spec: Dictionary, turn: Basis, box:
 			# (or a mask's one wide lens, `lens`: [middle x, middle y, half width],
 			# a little wider than the eyes are apart)
 			var mid := Vector2(box.get_center().x, box.get_center().y)
+			# (a mask's one wide lens fits round the face the eyes are in, not on the eyes)
+			var eyes := Vector3(f.eye_x, f.eye_y, f.eye_z) if spec.has("lens") else f.glasses_eyes
 			size *= f.glasses_size
-			k = f.eye_x * size / (w * 0.27)
+			k = eyes.x * size / (w * 0.27)
 			var lens_z := box.end.z
 			if spec.has("lens"):
 				var lens: Array = spec.lens
 				mid = Vector2(float(lens[0]), float(lens[1]))
-				k = f.eye_x * 1.75 * size / float(lens[2])
+				k = eyes.x * 1.75 * size / float(lens[2])
 			if spec.has("lenses"):
 				# (two lenses not where the box puts them, goggles: [their middles'
 				# height, how far each is from the middle, how far forward])
 				var ls: Array = spec.lenses
 				mid = Vector2(0.0, float(ls[0]))
-				k = f.eye_x * size / float(ls[1])
+				k = eyes.x * size / float(ls[1])
 				lens_z = float(ls[2])
 			# (the lenses just in front of the eyes: a snout goes through the bridge;
 			# a mask's one wide lens has to clear the whole face)
-			var front := (maxf(f.face_z, f.eye_z) if spec.has("lens") else f.eye_z) + f.head_d * 0.04
-			at = Vector3(f.head_c.x - mid.x * k, f.eye_y - mid.y * k, front - lens_z * k)
+			var front := (maxf(f.face_z, eyes.z) if spec.has("lens") else eyes.z) + f.head_d * 0.04
+			at = Vector3(f.head_c.x - mid.x * k, eyes.y - mid.y * k, front - lens_z * k)
+			if f.glasses_tilt != 0.0 and not spec.has("lens"):
+				# (leant back about the lenses, onto eyes that sit back on a sloping face)
+				var lean := Basis(Vector3.RIGHT, -deg_to_rad(f.glasses_tilt))
+				var pivot := Vector3(f.head_c.x, eyes.y, front)
+				return Transform3D(lean * Basis().scaled(Vector3(k, k * float(spec.get("flat", 1.0)), k)), pivot + lean * (at - pivot))
 		"monocle":
 			# the ring (at the top of the model; its chain hangs below) on the right
 			# eye, as wide as the eye

@@ -7,17 +7,20 @@ extends PanelContainer
 ## between you, its wins, its trackers (accuracy, headshots, damage,
 ## beat-downs by gun, longest beat-down), and the grudges it holds (against
 ## bots, and the director). Pad friendly: every card is a button, so the list scrolls with
-## the focus.
+## the focus; the right stick (or the mouse wheel, or Page Up / Down) reads on down a long card.
 
 signal closed
 
 const SPECIES := {"bandit_bunny": "Bandit Bunny", "squirrel": "Squirrel", "fox": "Fox", "raccoon": "Raccoon",
 	"frog": "Frog", "beaver": "Beaver", "hamster": "Hamster"}
+const STICK_SCROLL := 900.0   # px/s at full right-stick tilt
 
 var _list: VBoxContainer
 var _name: Label
 var _detail: Label
 var _portrait: CritterPortrait
+var _card_scroll: ScrollContainer
+var _more: Label   # "more below" under a card that doesn't fit
 
 
 func _ready() -> void:
@@ -62,6 +65,13 @@ func _ready() -> void:
 	_detail.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_detail.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	card_scroll.add_child(_detail)
+	_card_scroll = card_scroll
+	_more = UITheme.label("▼  right stick or mouse wheel to read on", 16, Color(UITheme.CREAM, 0.6))
+	_more.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	_more.modulate.a = 0.0
+	side.add_child(_more)
+	card_scroll.get_v_scroll_bar().value_changed.connect(func(_v: float): _update_more())
+	card_scroll.get_v_scroll_bar().changed.connect(_update_more)
 	var back := UITheme.button("Back", func(): closed.emit())
 	back.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	v.add_child(back)
@@ -78,10 +88,27 @@ func _ready() -> void:
 		first.grab_focus.call_deferred()
 
 
+## The right stick reads on down the card (the left stick and the D-pad walk the list).
+func _process(delta: float) -> void:
+	var tilt := Input.get_axis(&"look_up", &"look_down")
+	if tilt != 0.0:
+		_card_scroll.get_v_scroll_bar().value += clampf(tilt, -1.0, 1.0) * STICK_SCROLL * delta
+
+
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed(&"ui_cancel"):
 		get_viewport().set_input_as_handled()
 		closed.emit()
+	elif event.is_action_pressed(&"ui_page_down") or event.is_action_pressed(&"ui_page_up"):
+		var bar := _card_scroll.get_v_scroll_bar()
+		bar.value += _card_scroll.size.y * 0.8 * (1.0 if event.is_action_pressed(&"ui_page_down") else -1.0)
+		get_viewport().set_input_as_handled()
+
+
+## "More below" while there's more of the card under the bottom edge.
+func _update_more() -> void:
+	var bar := _card_scroll.get_v_scroll_bar()
+	_more.modulate.a = 1.0 if bar.max_value - bar.page > 1.0 and bar.value < bar.max_value - bar.page - 1.0 else 0.0
 
 
 ## The cast, the ones with the most history with you first.
@@ -191,3 +218,4 @@ func _show(n: String) -> void:
 	_name.text = Cast.title(n)
 	_name.add_theme_color_override("font_color", Cast.HEAT_COLORS[Cast.heat(n)] if Cast.heat(n) > 0 else UITheme.CARROT_LIGHT)
 	_detail.text = card(n)
+	_card_scroll.scroll_vertical = 0   # (each card from its top)

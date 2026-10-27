@@ -26,8 +26,10 @@ const BINDINGS := {
 	# on a pad X does both: picks up / opens what's right in front of you,
 	# reloads otherwise (A is only jump: you kept grabbing guns by accident)
 	&"reload": [[KEY, KEY_R], [PAD_BUTTON, JOY_BUTTON_X]],
-	&"interact": [[KEY, KEY_E], [PAD_BUTTON, JOY_BUTTON_X], [PAD_BUTTON, JOY_BUTTON_Y]],
+	&"interact": [[KEY, KEY_E], [PAD_BUTTON, JOY_BUTTON_X]],
 	&"heal": [[KEY, KEY_H], [PAD_BUTTON, JOY_BUTTON_DPAD_DOWN]],
+	# carrot grenade: hold to aim along its arc, let go to throw
+	&"grenade": [[KEY, KEY_X], [MOUSE, MOUSE_BUTTON_MIDDLE], [PAD_BUTTON, JOY_BUTTON_Y]],
 	&"weapon_1": [[KEY, KEY_1]],
 	&"weapon_2": [[KEY, KEY_2]],
 	&"weapon_3": [[KEY, KEY_3]],

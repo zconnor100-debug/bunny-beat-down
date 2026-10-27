@@ -154,6 +154,8 @@ func setup(world_root_: Node3D, island_: Island, opponents: int, difficulty: int
 		brain.skill = clampf(_skill_for(difficulty) + rng.randf_range(-0.12, 0.12) + float(p.skill) + (0.06 if rival else 0.0) + 0.04 * heat, 0.05, 0.98)
 		c.defies_director = brain.traits.get("defiant", false)
 		c.add_child(brain)
+		# a carrot grenade each to start (the hotheads and show-offs bring two)
+		c.inventory.grenades = 2 if brain.personality in ["hothead", "showoff"] else 1
 		_heat_loadout(c, n, heat)
 		_remembers_you(c, n)
 		if Burrow.modifier_on("stampede"):
@@ -172,6 +174,7 @@ func spawn_player(def: CritterDef, skin_id: String) -> Critter:
 	var display := "Bun" if def.id == &"bun" else "You (%s)" % def.display_name
 	player = _spawn_critter(def, display)
 	player.visual.apply_skin(skin_id)
+	player.inventory.grenades = 2   # (more in crates and lying about)
 	Outfits.dress_player(player)   # (your wardrobe, from the Workshop)
 	StatBook.begin_match(def.id, island.map_id if island else "")
 	_apply_perks(player)
@@ -508,9 +511,11 @@ func _spawn_loot() -> void:
 			Pickup.spawn(world_root, Pickup.weapon_spec(w), pos + Vector3.UP * 0.3)
 			spec = Pickup.ammo_spec(w.data.ammo_type, Inventory.AMMO_PICKUP[w.data.ammo_type])
 			pos += Vector3(rng.randf_range(-1, 1), 0, rng.randf_range(-1, 1))
-		elif roll < 0.8:
+		elif roll < 0.72:
 			var t := rng.randi_range(0, 3)
 			spec = Pickup.ammo_spec(t, Inventory.AMMO_PICKUP[t])
+		elif roll < 0.8:
+			spec = Pickup.grenade_spec(rng.randi_range(1, 2))
 		elif roll < 0.92:
 			spec = Pickup.clover_spec(rng.randi_range(1, 2))
 		else:

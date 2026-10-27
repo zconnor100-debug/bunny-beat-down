@@ -1,6 +1,6 @@
 class_name Inventory
 extends RefCounted
-## Three weapon slots, carrot reserves per ammo type, and clover heals.
+## Three weapon slots, carrot reserves per ammo type, clover heals and carrot grenades.
 
 signal changed
 
@@ -19,6 +19,7 @@ const AMMO_PICKUP := {
 	WeaponData.AmmoType.ROCKET: 2,
 }
 const MAX_CLOVERS := 5
+const MAX_GRENADES := 4
 
 var weapons: Array = [null, null, null]   # Array[WeaponInstance or null]
 var ammo := {
@@ -28,6 +29,7 @@ var ammo := {
 	WeaponData.AmmoType.ROCKET: 0,
 }
 var clovers := 0
+var grenades := 0
 ## Spare carrots carried, times this (Deep Pockets).
 var ammo_cap_scale := 1.0
 
@@ -94,6 +96,15 @@ func take_ammo(type: int, wanted: int) -> int:
 func add_clovers(n: int) -> int:
 	var fit := mini(n, MAX_CLOVERS - clovers)
 	clovers += fit
+	if fit > 0:
+		changed.emit()
+	return n - fit
+
+
+## Adds carrot grenades; returns how many did not fit.
+func add_grenades(n: int) -> int:
+	var fit := mini(n, MAX_GRENADES - grenades)
+	grenades += fit
 	if fit > 0:
 		changed.emit()
 	return n - fit

@@ -176,11 +176,11 @@ static func _pops_now(shooter: Node, every: int) -> bool:
 	return randi() % maxi(every, 1) == 0
 
 
-## Rewind (see TimeKeeper): every carrot and rocket in flight vanishes.
+## Rewind (see TimeKeeper): every carrot, rocket and grenade in flight vanishes.
 func clear_in_flight() -> void:
 	_shots.clear()
 	for c in get_children():
-		if c is Rocket:
+		if c is Rocket or c is Grenade:
 			c.queue_free()
 
 
