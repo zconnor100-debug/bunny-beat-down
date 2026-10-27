@@ -272,11 +272,16 @@ The third map follows the cage's pattern (`ToyBox extends Island`,
 - **Voices.** Every line a bot says is picked as `Cast.say` (text, a key
   naming the template, the fields that fill it), shown, and spoken by
   **`RogueVoice`** from the bot's head. `tests/export_lines.gd` writes every
-  template to `tools/voices/lines.json`; `tools/voices/build_voices.py`
-  (Kokoro-82M on the GPU, ~12 minutes for the whole cast) gives each rogue a
-  voice of its own (two voice packs blended, pitched for its species by a
-  resample, paced for its personality: `tools/voices/cast_voices.json`) and
-  renders every line as parts: words, your name ("Bun!" with the
+  template to `tools/voices/lines.json`; `tools/voices/build_voices_maya.py`
+  (Maya1 on the GPU, ~25 minutes a rogue) speaks each rogue in a voice
+  designed from a written description (`tools/voices/maya_voices.json`: its
+  accent spelled out by `dialects.py`, its pitch and tempo), held steady by
+  two anchor sentences in that voice (`tools/voices/anchors/`, some first
+  made with a real speaker of the accent in front), the best of several
+  takes per line kept by Whisper and a voice encoder; rogues not yet recast
+  keep `tools/voices/build_voices.py`'s Kokoro-82M voices (two voice packs
+  blended, pitched for its species, paced for its personality:
+  `tools/voices/cast_voices.json`). Either way every line is rendered as parts: words, your name ("Bun!" with the
   punctuation it ends on), other rogues' names, numbers 0–60 for scores; a
   line's plan stitches them back together at run time. Each rogue's clips
   are one Ogg file (16 kHz, ~0.8 MB) with an index in

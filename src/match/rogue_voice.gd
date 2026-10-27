@@ -3,9 +3,9 @@ extends AudioStreamPlayer3D
 ## A rogue saying a line out loud, from where it stands, in its own voice.
 ##
 ## Every line a rogue can say was spoken ahead of time by tools/voices/
-## build_voices.py (Kokoro TTS, a voice of its own for each rogue: two voice
-## packs blended, pitched for its kind of critter and paced for its
-## personality) and packed into one file per rogue, assets/voices/<rogue>.ogg,
+## build_voices_maya.py (Maya1, a voice designed for each rogue from a
+## written description; those not yet recast by build_voices.py's Kokoro
+## TTS) and packed into one file per rogue, assets/voices/<rogue>.ogg,
 ## with assets/voices/voices.json saying where each clip is. A line's `plan`
 ## there is its parts in order: a clip of its words, the name it calls you
 ## (`you`: your critter's, "Bun"), a number (`num`: the score so far), another
