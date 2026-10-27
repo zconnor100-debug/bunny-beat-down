@@ -158,7 +158,7 @@ func test_the_gallery_lists_everyone() -> void:
 	var g := GalleryPanel.new()
 	add_child(g)
 	await wait_frames(2)
-	var cards := g.find_children("*", "Button", true, false).filter(func(b): return b.text != "Back")
+	var cards := g._list.get_children()
 	check(cards.size() == 49, "a card for each of the 49 (%d)" % cards.size())
 	check(GalleryPanel.order()[0] == "Vex", "your rival first (%s)" % GalleryPanel.order()[0])
 	check(GalleryPanel.order()[1] == "Turbo", "then the bot you've made radical")

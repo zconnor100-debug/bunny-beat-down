@@ -238,7 +238,9 @@ and the final shot replayed from three angles. There's a
     rogue itself turning on a little stand in its outfit with its favourite
     gun (spin it with the mouse), who they are, how they fight, the score with you, their wins and grudges, and
     their own trackers (accuracy, headshots, damage, beat-downs by gun and
-    their longest beat-down).
+    their longest beat-down). **Reset all rogues** (at the bottom, asked
+    first) starts all 49 over, no rivals, nemeses or scars, so new ones can
+    rise; the signature guns you've won stay yours.
   - **Your Nemesis hunts you.** A bot you've beaten down eight times is your
     Nemesis: in a lobby it's tougher (half as much health again, full
     armour), its tag reads ☠ NEMESIS, the HUD shows how far it is and which
@@ -251,9 +253,10 @@ and the final shot replayed from three angles. There's a
   - **They come back marked.** Shoot a bot's head off and it returns in an
     eye patch (its head takes a quarter less damage); take an arm and it's
     bandaged, a leg and it's in a twig splint (tougher each time); blow it up
-    and blasts hurt it less. A bot that beats you down **takes the gun you
+    and its fur comes back singed and sooty (blasts hurt it less). A bot that beats you down **takes the gun you
     were holding** and brings it to your next matches, in your skin, until
-    you beat it down and take it back. The Rogues' Gallery remembers all of it.
+    you beat it down and take it back. The Rogues' Gallery remembers all of
+    it, and its portrait wears the scars (the list marks who's scarred).
 - **Runs down the Trail.** *A Run* (main menu) is five stops picked one at a
   time from a branching map (`Run`, `TrailPanel`): Skirmishes, Grudge Matches
   (your radical bots, as a gang), Golden Groves (better loot, double acorns,

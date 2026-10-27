@@ -90,16 +90,19 @@ func _build_stage() -> void:
 	_cam.current = true
 
 
-## One of the cast, in its fur and outfit, holding its favourite gun.
+## One of the cast, in its fur and outfit, holding its favourite gun, wearing
+## the scars you gave it (RivalBook).
 func show_rogue(rogue: String) -> void:
 	var m := Cast.member(rogue)
 	if m.is_empty():
 		return
-	_show("rogue:" + rogue, String(m.species), func(c: Critter):
+	var scars := RivalBook.scars(rogue)
+	_show("rogue:%s:%s" % [rogue, ",".join(scars)], String(m.species), func(c: Critter):
 		var gun := WeaponDB.get_weapon(StringName(m.weapon))
 		if gun:
 			c.give_weapon(WeaponInstance.new(gun, Rarity.Tier.PRIZE))
-		Outfits.dress(c, rogue))
+		Outfits.dress(c, rogue)
+		c.visual.add_scars(scars))   # (the scars you gave it, as it'll come at you)
 
 
 ## You: your critter and skin (Settings), wearing `wear` (Outfits pieces),

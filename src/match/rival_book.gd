@@ -75,6 +75,21 @@ static func save() -> void:
 	_book().save(path())
 
 
+## Every rogue back to how it started (the Gallery's "Reset all rogues", asked
+## first): no history with you (beat-downs both ways, so no rival or heat),
+## no grudges, scars, trackers or gun of yours. The signature guns you've
+## won stay on your trophy shelf: they're yours.
+static func reset_rogues() -> void:
+	var book := _book()
+	for bot in book.get_sections():
+		var won := signature_won(bot)
+		book.erase_section(bot)
+		if won:
+			book.set_value(bot, "signature_won", true)
+	_blast.clear()
+	save()
+
+
 ## Forget everyone (tests only; the player's book is never wiped by the game).
 static func reset_for_tests() -> void:
 	assert(Settings.is_test_run())

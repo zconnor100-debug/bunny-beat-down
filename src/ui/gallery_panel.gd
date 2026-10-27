@@ -8,6 +8,8 @@ extends PanelContainer
 ## beat-downs by gun, longest beat-down), and the grudges it holds (against
 ## bots, and the director). Pad friendly: every card is a button, so the list scrolls with
 ## the focus; the right stick (or the mouse wheel, or Page Up / Down) reads on down a long card.
+## "Reset all rogues" (asked first) starts every one of them over, so new
+## rivals and nemeses can rise (RivalBook.reset_rogues).
 
 signal closed
 
@@ -21,6 +23,11 @@ var _detail: Label
 var _portrait: CritterPortrait
 var _card_scroll: ScrollContainer
 var _more: Label   # "more below" under a card that doesn't fit
+var _sub: Label
+var _buttons: HBoxContainer   # Back, Reset all rogues
+var _reset: Button
+var _confirm: HBoxContainer   # "Are You Sure...?" Yes / No
+var _no: Button
 
 
 func _ready() -> void:
@@ -32,9 +39,9 @@ func _ready() -> void:
 	var title := UITheme.label("Rogues' Gallery", 52, UITheme.CARROT_LIGHT, true)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(title)
-	var sub := UITheme.label("The same 49 critters every run. They remember you, and each other.", 22, UITheme.CREAM)
-	sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	v.add_child(sub)
+	_sub = UITheme.label("The same 49 critters every run. They remember you, and each other.", 22, UITheme.CREAM)
+	_sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	v.add_child(_sub)
 	var h := HBoxContainer.new()
 	h.add_theme_constant_override("separation", 18)
 	v.add_child(h)
@@ -72,9 +79,31 @@ func _ready() -> void:
 	side.add_child(_more)
 	card_scroll.get_v_scroll_bar().value_changed.connect(func(_v: float): _update_more())
 	card_scroll.get_v_scroll_bar().changed.connect(_update_more)
-	var back := UITheme.button("Back", func(): closed.emit())
-	back.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	v.add_child(back)
+	_buttons = HBoxContainer.new()
+	_buttons.alignment = BoxContainer.ALIGNMENT_CENTER
+	_buttons.add_theme_constant_override("separation", 24)
+	v.add_child(_buttons)
+	_buttons.add_child(UITheme.button("Back", func(): closed.emit()))
+	_reset = UITheme.button("Reset all rogues", _ask_reset)
+	_buttons.add_child(_reset)
+	# (asked first, with No in focus: a stray press of the pad doesn't wipe them)
+	_confirm = HBoxContainer.new()
+	_confirm.alignment = BoxContainer.ALIGNMENT_CENTER
+	_confirm.add_theme_constant_override("separation", 18)
+	_confirm.visible = false
+	v.add_child(_confirm)
+	_confirm.add_child(UITheme.label("Are You Sure you want to reset all rogues to original?", 24, UITheme.CARROT_LIGHT, true))
+	_confirm.add_child(UITheme.button("Yes, reset them", _reset_all))
+	_no = UITheme.button("No", _cancel_reset)
+	_confirm.add_child(_no)
+	_fill_list()
+
+
+## The cast as buttons, the ones with the most history with you first; the first in focus.
+func _fill_list() -> void:
+	for old in _list.get_children():
+		_list.remove_child(old)
+		old.queue_free()
 	var first: Button = null
 	for n in order():
 		var b := UITheme.button(card_title(n), func(): _show(n))
@@ -88,6 +117,27 @@ func _ready() -> void:
 		first.grab_focus.call_deferred()
 
 
+func _ask_reset() -> void:
+	_buttons.visible = false
+	_confirm.visible = true
+	_no.grab_focus()
+
+
+func _cancel_reset() -> void:
+	_confirm.visible = false
+	_buttons.visible = true
+	_reset.grab_focus()
+
+
+## Every rogue back to how it started (your trophies stay yours).
+func _reset_all() -> void:
+	RivalBook.reset_rogues()
+	_confirm.visible = false
+	_buttons.visible = true
+	_sub.text = "Every rogue is back to how it started: no rivals, no nemeses, no scars. Your trophies stay yours."
+	_fill_list()
+
+
 ## The right stick reads on down the card (the left stick and the D-pad walk the list).
 func _process(delta: float) -> void:
 	var tilt := Input.get_axis(&"look_up", &"look_down")
@@ -98,7 +148,10 @@ func _process(delta: float) -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed(&"ui_cancel"):
 		get_viewport().set_input_as_handled()
-		closed.emit()
+		if _confirm.visible:
+			_cancel_reset()   # (backing out of the question, not the gallery)
+		else:
+			closed.emit()
 	elif event.is_action_pressed(&"ui_page_down") or event.is_action_pressed(&"ui_page_up"):
 		var bar := _card_scroll.get_v_scroll_bar()
 		bar.value += _card_scroll.size.y * 0.8 * (1.0 if event.is_action_pressed(&"ui_page_down") else -1.0)
@@ -124,7 +177,8 @@ static func order() -> Array:
 
 static func card_title(n: String) -> String:
 	var tag := "⚔ " if RivalBook.is_rival(n) else ""
-	return "%s%s  ·  %s" % [tag, Cast.title(n), SPECIES.get(Cast.member(n).species, "")]
+	var scarred := "  ·  scarred" if not RivalBook.scars(n).is_empty() else ""   # (its portrait wears them)
+	return "%s%s  ·  %s%s" % [tag, Cast.title(n), SPECIES.get(Cast.member(n).species, ""), scarred]
 
 
 ## Everything the game knows about a bot, as text.

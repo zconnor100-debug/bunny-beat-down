@@ -18,6 +18,7 @@ const GLIDER_VARIANTS := [
 ]
 const GOLD_SHADER := preload("res://src/fx/golden.gdshader")
 const ENEMY_RIM_SHADER := preload("res://src/fx/enemy_rim.gdshader")
+const SINGED_SHADER := preload("res://src/fx/singed.gdshader")
 const NAME_TAG_RANGE := 45.0
 static var name_tag_range_scale := 1.0     ## the Hawk Eye perk doubles it
 ## Name tags keep their size on screen this close, and shrink further off (to
@@ -28,6 +29,8 @@ const NAME_TAG_MIN_SCALE := 0.35
 static var _enemy_rim: ShaderMaterial
 
 static var _gold_overlay: ShaderMaterial
+static var _soot: ShaderMaterial
+var singed := false   ## sooty fur (RivalBook "singed"), kept through a change of skin
 const BASE_MASS := 12.0
 ## Carrot guns are drawn bigger than "real" proportions so they read clearly
 ## in third person (the holder already carries the critter's body scale).
@@ -443,6 +446,8 @@ func apply_skin(id: String) -> void:
 			var copy := mat.duplicate() as BaseMaterial3D
 			copy.albedo_texture = load(tex_path)
 			m.set_surface_override_material(s, copy)
+	if singed:
+		_singe()
 
 
 # --- jump tricks ------------------------------------------------------------------------
@@ -921,8 +926,8 @@ const SCAR_PATCH := Color(0.08, 0.07, 0.07)
 
 
 ## The scars a bot came back with (RivalBook.SCARS): an eye patch on a strap,
-## bandages round an arm, a twig splint on a leg. On the bones, so they move
-## (and fly off) with the limb.
+## bandages round an arm, a twig splint on a leg, sooty singed fur. On the
+## bones, so they move (and fly off) with the limb.
 func add_scars(scars: Array) -> void:
 	for scar in scars:
 		match String(scar):
@@ -933,6 +938,9 @@ func add_scars(scars: Array) -> void:
 					_bandage(StringName("%s_%s" % [String(scar).right(1), part]))
 			"leg_l", "leg_r":
 				_splint(StringName("%s_lower_leg" % String(scar).right(1)))
+			"singed":
+				singed = true
+				_singe()
 
 
 ## [attachment, start, end, radius] of a body segment, in the attachment's frame.
@@ -958,6 +966,24 @@ func _scar_mesh(mesh: PrimitiveMesh, c: Color, parent: Node3D, xf: Transform3D) 
 	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	mi.transform = xf
 	parent.add_child(mi)
+
+
+## Soot over its fur: each of its materials (its skin's) with the singed
+## pass after it, multiplied on top.
+func _singe() -> void:
+	if _soot == null:
+		_soot = ShaderMaterial.new()
+		_soot.shader = SINGED_SHADER
+	for m in meshes:
+		for s in m.mesh.get_surface_count():
+			var mat := m.get_surface_override_material(s) as BaseMaterial3D
+			if mat == null:
+				mat = m.mesh.surface_get_material(s) as BaseMaterial3D
+			if mat == null or mat.next_pass == _soot:
+				continue
+			var copy := mat.duplicate() as BaseMaterial3D
+			copy.next_pass = _soot
+			m.set_surface_override_material(s, copy)
 
 
 func _bandage(role: StringName) -> void:

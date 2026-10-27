@@ -382,3 +382,63 @@ func _button(root: Node, text: String) -> Button:
 		if b.text == text:
 			return b
 	return null
+
+
+func test_the_gallery_shows_the_scars_you_gave_it() -> void:
+	RivalBook.add_scar("Croaker", "eye_patch")
+	RivalBook.add_scar("Croaker", "leg_r")
+	RivalBook.add_scar("Croaker", "singed")
+	var p := CritterPortrait.new(Vector2(320, 360))
+	add_child(p)
+	await wait_frames(2)
+	p.show_rogue("Croaker")
+	await wait_frames(2)
+	var c := p.shown_critter()
+	var scars := c.find_children("*", "MeshInstance3D", true, false).filter(func(x): return x.has_meta(&"scar"))
+	check(scars.size() >= 3, "its portrait wears its eye patch and splint (%d pieces)" % scars.size())
+	var sooty := false
+	for m in c.visual.meshes:
+		var mat := m.get_surface_override_material(0) as BaseMaterial3D
+		sooty = sooty or (mat != null and mat.next_pass is ShaderMaterial and (mat.next_pass as ShaderMaterial).shader == CritterVisual.SINGED_SHADER)
+	check(c.visual.singed and sooty, "and its singed fur is sooty")
+	check(GalleryPanel.card_title("Croaker").ends_with("scarred") and not GalleryPanel.card_title("Vex").ends_with("scarred"),
+		"the list marks it scarred (and not one you've never hurt)")
+	p.show_rogue("Vex")
+	await wait_frames(2)
+	var none := p.shown_critter().find_children("*", "MeshInstance3D", true, false).filter(func(x): return x.has_meta(&"scar"))
+	check(none.is_empty() and not p.shown_critter().visual.singed, "a rogue you've never hurt has none")
+	p.queue_free()
+
+
+func test_reset_all_rogues_asks_first_then_starts_them_over() -> void:
+	for i in 8:
+		RivalBook.note_you_beat("Sly", "fox")
+	for i in RivalBook.RIVAL_AT:
+		RivalBook.note_you_died_to("Vex", "bandit_bunny")
+	RivalBook.add_scar("Sly", "eye_patch")
+	RivalBook.note_took_gun("Vex", {"id": "carrot_smg", "rarity": Rarity.Tier.HEIRLOOM, "skin": "candy"})
+	RivalBook.note_signature_won("Sly")
+	RivalBook.save()
+	check(Cast.heat("Sly") == 4 and RivalBook.is_rival("Vex"), "(Sly's a nemesis, Vex your rival)")
+	var g := GalleryPanel.new()
+	add_child(g)
+	await wait_frames(2)
+	g._reset.pressed.emit()
+	await wait_frames(1)
+	check(g._confirm.visible and g._no.has_focus() and Cast.heat("Sly") == 4, "Reset all rogues asks first (No in focus), and nothing's reset yet")
+	var asked := g._confirm.get_child(0) as Label
+	check(asked.text == "Are You Sure you want to reset all rogues to original?", "in so many words")
+	g._no.pressed.emit()
+	await wait_frames(1)
+	check(not g._confirm.visible and Cast.heat("Sly") == 4 and RivalBook.is_rival("Vex"), "No: nobody's reset")
+	g._reset.pressed.emit()
+	(g._confirm.get_child(1) as Button).pressed.emit()
+	await wait_frames(2)
+	check(Cast.heat("Sly") == 0 and not RivalBook.is_rival("Vex") and RivalBook.scars("Sly").is_empty() and RivalBook.took_gun("Vex").is_empty(),
+		"Yes: every rogue starts over (no heat, rival, scars, or gun of yours)")
+	check(RivalBook.signatures() == ["Sly"], "the signature guns you won stay yours (%s)" % [RivalBook.signatures()])
+	check(not GalleryPanel.card_title("Sly").ends_with("scarred") and (g._list.get_child(0) as Button).text == GalleryPanel.card_title(GalleryPanel.order()[0]),
+		"the list starts over too")
+	RivalBook._cfg = null   # (read back from the file)
+	check(Cast.heat("Sly") == 0 and RivalBook.signature_won("Sly"), "and it's saved")
+	g.queue_free()
