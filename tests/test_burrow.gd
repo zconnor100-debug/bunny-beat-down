@@ -9,6 +9,7 @@ extends TestCase
 
 func before_each() -> void:
 	PlayerProfile.reset_for_tests()
+	RivalBook.reset_for_tests()   # (no scars from other tests' matches: a scarred rogue comes back tougher)
 
 
 func after_each() -> void:
@@ -230,6 +231,40 @@ func test_the_workshop() -> void:
 	check(labels.has("Reticle: Carrot") and labels.has("Gun skin: Candy stripe"), "the Workshop lists your looks")
 	check(panel.find_children("*", "Button", true, false).any(func(b): return b.text == "Fitted ✓"), "and your attachments")
 
+
+## Browsing a look (◂ ▸) rebuilds the list: it used to jump to its end on
+## every press, and the portrait's gun never wore the skin being browsed.
+func test_browsing_the_workshop_keeps_your_place_and_shows_the_skin() -> void:
+	var panel := BurrowPanel.new()
+	add_child(panel)
+	await wait_frames(10)
+	var bar := panel._scroll.get_v_scroll_bar()
+	check(bar.max_value - bar.page > 600.0, "the list is long enough to scroll (%d)" % bar.max_value)
+	var next := _arrow(panel, "skin")
+	next.grab_focus()
+	await wait_frames(5)
+	var before := panel._scroll.scroll_vertical
+	check(before > 0 and before < bar.max_value - bar.page - 100.0, "scrolled to the gun skins, not the end (%d)" % before)
+	for skin in ["fern_camo", "candy"]:
+		_arrow(panel, "skin").pressed.emit()
+		await wait_frames(6)
+		check(panel._scroll.scroll_vertical == before, "▸ to %s: the list stays put (%d, was %d)" % [skin, panel._scroll.scroll_vertical, before])
+		var focused := get_viewport().gui_get_focus_owner()
+		check(focused == _arrow(panel, "skin"), "and the skin row's ▸ keeps the focus")
+		check(panel.shown("skin") == skin, "showing %s" % skin)
+		var gun: Node3D = panel._portrait.shown_critter().visual.weapon_model
+		var skinned := gun.find_children("*", "GeometryInstance3D", true, false).filter(func(g): return g.material_overlay == GunKit.skin_material(skin))
+		check(not skinned.is_empty(), "the portrait's gun wears %s (bought or not)" % skin)
+	check(Workshop.look("skin") == "stock", "only trying them on: still wearing the stock skin")
+
+
+func _arrow(panel: BurrowPanel, cat: String) -> Button:
+	for h in panel._list.get_children():
+		if h is HBoxContainer and (h.get_child(0) as Label).text.begins_with(Workshop.LOOKS[cat].label + ":"):
+			for b in h.get_children():
+				if b is Button and b.text == "▸":
+					return b
+	return null
 
 func _match() -> MatchManager:
 	var cage := HamsterCage.new()

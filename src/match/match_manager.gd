@@ -266,7 +266,7 @@ func _apply_perks(p: Critter) -> void:
 		p.bloom_scale = 0.7
 	if Workshop.fitted("long_mag"):
 		p.mag_scale = 1.3
-	p.visual.kit = {"sight": Workshop.fitted("red_dot"), "laser": Workshop.fitted("laser"), "skin": Workshop.look("skin")}
+	p.visual.kit = Workshop.kit()
 	p.flash_look = Workshop.look("flash")
 	p.smoke_look = Workshop.look("smoke")
 	p.muffled = Workshop.fitted("muffler")

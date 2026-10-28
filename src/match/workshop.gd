@@ -163,6 +163,12 @@ static func outfit() -> Array:
 	return out
 
 
+## Your guns' kit (GunKit.dress): the sight and the laser if they're fitted,
+## and your skin (or `skin` instead, to try one on).
+static func kit(skin := "") -> Dictionary:
+	return {"sight": fitted("red_dot"), "laser": fitted("laser"), "skin": skin if skin != "" else look("skin")}
+
+
 ## Earned only (a Milestone's reward), not for sale.
 static func earned_only(item: String) -> bool:
 	var opt := _option(item)

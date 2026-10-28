@@ -5,7 +5,8 @@ extends PanelContainer
 ## switch run modifiers on or off, and in the Workshop buy gun attachments
 ## (fit or take them off) and looks (browse each with ◂ ▸; one you own is
 ## worn as soon as you pick it), your wardrobe among them: a portrait beside
-## the list shows you wearing what you're browsing, bought or not. Pad
+## the list shows you wearing what you're browsing, bought or not, your gun
+## in the skin you're browsing. Pad
 ## friendly: every row is buttons, and the list scrolls with the focus.
 
 signal closed
@@ -14,6 +15,7 @@ var _acorns: Label
 var _list: VBoxContainer
 var _browse: Dictionary = {}        # look category -> option index shown
 var _portrait: CritterPortrait
+var _scroll: ScrollContainer
 
 
 func _ready() -> void:
@@ -31,17 +33,17 @@ func _ready() -> void:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 16)
 	v.add_child(row)
-	var scroll := ScrollContainer.new()
-	scroll.custom_minimum_size = Vector2(720, 560)
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	scroll.follow_focus = true
-	row.add_child(scroll)
+	_scroll = ScrollContainer.new()
+	_scroll.custom_minimum_size = Vector2(720, 560)
+	_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_scroll.follow_focus = true
+	row.add_child(_scroll)
 	_portrait = CritterPortrait.new(Vector2(320, 560))
 	row.add_child(_portrait)
 	_list = VBoxContainer.new()
 	_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_list.add_theme_constant_override("separation", 8)
-	scroll.add_child(_list)
+	_scroll.add_child(_list)
 	var back := UITheme.button("Back", func(): closed.emit())
 	back.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	v.add_child(back)
@@ -61,7 +63,7 @@ func _rebuild(focus_key := "") -> void:
 		_list.remove_child(c)
 		c.queue_free()
 	_acorns.text = "🌰 %d acorns   •   perks equipped: %d of %d" % [Burrow.acorns(), Burrow.equipped().size(), Burrow.slots()]
-	_portrait.show_player(trying_on())
+	_portrait.show_player(trying_on(), &"carrot_rifle", Workshop.kit(shown("skin")))   # (the skin you're browsing, on your gun)
 	var focus: Dictionary = {}   # key -> button
 	_heading("Perks")
 	for id in Burrow.PERKS:
@@ -106,7 +108,27 @@ func _rebuild(focus_key := "") -> void:
 	if to_focus == null:
 		to_focus = UITheme.first_focusable(_list)
 	if to_focus:
-		to_focus.grab_focus.call_deferred()
+		_refocus.call_deferred(to_focus, _scroll.scroll_vertical)
+
+
+## Focus the rebuilt row's button where the list was. The rows just built
+## aren't laid out yet (their wrapped labels have no width), so following the
+## focus now threw the list to its end on every press: it stays put, and
+## follows the focus again once they're in place.
+func _refocus(c: Control, keep: int) -> void:
+	if not is_instance_valid(c):
+		return
+	_scroll.follow_focus = false
+	c.grab_focus()
+	_scroll.scroll_vertical = keep
+	await get_tree().process_frame
+	await get_tree().process_frame
+	if not is_instance_valid(c):
+		return
+	_scroll.scroll_vertical = keep
+	_scroll.follow_focus = true
+	if c.has_focus():
+		_scroll.ensure_control_visible(c)
 
 
 func _heading(text: String) -> void:
