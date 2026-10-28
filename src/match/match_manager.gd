@@ -251,9 +251,10 @@ func _heat_loadout(c: Critter, n: String, heat: int) -> void:
 
 
 ## What a bot remembers of you: the scars you gave it (it comes back wearing
-## them, and tougher), and the gun it took off you (it's carrying it, in your skin).
+## them, and tougher; the ones other rogues gave it off-screen too: WarrenSim),
+## and the gun it took off you (it's carrying it, in your skin).
 func _remembers_you(c: Critter, n: String) -> void:
-	var scars := RivalBook.scars(n)
+	var scars := RivalBook.all_scars(n)
 	if not scars.is_empty():
 		c.visual.add_scars(scars)
 		if scars.has("eye_patch"):

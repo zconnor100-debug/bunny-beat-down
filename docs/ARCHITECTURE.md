@@ -269,6 +269,17 @@ The third map follows the cage's pattern (`ToyBox extends Island`,
   rival: `MatchManager` puts up to three rivals in every match, their
   `AIBrain` scores the player as a preferred target and skips the
   "attack slot" queue, and `Events.taunt` drives the HUD's speech bubbles.
+- **`WarrenSim`** plays the rogues' off-screen matches: one per three hours
+  of real time since its clock last moved (kept in its own `ConfigFile`,
+  capped at twelve), caught up when the main menu opens. They're
+  statistical, not physical: a lobby meets two at a time, the one who
+  starts it picked by temper, the one it meets by grudge, the winner by a
+  logistic of each rogue's `power` (personality, its smoothed tracked
+  accuracy, wins, scars). Results go through the same `RivalBook` calls as
+  real matches (`note_bot_beat`, `note_win`) plus `add_scar_from` and
+  `set_mood`, so the next real match picks them up with no new code; the
+  seed is the clock, so the same absence makes the same news. `edition_of`
+  turns the matches into weighted stories for `GazettePanel`.
 - **Voices.** Every line a bot says is picked as `Cast.say` (text, a key
   naming the template, the fields that fill it), shown, and spoken by
   **`RogueVoice`** from the bot's head. `tests/export_lines.gd` writes every

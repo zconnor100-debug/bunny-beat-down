@@ -177,7 +177,7 @@ static func order() -> Array:
 
 static func card_title(n: String) -> String:
 	var tag := "⚔ " if RivalBook.is_rival(n) else ""
-	var scarred := "  ·  scarred" if not RivalBook.scars(n).is_empty() else ""   # (its portrait wears them)
+	var scarred := "  ·  scarred" if not RivalBook.all_scars(n).is_empty() else ""   # (its portrait wears them)
 	return "%s%s  ·  %s%s" % [tag, Cast.title(n), SPECIES.get(Cast.member(n).species, ""), scarred]
 
 
@@ -243,12 +243,22 @@ static func tracker_lines(n: String) -> Array:
 
 ## What it remembers of you: its scars (and what it learned from them),
 ## the gun it took off you, and its signature gun if you won its nemesis hunt.
+## And of its time away from you (WarrenSim): scars other rogues gave it, and its mood.
 static func memory_lines(n: String) -> Array:
 	var out := []
 	var sc := RivalBook.scars(n)
 	if not sc.is_empty():
 		out.append("Scars: %s. It learned: %s." % [", ".join(sc.map(func(x): return "%s (%s)" % [RivalBook.SCARS[x].text, RivalBook.SCARS[x].why])),
 			"; ".join(sc.map(func(x): return RivalBook.SCARS[x].learned))])
+	var from := RivalBook.scars_from(n)
+	if not from.is_empty():
+		out.append("Scars from other rogues while you were away (they heal in a few days): %s." % ", ".join(from.keys().map(
+			func(x): return "%s (from %s)" % [RivalBook.SCARS[x].text, from[x]])))
+	match RivalBook.mood(n):
+		"cocky":
+			out.append("Cocky: it's been winning while you were away, and fights braver (and a little sloppier) for it.")
+		"wary":
+			out.append("Wary: fresh from a beating while you were away, it keeps its distance.")
 	var took := RivalBook.took_gun(n)
 	if not took.is_empty():
 		var w := WeaponInstance.from_dict(took)

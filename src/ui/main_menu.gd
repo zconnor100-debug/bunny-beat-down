@@ -32,6 +32,8 @@ func _ready() -> void:
 	if GameSession.open_trail:   # (back from a run's match)
 		GameSession.open_trail = false
 		_open_trail()
+	elif not Settings.is_test_run() and not WarrenSim.catch_up().is_empty():
+		_open_gazette.call_deferred()   # (the rogues have been busy while you were away)
 
 
 func _build_diorama() -> void:
@@ -141,8 +143,8 @@ func _build_ui() -> void:
 	_ui.add_child(shade)
 
 	_menu = VBoxContainer.new()
-	_menu.position = Vector2(110, 150)
-	_menu.add_theme_constant_override("separation", 16)
+	_menu.position = Vector2(110, 130)
+	_menu.add_theme_constant_override("separation", 12)
 	_ui.add_child(_menu)
 	var title := UITheme.label("BUNNY\nBEAT DOWN", 112, UITheme.CARROT, true)
 	title.add_theme_constant_override("line_spacing", -26)
@@ -151,9 +153,9 @@ func _build_ui() -> void:
 	_menu.add_child(tag)
 	_menu.add_child(Control.new())
 	for item in [["Play", _open_play], ["Continue the run" if Run.active() else "A Run", _open_trail], ["The Burrow", _open_burrow], ["Rogues' Gallery", _open_gallery],
-			["Trophy Room", _open_trophies], ["Settings", _open_settings], ["Credits", _open_credits], ["Quit", func(): get_tree().quit()]]:
+			["Warren Gazette", _open_gazette], ["Trophy Room", _open_trophies], ["Settings", _open_settings], ["Credits", _open_credits], ["Quit", func(): get_tree().quit()]]:
 		var b := UITheme.button(item[0], item[1])
-		b.custom_minimum_size = Vector2(320, 58)
+		b.custom_minimum_size = Vector2(320, 54)
 		b.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 		_menu.add_child(b)
 	_play_button().grab_focus.call_deferred()
@@ -260,6 +262,12 @@ func _open_trophies() -> void:
 
 func _open_gallery() -> void:
 	var p := GalleryPanel.new()
+	p.closed.connect(_close_overlay)
+	_show_overlay(p)
+
+
+func _open_gazette() -> void:
+	var p := GazettePanel.new()
 	p.closed.connect(_close_overlay)
 	_show_overlay(p)
 

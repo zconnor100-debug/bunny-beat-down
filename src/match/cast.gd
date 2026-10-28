@@ -272,6 +272,19 @@ static func traits_for(n: String) -> Dictionary:
 		out["hunts_you"] = t >= 2
 		out["no_slot"] = t >= 3                 # doesn't wait its turn to shoot at you
 	out["defiant"] = RivalBook.director_grudge(n) >= DEFIANT_AT
+	# how its off-screen matches left it (WarrenSim): on a streak it's braver,
+	# picks fights from further off and hops about, and spots you a bit slower
+	# for it; freshly scarred, it keeps its distance and runs sooner
+	match RivalBook.mood(n):
+		"cocky":
+			out["fight_range"] = float(out.get("fight_range", AIBrain.BOT_FIGHT_RANGE)) * 1.2
+			out["break_off"] = float(out.get("break_off", AIBrain.BREAK_OFF_HEALTH)) * 0.7
+			out["spot"] = float(out.get("spot", 1.0)) * 0.9
+			out["jump"] = float(out.get("jump", 1.0)) * 1.3
+		"wary":
+			out["break_off"] = float(out.get("break_off", AIBrain.BREAK_OFF_HEALTH)) * 1.3
+			out["range"] = float(out.get("range", 1.0)) * 1.15
+			out["settle"] = float(out.get("settle", 1.0)) * 1.3
 	return out
 
 

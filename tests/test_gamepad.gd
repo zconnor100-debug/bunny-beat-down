@@ -71,6 +71,15 @@ func test_menu_buttons_answer_a_and_b() -> void:
 	check(menu.find_children("*", "GalleryPanel", true, false).is_empty(), "B closes the Rogues' Gallery")
 	check(_focus_text() == "Rogues' Gallery", "and the pad is back on the Rogues' Gallery (focus: %s)" % _focus_text())
 
+	# The Warren Gazette: opens on Back, B comes back to the same button
+	await _pad(JOY_BUTTON_DPAD_DOWN)
+	check(_focus_text() == "Warren Gazette", "D-pad down moves to the Warren Gazette (focus: %s)" % _focus_text())
+	await _pad(JOY_BUTTON_A)
+	check(menu.find_children("*", "GazettePanel", true, false).size() == 1 and _focus_text() == "Back", "A opens it on Back (focus: %s)" % _focus_text())
+	await _pad(JOY_BUTTON_B)
+	await wait_frames(1)
+	check(menu.find_children("*", "GazettePanel", true, false).is_empty() and _focus_text() == "Warren Gazette", "B closes it (focus: %s)" % _focus_text())
+
 	# The Trophy Room: opens on Back, B comes back to the same button
 	await _pad(JOY_BUTTON_DPAD_DOWN)
 	check(_focus_text() == "Trophy Room", "D-pad down moves to the Trophy Room (focus: %s)" % _focus_text())
@@ -94,7 +103,7 @@ func test_menu_buttons_answer_a_and_b() -> void:
 	check(_focus_text() == "Settings", "and the pad is back on the Settings button (focus: %s)" % _focus_text())
 
 	# Play: the D-pad steps the opponent count, B goes back
-	for i in 5:
+	for i in 6:
 		await _pad(JOY_BUTTON_DPAD_UP)
 	await _pad(JOY_BUTTON_A)
 	check(_focus_text() == "Drop in!", "A on Play opens the match setup on 'Drop in!' (focus: %s)" % _focus_text())
@@ -112,7 +121,7 @@ func test_menu_buttons_answer_a_and_b() -> void:
 	check(_focus_text() == "Play", "B backs out to Play (focus: %s)" % _focus_text())
 
 	# Credits: opens on Back, B closes it
-	for i in 6:
+	for i in 7:
 		await _pad(JOY_BUTTON_DPAD_DOWN)
 	await _pad(JOY_BUTTON_A)
 	check(menu.find_children("*", "CreditsPanel", true, false).size() == 1, "A on Credits opens them")

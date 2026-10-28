@@ -13,6 +13,9 @@ extends RefCounted
 ## headshots, damage, beat-downs by gun and its longest beat-down. A bot
 ## remembers what you did to it, too: the scars it came back with, the gun
 ## it took off you, and whether you won its nemesis hunt (its signature gun).
+## While you're away the bots play matches of their own (WarrenSim), and those
+## go in the book too: wins, grudges, scars from the rogue that dealt them,
+## and the mood they left it in.
 ##
 ## Automated test runs use their own file, like Settings.
 
@@ -77,8 +80,9 @@ static func save() -> void:
 
 ## Every rogue back to how it started (the Gallery's "Reset all rogues", asked
 ## first): no history with you (beat-downs both ways, so no rival or heat),
-## no grudges, scars, trackers or gun of yours. The signature guns you've
-## won stay on your trophy shelf: they're yours.
+## no grudges, scars, trackers or gun of yours, and no off-screen history
+## (the Gazette's news goes too). The signature guns you've won stay on your
+## trophy shelf: they're yours.
 static func reset_rogues() -> void:
 	var book := _book()
 	for bot in book.get_sections():
@@ -88,6 +92,7 @@ static func reset_rogues() -> void:
 			book.set_value(bot, "signature_won", true)
 	_blast.clear()
 	save()
+	WarrenSim.forget_news()
 
 
 ## Forget everyone (tests only; the player's book is never wiped by the game).
@@ -238,6 +243,56 @@ static func add_scar(bot: String, scar: String) -> bool:
 	list.append(scar)
 	_book().set_value(bot, "scars", list)
 	return true
+
+
+## Scars other rogues gave it off-screen (WarrenSim) heal in this many days;
+## the ones you gave it never do.
+const HEAL_DAYS := 3.0
+
+
+## Scars other rogues gave it, off-screen, not yet healed: {scar: who}. Yours
+## (scars) stay yours; it wears both, and is wiser for both.
+static func scars_from(bot: String) -> Dictionary:
+	var out := {}
+	var now := Time.get_unix_time_from_system()
+	var kept: Dictionary = _book().get_value(bot, "scars_from", {})
+	for s in kept:
+		if now - float(kept[s][1]) < HEAL_DAYS * 86400.0:
+			out[s] = String(kept[s][0])
+	return out
+
+
+## `by` gave it `scar` at `at` (unix time). Returns true if it's a new scar
+## (not one it already wears, from you or anyone).
+static func add_scar_from(bot: String, scar: String, by: String, at := Time.get_unix_time_from_system()) -> bool:
+	if not SCARS.has(scar) or all_scars(bot).has(scar):
+		return false
+	var kept: Dictionary = (_book().get_value(bot, "scars_from", {}) as Dictionary).duplicate()
+	kept[scar] = [by, at]
+	_book().set_value(bot, "scars_from", kept)
+	return true
+
+
+## Every scar it wears: yours, then the ones other rogues gave it.
+static func all_scars(bot: String) -> Array:
+	var out := scars(bot)
+	for s in scars_from(bot):
+		if not out.has(s):
+			out.append(s)
+	return out
+
+
+## How the off-screen matches left it (WarrenSim): "cocky" after a winning
+## streak, "wary" after a fresh scar, "" as it was (Cast.traits_for).
+static func mood(bot: String) -> String:
+	return String(_book().get_value(bot, "mood", ""))
+
+
+static func set_mood(bot: String, m: String) -> void:
+	if m != "":
+		_book().set_value(bot, "mood", m)
+	elif _book().has_section_key(bot, "mood"):
+		_book().erase_section_key(bot, "mood")
 
 
 ## The gun it took off you when it beat you down ({} if none): WeaponInstance.to_dict().

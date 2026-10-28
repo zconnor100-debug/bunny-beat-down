@@ -260,6 +260,19 @@ and the final shot replayed from three angles. There's a
     were holding** and brings it to your next matches, in your skin, until
     you beat it down and take it back. The Rogues' Gallery remembers all of
     it, and its portrait wears the scars (the list marks who's scarred).
+  - **They live while you're away: the Warren Gazette.** Every three hours
+    of real time the rogues play a match of their own, off-screen (twelve at
+    most to catch up on). Who runs into whom follows their grudges and
+    tempers, and who wins follows their real record: how well each one
+    shoots in your matches, its wins and its scars. It all goes in the book
+    like your matches do: wins, grudges (so they go after each other first
+    when you're there), and now and then a scar from the rogue that dealt it
+    ("an eye patch, from Vex", in the gallery; those heal in three days, the
+    ones you give never do). A winning streak leaves a rogue cocky
+    (braver, sloppier), a fresh scar leaves it wary. When you come back, the
+    **Warren Gazette** (main menu) opens on its own: the front-page story,
+    the rest of the news, Feud Watch, Wanted (who's after you) and the
+    standings.
 - **Runs down the Trail.** *A Run* (main menu) is five stops picked one at a
   time from a branching map (`Run`, `TrailPanel`): Skirmishes, Grudge Matches
   (your radical bots, as a gang), Golden Groves (better loot, double acorns,
@@ -511,7 +524,7 @@ The full write-up is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
   the same views: 31% fewer triangles on the island, 31% on the Hamster
   Cage, 79% on Toy Box Bash, and a third to two thirds fewer shadow
   triangles.
-- **Tests that play the game.** A headless suite of 134 tests covers:
+- **Tests that play the game.** A headless suite of 166 tests covers:
   - the IK maths, hitboxes, ragdolls and dismemberment, and how critters
     carry themselves (never frozen, guns carried low but shooting from the
     aim, held clear of the head, both paws on the handles of every gun, feet
@@ -541,7 +554,10 @@ The full write-up is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
     match, hunting and taunting, revenge), radical bots (each step, their
     loadout and name tag, the bounty), grudges between bots and against the
     director (paid back, remembered, a defiant bot's hits), the lobby news
-    and the Rogues' Gallery, the bots learning you (landings, fighting style,
+    and the Rogues' Gallery, the off-screen season and the Warren Gazette
+    (time away into matches, the same news for the same absence, a better
+    shot winning more, scars that are theirs not yours, moods, the paper
+    itself), the bots learning you (landings, fighting style,
     camping, hot streaks), every Briar mood, the Burrow (earning,
     unlocking, equipping, every perk and modifier in a match, the third
     slot, the Workshop's attachments and looks on your guns), rewinds
