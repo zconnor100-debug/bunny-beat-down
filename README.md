@@ -798,7 +798,11 @@ that fits on the screen (a temporary `override.cfg` with the viewport at
 `tools/make_hunt_trailer.py`. The hunters' lines are spoken for the trailer
 in each rogue's own voice (`tools/voices/say.py`, Maya1, like the game's)
 and laid in where the stage says they speak; the Arsenal's gang shout their
-in-game lines, heard from the camera. Recorded tall, the Arsenal's stage
+in-game lines, heard from the camera. The trailers cut before the rogues
+had voices (the island trailer, the 30-second trailer and its phone cut)
+have them laid in since, each line where its speech bubble comes up
+(`tools/add_voices.py`; Sly's "Don't turn around, Bun." is his own in-game
+clip). Recorded tall, the Arsenal's stage
 frames every shot for a phone (the pack closer together, the cameras
 further back and in behind Bun, one speech bubble at a time). Their music: "Bushwick Tarantella" and
 "Voxel Revolution", by Kevin MacLeod.

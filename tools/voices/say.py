@@ -12,9 +12,10 @@ writes OUT_DIR/<id>.wav (24 kHz mono) for each. The old Kokoro voices
 
 A line the game already says (its key, as Cast.say makes them: "gspot.1"),
 cut from the rogue's voice bank exactly as the game plays it (its word clips
-one after another, nothing spoken anew; needs ffmpeg):
+one after another, nothing spoken anew; needs ffmpeg), with the names it
+calls out after the key ("you=Bun", "them=Vex"):
 
-    python3 tools/voices/say.py --from-bank OUT_DIR "Rogue|id|gspot.1" ...
+    python3 tools/voices/say.py --from-bank OUT_DIR "Rogue|id|gspot.1" "Sly|dont|p.sneak.spot.2|you=Bun" ...
 """
 from __future__ import annotations
 
@@ -32,12 +33,18 @@ BANK = HERE.parents[1] / "assets" / "voices"
 def from_bank(out: Path, specs: list) -> None:
     bank = json.loads((BANK / "voices.json").read_text())
     for spec in specs:
-        name, cid, key = spec.split("|", 2)
+        name, cid, key, *named = spec.split("|")
+        fields = dict(kv.split("=", 1) for kv in named)
         r = bank["rogues"][name]
         pcm = b""
         for step in bank["plans"][key]:
+            clip = ""
             if step[0] == "t":
-                start, length, *f = r["clips"]["t%d" % step[1]]
+                clip = "t%d" % step[1]
+            elif step[0] in ("you", "them"):
+                clip = "%s:%s:%s" % (step[0], fields[step[0]], step[1])   # (a name, said as it ends a phrase)
+            if clip:
+                start, length, *f = r["clips"][clip]
                 pcm += subprocess.run(["ffmpeg", "-v", "error", "-ss", str(start), "-t", str(length), "-i", str(BANK / (f[0] if f else r["file"])),
                                       "-ac", "1", "-ar", "24000", "-f", "s16le", "-"], capture_output=True, check=True).stdout
             elif step[0] == "pause":
