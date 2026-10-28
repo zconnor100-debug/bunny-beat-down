@@ -67,6 +67,17 @@ var shrines: Array[AcornShrine] = []
 ## out for you (they leave each other alone). Its name, and who's in it.
 var gang_name := ""
 var gang: Array[Critter] = []
+## Every gang in the match (Gang): the drop's, and any that team up mid-match.
+var gangs: Array[Gang] = []
+const GANGS_AT_ONCE := 2
+const TRUCE_RANGE := 25.0         ## bots this close may team up...
+const TRUCE_EVERY := 3.0          ## ...checked this often (seconds)
+const LEADING_AT := 3             ## your beat-downs this match before bots team up against you
+const BETRAY_RATE := 0.15         ## chance a second, x its disloyalty, once the win's in sight
+const CALL_EVERY := 6.0           ## seconds between a gang's callouts
+var player_beat_downs := 0        ## yours, this match
+var _gang_t := 0.0
+var _truce_t := 0.0
 const GANG_NAMES := ["the Thorn Gang", "the Bramble Bunch", "the Muddy Paws", "the Acorn Ring", "the Hedge Mob", "the Burrow Bandits"]
 ## The nemesis hunt: your Nemesis (Cast heat 4; in a run's finale, the
 ## hottest bot there) hunts you all match, tougher than the rest, and drops
@@ -284,16 +295,252 @@ func _form_gang() -> void:
 	if hot.size() < 2:
 		return
 	hot.sort_custom(func(a, b): return Cast.heat(a.display_name) > Cast.heat(b.display_name))
-	gang_name = GANG_NAMES[extra_rng.randi() % GANG_NAMES.size()]
-	for c in hot.slice(0, 3):
-		gang.append(c)
-		c.gang = gang_name
+	var picked: Array[Critter] = []
+	for c in hot:   # (never two who've turned on each other before)
+		if picked.size() < 3 and picked.all(func(o): return not RivalBook.betrayed(c.display_name, o.display_name)):
+			picked.append(c)
+	if picked.size() < 2:
+		return
+	var g := make_gang(picked, null, GANG_NAMES[extra_rng.randi() % GANG_NAMES.size()])
+	gang_name = g.name
+	gang = picked
+
+
+# ---- gangs: hunting as a pack, teaming up, turning on each other -------------------------
+
+## A gang of `members`, out for `enemy` (null: you). Each gets its part in
+## the hunt (AIBrain.flank), and one out for you hunts you.
+func make_gang(members: Array, enemy: Critter = null, gang_title := "") -> Gang:
+	if gang_title == "":
+		var used := gangs.map(func(g): return g.name)
+		var free := GANG_NAMES.filter(func(n): return not used.has(n))
+		gang_title = free[rng.randi() % free.size()] if not free.is_empty() else "the Gang"
+	var g := Gang.new(gang_title, enemy)
+	for c in members:
+		g.add(c)
 		var brain := c.get_node_or_null("AIBrain") as AIBrain
 		if brain:
-			brain.traits = brain.traits.duplicate()
-			brain.traits["hunts_you"] = true
-		if c.visual.name_tag:
-			c.visual.name_tag.text += "\n" + gang_name
+			brain.gang_enemy = enemy
+			if enemy == null:
+				brain.traits = brain.traits.duplicate()
+				brain.traits["hunts_you"] = true
+	gangs.append(g)
+	_assign_roles(g)
+	return g
+
+
+func gang_of(c: Critter) -> Gang:
+	for g in gangs:
+		if c != null and c.gang == g.name and g.members.has(c):
+			return g
+	return null
+
+
+## Who the gang's out for: its enemy bot, or you.
+func gang_target(g: Gang) -> Critter:
+	return g.enemy if g.enemy != null else player
+
+
+## The one with the longest reach pins the enemy down; the rest flank it, a side each.
+func _assign_roles(g: Gang) -> void:
+	var team := g.alive()
+	var reach := func(c: Critter) -> float:
+		var w := c.current_weapon()
+		return w.data.ai_preferred_range if w else 0.0
+	team.sort_custom(func(a, b): return reach.call(a) > reach.call(b))
+	for i in team.size():
+		var brain := team[i].get_node_or_null("AIBrain") as AIBrain
+		if brain:
+			brain.flank = 0 if i == 0 else (1 if i % 2 == 1 else -1)
+
+
+## A gang member spotted `seen`: if that's who the gang's after, it calls it
+## out and the others know roughly where it is.
+func gang_spotted(c: Critter, seen: Critter) -> void:
+	var g := gang_of(c)
+	if g == null or seen == null or seen != gang_target(g):
+		return
+	for m in g.alive():
+		var brain := m.get_node_or_null("AIBrain") as AIBrain
+		if m != c and brain:
+			brain.share_sighting(seen, seen.global_position)
+	gang_call(c, "spot")
+
+
+## A gang member shouts to the others (not too often a gang).
+func gang_call(c: Critter, kind: String) -> void:
+	var g := gang_of(c)
+	if g == null or _clock - g.called < CALL_EVERY:
+		return
+	g.called = _clock
+	_say(c, Cast.pick_say(Cast.GANG_RUSH_LINES if kind == "rush" else Cast.GANG_SPOT_LINES, "g" + kind, rng))
+
+
+## Once a second while the match is on: gangs whose enemy is down break up,
+## the roles are dealt again, someone may turn on a mate, and new gangs may form.
+func _tend_gangs(delta: float) -> void:
+	_gang_t += delta
+	if _gang_t < 1.0:
+		return
+	var step := _gang_t
+	_gang_t = 0.0
+	for g: Gang in gangs.duplicate():
+		if g.enemy != null and not (is_instance_valid(g.enemy) and g.enemy.alive):
+			_disband(g, true)
+			continue
+		var team := g.alive()
+		if team.size() < 2:
+			_disband(g, false)
+			continue
+		_assign_roles(g)
+		for m in team:
+			if rng.randf() < betrayal_chance(m, g) * step:
+				betray(m, _victim_of(m, g))
+				break
+	_truce_t += step
+	if _truce_t >= TRUCE_EVERY:
+		_truce_t = 0.0
+		_try_truce()
+
+
+## Is the win in sight for this gang: hardly anyone left but them, or the Briar nearly shut?
+func win_in_sight(g: Gang) -> bool:
+	return alive_critters().size() <= g.alive().size() + 2 or (storm != null and storm.active and safe_radius() < 45.0)
+
+
+## The chance a second that `m` turns on its gang: none till the win's in
+## sight, then by how disloyal it is (a noble never), more with a grudge
+## against a mate, and more with a mate on its last legs.
+func betrayal_chance(m: Critter, g: Gang) -> float:
+	if m == player or not win_in_sight(g):
+		return 0.0
+	var mates := g.alive().filter(func(o): return o != m)
+	if mates.is_empty():
+		return 0.0
+	var held := RivalBook.grudges(m.display_name)
+	var grudge := mates.any(func(o): return held.has(o.display_name))
+	var weak := mates.any(func(o): return o.health < 40.0)
+	return float(Gang.DISLOYAL.get(RivalBook.personality_of(m.display_name), 0.3)) * BETRAY_RATE * (1.5 if grudge else 1.0) * (2.0 if weak else 1.0)
+
+
+## Who it turns on: a mate it holds a grudge against, else the weakest.
+func _victim_of(m: Critter, g: Gang) -> Critter:
+	var mates := g.alive().filter(func(o): return o != m)
+	var held := RivalBook.grudges(m.display_name)
+	mates.sort_custom(func(a, b): return (held.has(a.display_name) and not held.has(b.display_name)) or \
+		(held.has(a.display_name) == held.has(b.display_name) and a.health < b.health))
+	return mates[0]
+
+
+## `b` turns on its gang mate `v`: it leaves the gang, goes for `v`, says
+## so, `v` answers, and `v` never forgets (RivalBook).
+func betray(b: Critter, v: Critter) -> void:
+	var g := gang_of(b)
+	if g:
+		g.leave(b)
+	var bb := b.get_node_or_null("AIBrain") as AIBrain
+	if bb:
+		bb.flank = 0
+		bb.gang_enemy = null
+		bb._avoid.erase(v)
+		bb._provoked[v] = bb._clock
+		bb._awareness[v] = 1.5
+		bb.target = v
+	var vb := v.get_node_or_null("AIBrain") as AIBrain
+	if vb:
+		vb._provoked[b] = vb._clock
+		vb._awareness[b] = maxf(vb.awareness_of(b), 1.0)
+	RivalBook.note_betrayal(v.display_name, b.display_name)
+	_say(b, Cast.pick_say(Cast.BETRAY_LINES, "gb", rng, {"them": v.display_name}))
+	var answer := Cast.pick_say(Cast.BETRAYED_LINES, "gt", rng, {"them": b.display_name})
+	get_tree().create_timer(1.4).timeout.connect(func():
+		if is_instance_valid(v) and v.alive:
+			_say(v, answer))
+	Events.headline.emit("BETRAYAL! %s turned on %s." % [b.display_name, v.display_name])
+	if g and g.alive().size() < 2:
+		_disband(g, false)
+
+
+## The gang breaks up (`done`: its enemy is down, and one of them says so).
+## They leave each other alone a few seconds before anything else happens.
+func _disband(g: Gang, done: bool) -> void:
+	var team := g.alive()
+	if done and not team.is_empty():
+		_say(team[0], Cast.pick_say(Cast.DONE_LINES, "gd", rng))
+	for m in g.members.duplicate():
+		if is_instance_valid(m):
+			g.leave(m)
+			var brain := m.get_node_or_null("AIBrain") as AIBrain
+			if brain:
+				brain.flank = 0
+				brain.gang_enemy = null
+				for o in team:
+					if o != m:
+						brain._avoid[o] = brain._clock + 6.0
+	gangs.erase(g)
+
+
+## You beat down a gang member in front of the rest: a disloyal mate that's
+## hurting cuts and runs (and leaves you be a while).
+func _gang_member_down(c: Critter) -> void:
+	var g := gang_of(c)
+	if g == null:
+		return
+	for m in g.alive():
+		if m == c or float(Gang.DISLOYAL.get(RivalBook.personality_of(m.display_name), 0.3)) < 0.4 or m.health >= 60.0:
+			continue
+		g.leave(m)
+		var brain := m.get_node_or_null("AIBrain") as AIBrain
+		if brain:
+			brain.flank = 0
+			brain.gang_enemy = null
+			brain._shy_until = brain._clock + 12.0
+			if brain.target == player:
+				brain.target = null
+			if player:
+				var away := m.global_position - player.global_position
+				away.y = 0.0
+				brain._set_dest(m.global_position + away.normalized() * 30.0)
+		_say(m, Cast.pick_say(Cast.SPLIT_LINES, "gs", rng))
+	if g.alive().size() < 2:
+		_disband(g, false)
+
+
+## Two bots near each other with a common enemy may team up: a bot they both
+## hold grudges against, or you, once you're leading the match. Each says
+## yes by its nature (Gang.JOIN); two who've turned on each other never do.
+func _try_truce() -> void:
+	if gangs.size() >= GANGS_AT_ONCE or player == null:
+		return
+	var free := alive_critters().filter(func(c): return c != player and c.gang == "" and c != nemesis)
+	var leading := player.alive and player_beat_downs >= LEADING_AT
+	for i in free.size():
+		for j in range(i + 1, free.size()):
+			var a: Critter = free[i]
+			var b: Critter = free[j]
+			if a.global_position.distance_to(b.global_position) > TRUCE_RANGE or RivalBook.betrayed(a.display_name, b.display_name):
+				continue
+			var ga := RivalBook.grudges(a.display_name)
+			var gb := RivalBook.grudges(b.display_name)
+			var enemy: Critter = null
+			for x in alive_critters():
+				if x != a and x != b and x != player and ga.has(x.display_name) and gb.has(x.display_name):
+					enemy = x
+					break
+			if enemy == null and not leading:
+				continue
+			var yes := float(Gang.JOIN.get(RivalBook.personality_of(a.display_name), 0.3)) * float(Gang.JOIN.get(RivalBook.personality_of(b.display_name), 0.3))
+			if rng.randf() >= yes:
+				continue
+			var g := make_gang([a, b], enemy)
+			var you := String(player.def.display_name) if player.def else "you"
+			if enemy:
+				_say(a, Cast.pick_say(Cast.TRUCE_LINES, "gr", rng, {"them": enemy.display_name}))
+				Events.headline.emit("%s and %s have teamed up against %s, as %s." % [a.display_name, b.display_name, enemy.display_name, g.name])
+			else:
+				_say(a, Cast.pick_say(Cast.TRUCE_YOU_LINES, "gy", rng, {"you": you}))
+				Events.headline.emit("%s and %s have teamed up against you, as %s." % [a.display_name, b.display_name, g.name])
+			return
 
 
 ## Your Nemesis, if one's here (a run's finale always has one: the hottest bot).
@@ -602,6 +849,7 @@ func _process(delta: float) -> void:
 		_on_briar_moves(storm.shrinking)
 	if phase == Phase.PLAYING:
 		_direct(delta)
+		_tend_gangs(delta)
 		_supply_t += delta
 		if _supply_t >= SUPPLY_INTERVAL * pace:
 			_supply_t = 0.0
@@ -685,6 +933,7 @@ func flush_out_player() -> Array[Critter]:
 
 func _note_player_kill(info: DamageInfo) -> void:
 	PlayerProfile.note_kill(info.weapon_id if info.weapon_id != &"" else &"melee")
+	player_beat_downs += 1
 	_player_kills.append(_clock)
 	_player_kills = _player_kills.filter(func(t): return _clock - t < STREAK_WINDOW)
 	if _player_kills.size() >= 2 and _adapt_left <= 0.0:
@@ -786,6 +1035,7 @@ func _on_critter_died(victim: Node, info: DamageInfo) -> void:
 			player.health = minf(player.max_health, player.health + 20.0)
 		_boons_on_kill(c)
 		_scar(c, info)
+		_gang_member_down(c)
 		_check_mastery()
 		if not RivalBook.took_gun(c.display_name).is_empty():
 			RivalBook.clear_took_gun(c.display_name)

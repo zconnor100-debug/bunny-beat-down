@@ -264,13 +264,15 @@ static func edition_of(played: Array, now: float, rng: RandomNumberGenerator) ->
 		"standings": standings.slice(0, 5).map(func(n): return [n, int(wins[n])]), "read": false}
 
 
-## The hottest grudges between rogues: [[holder, against, beat-downs not yet paid back], ...].
+## The hottest grudges between rogues: [[holder, against, beat-downs not yet
+## paid back, whether it was betrayed by them], ...].
 static func feuds(count := 4) -> Array:
 	var out := []
 	for n in Cast.names():
 		var g := RivalBook.grudges(n)
+		var turned := RivalBook.betrayed_by(n)
 		for other in g:
-			out.append([n, other, int(g[other])])
+			out.append([n, other, int(g[other]), turned.has(other)])
 	out.sort_custom(func(a, b): return a[2] > b[2] or (a[2] == b[2] and String(a[0]) < String(b[0])))
 	return out.slice(0, count)
 

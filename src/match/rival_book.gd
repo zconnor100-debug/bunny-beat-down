@@ -195,6 +195,27 @@ static func note_bot_beat(winner: String, loser: String) -> bool:
 	return true
 
 
+## Who turned on this bot in a gang (MatchManager.betray): {name: times}.
+static func betrayed_by(bot: String) -> Dictionary:
+	return (_book().get_value(bot, "betrayed_by", {}) as Dictionary).duplicate()
+
+
+## `by` turned on `victim`, its gang mate: the victim never forgets (and
+## holds it as a grudge, twice over). Saved with the match.
+static func note_betrayal(victim: String, by: String) -> void:
+	var b := betrayed_by(victim)
+	b[by] = int(b.get(by, 0)) + 1
+	_book().set_value(victim, "betrayed_by", b)
+	var theirs := grudges(victim)
+	theirs[by] = int(theirs.get(by, 0)) + 2
+	_book().set_value(victim, "grudges", theirs)
+
+
+## One of them has turned on the other (they'll never gang up again).
+static func betrayed(a: String, b: String) -> bool:
+	return betrayed_by(a).has(b) or betrayed_by(b).has(a)
+
+
 static func bot_kills(bot: String) -> int:
 	return int(_book().get_value(bot, "bot_kills", 0))
 

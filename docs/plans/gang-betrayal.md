@@ -1,5 +1,12 @@
 # Gangs that hunt together, then turn on each other
 
+> **Status (2026-10-28):** built: `Gang`, the gang section of
+> `MatchManager`, `AIBrain` pack tactics, `tests/test_gangs.gd`. The new
+> lines show as speech bubbles until they're voiced with the "new lines only"
+> build. Not built: staying out of each other's line of fire. Gang mates'
+> carrots already pass harmlessly through each other, so it would only be
+> for looks.
+
 **The idea.** Gangs stop being three bots that happen to drop together. They
 hunt like a pack: one pins you down while the others flank, and they call
 out where you are and when you're reloading. When the circle closes and only

@@ -75,6 +75,15 @@ var traits: Dictionary = {}
 ## first, from further off, even while it's still settling in.
 var grudges: Dictionary = {}
 const GRUDGE_FIGHT_RANGE := 2.0   ## x its fight range, for a bot it has a grudge against
+## In a gang (Gang, MatchManager): the side it flanks the gang's enemy from
+## (-1 / 1; 0: it pins it down from range), and the bot the gang is out for
+## (null: you, or no gang).
+var flank := 0
+var gang_enemy: Critter
+const FLANK_ANGLE := 1.75         ## radians round from where the enemy's looking (about 100°)
+const RUSH_RANGE := 0.35          ## x its preferred range, rushing an enemy that's reloading or healing
+var _rush_until := -100.0         # (the enemy ate a clover: rush it)
+var _shy_until := -100.0          # (it cut and ran from you: leave you be till then)
 var _next_sense := 0.0            # (a radical bot's next "where are you?")
 ## How the player likes to fight, learned over past matches (PlayerProfile):
 ## "close" → bots keep their distance from you, "far" → they rush you.
@@ -131,6 +140,7 @@ func _ready() -> void:
 	me = get_parent() as Critter
 	Events.shot_fired.connect(_on_shot_heard)
 	Events.critter_damaged.connect(_on_damaged)
+	Events.clover_eaten.connect(_on_clover)
 
 
 func _physics_process(delta: float) -> void:
@@ -178,6 +188,8 @@ func _perceive() -> void:
 			continue
 		if other.gang != "" and other.gang == me.gang:
 			continue   # (a gang mate: they're out for you together)
+		if other.is_player and _clock < _shy_until:
+			continue   # (it ran from you: not looking for another go yet)
 		var to := other.get_chest_position() - eye
 		var d := to.length()
 		if d > range_:
@@ -213,7 +225,8 @@ func _perceive() -> void:
 		# (a duelist more so), a bot we hold a grudge against, and (a rival,
 		# a radical) you
 		var score := d * (0.6 + other.health / 200.0 * _t("weak", 1.0)) * (_t("sticky", 0.6) if other == target else 1.0) \
-			* (0.35 if rival and other.is_player else 1.0) * (_t("player_focus", 1.0) if other.is_player else 1.0) * (0.4 if grudge else 1.0)
+			* (0.35 if rival and other.is_player else 1.0) * (_t("player_focus", 1.0) if other.is_player else 1.0) * (0.4 if grudge else 1.0) \
+			* (0.3 if gang_enemy != null and other == gang_enemy else 1.0)
 		if score < best_score:
 			best_score = score
 			best = other
@@ -230,6 +243,8 @@ func _perceive() -> void:
 				match_manager.taunt(me, "spot")
 			elif not best.is_player and grudges.has(best.display_name) and match_manager and match_manager.has_method("feud"):
 				match_manager.feud(me, best)
+			if me.gang != "" and match_manager and match_manager.has_method("gang_spotted"):
+				match_manager.gang_spotted(me, best)   # (it tells its gang, if it's who they're after)
 			# half-hidden targets are harder to aim at
 			_aim_err = _random_aim_error(eye.distance_to(best.get_chest_position())) * (1.0 + (1.0 - best_vis) * 1.5)
 		target = best
@@ -262,6 +277,48 @@ func _visibility_of(other: Critter, eye: Vector3, space: PhysicsDirectSpaceState
 ## How sure this bot is that it has seen `c` (0..1.5; 1 = spotted).
 func awareness_of(c: Critter) -> float:
 	return float(_awareness.get(c, 0.0))
+
+
+## A gang mate saw `other` at `pos` and called it out: this bot goes there,
+## half-aware of it already, without having seen it itself.
+func share_sighting(other: Critter, pos: Vector3) -> void:
+	if other == null or not is_instance_valid(other) or not other.alive or me == null or not me.alive:
+		return
+	_awareness[other] = maxf(float(_awareness.get(other, 0.0)), 0.75)
+	hunt(pos + Vector3(randf_range(-2.5, 2.5), 0.0, randf_range(-2.5, 2.5)), 10.0)
+	_think_t = minf(_think_t, 0.05)
+
+
+func _on_clover(c: Node) -> void:
+	if c == target and me and me.gang != "":
+		_rush_until = _clock + 2.5
+
+
+## In a gang, going at its enemy while it reloads or eats a clover.
+func _rushing() -> bool:
+	return me.gang != "" and target != null and (target.is_player or target == gang_enemy) \
+		and (target.is_reloading() or _clock < _rush_until)
+
+
+## Where a flanker wants to be: off to its side of where the enemy is
+## looking, at about the range it's fighting from.
+func _flank_spot(dist: float) -> Vector3:
+	var face := target.look_direction()
+	face.y = 0.0
+	if face.length_squared() < 1e-4:
+		face = me.global_position - target.global_position
+		face.y = 0.0
+	return target.global_position + face.normalized().rotated(Vector3.UP, FLANK_ANGLE * flank) * clampf(dist, 8.0, 30.0)
+
+
+## The stick that walks straight toward `p` (relative to where it's looking).
+func _stick_toward(p: Vector3) -> Vector2:
+	var to := p - me.global_position
+	to.y = 0.0
+	if to.length_squared() < 1e-4:
+		return Vector2.ZERO
+	var local := Basis(Vector3.UP, -me.look_yaw) * to.normalized()
+	return Vector2(local.x, -local.z).limit_length(1.0)
 
 
 func _random_aim_error(dist: float) -> Vector3:
@@ -610,6 +667,11 @@ func _fight(delta: float) -> void:
 	var pref := w.data.ai_preferred_range * lerpf(1.2, 0.9, skill) * _t("range", 1.0)
 	if target.is_player and player_style != "":
 		pref *= 1.6 if player_style == "close" else 0.5   # fight you where your guns are weakest
+	var rushing := _rushing()
+	if rushing:
+		pref *= RUSH_RANGE
+		if match_manager and match_manager.has_method("gang_call"):
+			match_manager.gang_call(me, "rush")
 	_strafe_t -= delta
 	if _strafe_t <= 0.0:
 		_strafe = -_strafe if randf() < 0.7 else _strafe
@@ -628,6 +690,13 @@ func _fight(delta: float) -> void:
 		elif dist < pref * 0.6 and w.data.id != &"carrot_shotgun":
 			forward = -1.0
 		me.move_input = Vector2(_strafe * lerpf(0.5, 1.0, skill), forward * 0.8)
+		# a gang's flankers work round to the enemy's sides (the one who pins it holds still)
+		if flank != 0 and not rushing and (target.is_player or target == gang_enemy):
+			var spot := _flank_spot(dist)
+			if Vector2(spot.x - me.global_position.x, spot.z - me.global_position.z).length() > 3.0:
+				me.move_input = _stick_toward(spot)
+		if rushing:
+			me.want_sprint = true
 		me.want_crouch = (skill > 0.7 and dist > 30.0 and randf() < 0.02) or (_t("crouch", 0.0) >= 1.0 and forward == 0.0 and dist > 12.0)
 
 	# --- aiming (turn-rate limited, error decays while tracking)

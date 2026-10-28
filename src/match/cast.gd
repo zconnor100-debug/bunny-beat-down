@@ -197,6 +197,17 @@ const FEUD_LINES := ["{them}! Remember me?", "We're not done, {them}!", "This is
 ## A bot with a grudge against the director (the Briar, the pacing).
 const DIRECTOR_LINES := ["Oi, Director! I see what you're doing!", "This lobby is RIGGED!", "The Briar? AGAIN? Who's running this?",
 	"Hey, up there! Pick on someone else!", "I don't play by your rules, Director!"]
+## Gangs (Gang, MatchManager): a gang mate calling out the one they're after,
+## the rush while it reloads or heals, a truce to team up (against a bot, or
+## you), turning on a mate, the one turned on, walking out, and the job done.
+const GANG_SPOT_LINES := ["Over here! Over here!", "Found 'em! This way!", "There! Get over here, all of you!"]
+const GANG_RUSH_LINES := ["They're reloading! GO!", "Now! While they're busy!", "Rush 'em!"]
+const TRUCE_LINES := ["Truce? Just till {them} is down.", "You and me, against {them}. Deal?"]
+const TRUCE_YOU_LINES := ["Truce? Just till {you} is down.", "{you}'s winning. Not for long. Together?"]
+const BETRAY_LINES := ["Nothing personal, {them}.", "Sorry, partner. Only one of us wins.", "Did you really think we were friends, {them}?"]
+const BETRAYED_LINES := ["{them}! I trusted you!", "You RAT, {them}!", "Of course. OF COURSE, {them}."]
+const SPLIT_LINES := ["I'm out!", "Every critter for themselves!", "Nope. Not dying for this gang."]
+const DONE_LINES := ["Pleasure doing business.", "That's that. Don't follow me.", "Truce over."]
 ## Grudge points against the director before a bot defies it: its hits on
 ## other bots aren't softened by the director's pacing (and it says so).
 const DEFIANT_AT := 3

@@ -269,6 +269,18 @@ The third map follows the cage's pattern (`ToyBox extends Island`,
   rival: `MatchManager` puts up to three rivals in every match, their
   `AIBrain` scores the player as a preferred target and skips the
   "attack slot" queue, and `Events.taunt` drives the HUD's speech bubbles.
+- **Gangs** (`Gang`, made by `MatchManager.make_gang`): members share
+  `Critter.gang` (no damage between them, ignored in `AIBrain._perceive`).
+  `MatchManager._tend_gangs` runs once a second: it deals roles
+  (`AIBrain.flank`: the longest reach pins, the rest flank at ±100° from
+  where the enemy looks, steered with `_stick_toward` so the aim isn't
+  disturbed), disbands a gang whose enemy bot is down, rolls betrayal
+  (`betrayal_chance`: zero until `win_in_sight`, then `Gang.DISLOYAL` x
+  `BETRAY_RATE`, more with a grudge or a weak mate) and every few seconds
+  tries a mid-match truce (`Gang.JOIN`, never between two with a betrayal in
+  `RivalBook`). A sighting goes through `gang_spotted` to the mates'
+  `share_sighting`; `AIBrain._rushing` reads the enemy's reload and
+  `Events.clover_eaten`.
 - **`WarrenSim`** plays the rogues' off-screen matches: one per three hours
   of real time since its clock last moved (kept in its own `ConfigFile`,
   capped at twelve), caught up when the main menu opens. They're

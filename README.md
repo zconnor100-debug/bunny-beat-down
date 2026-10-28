@@ -253,6 +253,18 @@ and the final shot replayed from three angles. There's a
   - **Gangs.** When two or more bots you've made Vengeful are in a lobby, the
     three hottest gang up (*the Thorn Gang*, *the Muddy Paws*...): they drop
     in together, leave each other alone, hunt you, and the news says so.
+    They hunt as a pack: the one that spots you calls it out and the rest
+    know roughly where you are; the one with the longest gun pins you down
+    while the others work round to your sides; and they all rush you while
+    you reload or eat a clover. Gangs also form mid-match: two bots near each
+    other who both hate the same bot team up against it ("Truce? Just till
+    Rocco is down.") and split when it's down, or team up against you once
+    you're leading the match. None of it lasts. When the win is in sight, a
+    disloyal member turns on a mate ("Nothing personal."): a sneak readily, a
+    noble never. Beat one down in front of the rest and a hurting, disloyal
+    mate cuts and runs. The one betrayed never forgets: it never gangs up with
+    the traitor again, the Rogues' Gallery says who did it, and Feud Watch in
+    the Gazette calls it a betrayal.
   - **They come back marked.** Shoot a bot's head off and it returns in an
     eye patch (its head takes a quarter less damage); take an arm and it's
     bandaged, a leg and it's in a twig splint (tougher each time); blow it up
@@ -524,7 +536,7 @@ The full write-up is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
   the same views: 31% fewer triangles on the island, 31% on the Hamster
   Cage, 79% on Toy Box Bash, and a third to two thirds fewer shadow
   triangles.
-- **Tests that play the game.** A headless suite of 166 tests covers:
+- **Tests that play the game.** A headless suite of 172 tests covers:
   - the IK maths, hitboxes, ragdolls and dismemberment, and how critters
     carry themselves (never frozen, guns carried low but shooting from the
     aim, held clear of the head, both paws on the handles of every gun, feet
@@ -546,7 +558,11 @@ The full write-up is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
     Carrot Juice in a match, carrots that split, pierce, bounce and pop,
     acorn shrines, a run down the Trail (goals, helmets, rewards, picnics,
     the finale and its retry), a nemesis hunt and its signature gun, gangs,
-    scars and your stolen gun, and the Trail and draft screens; milestones
+    scars and your stolen gun, gangs (calling you out, pinning and
+    flanking, rushing you while you reload or heal, teaming up mid-match and
+    splitting when the job's done, the betrayal a sneak makes and a noble
+    never does, cutting and running, never again), and the Trail and draft
+    screens; milestones
     (reached once, paid once, each unlock acting only for you);
   - the cast (49 characters, each fighting its own way and wearing its own
     outfit, every piece fitted to every species; a full lobby with

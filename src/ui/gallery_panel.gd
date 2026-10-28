@@ -243,7 +243,8 @@ static func tracker_lines(n: String) -> Array:
 
 ## What it remembers of you: its scars (and what it learned from them),
 ## the gun it took off you, and its signature gun if you won its nemesis hunt.
-## And of its time away from you (WarrenSim): scars other rogues gave it, and its mood.
+## And of its time away from you (WarrenSim): scars other rogues gave it, and its mood;
+## and who turned on it in a gang.
 static func memory_lines(n: String) -> Array:
 	var out := []
 	var sc := RivalBook.scars(n)
@@ -259,6 +260,10 @@ static func memory_lines(n: String) -> Array:
 			out.append("Cocky: it's been winning while you were away, and fights braver (and a little sloppier) for it.")
 		"wary":
 			out.append("Wary: fresh from a beating while you were away, it keeps its distance.")
+	var betrayed := RivalBook.betrayed_by(n)
+	if not betrayed.is_empty():
+		out.append("Betrayed by %s. It'll never gang up with them again." % ", ".join(betrayed.keys().map(
+			func(b): return "%s (%s)" % [b, _times(int(betrayed[b]))])))
 	var took := RivalBook.took_gun(n)
 	if not took.is_empty():
 		var w := WeaponInstance.from_dict(took)

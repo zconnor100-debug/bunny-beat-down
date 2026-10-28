@@ -66,7 +66,7 @@ func _ready() -> void:
 	side.custom_minimum_size = Vector2(380, 0)
 	side.add_theme_constant_override("separation", 6)
 	h.add_child(side)
-	_section(side, "FEUD WATCH", WarrenSim.feuds().map(func(f): return "%s wants %s (%s)" % [f[0], f[1], "once" if f[2] == 1 else "%d times" % f[2]]),
+	_section(side, "FEUD WATCH", WarrenSim.feuds().map(func(f): return "%s wants %s (%s)" % [f[0], f[1], "betrayed!" if f[3] else ("once" if f[2] == 1 else "%d times" % f[2])]),
 		"No feuds. Suspiciously peaceful.")
 	_section(side, "WANTED", WarrenSim.wanted().map(func(n): return "%s  ·  %s" % [Cast.title(n), "your rival" if RivalBook.is_rival(n) else "out for you"]),
 		"Nobody's after you. Yet.")
