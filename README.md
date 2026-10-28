@@ -72,6 +72,22 @@ and the final shot replayed from three angles. There's a
   enamel (chipped to brass), with watering-can copper for bare metal, carrot
   barrels and leafy sights (`tools/weapons/blender/assets/weapons.py`).
 
+  **Your arsenal: three more, yours alone** (`Arsenal`, `data/arsenal`,
+  `tools/weapons/blender/assets/arsenal.py`), your answers to a gang and to
+  your Doppelbunny. No bot ever carries one, picks one up, opens their crate
+  or steals one off you, and they're never loot:
+
+  | Gun | Role | Look |
+  |---|---|---|
+  | Root Rumbler | a minigun: hold the trigger and its six barrels wind up (0.7 s, a rising whine), then 1,200 carrots a minute from a 150-carrot belt, tightening the longer it goes; you can't sprint while it spins | terracotta, six carrot barrels round a copper spindle, a motor drum wrapped in roots, a seed box feeding a belt of baby carrots |
+  | Carrot Lobber | six carrot bombs lobbed in an arc, each going off on whoever it hits or 1.5 s after it lands | beetroot, a fluted revolving drum with the bombs nosing out, a flower pot for a mouth, a twig ladder sight |
+  | Big Root .50 | a carrot slug through two critters and anything up to 60 cm thick behind them; sways standing, steadies kneeling or lying down | delphinium blue, a fat carrot barrel, a copper muzzle brake, a deployed twig bipod, a stock grown from a gnarled root |
+
+  You win each one on the Trail (make the goal in a Grudge Match or a Mirror
+  Match) and keep it for good. In any match, from your third beat-down, call
+  them in once (B, or LB + RB together): a crate drops beside you with every
+  one you've won, and you take one.
+
   Carrots fly fast enough that you barely lead a running critter at the
   range each gun is made for: 260 m/s for shotgun pellets up to 480 for the
   rifle (the sniper's 800 is the ceiling; the rocket stays a slow 120 and
@@ -300,12 +316,17 @@ and the final shot replayed from three angles. There's a
 - **Boons: a build that grows as you go.** Acorn shrines on every map (hold
   interact to pray; bots walk on by) and every goal you make on the Trail
   offer one of three boons (`Boons`, `DraftPanel`); picking one again levels
-  it up. Four families: **Bramble** (Thorny Carrots make critters bleed,
+  it up. Five families: **Bramble** (Thorny Carrots make critters bleed,
   Bramble Coat hits back, Cruel Thorns, Splinters), **Sugar Rush** (speed,
   higher jumps, faster reloads, Carrot Frenzy), **Mutations** (Splitting
   Carrots burst into shards, Piercing Carrots go through critters, Bouncy
-  Carrots ricochet, Popping Carrots go off) and **Deep Roots** (Thick Skin,
-  Carrot Juice heals you, Acorn Shell, Hush). Hold two families and their
+  Carrots ricochet, Popping Carrots go off), **Deep Roots** (Thick Skin,
+  Carrot Juice heals you, Acorn Shell, Hush) and **Cunning**, for a gang and
+  your Doppelbunny (Gang Buster: beat one down and its mates panic and run;
+  Pack Sense: when one calls you out, you see the whole gang through walls;
+  Habit Breaker: do what you rarely do and your Doppelbunny can't read you;
+  Cardboard You: eat a clover and a cardboard cut-out of you draws their
+  fire). Hold two families and their
   **duo** can turn up: Briar Shards, Second Breakfast, Ricochet Rush, Bark Skin.
 - **The bots learn you.** They remember where you like to land (and more of
   them head there), and which guns you win with (they fight you at the
@@ -583,7 +604,13 @@ The full write-up is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
     and the Doppelbunny itself (going prone at range where a bot never
     does, backing off hurt, a reckless player's Doppel circling and hopping
     instead; a Mirror Match on the Trail once it's ready, dressed as you,
-    silent, a boon for beating it down),
+    silent, a boon for beating it down), your arsenal (three guns no bot
+    can carry, take or steal; the Root Rumbler winding up then mowing, the
+    Big Root .50 through two critters and a wall but not a thick one, the
+    Lobber's bombs going off on a hit or after landing; won on the Trail,
+    called in once from your third beat-down) and the Cunning boons (a
+    panicked gang, a gang seen through walls, a cardboard you drawing the
+    fire, a Doppelbunny that can't read you),
     and the Trail and draft
     screens; milestones
     (reached once, paid once, each unlock acting only for you);

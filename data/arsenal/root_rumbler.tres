@@ -1,0 +1,46 @@
+[gd_resource type="Resource" script_class="WeaponData" format=3]
+
+[ext_resource type="Script" path="res://src/weapons/weapon_data.gd" id="1_wd"]
+
+[resource]
+script = ExtResource("1_wd")
+id = &"root_rumbler"
+display_name = "Root Rumbler"
+blurb = "Six spinning carrot barrels and a belt of a hundred and fifty. Hold the trigger, let it wind up, mow the garden."
+model_path = "res://assets/weapons/root_rumbler.glb"
+icon_color = Color(0.95, 0.42, 0.12, 1)
+fire_mode = 1
+ammo_type = 2
+magazine = 150
+rounds_per_minute = 1200.0
+pellets = 1
+damage = 9.0
+headshot_multiplier = 1.5
+spread_hip_deg = 3.6
+spread_aim_deg = 2.2
+spread_move_deg = 1.6
+bloom_per_shot_deg = 0.0
+bloom_max_deg = 0.0
+projectile = 0
+projectile_speed = 380.0
+projectile_gravity = 0.5
+falloff_start = 22.0
+falloff_end = 60.0
+min_damage_scale = 0.45
+impulse = 2.5
+dismember_power = 0.2
+reload_time = 4.5
+equip_time = 0.9
+two_handed = true
+hold_distance = 0.22
+aim_fov_scale = 0.85
+recoil_pitch_deg = 0.35
+recoil_yaw_deg = 0.5
+camera_shake = 0.06
+move_speed_scale = 0.75
+sfx_fire = &"rumbler_fire"
+spin_up = 0.7
+spin_spread = 0.45
+ai_preferred_range = 16.0
+ai_max_range = 45.0
+loot_weight = 0.0

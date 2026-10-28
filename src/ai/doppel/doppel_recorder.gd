@@ -7,9 +7,13 @@ extends Node
 ## which way you moved against that enemy, and whether you sprinted,
 ## crouched, went prone, jumped, fired, healed, threw a grenade or swung the
 ## club). When the match is over (or you leave it) the moments go to
-## DoppelData, which trains on them.
+## DoppelData, which trains on them. With your Habit Breaker boon, a move you
+## rarely make (under RARE of your moments, by what it has kept) leaves your
+## Doppelbunny unable to read you for a moment (`fooled`, DoppelBrain).
 
 const STEP := 0.2
+const RARE := 0.15                   ## a move this rare in your habits fools it (Habit Breaker)
+const HABITS_FROM := 200             ## (moments kept before it knows your habits)
 
 var match_manager: Node
 var rows := PackedFloat32Array()     ## this match's moments so far
@@ -24,9 +28,13 @@ var _flags := {}
 var _hit_at := -100.0
 var _clock := 0.0
 var _done := false
+var _habits := {}                     # DoppelSense.MOVES name -> share of your moments
+var _fooled_until := -1.0
 
 
 func _ready() -> void:
+	if DoppelData.moments() >= HABITS_FROM:
+		_habits = DoppelData.habits().moves
 	_me = get_parent() as Critter
 	_me.damaged.connect(func(_info): _hit_at = _clock)
 	Events.clover_eaten.connect(_on_clover)
@@ -64,7 +72,10 @@ func _physics_process(delta: float) -> void:
 		_flags["crouch"] = _me.crouch_amount() > 0.5
 		_flags["prone"] = _me.prone_amount() > 0.5
 		rows.append_array(_start)
-		rows.append_array(DoppelSense.label(_moved / _frames, _enemy.global_position - _me.global_position, _flags))
+		var y := DoppelSense.label(_moved / _frames, _enemy.global_position - _me.global_position, _flags)
+		rows.append_array(y)
+		if Boons.has("habit_breaker") and not _habits.is_empty() and float(_habits.get(DoppelSense.MOVES[int(y[0])], 1.0)) < RARE:
+			_fooled_until = _clock + Boons.value("habit_breaker")
 	# the next moment
 	_enemy = DoppelSense.nearest_enemy(_me)
 	_start = DoppelSense.features(_me, _enemy, match_manager, _clock - _hit_at) if _enemy else PackedFloat32Array()
@@ -72,6 +83,12 @@ func _physics_process(delta: float) -> void:
 	_frames = 0
 	_sprint = 0
 	_flags = {}
+
+
+## Your Doppelbunny can't read you right now (Habit Breaker: you just did
+## something you rarely do).
+func fooled() -> bool:
+	return _clock < _fooled_until
 
 
 ## The match is over for you: what was seen goes to DoppelData (once).

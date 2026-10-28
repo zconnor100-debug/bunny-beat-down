@@ -84,6 +84,7 @@ const FLANK_ANGLE := 1.75         ## radians round from where the enemy's lookin
 const RUSH_RANGE := 0.35          ## x its preferred range, rushing an enemy that's reloading or healing
 var _rush_until := -100.0         # (the enemy ate a clover: rush it)
 var _shy_until := -100.0          # (it cut and ran from you: leave you be till then)
+var _panic_until := -100.0        # (your Gang Buster boon: running from you, flat out)
 var _next_sense := 0.0            # (a radical bot's next "where are you?")
 ## How the player likes to fight, learned over past matches (PlayerProfile):
 ## "close" → bots keep their distance from you, "far" → they rush you.
@@ -281,6 +282,24 @@ func awareness_of(c: Critter) -> float:
 
 ## A gang mate saw `other` at `pos` and called it out: this bot goes there,
 ## half-aware of it already, without having seen it itself.
+## Panicked (your Gang Buster boon: a mate beaten down in front of it): for
+## `seconds` it leaves `from` alone and runs from it, flat out.
+func panic(from: Critter, seconds: float) -> void:
+	_shy_until = maxf(_shy_until, _clock + seconds)
+	_panic_until = _clock + seconds
+	if target == from:
+		target = null
+	var away := me.global_position - from.global_position
+	away.y = 0.0
+	if away.length_squared() > 0.01:
+		_set_dest(me.global_position + away.normalized() * 20.0)
+	mode = Mode.ROAM
+
+
+func panicking() -> bool:
+	return _clock < _panic_until
+
+
 func share_sighting(other: Critter, pos: Vector3) -> void:
 	if other == null or not is_instance_valid(other) or not other.alive or me == null or not me.alive:
 		return
@@ -453,6 +472,8 @@ func _find_loot() -> Node3D:
 		# never re-grab what we just dropped (prevents swap ping-pong)
 		if p.dropped_by == me and Time.get_ticks_msec() - p.dropped_msec < 30000:
 			continue
+		if not p.anyone_may_take():
+			continue   # (your arsenal, your call-in: yours alone)
 		match p.spec.get("type"):
 			"weapon":
 				var fav: bool = p.spec["weapon"] is WeaponInstance and String((p.spec["weapon"] as WeaponInstance).data.id) == traits.get("favorite", "")
@@ -489,7 +510,7 @@ func _find_loot() -> Node3D:
 	if me.inventory.weapon_count() < 2:
 		for n in me.get_tree().get_nodes_in_group(&"crates"):
 			var c := n as LootCrate
-			if c and not c.opened and _clock >= float(_unreachable.get(c, -1.0)) and not _storm_unsafe(c.global_position):
+			if c and not c.opened and not c.player_only and _clock >= float(_unreachable.get(c, -1.0)) and not _storm_unsafe(c.global_position):
 				var d := c.global_position.distance_to(pos)
 				if d < best_d:
 					best_d = d
@@ -546,6 +567,8 @@ func _act(delta: float) -> void:
 			_follow_path(true)
 		_:
 			_roam()
+	if panicking():
+		me.want_sprint = true
 	_unstick(delta)
 
 
@@ -661,6 +684,11 @@ func _fight(delta: float) -> void:
 	var eye := me.get_eye_position()
 	var visible := _clock - _last_seen_t < 0.35
 	var tpos := target.get_chest_position() if visible else _last_seen_pos
+	# your Cardboard You boon: while the cut-out of you stands, it draws the fire
+	var decoy := Decoy.fooling(me) if target.is_player else null
+	if decoy:
+		tpos = decoy.aim_point()
+		visible = true
 	var dist := eye.distance_to(tpos)
 
 	# --- positioning
@@ -701,13 +729,14 @@ func _fight(delta: float) -> void:
 
 	# --- aiming (turn-rate limited, error decays while tracking)
 	var aim := tpos
-	if visible:
+	if visible and decoy == null:
 		var lead := target.velocity * (dist / maxf(w.data.projectile_speed, 1.0)) * skill
 		aim += lead
 		if w.data.projectile == WeaponData.ProjectileKind.ROCKET or (_t("feet", 0.0) > 0.0 and target.is_on_floor()):
 			aim = target.global_position + Vector3.UP * 0.15 + lead
 		elif randf() < skill * 0.3:
 			aim = target.get_eye_position() + lead
+	if visible:
 		_aim_err = _aim_err.lerp(Vector3.ZERO, IKMath.damp(lerpf(0.6, 2.4, skill) * (0.3 + 0.7 * _target_vis), delta))
 	aim += _aim_err
 	var want := (aim - eye).normalized()

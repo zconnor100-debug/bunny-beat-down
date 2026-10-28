@@ -18,7 +18,7 @@ const SIGHT := 75.0                  ## an enemy further off than this isn't a f
 const NEAR := 30.0                   ## "how many are near"
 ## Guns by how they fight: [none, close, mid, far, blast].
 const GUN_CLASS := {&"carrot_pistol": 1, &"carrot_smg": 1, &"carrot_shotgun": 1, &"carrot_rifle": 2, &"carrot_lmg": 2,
-	&"carrot_sniper": 3, &"carrot_rocket_launcher": 4}
+	&"carrot_sniper": 3, &"carrot_rocket_launcher": 4, &"root_rumbler": 1, &"carrot_lobber": 4, &"big_root_50": 3}
 
 
 ## Its nearest living enemy within SIGHT (gang mates aren't enemies), or null.

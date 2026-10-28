@@ -5,12 +5,25 @@ you do. Three new guns, yours alone, and a few upgrades give you answers to
 both. No bot ever carries these guns, and they're never found lying about,
 so a gang never turns one on you.
 
+## Status (2026-10-28): built
+
+Your calls: the minigun is the **Root Rumbler**; the guns are **Trail
+rewards** (make the goal in a Grudge Match or a Mirror Match: pick one) and
+you **call one in** once a match from your **3rd beat-down** (B, or LB + RB
+on a pad); **only you** carry them, never a bot or your Doppelbunny.
+Everything below is in, with `tests/test_arsenal.gd` (9 tests). The four
+upgrades became boons in a fifth family, **Cunning**, so they come from the
+same drafts as the rest (Cardboard You leaves its cut-out when you eat a
+clover, which is when a gang rushes you). Sounds: `rumbler_fire`,
+`rumbler_spin` (looped, pitched up as it winds up), `lobber_fire`,
+`big50_fire` (tools/audio/recipes.py).
+
 ## The guns
 
 All three are built like the others: generated in Blender from code
 (`tools/weapons`), carrots and all, from CC0/CC-BY scans.
 
-- **Carrot Cruncher (minigun).** Six spinning carrot barrels. Hold the
+- **Root Rumbler (minigun).** Six spinning carrot barrels. Hold the
   trigger to spin up (about 0.7 s, with a rising whine), then 1,200 carrots
   a minute from a 150-carrot belt. You walk slowly and can't sprint while it
   spins, and the spread tightens the longer it keeps spinning. It shreds a
@@ -39,32 +52,19 @@ All three are built like the others: generated in Blender from code
 - **Cardboard You (gadget).** A cardboard cut-out of your critter. Gangs and
   your Doppelbunny shoot at it for 4 seconds.
 
-## How you'd get them (your call)
+## How you get them (answered 2026-10-28)
 
-- **(a) Recommended: unlock and call in.** Unlock each gun in the Workshop
-  with acorns. Then, once a match, when a gang is hunting you or your
-  Doppelbunny has seen you, call in a drop: a crate lands near you with
-  your pick. That makes them answers to gangs and the Doppelbunny, not an
-  everyday loadout.
-- **(b) Rare loot only you can pick up.** Found in chests now and then;
-  bots walk past them.
-- **(c) Trail rewards.** Beat a Grudge Match or a Mirror Match and one is
-  your keepsake for the next stop.
-
-## Also your call
-
-- **Can your Doppelbunny carry them?** If the Cruncher becomes your
-  favourite gun, should your Doppelbunny bring one too ("it even brought
-  your minigun"), or stay with ordinary guns?
-- **Names:** Carrot Cruncher, Carrot Lobber, Big Root .50. Keep these, or
-  pick others?
+A Trail reward (a Grudge Match or Mirror Match goal: pick one of the guns
+you haven't won), kept for good; called in once a match from your 3rd
+beat-down. Only you carry them; your Doppelbunny doesn't either. The names:
+Root Rumbler, Carrot Lobber, Big Root .50.
 
 ## Under the hood
 
 - `WeaponData` gains `player_only` (bots skip it in `_find_loot`, loot
-  never rolls it), `spin_up` (the Cruncher), and `pierce` / `pierce_cover`
+  never rolls it), `spin_up` (the Rumbler), and `pierce` / `pierce_cover`
   (the .50). The Lobber reuses the grenade's arc and blast code.
-- `DoppelSense.GUN_CLASS` learns the new guns (Cruncher close, Lobber
+- `DoppelSense.GUN_CLASS` learns the new guns (Rumbler close, Lobber
   blast, .50 far), so your Doppelbunny reads them like any other gun.
 - Tests: spin-up and the belt, slowed while spinning; the Lobber's bounce
   and blast; the .50 through a critter and a crate; bots never pick them

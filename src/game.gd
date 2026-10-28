@@ -147,6 +147,7 @@ func _spawn_player() -> void:
 	rig.set_target(match_manager.player)
 	var pc := match_manager.player.get_node("PlayerController") as PlayerController
 	pc.rig = rig
+	pc.match_manager = match_manager
 	hud = HUD.new()
 	hud.name = "HUD"
 	world.add_child(hud)

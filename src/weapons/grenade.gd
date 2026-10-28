@@ -5,6 +5,8 @@ extends Node3D
 ## rolls to a stop, blinks faster and faster, and goes off FUSE seconds after
 ## the throw: falloff damage and a big shove for everyone in the blast
 ## (Explosion, as a rocket's), so the ones it doesn't beat down get blown back.
+## The Carrot Lobber fires these too (WeaponData.ProjectileKind.LOB): its
+## own blast, a shorter fuse (WeaponData.fuse), and it goes off on a critter.
 
 const DATA := "res://data/throwables/carrot_grenade.tres"
 const FUSE := 2.4
@@ -18,6 +20,7 @@ var thrower: Node
 var weapon: WeaponInstance
 var velocity := Vector3.ZERO
 var exclude: Array[RID] = []
+var fuse := FUSE
 var _age := 0.0
 var _gravity := 16.0
 var _resting := false
@@ -33,11 +36,14 @@ static func data() -> WeaponData:
 
 
 ## Lob one from `pos` at `vel` (m/s); `thrower` gets the credit (and half the
-## damage, standing in its own blast, like a rocket's).
-static func spawn(parent: Node, thrower_: Node, pos: Vector3, vel: Vector3, exclude_: Array[RID] = []) -> Grenade:
+## damage, standing in its own blast, like a rocket's). `gun`: the Carrot
+## Lobber that fired it (its blast and fuse), or none for a thrown grenade.
+static func spawn(parent: Node, thrower_: Node, pos: Vector3, vel: Vector3, exclude_: Array[RID] = [], gun: WeaponInstance = null) -> Grenade:
 	var g := Grenade.new()
 	g.thrower = thrower_
-	g.weapon = WeaponInstance.new(data())
+	g.weapon = gun if gun else WeaponInstance.new(data())
+	if gun and gun.data.fuse > 0.0:
+		g.fuse = gun.data.fuse
 	g.velocity = vel
 	g.exclude = exclude_
 	parent.add_child(g)
@@ -156,12 +162,12 @@ func _physics_process(delta: float) -> void:
 	if _done:
 		return
 	_age += delta
-	if _age >= FUSE:
+	if _age >= fuse:
 		_detonate()
 		return
 	# the light blinks faster as the fuse runs down, and beeps for the last second
-	var left := FUSE - _age
-	_light.visible = fmod(_age, lerpf(0.08, 0.4, left / FUSE)) < 0.05 or left < 0.15
+	var left := fuse - _age
+	_light.visible = fmod(_age, lerpf(0.08, 0.4, left / fuse)) < 0.05 or left < 0.15
 	if left < _next_beep:
 		_next_beep -= 0.33
 		Audio.play_at(&"match_countdown_beep", global_position, -10.0, 0.0, {"unit_size": 3.0})
@@ -181,6 +187,9 @@ func _physics_process(delta: float) -> void:
 		var into := velocity.dot(n)
 		var along := velocity - n * into
 		global_position = hit.position + n * RADIUS
+		if hit.collider is Area3D and (hit.collider as Node).has_meta(&"critter") and weapon.data.projectile == WeaponData.ProjectileKind.LOB:
+			_detonate()   # (a Lobber's carrot goes off on whoever it hits)
+			return
 		if hit.collider is Area3D and (hit.collider as Node).has_meta(&"critter"):
 			# a critter's soft: it thuds off them and drops at their feet
 			velocity = velocity * 0.12 + n * 1.0

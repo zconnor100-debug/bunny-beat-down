@@ -1,11 +1,12 @@
 class_name WeaponData
 extends Resource
 ## Static description of one carrot gun. Lives in res://data/weapons/*.tres so
-## balancing is done in the inspector, never in code.
+## balancing is done in the inspector, never in code (your arsenal's guns,
+## yours alone, in res://data/arsenal: Arsenal).
 
 enum FireMode { SEMI, AUTO }
 enum AmmoType { LIGHT, SHELLS, HEAVY, ROCKET }
-enum ProjectileKind { BOLT, PELLET, ROCKET }
+enum ProjectileKind { BOLT, PELLET, ROCKET, LOB }   ## LOB: a bouncing carrot that goes off (Grenade)
 
 @export var id: StringName
 @export var display_name := ""
@@ -60,6 +61,14 @@ enum ProjectileKind { BOLT, PELLET, ROCKET }
 @export var ai_max_range := 55.0
 @export var ai_min_range := 0.0         ## don't fire closer than this (rockets!)
 @export var ai_burst := 1               ## shots per trigger pull for SEMI weapons
+
+@export_group("Arsenal")
+@export var spin_up := 0.0              ## seconds the barrels take to spin up before it fires (the Root Rumbler)
+@export var spin_spread := 1.0          ## its spread once it's been firing a while, x its spread at first
+@export var pierce := 0                 ## critters each carrot goes on through
+@export var pierce_cover := 0.0         ## cover up to this thick (m) each carrot goes on through
+@export var stand_spread_deg := 0.0     ## more spread standing (it steadies crouched, and lying down)
+@export var fuse := 0.0                 ## LOB: seconds before its carrot goes off (on a critter, at once)
 
 @export_group("Loot")
 @export var loot_weight := 1.0

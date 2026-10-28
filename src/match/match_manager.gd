@@ -96,6 +96,8 @@ var run_goal_met := false
 var doppel: Critter
 var doppel_beaten := false
 var _difficulty := 1
+## Your arsenal (Arsenal): from your CALL_AT-th beat-down you can call it in, once a match.
+var called_in := false
 
 
 func setup(world_root_: Node3D, island_: Island, opponents: int, difficulty: int, seed_: int, pace_ := 1.0) -> void:
@@ -130,6 +132,7 @@ func setup(world_root_: Node3D, island_: Island, opponents: int, difficulty: int
 	Events.critter_died.connect(_on_critter_died)
 	Events.critter_damaged.connect(_on_critter_damaged)
 	Events.shot_fired.connect(_on_shot_fired)
+	Events.clover_eaten.connect(_on_clover_eaten)
 	var d := clampi(difficulty, 0, 2)
 	AIBrain.player_attack_slots = [1, 2, 3][d]
 	AIBrain.damage_to_player = [0.45, 0.65, 0.85][d]
@@ -407,6 +410,8 @@ func gang_spotted(c: Critter, seen: Critter) -> void:
 		var brain := m.get_node_or_null("AIBrain") as AIBrain
 		if m != c and brain:
 			brain.share_sighting(seen, seen.global_position)
+		if seen == player and Boons.has("pack_sense"):
+			m.visual.reveal(Boons.value("pack_sense"))   # (you see the whole gang through walls)
 	gang_call(c, "spot")
 
 
@@ -529,6 +534,12 @@ func _gang_member_down(c: Critter) -> void:
 	var g := gang_of(c)
 	if g == null:
 		return
+	if Boons.has("gang_buster") and player and not g.alive().is_empty():
+		for m in g.alive():
+			var brain := m.get_node_or_null("AIBrain") as AIBrain
+			if m != c and brain:
+				brain.panic(player, Boons.value("gang_buster"))
+		Events.headline.emit("%s panic!" % g.name.capitalize())
 	for m in g.alive():
 		if m == c or float(Gang.DISLOYAL.get(RivalBook.personality_of(m.display_name), 0.3)) < 0.4 or m.health >= 60.0:
 			continue
@@ -985,6 +996,8 @@ func flush_out_player() -> Array[Critter]:
 func _note_player_kill(info: DamageInfo) -> void:
 	PlayerProfile.note_kill(info.weapon_id if info.weapon_id != &"" else &"melee")
 	player_beat_downs += 1
+	if player_beat_downs == Arsenal.CALL_AT and can_call_in():
+		Events.announce.emit("YOUR ARSENAL IS READY", "%s to call it in." % GameInput.prompt(&"call_in"))
 	_player_kills.append(_clock)
 	_player_kills = _player_kills.filter(func(t): return _clock - t < STREAK_WINDOW)
 	if _player_kills.size() >= 2 and _adapt_left <= 0.0:
@@ -1001,6 +1014,45 @@ func _set_adapted(on: bool) -> void:
 		var brain := c.get_node_or_null("AIBrain") if is_instance_valid(c) else null
 		if brain:
 			(brain as AIBrain).skill = clampf((brain as AIBrain).skill + (0.08 if on else -0.08), 0.05, 0.98)
+
+
+## You can call your arsenal in: you've won a gun of it on the Trail, beaten
+## down Arsenal.CALL_AT critters this match, and not called it in yet.
+func can_call_in() -> bool:
+	return not called_in and player != null and player.alive and player.state == Critter.State.GROUND \
+		and player_beat_downs >= Arsenal.CALL_AT and phase == Phase.PLAYING and not Arsenal.unlocked().is_empty()
+
+
+## Call your arsenal in: a crate drops beside you (Arsenal.call_in_contents),
+## for you alone. True if it's on its way.
+func call_in() -> bool:
+	if not can_call_in():
+		return false
+	called_in = true
+	var at := player.global_position
+	var spot := Vector3.INF
+	for i in 8:
+		# somewhere clear a few metres away: straight ahead, then either side of it
+		var a := player.look_yaw + PI + float((i + 1) / 2) * (1.0 if i % 2 == 1 else -1.0) * 0.7
+		var p := at + Vector3(sin(a), 0.0, cos(a)) * Arsenal.CALL_DISTANCE
+		var q := PhysicsRayQueryParameters3D.create(p + Vector3.UP * 6.0, p + Vector3.DOWN * 8.0, Layers.WORLD)
+		var hit := player.get_world_3d().direct_space_state.intersect_ray(q)
+		if hit and (hit.normal as Vector3).y > 0.7:
+			spot = hit.position
+			break
+	if spot == Vector3.INF:
+		spot = at
+	var drop := SupplyDrop.new()
+	drop.landing = spot
+	drop.fall_speed = Arsenal.CALL_FALL
+	drop.contents = Arsenal.call_in_contents()
+	drop.player_only = true
+	drop.rng.seed = rng.randi()
+	world_root.add_child(drop)
+	drop.global_position = spot + Vector3.UP * Arsenal.CALL_HEIGHT
+	Events.supply_drop_incoming.emit(spot)
+	Events.announce.emit("CALLED IN", "Your arsenal is on its way. Take one.")
+	return true
 
 
 func _spawn_supply_drop() -> void:
@@ -1200,8 +1252,8 @@ func _steal_gun(killer: Critter) -> void:
 		for g in held:
 			if g and (w == null or g.rarity > w.rarity):
 				w = g
-	if w == null or not RivalBook.took_gun(killer.display_name).is_empty():
-		return
+	if w == null or not RivalBook.took_gun(killer.display_name).is_empty() or WeaponDB.is_arsenal(w.data):
+		return   # (your arsenal's guns are yours alone)
 	var d := w.to_dict()
 	d["skin"] = Workshop.look("skin")
 	RivalBook.note_took_gun(killer.display_name, d)
@@ -1293,6 +1345,13 @@ func taunt(c: Critter, event: String) -> void:
 	if said.is_empty():
 		said = RivalBook.line_say(c.display_name, event, you, rng)
 	_say(c, said)
+
+
+## You ate a clover: with Cardboard You, a cut-out of you stays behind and
+## draws the fire for a few seconds (Decoy).
+func _on_clover_eaten(c: Node) -> void:
+	if c == player and player and Boons.has("cardboard_you"):
+		Decoy.spawn(world_root, player, Boons.value("cardboard_you"))
 
 
 ## A bot says something: on screen (HUD, a speech bubble) and out loud

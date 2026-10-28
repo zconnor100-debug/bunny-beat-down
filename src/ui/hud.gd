@@ -26,6 +26,7 @@ var _weapon_name: Label
 var _slots: Array[PanelContainer] = []
 var _clover_label: Label
 var _grenade_label: Label
+var _arsenal_label: Label          ## your arsenal: beat-downs to go, or ready to call in (Arsenal)
 var _rewind_label: Label
 var _news_frame := -1          # the frame a rival's news (REVENGE!...) was shown
 var _rewind_tint: ColorRect
@@ -179,6 +180,11 @@ func setup(player_: Critter, rig_: CameraRig, mm: MatchManager) -> void:
 	_grenade_label.offset_left = 30
 	_grenade_label.offset_top = -218
 	_root.add_child(_grenade_label)
+	_arsenal_label = UITheme.label("", 22, UITheme.CREAM)
+	_arsenal_label.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT)
+	_arsenal_label.offset_left = 30
+	_arsenal_label.offset_top = -252
+	_root.add_child(_arsenal_label)
 	_rewind_label = UITheme.label("", 20, Color("9fe3ff"))
 	_rewind_label.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT)
 	_rewind_label.offset_left = 30
@@ -407,6 +413,13 @@ func _process(delta: float) -> void:
 	_clover_label.text = "Lucky clovers: %d   [%s] to heal" % [player.inventory.clovers, GameInput.prompt(&"heal")] if player.inventory.clovers > 0 else ""
 	_grenade_label.text = "Carrot grenades: %d   hold [%s] to aim, let go to throw" % [player.inventory.grenades, GameInput.prompt(&"grenade")] \
 		if player.inventory.grenades > 0 else ""
+	_arsenal_label.text = ""
+	if match_manager and match_manager.phase == MatchManager.Phase.PLAYING and player.alive and not match_manager.called_in \
+			and not Arsenal.unlocked().is_empty():
+		var to_go := Arsenal.CALL_AT - match_manager.player_beat_downs
+		_arsenal_label.text = "Your arsenal is ready: [%s] to call it in" % GameInput.prompt(&"call_in") if to_go <= 0 \
+			else "Your arsenal: %d more beat-down%s to call it in" % [to_go, "" if to_go == 1 else "s"]
+		_arsenal_label.add_theme_color_override("font_color", UITheme.CARROT_LIGHT if to_go <= 0 else UITheme.CREAM)
 	var tk := match_manager.time_keeper if match_manager else null
 	if tk and match_manager.phase == MatchManager.Phase.PLAYING and player.alive:
 		var how := "pause menu" if GameInput.using_pad else "[%s]" % GameInput.prompt(&"rewind")

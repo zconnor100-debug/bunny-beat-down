@@ -128,7 +128,8 @@ func _status(s: Dictionary) -> Control:
 	return v
 
 
-## A reward waiting: "draft" (a boon) or {"keepsake": [gun dicts]}.
+## A reward waiting: "draft" (a boon), {"keepsake": [gun dicts]} or
+## {"arsenal": [gun ids]} (a gun for your arsenal).
 func _reward(r) -> void:
 	if str(r) == "draft":
 		var d := DraftPanel.new()
@@ -145,6 +146,22 @@ func _reward(r) -> void:
 			Run.take_pending()
 			rebuild.call_deferred()
 		return
+	if r is Dictionary and r.has("arsenal"):
+		_v.add_child(_text("Win a gun for your arsenal. It's yours alone: call it in during any match, from your %s beat-down." % _nth(Arsenal.CALL_AT),
+			26, UITheme.CARROT_LIGHT))
+		var items := []
+		for id in r.arsenal:
+			var data := WeaponDB.get_weapon(StringName(id))
+			if data:
+				items.append([data.display_name, func():
+					Run.take_pending("", {}, StringName(id))
+					rebuild()])
+		_v.add_child(_buttons(items))
+		for id in r.arsenal:
+			var data := WeaponDB.get_weapon(StringName(id))
+			if data:
+				_v.add_child(_text("%s: %s" % [data.display_name, data.blurb], 20))
+		return
 	if r is Dictionary and r.has("keepsake"):
 		_v.add_child(_text("Pocket a keepsake: one gun you were holding, for the start of the next stop.", 26, UITheme.CARROT_LIGHT))
 		var items := []
@@ -158,6 +175,10 @@ func _reward(r) -> void:
 			Run.take_pending()
 			rebuild()])
 		_v.add_child(_buttons(items))
+
+
+static func _nth(n: int) -> String:
+	return "%d%s" % [n, "st" if n == 1 else ("nd" if n == 2 else ("rd" if n == 3 else "th"))]
 
 
 ## The same three boons however often the Trail is opened before you pick.

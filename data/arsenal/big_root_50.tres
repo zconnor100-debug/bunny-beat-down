@@ -1,0 +1,49 @@
+[gd_resource type="Resource" script_class="WeaponData" format=3]
+
+[ext_resource type="Script" path="res://src/weapons/weapon_data.gd" id="1_wd"]
+
+[resource]
+script = ExtResource("1_wd")
+id = &"big_root_50"
+display_name = "Big Root .50"
+blurb = "A carrot slug the size of a bunny's arm. Through a critter, through the fence behind it. Kneel first."
+model_path = "res://assets/weapons/big_root_50.glb"
+icon_color = Color(0.85, 0.4, 0.14, 1)
+fire_mode = 0
+ammo_type = 2
+magazine = 5
+rounds_per_minute = 30.0
+pellets = 1
+damage = 125.0
+headshot_multiplier = 2.0
+spread_hip_deg = 5.0
+spread_aim_deg = 0.0
+spread_move_deg = 3.0
+bloom_per_shot_deg = 0.0
+bloom_max_deg = 0.0
+projectile = 0
+projectile_speed = 900.0
+projectile_gravity = 0.08
+falloff_start = 200.0
+falloff_end = 400.0
+min_damage_scale = 0.9
+impulse = 26.0
+dismember_power = 1.0
+reload_time = 3.4
+equip_time = 0.8
+two_handed = true
+hold_distance = 0.2
+aim_fov_scale = 0.25
+recoil_pitch_deg = 9.0
+recoil_yaw_deg = 1.4
+camera_shake = 0.25
+move_speed_scale = 0.8
+sfx_fire = &"big50_fire"
+scoped = true
+cycle_sfx = &"sniper_bolt"
+pierce = 2
+pierce_cover = 0.6
+stand_spread_deg = 1.4
+ai_preferred_range = 50.0
+ai_max_range = 140.0
+loot_weight = 0.0

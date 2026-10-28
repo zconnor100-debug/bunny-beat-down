@@ -34,11 +34,12 @@ PROP_SHEET = ["acorn_helmet", "pickup_health", "pickup_armor", "ammo_light", "am
               "ammo_rocket", "loot_crate", "supply_drop", "dandelion_glider", "dropship_balloon"]
 CHEST_GLIDER_SHEET = ["treasure_chest", "treasure_chest_golden", "glider_dandelion_plume", "glider_oak_leaf",
                       "glider_maple_leaf", "glider_tulip", "glider_daisy", "glider_mushroom"]
+ARSENAL_SHEET = ["root_rumbler", "carrot_lobber", "big_root_50"]
 MELEE_SHEET = ["melee_barbed_carrot", "melee_shadow_carrot", "melee_fly_swatter", "melee_bunny_spine",
                "melee_acorn_knocker", "melee_mousetrap_mallet", "melee_nail_corncob", "melee_trout_stick"]
 CRITTER_CAPSULE = set(CHEST_GLIDER_SHEET)   # previewed next to a 1.1 m critter capsule
-ALL = WEAPON_SHEET + PROP_SHEET + CHEST_GLIDER_SHEET + MELEE_SHEET
-IN_WEAPONS = set(WEAPON_SHEET + MELEE_SHEET)   # assets/weapons/ (the rest go to assets/props/)
+ALL = WEAPON_SHEET + ARSENAL_SHEET + PROP_SHEET + CHEST_GLIDER_SHEET + MELEE_SHEET
+IN_WEAPONS = set(WEAPON_SHEET + ARSENAL_SHEET + MELEE_SHEET)   # assets/weapons/ (the rest go to assets/props/)
 ORIGINS = {
     "weapon": ("main (trigger) grip", "barrel along -Z, +Y up"),
     "melee": ("hand grip on the handle", "striking end along -Z, +Y up"),
@@ -142,7 +143,8 @@ def write_credits(reports: dict) -> Path:
     for key, m in meta.items():
         if m["kind"] == "polyhaven_hdri":
             files = ["assets/weapons/preview_sheet.png", "assets/weapons/preview_sheet_melee.png",
-                     "assets/props/preview_sheet.png", "assets/props/acorn_helmet_closeup.png"]
+                     "assets/weapons/preview_sheet_arsenal.png", "assets/props/preview_sheet.png",
+                     "assets/props/acorn_helmet_closeup.png"]
         else:
             files = sorted(rel(r["file"]) for r in reports.values() if key in r.get("sources", []))
         if not files:
@@ -210,6 +212,9 @@ def previews(ids: list[str], blender_bin: str, samples: int) -> None:
     if present(MELEE_SHEET):
         compose_sheet.sheet("Bunny Beat Down - melee clubs (one per species)", present(MELEE_SHEET), tiles, BUILD,
                             ROOT / "assets" / "weapons" / "preview_sheet_melee.png", cols=4, tile=260)
+    if present(ARSENAL_SHEET):
+        compose_sheet.sheet("Bunny Beat Down - your arsenal (yours alone)", present(ARSENAL_SHEET), tiles, BUILD,
+                            ROOT / "assets" / "weapons" / "preview_sheet_arsenal.png", cols=3, tile=260)
     if present(CHEST_GLIDER_SHEET):
         compose_sheet.sheet("Bunny Beat Down - treasure chests & gliders", present(CHEST_GLIDER_SHEET), tiles, BUILD,
                             ROOT / "assets" / "props" / "preview_sheet_chests_gliders.png", cols=4, tile=260,

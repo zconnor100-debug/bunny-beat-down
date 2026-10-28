@@ -26,6 +26,7 @@ const ASSIST_PULL := 2.2          ## 1/s: how fast the aim drifts onto the body
 
 var critter: Critter
 var rig: CameraRig
+var match_manager: Node            ## (the match: calling your arsenal in)
 var enabled := true
 var _focus: Node = null
 var _hint := ""
@@ -35,6 +36,7 @@ var _sprint_latch := false         # pad: L3 clicks sprint on until you stop mov
 var _latch_before := false         # (undone if that click was half of an L3 + R3 chord)
 var _pad_pressed_at := {}          # button -> msec of its last press (for chords)
 var _pending_melee := -1.0         # seconds until a pad R3 swing (it may yet be a chord)
+var _slot_before := -1             # the gun before a pad LB / RB (put back if it was half of LB + RB)
 var assist_target: Critter = null  ## who the aim assist is helping with (HUD / tests)
 var readying_grenade := false      ## the grenade button's held: the arc shows, letting go throws
 var _arc: ThrowArc
@@ -64,6 +66,9 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventJoypadButton and event.pressed and _chord(event.button_index):
 		rig.toggle_first_person()
 		return
+	if event is InputEventJoypadButton and event.pressed and critter.alive and _call_in_chord(event.button_index):
+		_call_in()
+		return
 	if not critter.alive:
 		return
 	if event.is_action_pressed(&"interact") and _can_interact():
@@ -82,6 +87,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		critter.cycle_weapon(-1)
 	elif event.is_action_pressed(&"heal"):
 		critter.use_clover()
+	elif event.is_action_pressed(&"call_in"):
+		_call_in()
 	elif event.is_action_pressed(&"grenade"):
 		readying_grenade = critter.can_throw()
 		if not readying_grenade and critter.inventory.grenades <= 0:
@@ -200,6 +207,29 @@ func _chord(button: JoyButton) -> bool:
 				_sprint_latch = _latch_before
 			return true
 	return false
+
+
+## True when `button` completes LB + RB (GameInput.CALL_IN_CHORD); the gun
+## change its first half made is put back.
+func _call_in_chord(button: JoyButton) -> bool:
+	if not button in GameInput.CALL_IN_CHORD:
+		return false
+	var now := Time.get_ticks_msec()
+	var other: JoyButton = GameInput.CALL_IN_CHORD[0] if button == GameInput.CALL_IN_CHORD[1] else GameInput.CALL_IN_CHORD[1]
+	if now - int(_pad_pressed_at.get(other, -100000)) <= GameInput.CHORD_SECONDS * 1000.0:
+		_pad_pressed_at.erase(other)
+		_pad_pressed_at.erase(button)
+		if _slot_before >= 0:
+			critter.switch_to(_slot_before)
+		return true
+	_slot_before = critter.current_slot
+	return false
+
+
+## Call your arsenal in (MatchManager.call_in), if you can.
+func _call_in() -> void:
+	if match_manager == null or not match_manager.has_method("call_in") or not match_manager.call_in():
+		Audio.play(&"dry_fire", -8.0)
 
 
 ## The opponent nearest the crosshair ray, if the ray passes within

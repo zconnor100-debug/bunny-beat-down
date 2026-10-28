@@ -31,6 +31,14 @@ var dropped_by: Node = null      ## who swapped this gun out (AI ignores its own
 var dropped_msec := 0
 
 
+## False for what's yours alone: a gun of your arsenal (Arsenal), or anything
+## from your call-in (spec "yours"). Bots leave it be and can't take it.
+func anyone_may_take() -> bool:
+	if spec.get("yours", false):
+		return false
+	return not (is_weapon() and spec["weapon"] is WeaponInstance and WeaponDB.is_arsenal((spec["weapon"] as WeaponInstance).data))
+
+
 static func weapon_spec(w: WeaponInstance) -> Dictionary:
 	return {"type": "weapon", "weapon": w}
 
@@ -150,9 +158,16 @@ func _physics_process(delta: float) -> void:
 
 ## Applies this pickup to `critter`. Returns true if it was consumed.
 func try_collect(critter: Critter) -> bool:
+	if not critter.is_player and not anyone_may_take():
+		return false
 	match spec.get("type"):
 		"weapon":
 			_note_taken(critter, spec)
+			if spec.has("one_of"):
+				# a call-in's guns: take one and the rest go back
+				for other in get_tree().get_nodes_in_group(&"pickups"):
+					if other != self and other is Pickup and (other as Pickup).spec.get("one_of", "") == spec.one_of:
+						other.queue_free()
 			var dropped := critter.give_weapon(spec["weapon"])
 			Audio.play_at(&"pickup_weapon", global_position)
 			Events.item_picked_up.emit(critter, label())

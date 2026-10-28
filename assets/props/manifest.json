@@ -455,6 +455,156 @@
     "notes": "Origin at the rocket centre, tip toward -Z. `Trail` marks the rear for the exhaust/leaf-trail particles."
   },
   {
+    "id": "root_rumbler",
+    "file": "assets/weapons/root_rumbler.glb",
+    "kind": "weapon",
+    "use": "Your arsenal: Root Rumbler, a six-barrel carrot minigun (player only)",
+    "size_m": [
+      0.173,
+      0.234,
+      0.68
+    ],
+    "max_extent_m": 0.68,
+    "aabb_min": [
+      -0.0593,
+      -0.0499,
+      -0.564
+    ],
+    "aabb_max": [
+      0.114,
+      0.184,
+      0.116
+    ],
+    "origin": "main (trigger) grip",
+    "orientation": "barrel along -Z, +Y up",
+    "tris": 7528,
+    "texture_px": 1024,
+    "markers": {
+      "Muzzle": [
+        0.0,
+        0.092,
+        -0.556
+      ],
+      "SupportGrip": [
+        0.0,
+        0.008,
+        -0.193
+      ],
+      "Sight": [
+        0.0,
+        0.1795,
+        0.052
+      ],
+      "Eject": [
+        0.0,
+        0.04,
+        -0.072
+      ]
+    },
+    "nodes": {},
+    "notes": "Muzzle is the spindle's centre at the barrels' mouths (carrots leave from there). Sight line runs over the drum from the rear notch to the front plate's post."
+  },
+  {
+    "id": "carrot_lobber",
+    "file": "assets/weapons/carrot_lobber.glb",
+    "kind": "weapon",
+    "use": "Your arsenal: Carrot Lobber, a revolving carrot-bomb launcher (player only)",
+    "size_m": [
+      0.129,
+      0.198,
+      0.645
+    ],
+    "max_extent_m": 0.645,
+    "aabb_min": [
+      -0.0644,
+      -0.0459,
+      -0.435
+    ],
+    "aabb_max": [
+      0.0644,
+      0.1524,
+      0.21
+    ],
+    "origin": "main (trigger) grip",
+    "orientation": "barrel along -Z, +Y up",
+    "tris": 7038,
+    "texture_px": 1024,
+    "markers": {
+      "Muzzle": [
+        0.0,
+        0.078,
+        -0.3954
+      ],
+      "SupportGrip": [
+        0.0,
+        0.006,
+        -0.28
+      ],
+      "Sight": [
+        0.0,
+        0.146,
+        0.005
+      ],
+      "Eject": [
+        0.026,
+        0.074,
+        -0.075
+      ]
+    },
+    "nodes": {},
+    "notes": "Revolving drum under the bore (its top chamber feeds the barrel). Sight = the ladder's top rung over the front post on the flower pot's rim."
+  },
+  {
+    "id": "big_root_50",
+    "file": "assets/weapons/big_root_50.glb",
+    "kind": "weapon",
+    "use": "Your arsenal: Big Root .50, an anti-materiel carrot rifle (player only)",
+    "size_m": [
+      0.145,
+      0.287,
+      1.505
+    ],
+    "max_extent_m": 1.505,
+    "aabb_min": [
+      -0.0615,
+      -0.0891,
+      -1.1386
+    ],
+    "aabb_max": [
+      0.0836,
+      0.198,
+      0.366
+    ],
+    "origin": "main (trigger) grip",
+    "orientation": "barrel along -Z, +Y up",
+    "tris": 7044,
+    "texture_px": 1024,
+    "markers": {
+      "Muzzle": [
+        0.0,
+        0.09,
+        -1.138
+      ],
+      "SupportGrip": [
+        0.0,
+        0.06,
+        -0.385
+      ],
+      "Sight": [
+        0.0,
+        0.168,
+        0.113
+      ],
+      "Eject": [
+        0.03,
+        0.096,
+        -0.125
+      ]
+    },
+    "nodes": {},
+    "notes": "Bolt-action .50: ADS through the scope (Sight just behind the eyecup, 0.078 m above the bore). SupportGrip on the carrot barrel ahead of the receiver; the bipod is deployed (its feet hang 0.17 m under the bore)."
+  },
+  {
     "id": "acorn_helmet",
     "file": "assets/props/acorn_helmet.glb",
     "kind": "prop",

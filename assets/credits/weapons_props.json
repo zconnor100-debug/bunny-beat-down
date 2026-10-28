@@ -9,12 +9,15 @@
     "changes": "Sampled (box/UV projected, rescaled, tinted) inside procedural Blender materials that add edge wear, cavity dirt and paint chipping, then baked by tools/weapons into each asset's own 512-2048 px PBR atlas. The original image files are not shipped.",
     "used_for": "Gun stocks, pistol grips and fore-ends",
     "files": [
+      "assets/weapons/big_root_50.glb",
       "assets/weapons/carrot_lmg.glb",
+      "assets/weapons/carrot_lobber.glb",
       "assets/weapons/carrot_pistol.glb",
       "assets/weapons/carrot_rifle.glb",
       "assets/weapons/carrot_rocket_launcher.glb",
       "assets/weapons/carrot_shotgun.glb",
-      "assets/weapons/carrot_sniper.glb"
+      "assets/weapons/carrot_sniper.glb",
+      "assets/weapons/root_rumbler.glb"
     ]
   },
   {
@@ -70,7 +73,9 @@
       "assets/props/supply_drop.glb",
       "assets/props/treasure_chest.glb",
       "assets/props/treasure_chest_golden.glb",
+      "assets/weapons/big_root_50.glb",
       "assets/weapons/carrot_lmg.glb",
+      "assets/weapons/carrot_lobber.glb",
       "assets/weapons/carrot_pistol.glb",
       "assets/weapons/carrot_rifle.glb",
       "assets/weapons/carrot_rocket_launcher.glb",
@@ -80,7 +85,8 @@
       "assets/weapons/melee_barbed_carrot.glb",
       "assets/weapons/melee_mousetrap_mallet.glb",
       "assets/weapons/melee_nail_corncob.glb",
-      "assets/weapons/melee_shadow_carrot.glb"
+      "assets/weapons/melee_shadow_carrot.glb",
+      "assets/weapons/root_rumbler.glb"
     ]
   },
   {
@@ -95,13 +101,16 @@
     "files": [
       "assets/props/ammo_heavy.glb",
       "assets/props/supply_drop.glb",
+      "assets/weapons/big_root_50.glb",
       "assets/weapons/carrot_lmg.glb",
+      "assets/weapons/carrot_lobber.glb",
       "assets/weapons/carrot_pistol.glb",
       "assets/weapons/carrot_rifle.glb",
       "assets/weapons/carrot_rocket_launcher.glb",
       "assets/weapons/carrot_shotgun.glb",
       "assets/weapons/carrot_smg.glb",
-      "assets/weapons/carrot_sniper.glb"
+      "assets/weapons/carrot_sniper.glb",
+      "assets/weapons/root_rumbler.glb"
     ]
   },
   {
@@ -129,7 +138,9 @@
       "assets/props/loot_crate.glb",
       "assets/props/pickup_health.glb",
       "assets/props/supply_drop.glb",
+      "assets/weapons/big_root_50.glb",
       "assets/weapons/carrot_lmg.glb",
+      "assets/weapons/carrot_lobber.glb",
       "assets/weapons/carrot_pistol.glb",
       "assets/weapons/carrot_rifle.glb",
       "assets/weapons/carrot_rocket.glb",
@@ -141,7 +152,8 @@
       "assets/weapons/melee_barbed_carrot.glb",
       "assets/weapons/melee_nail_corncob.glb",
       "assets/weapons/melee_shadow_carrot.glb",
-      "assets/weapons/melee_trout_stick.glb"
+      "assets/weapons/melee_trout_stick.glb",
+      "assets/weapons/root_rumbler.glb"
     ]
   },
   {
@@ -158,6 +170,8 @@
       "assets/props/ammo_heavy.glb",
       "assets/props/dropship_balloon.glb",
       "assets/props/pickup_armor.glb",
+      "assets/weapons/big_root_50.glb",
+      "assets/weapons/carrot_lobber.glb",
       "assets/weapons/carrot_shotgun.glb",
       "assets/weapons/carrot_sniper.glb",
       "assets/weapons/melee_barbed_carrot.glb",
@@ -175,13 +189,16 @@
     "used_for": "Bark armour plates (pickup_armor)",
     "files": [
       "assets/props/pickup_armor.glb",
+      "assets/weapons/big_root_50.glb",
       "assets/weapons/carrot_lmg.glb",
+      "assets/weapons/carrot_lobber.glb",
       "assets/weapons/carrot_rifle.glb",
       "assets/weapons/carrot_rocket_launcher.glb",
       "assets/weapons/carrot_smg.glb",
       "assets/weapons/carrot_sniper.glb",
       "assets/weapons/melee_acorn_knocker.glb",
-      "assets/weapons/melee_trout_stick.glb"
+      "assets/weapons/melee_trout_stick.glb",
+      "assets/weapons/root_rumbler.glb"
     ]
   },
   {
@@ -288,6 +305,7 @@
     "files": [
       "assets/weapons/preview_sheet.png",
       "assets/weapons/preview_sheet_melee.png",
+      "assets/weapons/preview_sheet_arsenal.png",
       "assets/props/preview_sheet.png",
       "assets/props/acorn_helmet_closeup.png"
     ]
@@ -321,8 +339,10 @@
       "assets/props/ammo_shells.glb",
       "assets/props/loot_crate.glb",
       "assets/props/supply_drop.glb",
+      "assets/weapons/big_root_50.glb",
       "assets/weapons/carrot_bolt.glb",
       "assets/weapons/carrot_lmg.glb",
+      "assets/weapons/carrot_lobber.glb",
       "assets/weapons/carrot_pistol.glb",
       "assets/weapons/carrot_rifle.glb",
       "assets/weapons/carrot_rocket.glb",
@@ -331,7 +351,8 @@
       "assets/weapons/carrot_shotgun.glb",
       "assets/weapons/carrot_smg.glb",
       "assets/weapons/carrot_sniper.glb",
-      "assets/weapons/melee_barbed_carrot.glb"
+      "assets/weapons/melee_barbed_carrot.glb",
+      "assets/weapons/root_rumbler.glb"
     ]
   },
   {
@@ -346,10 +367,12 @@
     "files": [
       "assets/props/acorn_helmet.glb",
       "assets/props/pickup_armor.glb",
+      "assets/weapons/big_root_50.glb",
       "assets/weapons/carrot_lmg.glb",
       "assets/weapons/carrot_pistol.glb",
       "assets/weapons/carrot_shotgun.glb",
-      "assets/weapons/melee_acorn_knocker.glb"
+      "assets/weapons/melee_acorn_knocker.glb",
+      "assets/weapons/root_rumbler.glb"
     ]
   },
   {
@@ -532,6 +555,45 @@
     "used_for": "Projectile for carrot_rocket_launcher",
     "files": [
       "assets/weapons/carrot_rocket.glb"
+    ]
+  },
+  {
+    "asset": "Root Rumbler",
+    "author": "Bunny Beat Down project",
+    "author_url": "",
+    "license": "MIT (project)",
+    "license_url": "",
+    "source_url": "tools/weapons/blender/assets/weapons.py",
+    "changes": "Original model generated from code (Blender Python): procedural geometry, scripted materials and a baked PBR atlas. Third-party textures/scans it samples are credited separately.",
+    "used_for": "Your arsenal: Root Rumbler, a six-barrel carrot minigun (player only)",
+    "files": [
+      "assets/weapons/root_rumbler.glb"
+    ]
+  },
+  {
+    "asset": "Carrot Lobber",
+    "author": "Bunny Beat Down project",
+    "author_url": "",
+    "license": "MIT (project)",
+    "license_url": "",
+    "source_url": "tools/weapons/blender/assets/weapons.py",
+    "changes": "Original model generated from code (Blender Python): procedural geometry, scripted materials and a baked PBR atlas. Third-party textures/scans it samples are credited separately.",
+    "used_for": "Your arsenal: Carrot Lobber, a revolving carrot-bomb launcher (player only)",
+    "files": [
+      "assets/weapons/carrot_lobber.glb"
+    ]
+  },
+  {
+    "asset": "Big Root 50",
+    "author": "Bunny Beat Down project",
+    "author_url": "",
+    "license": "MIT (project)",
+    "license_url": "",
+    "source_url": "tools/weapons/blender/assets/weapons.py",
+    "changes": "Original model generated from code (Blender Python): procedural geometry, scripted materials and a baked PBR atlas. Third-party textures/scans it samples are credited separately.",
+    "used_for": "Your arsenal: Big Root .50, an anti-materiel carrot rifle (player only)",
+    "files": [
+      "assets/weapons/big_root_50.glb"
     ]
   },
   {

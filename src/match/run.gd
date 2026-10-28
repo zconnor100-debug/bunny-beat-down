@@ -11,7 +11,9 @@ extends RefCounted
 ## pocketed for the start of the next. Picnics are rests: mend a helmet,
 ## find two rewinds, or take a boon. Once your Doppelbunny is ready
 ## (DoppelData.ready), a run has one Mirror Match: it's in the lobby, hunting
-## you, and beating it down is a boon of its own. Saved with the
+## you, and beating it down is a boon of its own. Make the goal in a Grudge
+## Match or a Mirror Match and you win a gun for your arsenal (Arsenal), while
+## there's one left to win. Saved with the
 ## PlayerProfile after every step, so a run survives quitting the game.
 
 const ROWS := 5
@@ -217,7 +219,10 @@ static func finish_match(placement: int, total: int, kills: int, won: bool, keep
 		_record("helmets_lost", 1)
 	if kind == "mirror" and broke_mirror:
 		pending.append("draft")
-	var options := keep.filter(func(w): return w is WeaponInstance).map(func(w): return (w as WeaponInstance).to_dict())
+	if met and kind in Arsenal.REWARD_KINDS and not Arsenal.locked().is_empty():
+		pending.append({"arsenal": Arsenal.locked().map(func(id): return String(id))})
+	var options := keep.filter(func(w): return w is WeaponInstance and not WeaponDB.is_arsenal((w as WeaponInstance).data)) \
+		.map(func(w): return (w as WeaponInstance).to_dict())   # (your arsenal's guns are called in, not kept)
 	if not options.is_empty() and s.helmets > 0:
 		pending.append({"keepsake": options})
 	s.pending = pending
@@ -271,8 +276,9 @@ static func pending() -> Array:
 	return state().get("pending", [])
 
 
-## A reward waiting has been taken (a draft's boon, a keepsake, or skipped).
-static func take_pending(boon := "", keepsake: Dictionary = {}) -> void:
+## A reward waiting has been taken (a draft's boon, a keepsake, a gun for
+## your arsenal, or skipped).
+static func take_pending(boon := "", keepsake: Dictionary = {}, arsenal: StringName = &"") -> void:
 	var s := state()
 	if s.get("pending", []).is_empty():
 		return
@@ -284,6 +290,8 @@ static func take_pending(boon := "", keepsake: Dictionary = {}) -> void:
 		Mastery.note_boons(Boons.held.size())
 	if first is Dictionary and first.has("keepsake"):
 		s.keepsake = keepsake
+	if first is Dictionary and first.has("arsenal") and arsenal != &"":
+		Arsenal.unlock(arsenal)
 	_save(s)
 
 

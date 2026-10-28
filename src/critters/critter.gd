@@ -83,6 +83,8 @@ var _reload_timer := -1.0
 var _trigger_held := false
 var _bloom := 0.0
 var _burst := 0.0                  ## shots in the current burst (see _weapon_tick)
+var spin := 0.0                    ## a spin-up gun's barrels (the Root Rumbler): it fires at 1
+var _spin_sound: Node              # their whir, rising with them
 var _since_shot := 99.0
 var _recoil := 0.0
 var _was_on_floor := true
@@ -262,6 +264,10 @@ func current_spread_deg() -> float:
 	var moving := clampf(Vector2(velocity.x, velocity.z).length() / def.move_speed, 0.0, 1.0)
 	var move := d.spread_move_deg * moving * moving * (0.4 if want_aim else 1.0)
 	var air := 0.0 if is_on_floor() else 1.0
+	if d.spin_up > 0.0:
+		base *= lerpf(1.0, d.spin_spread, clampf(_burst / 30.0, 0.0, 1.0))   # (the longer it keeps going, the tighter)
+	if d.stand_spread_deg > 0.0:
+		base += d.stand_spread_deg * (1.0 - clampf(maxf(_crouch, _prone), 0.0, 1.0))   # (it steadies kneeling, or lying down)
 	return base + move + air + _bloom * bloom_scale - (0.3 * base if _crouch > 0.5 else 0.0)
 
 
@@ -306,7 +312,7 @@ func _ground_move(delta: float) -> void:
 	var w := current_weapon()
 	var speed := def.move_speed
 	# sprint forward or sideways — aiming too (a little slower than flat out)
-	var sprinting := want_sprint and move_input.length() > 0.3 and move_input.y > -0.3 and _prone < 0.5
+	var sprinting := want_sprint and move_input.length() > 0.3 and move_input.y > -0.3 and _prone < 0.5 and spin <= 0.0
 	if sprinting:
 		speed = def.sprint_speed
 	if want_aim:
@@ -318,7 +324,7 @@ func _ground_move(delta: float) -> void:
 		var h := visual.rig.world_head_top if visual and visual.rig else 1.0
 		speed *= lerpf(1.0, 0.7, clampf(wade / (h * 0.5), 0.0, 1.0))
 	if w:
-		speed *= w.data.move_speed_scale
+		speed *= w.data.move_speed_scale * (0.7 if spin > 0.0 else 1.0)   # (a spinning Root Rumbler: slower still)
 	speed *= slow_factor * speed_scale * (FRENZY if frenzy_t > 0.0 else 1.0)
 	var basis := Basis(Vector3.UP, look_yaw)
 	var wish := basis * Vector3(move_input.x, 0, -move_input.y)
@@ -683,6 +689,14 @@ func _weapon_tick(delta: float) -> void:
 			_finish_reload()
 	var can_shoot := state == State.GROUND and not swimming and _equip_timer <= 0.0 and _reload_timer < 0.0 \
 		and not (visual.trick and visual.trick.blocks_fire()) and visual.club_model == null
+	if w.data.spin_up > 0.0:
+		# the barrels wind up while the trigger's held (and run down when it's let go): it fires once they're spinning
+		var winding := want_fire and can_shoot and w.ammo_in_mag > 0
+		spin = move_toward(spin, 1.0 if winding else 0.0, delta / (w.data.spin_up if winding else w.data.spin_up * 0.6))
+		_spin_whir()
+		if winding and spin < 1.0:
+			_trigger_held = want_fire
+			return
 	if want_fire and can_shoot and _fire_cooldown <= 0.0:
 		var semi_ok := w.data.fire_mode == WeaponData.FireMode.AUTO or not _trigger_held
 		if semi_ok:
@@ -736,6 +750,21 @@ func _fire(w: WeaponInstance) -> void:
 		start_reload.call_deferred()
 
 
+## The barrels' whir while they turn, pitched up as they wind up (and down as they run down).
+func _spin_whir() -> void:
+	if spin <= 0.0:
+		if _spin_sound:
+			_spin_sound.queue_free()
+			_spin_sound = null
+		return
+	if _spin_sound == null:
+		_spin_sound = Audio.make_loop(&"rumbler_spin", self, not is_player)
+		if _spin_sound:
+			_spin_sound.play()
+	if _spin_sound:
+		_spin_sound.pitch_scale = 0.45 + 0.75 * spin
+
+
 func start_reload() -> void:
 	var w := current_weapon()
 	if w == null or _reload_timer >= 0.0 or w.ammo_in_mag >= w.magazine_size():
@@ -761,6 +790,8 @@ func switch_to(slot: int) -> void:
 		return
 	current_slot = slot
 	_reload_timer = -1.0
+	spin = 0.0
+	_spin_whir()
 	var w := current_weapon()
 	_equip_timer = w.data.equip_time if w else 0.0
 	visual.set_weapon(w)
@@ -1195,7 +1226,7 @@ func _drop_loot() -> void:
 	var drops: Array = []
 	for i in Inventory.SLOTS:
 		var w: WeaponInstance = inventory.weapons[i]
-		if w:
+		if w and not WeaponDB.is_arsenal(w.data):   # (yours alone: it goes back to the Burrow)
 			drops.append(Pickup.weapon_spec(w))
 	for t in inventory.ammo:
 		if inventory.ammo[t] > 0:

@@ -44,6 +44,23 @@
     "sfx/rocket_fire_1.ogg",
     "sfx/rocket_fire_2.ogg"
   ],
+  "rumbler_fire": [
+    "sfx/rumbler_fire_1.ogg",
+    "sfx/rumbler_fire_2.ogg",
+    "sfx/rumbler_fire_3.ogg",
+    "sfx/rumbler_fire_4.ogg"
+  ],
+  "rumbler_spin": [
+    "sfx/rumbler_spin.ogg"
+  ],
+  "lobber_fire": [
+    "sfx/lobber_fire_1.ogg",
+    "sfx/lobber_fire_2.ogg"
+  ],
+  "big50_fire": [
+    "sfx/big50_fire_1.ogg",
+    "sfx/big50_fire_2.ogg"
+  ],
   "rocket_whoosh_loop": [
     "sfx/rocket_whoosh_loop.ogg"
   ],

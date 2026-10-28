@@ -2,16 +2,18 @@ class_name Boons
 extends RefCounted
 ## Boons: the build you put together as you go. You pick one of three
 ## (DraftPanel) at an acorn shrine (AcornShrine, a few on every map) and, in a
-## run (Run), after every match you get through. Four families: Bramble
+## run (Run), after every match you get through. Five families: Bramble
 ## (thorns and bleeding), Sugar Rush (speed), Mutations (carrots that split,
-## pierce, bounce and pop) and Deep Roots (staying alive). Picking a boon
+## pierce, bounce and pop), Deep Roots (staying alive) and Cunning (outwitting
+## a gang and your Doppelbunny). Picking a boon
 ## again levels it up (to MAX_LEVEL); once you hold boons from two families,
 ## their DUO boon can turn up. Only the player has boons: in a single match
 ## they last the match, in a run the whole run.
 ##
 ## Stat boons are applied to your critter (apply_level); the rest are read
 ## where they act: Projectiles (mutations), Critter (bleeding, Cruel Thorns,
-## Bark Skin, Carrot Frenzy) and MatchManager (hits, hurts and beat-downs).
+## Bark Skin, Carrot Frenzy), MatchManager (hits, hurts and beat-downs; Gang
+## Buster, Pack Sense, Cardboard You) and DoppelRecorder (Habit Breaker).
 
 const MAX_LEVEL := 3
 const BLEED_SECONDS := 4.0
@@ -24,6 +26,7 @@ const FAMILIES := {
 	"sugar": {"name": "Sugar Rush", "color": Color(1.0, 0.56, 0.8), "text": "Faster everything"},
 	"mutation": {"name": "Mutations", "color": Color(0.55, 0.88, 0.32), "text": "Carrots that misbehave"},
 	"roots": {"name": "Deep Roots", "color": Color(0.85, 0.62, 0.34), "text": "Staying on your paws"},
+	"cunning": {"name": "Cunning", "color": Color(0.55, 0.78, 1.0), "text": "Outwitting a gang, and your Doppelbunny"},
 }
 
 ## Each boon: its family, name, what it does ("{v}" is this level's value) and
@@ -45,6 +48,10 @@ const BOONS := {
 	"carrot_juice": {"family": "roots", "name": "Carrot Juice", "text": "Heal {v}% of the damage you deal.", "v": [8, 12, 16]},
 	"acorn_shell": {"family": "roots", "name": "Acorn Shell", "text": "+{v} shield, and you drop in with it every match.", "v": [25, 50, 75]},
 	"hush": {"family": "roots", "name": "Hush", "text": "Bots take {v}% longer to spot you.", "v": [25, 40, 55]},
+	"gang_buster": {"family": "cunning", "name": "Gang Buster", "text": "Beat a gang member down and its mates panic for {v} s: they break and run.", "v": [3, 4, 5]},
+	"pack_sense": {"family": "cunning", "name": "Pack Sense", "text": "When a gang member calls you out, you see the whole gang through walls for {v} s.", "v": [2, 3, 4]},
+	"habit_breaker": {"family": "cunning", "name": "Habit Breaker", "text": "Do what you rarely do and your Doppelbunny can't read you for {v} s.", "v": [1, 2, 3]},
+	"cardboard_you": {"family": "cunning", "name": "Cardboard You", "text": "Eat a clover and you leave a cardboard you behind: for {v} s the bots shoot at it instead.", "v": [3, 4, 5]},
 }
 
 ## Duo boons: one level, offered once you hold a boon from both families.

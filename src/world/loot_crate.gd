@@ -21,6 +21,8 @@ var weights: Array = Rarity.CRATE_WEIGHTS
 var supply := false         ## landed supply drop: hide the chute, extra loot
 var open_time := 0.0        ## seconds to unlock (0 = instant)
 var extra_weapons := 0      ## additional guns beyond the first
+var contents: Array = []    ## exactly these (Pickup specs) instead of a roll: your call-in (Arsenal)
+var player_only := false    ## only you open it (your call-in); bots leave it be
 var display_name := "garden crate"
 var rng := RandomNumberGenerator.new()
 var progress := 0.0         ## 0..1 while being unlocked
@@ -113,7 +115,7 @@ func _physics_process(delta: float) -> void:
 
 
 func open(by: Node) -> void:
-	if opened:
+	if opened or (player_only and not (by is Critter and (by as Critter).is_player)):
 		return
 	opened = true
 	progress = 1.0
@@ -127,6 +129,10 @@ func open(by: Node) -> void:
 		FX.muzzle(global_position + Vector3.UP * 0.6, Vector3.UP, true)   # a puff of golden sparkle
 	var parent := get_parent()
 	var up := global_transform.basis.y
+	if not contents.is_empty():
+		_spill(contents, parent, up)
+		Events.item_picked_up.emit(by, "crate")
+		return
 	var tier := Rarity.roll(weights, rng)
 	var w := WeaponInstance.new(WeaponDB.random_weapon(rng), tier)
 	var specs := [Pickup.weapon_spec(w), Pickup.ammo_spec(w.data.ammo_type, Inventory.AMMO_PICKUP[w.data.ammo_type])]
@@ -141,8 +147,13 @@ func open(by: Node) -> void:
 		var w2 := WeaponInstance.new(WeaponDB.random_weapon(rng), Rarity.roll(weights, rng))
 		specs.append(Pickup.weapon_spec(w2))
 		specs.append(Pickup.ammo_spec(w2.data.ammo_type, Inventory.AMMO_PICKUP[w2.data.ammo_type] * 2))
+	_spill(specs, parent, up)
+	Events.item_picked_up.emit(by, "crate")
+
+
+## What's inside, tossed out in a fan in front of it.
+func _spill(specs: Array, parent: Node, up: Vector3) -> void:
 	for i in specs.size():
 		var a := -0.6 + 1.2 * i / maxf(specs.size() - 1, 1)
 		var out := global_transform.basis * Vector3(sin(a), 0, cos(a))
 		Pickup.spawn(parent, specs[i], global_position + up * 0.8, out * 2.5 + up * 3.5)
-	Events.item_picked_up.emit(by, "crate")

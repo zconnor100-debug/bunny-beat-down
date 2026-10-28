@@ -167,7 +167,7 @@ func test_every_sound_the_game_plays_exists() -> void:
 	for path in _gd_files("res://src"):
 		for m in re.search_all(FileAccess.get_file_as_string(path)):
 			keys[m.get_string(1)] = path.get_file()
-	for w in WeaponDB.all():
+	for w in WeaponDB.all() + WeaponDB.arsenal():
 		keys[String(w.sfx_fire)] = "%s sfx_fire" % w.id
 		if w.cycle_sfx != &"":
 			keys[String(w.cycle_sfx)] = "%s cycle_sfx" % w.id

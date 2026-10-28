@@ -846,6 +846,79 @@ def rocket_fire(c, v):
     return reverb(x, r, decay=1.0, mix_db=-15, tail=0.1)[: n_of(2.4)]
 
 
+# ---- your arsenal (the game's Arsenal: guns only you carry) ----------------------------------------------
+
+@recipe("rumbler_fire", variants=4, loud=-12.0)
+def rumbler_fire(c, v):
+    """Root Rumbler (1,200 a minute, a shot every 50 ms): the LMG's AK core, a touch higher and cut short so
+    a stream of them is a buzz-saw rattle rather than a smear, a tight low thump for weight and a tick of
+    the belt."""
+    r = c.rng
+    rec = c.o(FF, FFP + "AK-47/C_28P.wav")
+    shot = take(rec, [6.03, 3.26, 6.03, 9.175][v], 0.16, hold=0.025, tau=0.03)
+    shot = varispeed(shot, [1.02, 1.05, 0.99, 1.03][v])
+    shot = shelf(shot, 4000, -2.0)
+    thump = agree(shot, B.thump(88, 50, 0.008, 0.02, 0.1), PRE)
+    links = highpass(c.k("rpg-audio", "beltHandle1", speed=1.4), 1800)
+    x = mix(0.2, (shot, 0, 0), (thump, PRE, -7), (links, PRE + 0.02, -27))
+    x = saturate(x, 1.4)
+    x = reverb(x, r, decay=0.18, mix_db=-24, tail=0.01)[: n_of(0.2)]
+    return fit(x, -12.0)
+
+
+@recipe("rumbler_spin", loud=-18.0, src="synth", loop=True)
+def rumbler_spin(c, v):
+    """The Root Rumbler's barrels spinning, looped (the game pitches it up as they wind up, so it rises into
+    a whine): an electric motor's buzzy tone and its harmonics, the barrels whirring past (noise pulsed as
+    each goes by) and a light mechanical rattle."""
+    r = c.rng
+    L, X = 2.0, 0.25
+    tot = L + X
+    n = n_of(tot)
+    t = times(n)
+    f0 = 160.0                                   # (320 whole cycles a loop)
+    whine = sum((0.6 / k) * np.sin(2 * np.pi * f0 * k * t) for k in (1, 2, 3, 5))
+    pulse = 0.55 + 0.45 * np.sin(2 * np.pi * 45.0 * t)   # (90 a loop)
+    whir = bandpass(colored(n, r, -1.0), 1800, 0.8) * pulse
+    rattle = B.crackle(r, tot, 60, 1500, 5000)
+    x = mix(tot, (B.unit(whine), 0, -6), (B.unit(whir), 0, -4), (rattle, 0, -18))
+    return make_loop(x, L, X)
+
+
+@recipe("lobber_fire", variants=2, loud=-11.0)
+def lobber_fire(c, v):
+    """Carrot Lobber: a hollow "thoonk", a launcher's pop and not a gunshot: the shotgun's blast slowed right
+    down and darkened into a tube pop, a round thump, the barrel's "oonk", and the drum clicking round."""
+    r = c.rng
+    rec = c.o(FF, FFP + "Mossberg/N_30P.wav")
+    pop = varispeed(take(rec, [1.7, 4.97][v], 0.5, hold=0.05, tau=0.12), [0.55, 0.52][v])
+    pop = lowpass(pop, 900, 2)
+    thump = B.thump(120, 60, 0.012, 0.05, 0.25)
+    tube = B.thump(260, 180, 0.004, 0.02, 0.08)
+    click = highpass(c.k("rpg-audio", "metalLatch", dur=0.12, speed=1.2), 1200)
+    x = mix(0.9, (pop, 0, 0), (thump, PRE, -4), (tube, PRE + 0.005, -8), (click, PRE + 0.18, -16))
+    x = saturate(x, 1.3)
+    x = reverb(x, r, decay=0.5, mix_db=-18, tail=0.05)[: n_of(0.9)]
+    return fit(x, -11.0)
+
+
+@recipe("big50_fire", variants=2, loud=-5.5)
+def big50_fire(c, v):
+    """Big Root .50: the sniper's .30-06 slowed into a cannon with a deeper copy of itself underneath, a huge
+    sub thump and a dark blast, then slap-backs and a long tail rolling across the map."""
+    r = c.rng
+    near = take(c.o(FF, FFP + "Tikka/W_29P.wav"), 5.675, 1.6, hold=0.1, tau=0.5)
+    shot = varispeed(near, [0.82, 0.78][v])
+    deep = agree(shot, _deep(shot, 0.5, 600, 0.8), 0.0)
+    thump = agree(shot, B.kick(95, 38, 0.012, 0.04, 0.5, drive=2.0), PRE)
+    blast = B.lowbody(r, 0.6, 40, 600, 0.06)
+    x = mix(2.2, (shot, 0, 0), (deep, 0, -5), (thump, PRE, -3), (blast, PRE, -8))
+    x = saturate(x, 1.6)
+    x = _rolling_echoes(x, r, [(0.18, -14, 1500), (0.42, -18, 1000)])
+    x = reverb(x, r, decay=1.2, mix_db=-14, tail=0.2)[: n_of(2.2)]
+    return fit(x, -5.5, margin=CLIP_MARGIN, clip=4.0)
+
+
 @recipe("rocket_whoosh_loop", loud=-16.0, loop=True)
 def rocket_whoosh_loop(c, v):
     r = c.rng

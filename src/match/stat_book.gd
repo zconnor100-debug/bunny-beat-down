@@ -9,7 +9,7 @@ extends RefCounted
 ## numbers for the end screen. Only the player is tracked (MatchManager calls in).
 
 const GUNS := [&"carrot_pistol", &"carrot_smg", &"carrot_shotgun", &"carrot_rifle", &"carrot_lmg", &"carrot_sniper",
-	&"carrot_rocket_launcher", &"carrot_grenade", &"melee"]
+	&"carrot_rocket_launcher", &"root_rumbler", &"carrot_lobber", &"big_root_50", &"carrot_grenade", &"melee"]   # (your arsenal's too)
 const GUN_KEYS := ["kills", "shots", "hits", "heads", "damage", "longest"]
 const CRITTER_KEYS := ["matches", "wins", "best", "kills", "deaths", "heads", "damage", "shots", "hits"]
 

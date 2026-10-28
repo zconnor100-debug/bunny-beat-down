@@ -7,7 +7,9 @@ extends AIBrain
 ## picking by the network's odds so it isn't a machine: push in, hold, back
 ## off or circle round; sprint, crouch, go prone, jump; hold its fire, eat a
 ## clover, throw a grenade, swing the club. It comes in a Mirror Match on the
-## Trail (Run), hunting you, and it never says a word.
+## Trail (Run), hunting you, and it never says a word. Your Habit Breaker boon
+## fools it: just after you do something you rarely do, it can't read you and
+## moves at random, with none of your tricks (DoppelRecorder.fooled).
 
 const MOVE_STICK := [Vector2.ZERO, Vector2(0, 1), Vector2(0, -1), Vector2(-1, 0), Vector2(1, 0)]   ## DoppelSense.MOVES, look-relative
 const SHADER := preload("res://src/fx/mirror.gdshader")
@@ -64,6 +66,11 @@ func _fight(delta: float) -> void:
 
 ## What you would do now, by the network's odds.
 func _decide() -> void:
+	if _fooled():
+		_move = _rng.randi() % DoppelNet.MOVES
+		_flags = {}
+		picked["fooled"] = int(picked.get("fooled", 0)) + 1
+		return
 	var p := net.predict(DoppelSense.features(me, target, match_manager, _clock - _hit_at))
 	var roll := _rng.randf()
 	_move = DoppelNet.MOVES - 1
@@ -78,6 +85,13 @@ func _decide() -> void:
 			_flags[DoppelSense.FLAGS[i]] = true
 	for what in [DoppelSense.MOVES[_move]] + _flags.keys():
 		picked[what] = int(picked.get(what, 0)) + 1
+
+
+## Your Habit Breaker boon has it fooled (DoppelRecorder.fooled).
+func _fooled() -> bool:
+	var you: Critter = target if target and target.is_player else (match_manager.player if match_manager else null)
+	var rec := you.get_node_or_null("DoppelRecorder") as DoppelRecorder if you else null
+	return rec != null and rec.fooled()
 
 
 ## Do it (the stick and buttons, as you would; the aim stays the bot's).

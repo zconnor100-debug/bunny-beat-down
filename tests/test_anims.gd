@@ -131,7 +131,8 @@ func test_every_critter_holds_every_gun_by_its_handles() -> void:
 	# than a wrist can: every species with every gun, aiming level, up and down.
 	# Mitten paws (no finger bones) are given knuckles to close with.
 	const IDS := ["bun", "bandit_bunny", "squirrel", "fox", "raccoon", "frog", "beaver", "hamster"]
-	const GUNS := [&"carrot_pistol", &"carrot_smg", &"carrot_shotgun", &"carrot_rifle", &"carrot_lmg", &"carrot_sniper", &"carrot_rocket_launcher"]
+	const GUNS := [&"carrot_pistol", &"carrot_smg", &"carrot_shotgun", &"carrot_rifle", &"carrot_lmg", &"carrot_sniper", &"carrot_rocket_launcher",
+		&"root_rumbler", &"carrot_lobber", &"big_root_50"]   # (and your arsenal: Arsenal)
 	CritterPoser.measuring = true
 	var crits := []
 	for i in IDS.size():

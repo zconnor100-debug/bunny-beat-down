@@ -18,6 +18,7 @@ const GLIDER_VARIANTS := [
 ]
 const GOLD_SHADER := preload("res://src/fx/golden.gdshader")
 const ENEMY_RIM_SHADER := preload("res://src/fx/enemy_rim.gdshader")
+const XRAY_SHADER := preload("res://src/fx/xray.gdshader")
 const SINGED_SHADER := preload("res://src/fx/singed.gdshader")
 const NAME_TAG_RANGE := 45.0
 static var name_tag_range_scale := 1.0     ## the Hawk Eye perk doubles it
@@ -27,6 +28,8 @@ const NAME_TAG_FULL_SIZE := 10.0
 const NAME_TAG_MIN_SCALE := 0.35
 
 static var _enemy_rim: ShaderMaterial
+static var _xray: ShaderMaterial       # (Pack Sense: reveal)
+var _reveal_until := 0
 
 static var _gold_overlay: ShaderMaterial
 static var _soot: ShaderMaterial
@@ -413,6 +416,32 @@ func _size_name_tag() -> void:
 	name_tag.scale = Vector3.ONE * clampf(pow(NAME_TAG_FULL_SIZE / maxf(d, 0.01), 0.6), NAME_TAG_MIN_SCALE, 1.0)
 
 
+## Seen through walls for `seconds` (your Pack Sense boon): an x-ray glow
+## over the body, then back to how it looked.
+func reveal(seconds: float) -> void:
+	if _xray == null:
+		_xray = ShaderMaterial.new()
+		_xray.shader = XRAY_SHADER
+	for m in meshes:
+		if m.material_overlay != _xray:
+			m.set_meta(&"overlay_before", m.material_overlay)
+			m.material_overlay = _xray
+	_reveal_until = maxi(_reveal_until, Time.get_ticks_msec() + int(seconds * 1000.0))
+	get_tree().create_timer(seconds, false).timeout.connect(_end_reveal)
+
+
+func revealed() -> bool:
+	return meshes.any(func(m): return m.material_overlay == _xray) if _xray else false
+
+
+func _end_reveal() -> void:
+	if Time.get_ticks_msec() < _reveal_until - 30:
+		return   # (revealed again since: that one ends it)
+	for m in meshes:
+		if is_instance_valid(m) and m.material_overlay == _xray:
+			m.material_overlay = m.get_meta(&"overlay_before", null)
+
+
 func clear_enemy_highlight() -> void:
 	for m in meshes:
 		m.material_overlay = null
@@ -592,7 +621,8 @@ func _fallback_gun(data: WeaponData) -> Node3D:
 	var body := MeshInstance3D.new()
 	var box := BoxMesh.new()
 	var length: float = {&"carrot_pistol": 0.26, &"carrot_smg": 0.45, &"carrot_shotgun": 0.7, &"carrot_rifle": 0.8,
-		&"carrot_lmg": 0.85, &"carrot_sniper": 1.15, &"carrot_rocket_launcher": 0.95}.get(data.id, 0.5)
+		&"carrot_lmg": 0.85, &"carrot_sniper": 1.15, &"carrot_rocket_launcher": 0.95, &"root_rumbler": 0.9, &"carrot_lobber": 0.7,
+		&"big_root_50": 1.3}.get(data.id, 0.5)
 	box.size = Vector3(0.05, 0.08, length)
 	var mat := StandardMaterial3D.new()
 	mat.albedo_color = data.icon_color

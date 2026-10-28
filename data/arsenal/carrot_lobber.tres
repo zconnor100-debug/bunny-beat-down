@@ -1,0 +1,46 @@
+[gd_resource type="Resource" script_class="WeaponData" format=3]
+
+[ext_resource type="Script" path="res://src/weapons/weapon_data.gd" id="1_wd"]
+
+[resource]
+script = ExtResource("1_wd")
+id = &"carrot_lobber"
+display_name = "Carrot Lobber"
+blurb = "A six-carrot drum of little bombs, lobbed over whatever they're hiding behind. One bounce, then coleslaw."
+model_path = "res://assets/weapons/carrot_lobber.glb"
+icon_color = Color(0.9, 0.36, 0.1, 1)
+fire_mode = 0
+ammo_type = 3
+magazine = 6
+rounds_per_minute = 100.0
+pellets = 1
+damage = 70.0
+headshot_multiplier = 1.0
+spread_hip_deg = 1.2
+spread_aim_deg = 0.4
+spread_move_deg = 1.5
+projectile = 3
+projectile_speed = 26.0
+projectile_gravity = 1.0
+falloff_start = 100.0
+falloff_end = 200.0
+min_damage_scale = 1.0
+impulse = 36.0
+dismember_power = 0.7
+splash_radius = 4.5
+splash_damage = 70.0
+reload_time = 3.4
+equip_time = 0.6
+two_handed = true
+hold_distance = 0.24
+aim_fov_scale = 0.85
+recoil_pitch_deg = 4.0
+recoil_yaw_deg = 0.6
+camera_shake = 0.12
+move_speed_scale = 0.9
+sfx_fire = &"lobber_fire"
+fuse = 1.5
+ai_preferred_range = 18.0
+ai_max_range = 30.0
+ai_min_range = 7.0
+loot_weight = 0.0

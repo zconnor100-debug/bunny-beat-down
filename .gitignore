@@ -26,6 +26,9 @@ assets/weapons/carrot_*_*.png
 assets/weapons/carrot_*_*.jpg
 assets/weapons/carrot_*_*.png.import
 assets/weapons/carrot_*_*.jpg.import
+# (your arsenal's: the same textures, extracted from the .glb on import)
+assets/weapons/root_rumbler_root_rumbler_*
+assets/weapons/big_root_50_big_root_50_*
 assets/props/*_*_*.png
 assets/props/*_*_*.jpg
 assets/props/*_*_*.png.import

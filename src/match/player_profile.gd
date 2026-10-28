@@ -84,7 +84,8 @@ static func fighting_style() -> String:
 	return ""
 
 
-## The gun you've beaten the most critters down with (at least twice), or &"".
+## The gun you've beaten the most critters down with (at least twice; not
+## your arsenal's, yours alone), or &"".
 static func favourite_gun() -> StringName:
 	var best := &""
 	var best_n := 1
@@ -92,7 +93,7 @@ static func favourite_gun() -> StringName:
 		return best
 	for w in _book().get_section_keys("kills"):
 		var n := int(_book().get_value("kills", w, 0))
-		if n > best_n and w != "melee" and WeaponDB.get_weapon(StringName(w)) != null:
+		if n > best_n and w != "melee" and WeaponDB.get_weapon(StringName(w)) != null and not WeaponDB.is_arsenal(WeaponDB.get_weapon(StringName(w))):
 			best = StringName(w)
 			best_n = n
 	return best

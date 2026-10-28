@@ -113,6 +113,11 @@ static func fire(shooter: Node, weapon: WeaponInstance, origin: Vector3, dir: Ve
 	var mut := mutations_for(shooter, weapon)
 	for i in data.pellets:
 		var d := _spread_dir(dir, spread_deg) if data.pellets == 1 else _pattern_dir(dir, spread_deg, i, data.pellets)
+		if data.projectile == WeaponData.ProjectileKind.LOB:
+			var g := Grenade.spawn(instance, shooter, origin, d * data.projectile_speed + carried, exclude, weapon)
+			if KillCam.recording and not KillCam.instance.playing:
+				KillCam.instance.note_node(g, "")
+			continue
 		if data.projectile == WeaponData.ProjectileKind.ROCKET:
 			var r := Rocket.new()
 			r.setup(shooter, weapon, d, exclude)
@@ -136,6 +141,7 @@ static func fire(shooter: Node, weapon: WeaponInstance, origin: Vector3, dir: Ve
 			s.pierce_left = int(mut.get("pierce", 0))
 			s.bounce_left = int(mut.get("bounce", 0))
 			s.pops = mut.has("pop") and _pops_now(shooter, int(mut["pop"]))
+		s.pierce_left = maxi(s.pierce_left, data.pierce)   # (the Big Root .50: through critters as it is)
 		instance._add(s)
 
 
@@ -255,9 +261,13 @@ func _physics_process(delta: float) -> void:
 				_bounce(s, hit)
 				i += 1
 				continue
-			if KillCam.recording:
+			var through := _through_cover(s, hit, space)
+			if KillCam.recording and not through:
 				KillCam.instance.end_shot(s)
-			_on_hit(s, hit)
+			_on_hit(s, hit, not through)
+			if through:
+				i += 1
+				continue
 			_shots.remove_at(i)
 			continue
 		s.travelled += s.pos.distance_to(next)
@@ -352,7 +362,7 @@ static func _tracer_strip() -> ArrayMesh:
 	return m
 
 
-func _on_hit(s: Shot, hit: Dictionary) -> void:
+func _on_hit(s: Shot, hit: Dictionary, stick := true) -> void:
 	var col: Object = hit.collider
 	var dir := s.vel.normalized()
 	var dmg := s.data.damage_at(s.travelled) * s.damage_scale
@@ -378,7 +388,7 @@ func _on_hit(s: Shot, hit: Dictionary) -> void:
 	var surface: StringName = (col as Node).get_meta(&"surface", &"dirt") if col is Node else &"dirt"
 	FX.impact(hit.position, hit.normal, surface)
 	Audio.play_at(&"carrot_impact_wood" if surface == &"wood" else &"carrot_impact_dirt", hit.position, -8.0)
-	if s.data.projectile == WeaponData.ProjectileKind.BOLT and col is Node3D:
+	if s.data.projectile == WeaponData.ProjectileKind.BOLT and col is Node3D and stick:
 		_stick(hit.position, dir, col as Node3D, 0.35)
 
 
@@ -386,7 +396,7 @@ func _on_hit(s: Shot, hit: Dictionary) -> void:
 ## through it (weaker), Splitting Carrots burst into shards that fly on.
 ## True if the carrot went on through (so it isn't left stuck in them).
 func _mutate_on_critter(s: Shot, at: Vector3, critter: Node) -> bool:
-	if s.mut.is_empty() or not critter is Critter:
+	if (s.mut.is_empty() and s.pierce_left <= 0) or not critter is Critter:
 		return false
 	var rids: Array[RID] = (critter as Critter).visual.hitbox_rids
 	var rush := 1.0 if not s.mut.get("rush", false) else RUSH
@@ -427,6 +437,35 @@ func _follow(s: Shot, more_exclude: Array[RID]) -> Shot:
 	ex.append_array(more_exclude)
 	n.exclude = ex
 	return n
+
+
+## A carrot that goes through cover (WeaponData.pierce_cover: the Big Root
+## .50) carries on out of the far side of anything up to that thick (a
+## fence, a crate, a cardboard wall), a little weaker; not a critter (that's
+## pierce) and not the ground. True if it went through: `s` flies on from
+## the far side.
+func _through_cover(s: Shot, hit: Dictionary, space: PhysicsDirectSpaceState3D) -> bool:
+	var thick := s.data.pierce_cover
+	var col := hit.collider as CollisionObject3D
+	if thick <= 0.0 or col == null or col is Area3D or col.has_meta(&"critter"):
+		return false
+	var owner_id := col.shape_find_owner(int(hit.shape))
+	var shape_node := col.shape_owner_get_owner(owner_id) as CollisionShape3D if owner_id >= 0 else null
+	if shape_node and shape_node.shape is HeightMapShape3D:
+		return false   # (the ground)
+	var dir := s.vel.normalized()
+	# from beyond it, back the way the carrot came: where it comes out
+	var q := PhysicsRayQueryParameters3D.create(hit.position + dir * (thick + 0.05), hit.position + dir * 0.01, Layers.SHOT_MASK)
+	var out := space.intersect_ray(q)
+	if out.is_empty() or out.collider != col:
+		return false
+	s.pos = (out.position as Vector3) + dir * 0.03
+	s.damage_scale *= PIERCE_KEEP
+	var ex: Array[RID] = s.exclude.duplicate()
+	ex.append(col.get_rid())
+	s.exclude = ex
+	s.mutated = true
+	return true
 
 
 ## Bouncy Carrots: off the wall or the floor, a little slower (faster with

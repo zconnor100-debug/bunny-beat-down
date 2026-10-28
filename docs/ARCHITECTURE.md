@@ -302,6 +302,28 @@ The third map follows the cage's pattern (`ToyBox extends Island`,
   otherwise unchanged; `MatchManager._spawn_doppel` dresses your critter
   (`Outfits.dress_player`) under `mirror.gdshader`, and the doppel is kept
   out of `RivalBook`, gangs and `_say`.
+- **Your arsenal** (`Arsenal`, docs/plans/player-arsenal.md). Its guns are
+  `WeaponData` in `data/arsenal`, which `WeaponDB.all()` (loot) never lists
+  and `WeaponDB.arsenal()` / `get_weapon` do. Bots are kept off them in one
+  place, `Pickup.anyone_may_take` (`AIBrain._find_loot` and
+  `Pickup.try_collect` ask it), plus `LootCrate.player_only`; a corpse doesn't
+  drop them, a rogue can't steal one, a keepsake can't be one, and
+  `PlayerProfile.favourite_gun` (your Doppelbunny's loadout) skips them. Their
+  mechanics are fields any gun could use: `spin_up` / `spin_spread`
+  (`Critter.spin`, gating the trigger, slowing you, a `rumbler_spin` loop
+  pitched by it), `pierce` and `pierce_cover` (`Projectiles._through_cover`
+  finds the far side of a hit with a ray back from beyond it, never through
+  the ground's `HeightMapShape3D`), `stand_spread_deg`, and
+  `ProjectileKind.LOB` + `fuse` (`Grenade` with the gun's blast). Unlocks
+  are kept with the profile; `Run.finish_match` offers one after a Grudge or
+  Mirror Match goal. `MatchManager.call_in` drops a fast `SupplyDrop` whose
+  `LootCrate.contents` are every gun won (`"one_of"`: take one and the rest
+  go back) and their carrots (`"yours"`). The Cunning boons act where they
+  apply: Gang Buster (`AIBrain.panic`) in `_gang_member_down`, Pack Sense
+  (`CritterVisual.reveal`, `xray.gdshader`, depth test off) in
+  `gang_spotted`, Cardboard You (`Decoy`, which `AIBrain._fight` aims at
+  while it stands), Habit Breaker (`DoppelRecorder.fooled` when a move is
+  under 15% of your kept moments; `DoppelBrain` then moves at random).
 - **`WarrenSim`** plays the rogues' off-screen matches: one per three hours
   of real time since its clock last moved (kept in its own `ConfigFile`,
   capped at twelve), caught up when the main menu opens. They're

@@ -43,6 +43,10 @@ ENAMEL = {
     "carrot_rifle": ("#3f7f78", "teal"),
     "carrot_sniper": ("#7b4a8a", "plum"),
     "carrot_rocket_launcher": ("#5d7a46", "sage"),
+    # your arsenal (arsenal.py)
+    "root_rumbler": ("#a9542f", "terracotta"),
+    "carrot_lobber": ("#8c3b52", "beetroot"),
+    "big_root_50": ("#3e5f8a", "delphinium"),
 }
 
 
