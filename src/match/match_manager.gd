@@ -192,6 +192,11 @@ func spawn_player(def: CritterDef, skin_id: String) -> Critter:
 	var pc := PlayerController.new()
 	pc.name = "PlayerController"
 	player.add_child(pc)
+	# the Doppelbunny watches how you fight (DoppelData learns from it after the match)
+	var rec := DoppelRecorder.new()
+	rec.name = "DoppelRecorder"
+	rec.match_manager = self
+	player.add_child(rec)
 	# _spawn_critter already registered it; keep the player first in the list
 	# (registering it twice put it on the balloon twice: a second drop at the end of the route)
 	critters.erase(player)

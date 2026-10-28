@@ -536,7 +536,7 @@ The full write-up is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
   the same views: 31% fewer triangles on the island, 31% on the Hamster
   Cage, 79% on Toy Box Bash, and a third to two thirds fewer shadow
   triangles.
-- **Tests that play the game.** A headless suite of 172 tests covers:
+- **Tests that play the game.** A headless suite of 177 tests covers:
   - the IK maths, hitboxes, ragdolls and dismemberment, and how critters
     carry themselves (never frozen, guns carried low but shooting from the
     aim, held clear of the head, both paws on the handles of every gun, feet
@@ -561,7 +561,11 @@ The full write-up is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
     scars and your stolen gun, gangs (calling you out, pinning and
     flanking, rushing you while you reload or heal, teaming up mid-match and
     splitting when the job's done, the betrayal a sneak makes and a noble
-    never does, cutting and running, never again), and the Trail and draft
+    never does, cutting and running, never again), the Doppelbunny's
+    learning (decisions read off the controls, watching you fight, a
+    network that learns a made-up player's style and is measured on moments
+    it never saw, two styles making two players, the newest moments kept),
+    and the Trail and draft
     screens; milestones
     (reached once, paid once, each unlock acting only for you);
   - the cast (49 characters, each fighting its own way and wearing its own

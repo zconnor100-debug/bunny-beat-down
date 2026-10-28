@@ -58,6 +58,38 @@ out.
    - It arrives after ~3 matches of you, once its held-out score beats a
      no-skill baseline.
 
+## Status (2026-10-28)
+
+Built: the recorder, the labeller, the network, the trainer, storage, and
+`tests/test_doppel.gd`. From now on every match records your fights
+(locally) and trains after the match.
+
+On a scripted player ("backs off when hurt; far off, holds and goes prone;
+otherwise charges, sprinting"), trained on 2,700 moments in 3.3 s, it
+matches that player's move 92% of the time on held-back moments. Always
+guessing the player's most common move gets 41%. It also matches the
+player's other actions, like sprinting and going prone, 98% of the time.
+
+Next: the rogue itself (`doppel_brain.gd`, its look, its gallery card).
+That waits on the two questions under "Your call".
+
+## Speed check: done (2026-10-28)
+
+Plain GDScript, one thread, with every weight in one flat
+`PackedFloat32Array` written in place, SGD with softmax cross-entropy, on
+the Ryzen 9 9900X3D. "Pass" means one pass over 15k samples.
+
+| network | weights | samples/s | one pass over 15k samples |
+|---|---|---|---|
+| 30 → 32 → 16 | 1,520 | 12,768 | 1.2 s |
+| 30 → 64 → 16 | 3,024 | 6,460 | 2.3 s |
+| 30 → 64 → 64 → 16 | 7,184 | 3,094 | 4.8 s |
+
+**Decision:** the planned network trains fast enough in plain GDScript on a
+background thread after a match, a few passes in 10–20 s. That holds even on
+a PC 2–3× slower. No compute shaders, no C++ and no nearest-match fallback
+needed.
+
 ## First step: a speed check
 
 GDScript is slow at maths. Before building, I'll time training a network

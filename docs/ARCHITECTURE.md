@@ -281,6 +281,19 @@ The third map follows the cage's pattern (`ToyBox extends Island`,
   `RivalBook`). A sighting goes through `gang_spotted` to the mates'
   `share_sighting`; `AIBrain._rushing` reads the enemy's reload and
   `Events.clover_eaten`.
+- **The Doppelbunny's learning** (in progress: docs/plans/doppelbunny.md).
+  `DoppelRecorder`, a child of the player's critter in a match, notes every
+  0.2 s of a fight the situation (`DoppelSense.features`: 24 numbers, all
+  relative to the critter) and the decision taken through it
+  (`DoppelSense.label`: the move against the nearest enemy, read off the
+  stick, and eight flags such as sprint, prone or grenade), not the raw
+  controls. `DoppelData` keeps the newest 30,000 moments in `user://` and,
+  after a match, trains a `DoppelNet` (24 → 64 → 64 → 13, ReLU, softmax for
+  the move, a sigmoid per flag, SGD) on a `WorkerThreadPool` task. A tenth
+  is held back to measure likeness honestly against always guessing the
+  most common move. Plain GDScript, every weight in one flat
+  `PackedFloat32Array` written in place, trains about 3,000 moments a
+  second on the dev machine.
 - **`WarrenSim`** plays the rogues' off-screen matches: one per three hours
   of real time since its clock last moved (kept in its own `ConfigFile`,
   capped at twelve), caught up when the main menu opens. They're
