@@ -26,7 +26,7 @@ back: a rocket, a golden shotgun and the toy train, the ragdolls in slow
 motion.
 
 ▶ **[Your Arsenal](docs/trailer_arsenal.mp4)**, 26 seconds in 1080p (with
-sound): a gang spots Bun and charges, shouting in their own voices; Bun
+sound; also [cut for phones](docs/trailer_arsenal_phone.mp4)): a gang spots Bun and charges, shouting in their own voices; Bun
 calls in its arsenal, the Root Rumbler winds up and mows them down, the
 Carrot Lobber lobs a carrot bomb into a huddle, and the Big Root .50 goes
 through a gang member into Bun's own Doppelbunny.
@@ -392,7 +392,9 @@ and the final shot replayed from three angles. There's a
   reticle, then Ruby tracers), 10/25/50 wins (a Gold muzzle flash),
   25/50/100 matches (Jade tracers), 5/10/25 runs, 5/10/25 Nemeses beaten,
   25/50/100 gang members, and your Doppelbunny beaten in 3/5/10 Mirror
-  Matches (the Looking Glass skin). None of those looks can be bought.
+  Matches (the Looking Glass skin at 5; at 10 the Mended Mirror, a coat for
+  your critter: its cracked mirror, the cracks mended in gold). None of
+  those looks can be bought.
 - **The Workshop (in the Burrow): gun upgrades and looks, bought with
   acorns.** Attachments go on every gun you pick up: a Red Dot Sight on the
   gun's own sight line (in first person you aim through its tube at the
@@ -411,8 +413,9 @@ and the final shot replayed from three angles. There's a
   something for your face (heart, 3D, pixel and star glasses), a necklace,
   and something on your back (butterfly, fairy or dark wings, a jetpack),
   fitted to whichever critter you play like the rogues' outfits and shown
-  on you beside the list as you browse, bought or not. A hat takes the
-  acorn helmet's place. `tests/capture_workshop.gd` renders them
+  on you beside the list as you browse, bought or not (your gun in the skin
+  you're browsing, too), and a coat over all of it (the Mended Mirror, for
+  beating your Doppelbunny ten times). A hat takes the acorn helmet's place. `tests/capture_workshop.gd` renders them
   all.
 - **Rewind.** The game records the last ten seconds of the match, and you
   get three rewinds a match (on a run, three for the whole run): press **T** (or pick *Rewind* in the pause
@@ -795,7 +798,9 @@ that fits on the screen (a temporary `override.cfg` with the viewport at
 `tools/make_hunt_trailer.py`. The hunters' lines are spoken for the trailer
 in each rogue's own voice (`tools/voices/say.py`, Maya1, like the game's)
 and laid in where the stage says they speak; the Arsenal's gang shout their
-in-game lines, heard from the camera. Their music: "Bushwick Tarantella" and
+in-game lines, heard from the camera. Recorded tall, the Arsenal's stage
+frames every shot for a phone (the pack closer together, the cameras
+further back and in behind Bun, one speech bubble at a time). Their music: "Bushwick Tarantella" and
 "Voxel Revolution", by Kevin MacLeod.
 
 The other trailers are directed: the shots and the two critters' inputs are scripted

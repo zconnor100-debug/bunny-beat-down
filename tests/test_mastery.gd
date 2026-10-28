@@ -167,6 +167,8 @@ func test_every_earned_only_look_is_a_milestones_reward_and_exists() -> void:
 					check(o[0] == "none" or FX.BEAT_DOWN_BURSTS.has(o[0]), "the %s burst is drawn" % o[0])
 				"reticle_color", "tracer", "flash":
 					check(Workshop.COLORS.has(o[0]) or o[0] == "rainbow", "the %s colour %s exists" % [cat, o[0]])
+				"coat":
+					check(o[0] == "natural" or Workshop.coat_material(o[0]) != null, "the %s coat is drawn" % o[0])
 	for m in Mastery.all():
 		if m.reward.has("look"):
 			check(Workshop.earned_only(m.reward.look) or Workshop.cost(m.reward.look) > 0, "%s gives a real look (%s)" % [m.id, m.reward.look])

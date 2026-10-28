@@ -101,6 +101,15 @@ func _run() -> void:
 			break
 	await _wait(0.4)
 	await _snap("87_burrow_workshop")
+	# and in the Mended Mirror coat (Mirror, Mirror's top tier), its row in focus
+	var owned: Array = (PlayerProfile._book().get_value("workshop", "owned", []) as Array).duplicate()
+	owned.append("coat:mended_mirror")
+	PlayerProfile._book().set_value("workshop", "owned", owned)
+	Workshop.set_look(Workshop.COAT, "mended_mirror")
+	panel._browse[Workshop.COAT] = 1
+	panel._rebuild(Workshop.COAT + ":act")
+	await _wait(0.6)
+	await _snap("88_burrow_coat")
 	get_tree().quit()
 
 

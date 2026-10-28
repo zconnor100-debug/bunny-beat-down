@@ -105,21 +105,24 @@ func show_rogue(rogue: String) -> void:
 		c.visual.add_scars(scars))   # (as it'll come at you)
 
 
-## You: your critter and skin (Settings), wearing `wear` (Outfits pieces),
-## holding `gun` in your Workshop kit (Workshop.kit: its skin, sight and
-## laser), or in `kit` instead (the Burrow tries a skin on).
-func show_player(wear: Array, gun := &"carrot_rifle", kit := {}) -> void:
+## You: your critter and skin (Settings), wearing `wear` (Outfits pieces)
+## and your coat (or `coat`), holding `gun` in your Workshop kit
+## (Workshop.kit: its skin, sight and laser), or in `kit` instead (the Burrow
+## tries a skin on).
+func show_player(wear: Array, gun := &"carrot_rifle", kit := {}, coat := "") -> void:
 	var id := String(Settings.get_value(&"player_character"))
 	if kit.is_empty():
 		kit = Workshop.kit()
-	_show("you:%s:%s:%s:%s:%s" % [id, Settings.get_value(&"player_skin"), ",".join(wear), gun, kit], id, func(c: Critter):
+	if coat == "":
+		coat = Workshop.look(Workshop.COAT)
+	_show("you:%s:%s:%s:%s:%s:%s" % [id, Settings.get_value(&"player_skin"), ",".join(wear), gun, kit, coat], id, func(c: Critter):
 		c.visual.apply_skin(String(Settings.get_value(&"player_skin")))
 		c.visual.kit = kit   # (before the gun goes in its paws: CritterVisual.set_weapon dresses it)
 		var w := WeaponDB.get_weapon(gun)
 		if w == null:
 			w = WeaponDB.get_weapon(&"carrot_rifle")
 		c.give_weapon(WeaponInstance.new(w, Rarity.Tier.PRIZE))
-		Outfits.dress_player(c, wear))
+		Outfits.dress_player(c, wear, coat))
 
 
 ## Your Doppelbunny: you (as show_player), in a cracked mirror (DoppelBrain.look).

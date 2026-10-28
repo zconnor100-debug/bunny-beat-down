@@ -444,7 +444,8 @@ func _end_reveal() -> void:
 
 func clear_enemy_highlight() -> void:
 	for m in meshes:
-		m.material_overlay = null
+		if m.material_overlay and (m.material_overlay == _enemy_rim or m.material_overlay == _xray):
+			m.material_overlay = null   # (a coat or a cracked mirror stays on)
 	if name_tag:
 		name_tag.queue_free()
 		name_tag = null

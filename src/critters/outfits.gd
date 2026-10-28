@@ -219,9 +219,9 @@ static func look_of(rogue: String) -> Dictionary:
 
 
 ## Dress your own critter: your skin (Settings) and what you wear from the
-## Workshop's wardrobe (or `wear` instead, to try things on). A hat takes the
-## place of the acorn helmet.
-static func dress_player(c: Critter, wear: Variant = null) -> void:
+## Workshop's wardrobe (or `wear` instead, to try things on), and your coat
+## over it all (or `coat`). A hat takes the place of the acorn helmet.
+static func dress_player(c: Critter, wear: Variant = null, coat: Variant = null) -> void:
 	if c.visual == null or c.visual.rig == null:
 		return
 	var pieces: Array = wear if wear is Array else Workshop.outfit()
@@ -229,6 +229,19 @@ static func dress_player(c: Critter, wear: Variant = null) -> void:
 		wear_piece(c.visual, id)
 	if c.visual.helmet and is_instance_valid(c.visual.helmet):
 		c.visual.helmet.visible = not pieces.any(func(id): return PIECES.get(id, {}).get("slot", "") == "hat")
+	wear_coat(c.visual, String(coat) if coat is String else Workshop.look(Workshop.COAT))
+
+
+## A coat (Workshop.coat_material) over the body, the helmet and every piece
+## worn, not the gun in the paws (that wears its skin).
+static func wear_coat(v: CritterVisual, coat: String) -> void:
+	var m := Workshop.coat_material(coat)
+	var on: Array = v.meshes.duplicate()
+	for n in [v.helmet] + v.outfit:
+		if n and is_instance_valid(n):
+			on.append_array(ModelUtil.find_all(n, "MeshInstance3D"))
+	for mi in on:
+		(mi as MeshInstance3D).material_overlay = m
 
 
 ## Take off every piece (to dress again).

@@ -6,7 +6,8 @@ extends RefCounted
 ## reticle and its colour, the guns' skin, the muzzle flash and smoke, your
 ## tracers, the burst when you beat a critter down, and your wardrobe: a hat,
 ## something for your face, your neck and your back (Outfits pieces no rogue
-## wears; a cost of -1 means it can only be earned, as a Milestone's reward).
+## wears; a cost of -1 means it can only be earned, as a Milestone's reward),
+## and a coat over your fur and all of it (coat_material).
 ## Kept in the PlayerProfile with the rest of the Burrow.
 
 const ATTACHMENTS := {
@@ -51,10 +52,13 @@ const LOOKS := {
 	"wear_back": {"label": "Back", "options": [["none", "None", 0], ["butterfly_wings", "Butterfly wings", 120],
 		["jetpack", "Jetpack", 150], ["fairy_wings", "Fairy wings", -1], ["dark_wings", "Dark wings", -1],
 		["windup_key", "Wind-up key", -1]]},
+	"coat": {"label": "Coat", "options": [["natural", "Your own fur", 0], ["mended_mirror", "Mended mirror", -1]]},
 }
 
 ## Your wardrobe's slots, in the order they're shown.
 const WARDROBE := ["wear_hat", "wear_face", "wear_neck", "wear_back"]
+## Shown with the wardrobe (on you, in the portrait), after its slots.
+const COAT := "coat"
 
 ## The palette the looks pick from.
 const COLORS := {
@@ -63,6 +67,9 @@ const COLORS := {
 	"blueberry": Color(0.35, 0.5, 1.0), "plum": Color(0.75, 0.4, 1.0), "bubblegum": Color(1.0, 0.5, 0.8),
 	"ruby": Color(0.95, 0.1, 0.25), "jade": Color(0.2, 0.88, 0.6),
 }
+
+
+static var _mended: ShaderMaterial
 
 
 static func _book() -> ConfigFile:
@@ -167,6 +174,24 @@ static func outfit() -> Array:
 ## and your skin (or `skin` instead, to try one on).
 static func kit(skin := "") -> Dictionary:
 	return {"sight": fitted("red_dot"), "laser": fitted("laser"), "skin": skin if skin != "" else look("skin")}
+
+
+## A coat's overlay, over your fur and all you wear (Outfits.dress_player),
+## or null for your own fur. The Mended Mirror: your Doppelbunny's cracked
+## mirror (DoppelBrain.look), its cracks mended in gold, with a softer rim and
+## no flashes of a bad reflection (so the two of you are told apart).
+static func coat_material(id: String) -> ShaderMaterial:
+	if id != "mended_mirror":
+		return null
+	if _mended == null:
+		_mended = ShaderMaterial.new()
+		_mended.shader = DoppelBrain.SHADER
+		_mended.set_shader_parameter(&"rim_color", Color(1.0, 0.78, 0.42))
+		_mended.set_shader_parameter(&"crack_color", Color(1.0, 0.76, 0.22))
+		_mended.set_shader_parameter(&"crack_width", 0.07)
+		_mended.set_shader_parameter(&"rim_strength", 0.45)
+		_mended.set_shader_parameter(&"flashes", 0.0)
+	return _mended
 
 
 ## Earned only (a Milestone's reward), not for sale.

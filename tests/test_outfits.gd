@@ -153,6 +153,66 @@ func test_you_wear_what_you_pick_in_the_workshop() -> void:
 	check(Workshop.owns("wear_back:fairy_wings"), "three runs finished: the fairy wings are yours")
 
 
+## Mirror, Mirror's top tier: the Mended Mirror coat, your Doppelbunny's
+## cracked mirror mended in gold, over your fur and all you wear (not your
+## gun); the Doppelbunny still wears its own silver one.
+func test_the_mended_mirror_coat() -> void:
+	PlayerProfile.reset_for_tests()
+	DoppelData.reset_for_tests()
+	check(Workshop.look(Workshop.COAT) == "natural" and Workshop.coat_material("natural") == null, "your own fur to start")
+	check(not Workshop.buy("coat:mended_mirror") and Workshop.earned_only("coat:mended_mirror"), "the coat isn't for sale")
+	var tiers := Mastery.tiers("mirror_mirror")
+	check(tiers[1].reward.get("look", "") == "skin:looking_glass" and tiers[2].reward.get("look", "") == "coat:mended_mirror",
+		"Mirror, Mirror: the Looking Glass skin at 5, the coat at 10")
+	for i in 9:
+		DoppelData.note_mirror("beaten")
+	Mastery.check()
+	check(Workshop.owns("skin:looking_glass") and not Workshop.owns("coat:mended_mirror"), "nine Mirror Matches won: the skin, not yet the coat")
+	DoppelData.note_mirror("beaten")
+	Mastery.check()
+	check(Workshop.owns("coat:mended_mirror") and Workshop.set_look(Workshop.COAT, "mended_mirror"), "ten: the coat is yours, and worn")
+	DoppelData.reset_for_tests()
+	var coat := Workshop.coat_material("mended_mirror")
+	check(coat.shader == DoppelBrain.SHADER and float(coat.get_shader_parameter(&"flashes")) == 0.0, "the Doppelbunny's mirror, without its bad flashes")
+	var gold: Color = coat.get_shader_parameter(&"crack_color")
+	check(gold.r > gold.b + 0.5, "its cracks mended in gold (%s)" % gold)
+	Burrow.add_acorns(500)
+	Workshop.buy("wear_hat:fedora")
+	Workshop.set_look("wear_hat", "fedora")
+	var c := spawn_critter("res://data/critters/bun.tres", Vector3(0, 0.1, 0))
+	c.is_player = true
+	await wait_physics(2)
+	c.visual.kit = Workshop.kit()
+	c.give_weapon(WeaponInstance.new(WeaponDB.get_weapon(&"carrot_rifle"), Rarity.Tier.GARDEN))
+	Outfits.dress_player(c)
+	check(c.visual.meshes.all(func(m): return m.material_overlay == coat), "over your fur")
+	var hat_meshes := ModelUtil.find_all(c.visual.outfit[0], "MeshInstance3D")
+	check(not hat_meshes.is_empty() and hat_meshes.all(func(m): return m.material_overlay == coat), "and the fedora")
+	check(ModelUtil.find_all(c.visual.weapon_model, "GeometryInstance3D").all(func(g): return g.material_overlay != coat), "not the gun")
+	c.visual.go_ragdoll(Vector3.ZERO)
+	check(c.visual.meshes.all(func(m): return m.material_overlay == coat), "still on when you're beaten down")
+	# your Doppelbunny, dressed as you, wears its silver mirror over the coat
+	var d := spawn_critter("res://data/critters/bun.tres", Vector3(4, 0.1, 0))
+	await wait_physics(2)
+	Outfits.dress_player(d)
+	d.visual.set_enemy_highlight("Doppel-Bun", true)
+	DoppelBrain.look(d)
+	check(d.visual.meshes.all(func(m): return m.material_overlay is ShaderMaterial and m.material_overlay != coat \
+		and (m.material_overlay as ShaderMaterial).shader == DoppelBrain.SHADER), "the Doppelbunny wears its own mirror, not your coat")
+	d.visual.go_ragdoll(Vector3.ZERO)
+	check(d.visual.meshes.all(func(m): return m.material_overlay is ShaderMaterial), "and keeps it, beaten down (only the enemy rim goes)")
+	# the Burrow shows it with your wardrobe, on you
+	var panel := BurrowPanel.new()
+	add_child(panel)
+	await wait_frames(4)
+	var labels: Array = panel._list.get_children().map(func(n): return n.get_child(0).text if n is HBoxContainer else (n.text if n is Label else ""))
+	var wardrobe_at := labels.find("Workshop: wardrobe (yours alone: no rogue wears these)")
+	var coat_at := labels.find("Coat: Mended mirror")
+	check(wardrobe_at >= 0 and coat_at > wardrobe_at, "the coat is listed with your wardrobe (%d, %d)" % [wardrobe_at, coat_at])
+	var you := panel._portrait.shown_critter()
+	check(you != null and you.visual.meshes.all(func(m): return m.material_overlay == coat), "and the portrait shows you in it")
+	PlayerProfile.reset_for_tests()
+
 func test_the_gallery_shows_each_rogue_dressed() -> void:
 	var gallery := GalleryPanel.new()
 	add_child(gallery)

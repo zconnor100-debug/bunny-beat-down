@@ -5,8 +5,8 @@ extends PanelContainer
 ## switch run modifiers on or off, and in the Workshop buy gun attachments
 ## (fit or take them off) and looks (browse each with ◂ ▸; one you own is
 ## worn as soon as you pick it), your wardrobe among them: a portrait beside
-## the list shows you wearing what you're browsing, bought or not, your gun
-## in the skin you're browsing. Pad
+## the list shows you wearing what you're browsing, bought or not (your coat
+## too), your gun in the skin you're browsing. Pad
 ## friendly: every row is buttons, and the list scrolls with the focus.
 
 signal closed
@@ -63,7 +63,7 @@ func _rebuild(focus_key := "") -> void:
 		_list.remove_child(c)
 		c.queue_free()
 	_acorns.text = "🌰 %d acorns   •   perks equipped: %d of %d" % [Burrow.acorns(), Burrow.equipped().size(), Burrow.slots()]
-	_portrait.show_player(trying_on(), &"carrot_rifle", Workshop.kit(shown("skin")))   # (the skin you're browsing, on your gun)
+	_portrait.show_player(trying_on(), &"carrot_rifle", Workshop.kit(shown("skin")), shown(Workshop.COAT))   # (the skin and coat you're browsing too)
 	var focus: Dictionary = {}   # key -> button
 	_heading("Perks")
 	for id in Burrow.PERKS:
@@ -99,10 +99,10 @@ func _rebuild(focus_key := "") -> void:
 		focus[id] = _row("%s — %s" % [a.name, a.text], state, func(): _attachment_pressed(id))
 	_heading("Workshop: looks")
 	for cat in Workshop.LOOKS:
-		if not Workshop.WARDROBE.has(cat):
+		if not _on_you(cat):
 			_look_row(cat, focus)
 	_heading("Workshop: wardrobe (yours alone: no rogue wears these)")
-	for cat in Workshop.WARDROBE:
+	for cat in Workshop.WARDROBE + [Workshop.COAT]:
 		_look_row(cat, focus)
 	var to_focus: Control = focus.get(focus_key)
 	if to_focus == null:
@@ -161,7 +161,7 @@ func _look_row(cat: String, focus: Dictionary) -> void:
 	var l := UITheme.label("%s: %s" % [Workshop.LOOKS[cat].label, opt[1]], 21)
 	l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	h.add_child(l)
-	if not Workshop.WARDROBE.has(cat):   # (the wardrobe shows on you, in the portrait)
+	if not _on_you(cat):   # (the wardrobe and your coat show on you, in the portrait)
 		h.add_child(LookPreview.new(cat, opt[0], self))
 	var prev := UITheme.button("◂", func(): _step(cat, -1))
 	prev.custom_minimum_size = Vector2(60, 0)
@@ -182,6 +182,11 @@ func _look_row(cat: String, focus: Dictionary) -> void:
 	focus[cat + ":prev"] = prev
 	focus[cat + ":next"] = next
 	focus[cat + ":act"] = act
+
+
+## Shown on you in the portrait (your wardrobe and coat), not as a preview.
+static func _on_you(cat: String) -> bool:
+	return Workshop.WARDROBE.has(cat) or cat == Workshop.COAT
 
 
 ## The option a look row currently shows (for the previews).

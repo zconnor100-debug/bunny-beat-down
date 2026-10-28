@@ -22,6 +22,11 @@ lines the game already has, cut from their voice banks:
     python3 tools/voices/say.py --from-bank /tmp/arsenal/lines "Rocco|gspot|gspot.1" "Bog Boss|grush|grush.2"
     python3 tools/make_hunt_trailer.py --cut arsenal /tmp/arsenal /tmp/arsenal/lines docs/trailer_arsenal
 
+Recorded at 1080x1920 instead (the tall override.cfg, as for The Hunt) the
+stage frames every shot for a phone, and the same cut makes the phone one:
+
+    python3 tools/make_hunt_trailer.py --cut arsenal /tmp/arsenal_tall /tmp/arsenal/lines docs/trailer_arsenal_phone
+
 Needs ffmpeg.
 """
 import argparse

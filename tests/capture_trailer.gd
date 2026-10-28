@@ -16,7 +16,7 @@ extends SceneTree
 ## ("hunt island", "hunt cage", "hunt toybox": tests/trailer_hunt_stage.gd),
 ## cut by tools/make_hunt_trailer.py. "Your Arsenal" (16:9, the island:
 ## tests/trailer_arsenal_stage.gd) is "arsenal", cut by the same tool with
-## --cut arsenal.
+## --cut arsenal; recorded at 1080x1920, it's framed for phones.
 
 
 func _initialize() -> void:
@@ -32,5 +32,5 @@ func _start() -> void:
 	if a.has("hunt"):
 		stage = "res://tests/trailer_hunt_stage.gd"   # (the hunt: "hunt island|cage|toybox")
 	if a.has("arsenal"):
-		stage = "res://tests/trailer_arsenal_stage.gd"   # (your arsenal, on the island, 16:9)
+		stage = "res://tests/trailer_arsenal_stage.gd"   # (your arsenal, on the island, 16:9 or tall)
 	root.add_child(load(stage).new())

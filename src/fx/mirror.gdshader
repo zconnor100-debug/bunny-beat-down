@@ -3,7 +3,9 @@
 // across it (the edges of Voronoi cells in the model's own space, so they stay
 // put on it as it moves) that glint in a slow sweep, with now and then the
 // brief flash of a bad reflection. Additive, as material_overlay, so it goes
-// over any fur, skin or outfit piece.
+// over any fur, skin or outfit piece. Also your Mended Mirror coat
+// (Workshop.coat_material): the cracks mended in gold, a softer rim and no
+// flashes.
 shader_type spatial;
 render_mode blend_add, unshaded, cull_back, depth_draw_never, shadows_disabled;
 
@@ -11,6 +13,8 @@ uniform vec3 rim_color : source_color = vec3(0.72, 0.86, 1.0);
 uniform vec3 crack_color : source_color = vec3(0.9, 0.97, 1.0);
 uniform float cells = 7.0;            // cracks per metre, about
 uniform float crack_width = 0.05;
+uniform float rim_strength = 1.1;
+uniform float flashes = 1.0;          // 0: never a bad reflection
 
 varying vec3 model_pos;
 
@@ -52,5 +56,5 @@ void fragment() {
 	float edge = 1.0 - smoothstep(0.0, crack_width, crack(model_pos * cells));
 	float sweep = 0.5 + 0.5 * sin(TIME * 2.3 - model_pos.y * 9.0);
 	float flash = step(0.94, fract(sin(floor(TIME * 8.0) * 12.9898) * 43758.5453));
-	ALBEDO = rim_color * rim * 1.1 + crack_color * edge * (0.3 + 0.7 * sweep) + rim_color * flash * (0.15 + 0.35 * rim);
+	ALBEDO = rim_color * rim * rim_strength + crack_color * edge * (0.3 + 0.7 * sweep) + rim_color * flash * flashes * (0.15 + 0.35 * rim);
 }

@@ -131,7 +131,8 @@ const LADDERS := [
 	{"id": "pack_breaker", "name": "Pack Breaker", "text": "Beat down %d gang members.", "stat": "gang_beaten",
 		"tiers": [[25, {"acorns": 100}, "100 acorns"], [50, {"acorns": 200}, "200 acorns"], [100, {"acorns": 400}, "400 acorns"]]},
 	{"id": "mirror_mirror", "name": "Mirror, Mirror", "text": "Beat your Doppelbunny in %d Mirror Matches.", "stat": "doppels_beaten",
-		"tiers": [[3, {"acorns": 150}, "150 acorns"], [5, {"acorns": 300}, "300 acorns"], [10, {"look": "skin:looking_glass"}, "the Looking Glass gun skin"]]},
+		"tiers": [[3, {"acorns": 150}, "150 acorns"], [5, {"look": "skin:looking_glass"}, "the Looking Glass gun skin"],
+			[10, {"look": "coat:mended_mirror"}, "the Mended Mirror coat"]]},
 ]
 const TIER_NAMES := ["I", "II", "III", "IV", "V"]
 
