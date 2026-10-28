@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Cut "The Hunt", the phone trailer, from tests/trailer_hunt_stage.gd's recordings.
+"""Cut "The Hunt", the phone trailer, from tests/trailer_hunt_stage.gd's recordings
+(or, with --cut arsenal, "Your Arsenal" from tests/trailer_arsenal_stage.gd's).
 
 Like tools/make_reel.py (each map recorded on its own, the stage printing
 SHOT name first_frame end_frame), plus the hunting party's lines: the stage
@@ -11,8 +12,15 @@ moment of the cut. Makes <out>_master.mp4 and <out>.mp4 (1080p, under 16 MB).
     godot --path . --write-movie /tmp/hunt/island/f.png --fixed-fps 30 \\
           -s tests/capture_trailer.gd -- hunt island > /tmp/hunt/island/log.txt
     (the same for cage and toybox)
-    ~/ai/venvs/tts/bin/python tools/voices/say.py /tmp/hunt/lines "Buck Toothington|buck|Tally-ho! ..." ...
+    HF_HOME=~/ai/hf-cache ~/ai/venvs/chatterbox/bin/python tools/voices/say.py /tmp/hunt/lines "Buck Toothington|tally|Tally-ho! ..." ...
     python3 tools/make_hunt_trailer.py /tmp/hunt /tmp/hunt/lines docs/trailer_hunt_phone
+
+"Your Arsenal" is 16:9 (viewport 1920x1080, window 1280x720 in the temporary
+override.cfg), one recording on the island ("arsenal island"); its gang shout
+lines the game already has, cut from their voice banks:
+
+    python3 tools/voices/say.py --from-bank /tmp/arsenal/lines "Rocco|gspot|gspot.1" "Bog Boss|grush|grush.2"
+    python3 tools/make_hunt_trailer.py --cut arsenal /tmp/arsenal /tmp/arsenal/lines docs/trailer_arsenal
 
 Needs ffmpeg.
 """
@@ -31,19 +39,31 @@ import make_reel as R  # noqa: E402
 
 FPS = R.FPS
 MUSIC = "assets/audio/music/match_bushwick_tarantella.mp3"   # Bushwick Tarantella, Kevin MacLeod (incompetech.com, CC BY 4.0)
+ARSENAL_MUSIC = "assets/audio/music/cage_voxel_revolution.mp3"   # Voxel Revolution, Kevin MacLeod (incompetech.com, CC BY 4.0)
 # (map, shot, from s, to s): the cut, in order
 EDIT = [
     ("island", "island_crane", 0.0, 3.0),
     ("island", "reveal", 0.0, 2.8),
-    ("island", "chase", 0.0, 3.0),
+    ("island", "chase", 0.0, 3.6),
     ("island", "rocket", 0.0, 3.25),
-    ("cage", "cage_crane", 0.0, 3.0),
-    ("cage", "cage_charge", 0.0, 2.2),
+    ("cage", "cage_crane", 0.0, 4.0),
+    ("cage", "cage_charge", 0.0, 3.3),
     ("toybox", "toy_crane", 0.0, 2.7),
     ("toybox", "train", 0.0, 3.0),
     ("toybox", "last", 0.0, 3.8),
     ("toybox", "card", 0.0, 3.8),
 ]
+ARSENAL_EDIT = [
+    ("island", "gang", 0.0, 3.2),
+    ("island", "charge", 0.0, 2.4),
+    ("island", "call", 0.0, 2.8),
+    ("island", "rumbler", 0.0, 4.5),
+    ("island", "lobber", 0.0, 3.8),
+    ("island", "doppel", 0.0, 2.2),
+    ("island", "fifty", 0.0, 3.4),
+    ("island", "card", 0.0, 4.0),
+]
+CUTS = {"hunt": (EDIT, MUSIC), "arsenal": (ARSENAL_EDIT, ARSENAL_MUSIC)}
 
 
 def lines_of(folder: pathlib.Path) -> list:
@@ -57,12 +77,14 @@ def lines_of(folder: pathlib.Path) -> list:
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("rec", type=pathlib.Path, help="folder holding island/ cage/ toybox/ recordings")
+    ap.add_argument("--cut", choices=sorted(CUTS), default="hunt")
+    ap.add_argument("rec", type=pathlib.Path, help="folder holding a folder of frames per map (island/ cage/ toybox/)")
     ap.add_argument("voices", type=pathlib.Path, help="folder of <line id>.wav (tools/voices/say.py)")
     ap.add_argument("out", type=pathlib.Path, help="output path without extension")
     args = ap.parse_args()
+    edit, music = CUTS[args.cut]
     root = pathlib.Path(__file__).resolve().parent.parent
-    maps = {e[0] for e in EDIT}
+    maps = {e[0] for e in edit}
     shots = {m: R.shots_of(args.rec / m) for m in maps}
     spoken = {m: lines_of(args.rec / m) for m in maps}
     tmp = pathlib.Path(tempfile.mkdtemp(prefix="hunt_"))
@@ -71,7 +93,7 @@ def main() -> None:
         pcm = bytearray()
         params = None
         voices = []   # (wav, seconds into the cut)
-        for m, shot, a, b in EDIT:
+        for m, shot, a, b in edit:
             first, end = shots[m][shot]
             lo = first + round(a * FPS)
             hi = min(end, first + round(b * FPS))
@@ -90,7 +112,7 @@ def main() -> None:
         with wave.open(str(tmp / "sfx.wav"), "wb") as w:
             w.setparams(params)
             w.writeframes(bytes(pcm))
-        inputs = ["-framerate", str(FPS), "-i", str(tmp / "c%06d.png"), "-i", str(tmp / "sfx.wav"), "-i", str(root / MUSIC)]
+        inputs = ["-framerate", str(FPS), "-i", str(tmp / "c%06d.png"), "-i", str(tmp / "sfx.wav"), "-i", str(root / music)]
         mix = f"[1:a]volume=0.8[s];[2:a]atrim=0:{seconds:.3f},volume=0.42,afade=t=out:st={seconds - 1.5:.2f}:d=1.5[m];"
         parts = "[s][m]"
         for k, (wav, at) in enumerate(voices):

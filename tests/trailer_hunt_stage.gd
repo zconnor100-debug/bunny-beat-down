@@ -1,31 +1,33 @@
 extends "res://tests/trailer_reel_stage.gd"
-## "The Hunt", the phone trailer: Bun is the quarry of a hunting party of the
-## Cast's nobles (the British voices: Buck Toothington, Sir Reynard, Sir
-## Toadsworth, Lady Garbage, Duchess, Sir Scamper, Wheelie) across all three
+## "The Hunt", the phone trailer: Bun is the quarry of a hunting party (the
+## Cast's nobles, Buck Toothington, Lady Garbage, Sir Scamper, Wheelie, with
+## Bandit Bill, Grimsby and Dam Dan along for the sport) across all three
 ## maps, with slow-motion ragdolls when the quarry bites back. Recorded a map
 ## at a time like the reel ("hunt island|cage|toybox", tests/capture_trailer.gd)
 ## and cut by tools/make_hunt_trailer.py, which also lays each spoken line
-## (tools/voices/say.py, in the rogue's own voice) where the stage prints
+## (tools/voices/say.py, in the rogue's own Maya1 voice) where the stage prints
 ## LINE <id> <frame>. Everyone else in the match is sent off stage.
 
 const HUNTERS := {
-	"island": ["Buck Toothington", "Sir Reynard", "Sir Toadsworth", "Lady Garbage", "Duchess"],
-	"cage": ["Lady Garbage", "Sir Scamper", "Duchess", "Sir Reynard", "Wheelie"],
-	"toybox": ["Duchess", "Buck Toothington", "Sir Toadsworth", "Sir Reynard", "Wheelie"],
+	"island": ["Buck Toothington", "Bandit Bill", "Grimsby", "Sir Reynard", "Duchess"],
+	"cage": ["Lady Garbage", "Sir Scamper", "Vixen Vera", "Rocco", "Wheelie"],
+	"toybox": ["Dam Dan", "Duchess", "Buck Toothington", "Sir Reynard", "Wheelie"],
 }
-## What they say (the voice files are made from the same text: tools/voices/say.py)
+## What they say (the voice files are made from the same text, each in its
+## speaker's own voice)
 const LINES := {
-	"buck": "Tally-ho! A bunny, on the lawn!",
-	"reynard": "Do keep running, old sport. It's terribly sporting.",
-	"toad": "I say! Not the hat!",
+	"tally": "Tally-ho! A bunny, on the lawn!",
+	"bill": "Run, bunny, run! It's more fun when you run!",
+	"grimsby": "Oh, come ON!",
 	"garbage": "Fetch me that rabbit. Gently. Then not gently.",
 	"scamper": "En garde, you fluffy cad!",
-	"duchess": "A train? How frightfully common.",
+	"dan": "Train? What train? I don't hear any—",
 	"wheelie": "Jolly good sport! Same time tomorrow?",
 }
 
 var _hunters: Array = []   # [{c, seed}]
 var _said := {}            # line ids already spoken
+var _bubbles: Array = []   # the speech bubbles up now (Label3D)
 
 
 func _ready() -> void:
@@ -118,7 +120,29 @@ func _line(c: Critter, id: String, seconds := 2.6) -> void:
 		return
 	_said[id] = true
 	c.visual.say(LINES[id], seconds)
+	_bubbles.append(c.visual.get_child(-1))
 	print("LINE %s %d" % [id, Engine.get_frames_drawn()])
+
+
+func _frame() -> void:
+	_fit_bubbles()
+	await super()
+
+
+## A bubble is a fixed size on screen, wrapped for a wide screen: in a tall
+## frame (or through a long lens) a long line ran off its sides. Each one is
+## wrapped to fit the frame, and slid in from the edge its speaker is near.
+func _fit_bubbles() -> void:
+	_bubbles = _bubbles.filter(func(b): return is_instance_valid(b) and not b.is_queued_for_deletion())
+	var vp := get_viewport().get_visible_rect().size
+	for b: Label3D in _bubbles:
+		if cam.is_position_behind(b.global_position):
+			continue
+		var per := b.pixel_size / (2.0 * tan(deg_to_rad(cam.fov) * 0.5)) * vp.y   # (screen pixels to a label pixel)
+		b.width = minf(420.0, vp.x * 0.84 / per)
+		var x := cam.unproject_position(b.global_position).x
+		var half := b.width * per * 0.5
+		b.offset.x = (clampf(x, half + vp.x * 0.06, vp.x * 0.94 - half) - x) / per
 
 
 func _middle(party: Array) -> Vector3:
@@ -184,7 +208,7 @@ func _island() -> void:
 	await _for(0.3)
 	var party := _gather(HUNTERS.island, [&"carrot_rifle", &"carrot_shotgun", &"carrot_smg", &"carrot_rifle", &"carrot_pistol"])
 	var spot := _open_spot(_poi("Carrot Patch"), 16.0, true)
-	var run_dir := _open_way(spot)
+	var run_dir := _open_way(spot, 44.0)
 	var back := -run_dir
 	_place(bun, spot, atan2(-back.x, -back.z))   # (Bun looking back the way the party comes)
 	_hand(bun, &"carrot_pistol", Rarity.Tier.GOLDEN)
@@ -204,7 +228,7 @@ func _island() -> void:
 		func(): _tags_off())
 	_end()
 
-	# 2. the party walks up, Buck sounds the hunt
+	# 2. the party walks up, Buck sounds the hunt, Bandit Bill eggs Bun on
 	_begin("reveal")
 	_say("THEY HUNT IN PACKS", "", 2.0)
 	var t0 := _t
@@ -213,7 +237,7 @@ func _island() -> void:
 		for h in _hunters:
 			h.c.want_sprint = false
 		if _t - t0 > 0.35:
-			_line(party[0], "buck", 2.6)
+			_line(party[0], "tally", 2.6)
 		_tags_off()
 		var to := _middle(party) - bun.global_position
 		to.y = 0
@@ -227,14 +251,14 @@ func _island() -> void:
 	bun.want_sprint = true
 	_begin("chase")
 	t0 = _t
-	await _for(3.0, func():
+	await _for(3.6, func():
 		bun.look_yaw = atan2(-run_dir.x, -run_dir.z)
 		bun.move_input = Vector2(0, 1)
 		bun.want_sprint = true
 		_drive_hunters(7.0, true)
 		_tags_off()
-		if _t - t0 > 0.25:
-			_line(party[1], "reynard", 3.2)
+		if _t - t0 > 0.15:
+			_line(party[1], "bill", 3.6)
 		var b := bun.global_position
 		cam.fov = 42.0   # (a long lens: the pack right on Bun's heels)
 		cam.global_position = b + run_dir * 8.0 + run_dir.cross(Vector3.UP) * 1.2 + Vector3.UP * 1.5
@@ -271,10 +295,13 @@ func _island() -> void:
 	bun.want_fire = true
 	await _frame()
 	bun.want_fire = false
-	_line(party[2], "toad", 3.0)
+	var fired := _t
 	await _for(0.08, frame_it)
 	_say("RAGDOLL PHYSICS", "", 2.0)
-	await _slowmo(0.15, 2.0, frame_it)
+	await _slowmo(0.15, 2.0, func():   # (Grimsby sees it coming)
+		frame_it.call()
+		if _t - fired > 0.25:
+			_line(party[2], "grimsby", 2.4))
 	await _for(0.3, frame_it)
 	_end()
 	_calm_hunters()
@@ -303,13 +330,13 @@ func _cage() -> void:
 	_say("THE HAMSTER CAGE", "", 2.2)
 	var t0 := _t
 	var low := spot + side * 9.0 + run_dir * 2.0 + Vector3.UP * 3.4
-	await _crane(spot + Vector3.UP * 42.0 + side * 24.0, low, spot, func(): return _middle(party) + Vector3.UP * 0.8, 3.0,
+	await _crane(spot + Vector3.UP * 42.0 + side * 24.0, low, spot, func(): return _middle(party) + Vector3.UP * 0.8, 4.0,
 		func():
 			_drive_hunters(8.0, false)
 			for h in _hunters:
 				h.c.want_sprint = false
-			if _t - t0 > 0.15:
-				_line(party[0], "garbage", 3.0))
+			if _t - t0 > 0.1:
+				_line(party[0], "garbage", 4.0))
 	_end()
 
 	# 2. Sir Scamper charges with his sword drawn (a carrot rifle); Bun's golden shotgun
@@ -327,7 +354,7 @@ func _cage() -> void:
 	var arena := _open_spot(Vector3.ZERO, 14.0)
 	var way := _open_way(arena, 14.0)
 	_place(bun, arena + way * 3.0, atan2(way.x, way.z))
-	_place(scamper, arena - way * 7.0, atan2(-way.x, -way.z))
+	_place(scamper, arena - way * 10.0, atan2(-way.x, -way.z))
 	var aside := way.cross(Vector3.UP)
 	for k in 8:   # (the side the cage's bars and toys don't hide)
 		var c := arena + (Basis(Vector3.UP, k * 0.4 * (1 if k % 2 else -1)) * way.cross(Vector3.UP)) * 7.0 + Vector3.UP * 1.4
@@ -340,10 +367,11 @@ func _cage() -> void:
 	var frame_it := func():   # (over Bun's shoulder: a tall frame wants depth, not width)
 		cam.global_position = arena + way * 5.6 + way.cross(Vector3.UP) * 1.0 + Vector3.UP * 1.5
 		cam.look_at(arena - way * 3.0 + Vector3.UP * 0.7, Vector3.UP)
-	await _for(1.2, func():
+	await _for(1.8, func():   # (at a run, not a sprint: he has his challenge to make)
 		_drive_hunters(1.0, false)
-		if true:
-			_line(scamper, "scamper", 2.4)
+		scamper.want_sprint = false
+		if _t - t0 > 0.25:
+			_line(scamper, "scamper", 2.0)
 		_aim(bun, scamper.get_chest_position())
 		frame_it.call()
 		_wobble(1.0))
@@ -400,7 +428,7 @@ func _toybox() -> void:
 		func():
 			_drive_hunters(30.0, true, false)
 			if _t - t0 > 0.5:
-				_line(_rogue("Duchess"), "duchess", 2.6))
+				_line(_rogue("Dam Dan"), "dan", 2.6))
 	_end()
 
 	# 2. the train, in slow motion
@@ -448,7 +476,7 @@ func _toybox() -> void:
 	_card.visible = true
 	_card.modulate.a = 1.0
 	_title_box.modulate.a = 0.0
-	_slam_title("49 rogues who remember you\nthree maps · carrot guns · ragdolls")
+	_slam_title("49 rogues, each in their own voice\nthree maps · carrot guns · ragdolls")
 	await _for(0.9)
 	var get := _label("FREE TO PLAY", 84, UITheme.CREAM)
 	var link := _label("github.com/zconnor100-debug/\nbunny-beat-down", 48, UITheme.CARROT_LIGHT)

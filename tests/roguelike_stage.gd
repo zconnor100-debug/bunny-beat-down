@@ -1,7 +1,7 @@
 extends "res://tests/workshop_stage.gd"
 ## Stage for tests/capture_roguelike.gd: every species wearing scars (an eye
 ## patch, a bandaged arm, a splinted leg), close-ups, an acorn shrine, a boon
-## draft, the Trail and the Trophy Room's milestones (the test profile).
+## draft, the Trail and the Trophy Room's milestones and ladders (the test profile).
 
 
 func _run() -> void:
@@ -89,4 +89,10 @@ func _run() -> void:
 			b.pressed.emit()
 	await _wait(0.4)
 	await _snap("95_milestones")
+	# and the ladders, the first rungs of two
+	for b in room.find_children("*", "Button", true, false):
+		if b.text == "Ladders":
+			b.pressed.emit()
+	await _wait(0.4)
+	await _snap("96_ladders")
 	get_tree().quit()

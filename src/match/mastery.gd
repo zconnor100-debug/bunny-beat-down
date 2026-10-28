@@ -5,12 +5,16 @@ extends RefCounted
 ## you reach it. Checked as you play (MatchManager, after a beat-down and at
 ## the end of a match) and shown in the Trophy Room with your progress.
 ##
+## Then the long haul, LADDERS: the same goal again and again, harder each
+## time (25, 50, then 100 beat-downs with each gun; bigger numbers for the
+## totals), each tier a milestone of its own.
+##
 ## Adding one is adding a row to MILESTONES: `stat` is what it counts (see
 ## progress(): "kills", "heads", "gun_kills:<gun id>", "gun_heads:<gun id>",
-## "wins", "map_wins:<map id>", "critters_played", "cast_beaten", "max_heat",
-## "signatures", "nemeses_beaten", "runs_done", "run_stops", "boons_at_once"),
-## `need` how many, and `reward`
-## what it gives:
+## "wins", "map_wins:<map id>", "matches", "critters_played", "cast_beaten",
+## "max_heat", "signatures", "nemeses_beaten", "runs_done", "run_stops",
+## "boons_at_once", "gang_beaten", "doppels_beaten"), `need` how many, and
+## `reward` what it gives:
 ##   {"acorns": n}                      once, when it's reached
 ##   {"look": "category:id"}            a Workshop look, free
 ##   {"mutation": "<gun id>", "kind": Boons.gun_mutation kind}   that gun's carrots, in your paws
@@ -77,7 +81,73 @@ const MILESTONES := [
 		"reward": {"look": "wear_back:windup_key"}, "gives": "the wind-up key"},
 	{"id": "laurels", "name": "Resting on Your Laurels", "text": "Beat down your Nemesis.", "stat": "nemeses_beaten", "need": 1,
 		"reward": {"look": "wear_hat:laurel_wreath"}, "gives": "the laurel wreath"},
+	{"id": "full_house", "name": "Full House", "text": "Beat down every one of the 49 rogues in the cast.", "stat": "cast_beaten", "need": 49,
+		"reward": {"acorns": 500}, "gives": "500 acorns"},
 ]
+
+## The ladders: `text` has a %d for a tier's need, and each tier is [need,
+## reward, what it gives]. A tier is a milestone like any other (all(): id
+## "<ladder>_<need>", named "<ladder> I", "II", "III"); the Trophy Room's
+## Ladders page shows a ladder on one row, at the tier you're climbing. The top
+## of each gun's ladder is a gun skin made for it, earned only.
+const LADDERS := [
+	{"id": "pistolero", "name": "Pistolero", "text": "Beat down %d critters with the Carrot Pistol.", "stat": "gun_kills:carrot_pistol",
+		"tiers": [[25, {"acorns": 50}, "50 acorns"], [50, {"acorns": 100}, "100 acorns"], [100, {"look": "skin:ruby"}, "the Ruby gun skin"]]},
+	{"id": "spray_and_pray", "name": "Spray and Pray", "text": "Beat down %d critters with the Carrot SMG.", "stat": "gun_kills:carrot_smg",
+		"tiers": [[25, {"acorns": 50}, "50 acorns"], [50, {"acorns": 100}, "100 acorns"], [100, {"look": "skin:toxic"}, "the Toxic stripe gun skin"]]},
+	{"id": "boomstick", "name": "Boomstick", "text": "Beat down %d critters with the Carrot Shotgun.", "stat": "gun_kills:carrot_shotgun",
+		"tiers": [[25, {"acorns": 50}, "50 acorns"], [50, {"acorns": 100}, "100 acorns"], [100, {"look": "skin:ember"}, "the Ember gun skin"]]},
+	{"id": "rifleman", "name": "Rifleman", "text": "Beat down %d critters with the Carrot Assault Rifle.", "stat": "gun_kills:carrot_rifle",
+		"tiers": [[25, {"acorns": 50}, "50 acorns"], [50, {"acorns": 100}, "100 acorns"], [100, {"look": "skin:jade"}, "the Jade gun skin"]]},
+	{"id": "carrot_hose", "name": "The Carrot Hose", "text": "Beat down %d critters with the Carrot LMG.", "stat": "gun_kills:carrot_lmg",
+		"tiers": [[25, {"acorns": 50}, "50 acorns"], [50, {"acorns": 100}, "100 acorns"], [100, {"look": "skin:obsidian"}, "the Obsidian gun skin"]]},
+	{"id": "long_shot", "name": "Long Shot", "text": "Beat down %d critters with the sniper.", "stat": "gun_kills:carrot_sniper",
+		"tiers": [[25, {"acorns": 50}, "50 acorns"], [50, {"acorns": 100}, "100 acorns"], [100, {"look": "skin:pearl"}, "the Pearl gun skin"]]},
+	{"id": "kaboom", "name": "Ka-BOOM", "text": "Beat down %d critters with the Rocket Launcher.", "stat": "gun_kills:carrot_rocket_launcher",
+		"tiers": [[25, {"acorns": 50}, "50 acorns"], [50, {"acorns": 100}, "100 acorns"], [100, {"look": "skin:royal"}, "the Royal gun skin"]]},
+	{"id": "big_bonker", "name": "Big Bonker", "text": "Beat down %d critters with your club.", "stat": "gun_kills:melee",
+		"tiers": [[25, {"acorns": 50}, "50 acorns"], [50, {"acorns": 100}, "100 acorns"], [100, {"look": "skin:zebra"}, "the Zebra stripe gun skin"]]},
+	{"id": "grenadier", "name": "Grenadier", "text": "Beat down %d critters with carrot grenades.", "stat": "gun_kills:carrot_grenade",
+		"tiers": [[25, {"acorns": 50}, "50 acorns"], [50, {"acorns": 100}, "100 acorns"], [100, {"look": "kill_fx:fireworks"}, "the Fireworks beat-down burst"]]},
+	{"id": "rumble_on", "name": "Rumble On", "text": "Beat down %d critters with the Root Rumbler.", "stat": "gun_kills:root_rumbler",
+		"tiers": [[25, {"acorns": 50}, "50 acorns"], [50, {"acorns": 100}, "100 acorns"], [100, {"look": "skin:carrot_king"}, "the Carrot King gun skin"]]},
+	{"id": "lob_star", "name": "Lob Star", "text": "Beat down %d critters with the Carrot Lobber.", "stat": "gun_kills:carrot_lobber",
+		"tiers": [[25, {"acorns": 50}, "50 acorns"], [50, {"acorns": 100}, "100 acorns"], [100, {"look": "skin:sapphire"}, "the Sapphire gun skin"]]},
+	{"id": "big_game", "name": "Big Game", "text": "Beat down %d critters with the Big Root .50.", "stat": "gun_kills:big_root_50",
+		"tiers": [[25, {"acorns": 50}, "50 acorns"], [50, {"acorns": 100}, "100 acorns"], [100, {"look": "skin:diamond"}, "the Diamond gun skin"]]},
+	# the totals
+	{"id": "carrot_crusher", "name": "Carrot Crusher", "text": "Beat down %d critters.", "stat": "kills",
+		"tiers": [[100, {"acorns": 150}, "150 acorns"], [250, {"acorns": 300}, "300 acorns"], [500, {"look": "kill_fx:gold_rush"}, "the Gold rush beat-down burst"]]},
+	{"id": "noggin_knocker", "name": "Noggin Knocker", "text": "Land %d headshots.", "stat": "heads",
+		"tiers": [[100, {"acorns": 150}, "150 acorns"], [250, {"look": "reticle_color:ruby"}, "the Ruby reticle"], [500, {"look": "tracer:ruby"}, "Ruby tracers"]]},
+	{"id": "champion", "name": "Champion", "text": "Win %d matches.", "stat": "wins",
+		"tiers": [[10, {"acorns": 200}, "200 acorns"], [25, {"acorns": 400}, "400 acorns"], [50, {"look": "flash:gold"}, "the Gold muzzle flash"]]},
+	{"id": "old_hand", "name": "Old Hand", "text": "Play %d matches.", "stat": "matches",
+		"tiers": [[25, {"acorns": 100}, "100 acorns"], [50, {"acorns": 200}, "200 acorns"], [100, {"look": "tracer:jade"}, "Jade tracers"]]},
+	{"id": "trail_boss", "name": "Trail Boss", "text": "Finish %d runs.", "stat": "runs_done",
+		"tiers": [[5, {"acorns": 250}, "250 acorns"], [10, {"acorns": 500}, "500 acorns"], [25, {"acorns": 1000}, "1,000 acorns"]]},
+	{"id": "nemesis_hunter", "name": "Nemesis Hunter", "text": "Beat down a Nemesis %d times.", "stat": "nemeses_beaten",
+		"tiers": [[5, {"acorns": 150}, "150 acorns"], [10, {"acorns": 300}, "300 acorns"], [25, {"acorns": 600}, "600 acorns"]]},
+	{"id": "pack_breaker", "name": "Pack Breaker", "text": "Beat down %d gang members.", "stat": "gang_beaten",
+		"tiers": [[25, {"acorns": 100}, "100 acorns"], [50, {"acorns": 200}, "200 acorns"], [100, {"acorns": 400}, "400 acorns"]]},
+	{"id": "mirror_mirror", "name": "Mirror, Mirror", "text": "Beat your Doppelbunny in %d Mirror Matches.", "stat": "doppels_beaten",
+		"tiers": [[3, {"acorns": 150}, "150 acorns"], [5, {"acorns": 300}, "300 acorns"], [10, {"look": "skin:looking_glass"}, "the Looking Glass gun skin"]]},
+]
+const TIER_NAMES := ["I", "II", "III", "IV", "V"]
+
+static var _all: Array = []
+
+
+## Every milestone: MILESTONES, then each ladder's tiers.
+static func all() -> Array:
+	if _all.is_empty():
+		_all = MILESTONES.duplicate()
+		for l in LADDERS:
+			for i in l.tiers.size():
+				var t: Array = l.tiers[i]
+				_all.append({"id": "%s_%d" % [l.id, int(t[0])], "name": "%s %s" % [l.name, TIER_NAMES[i]], "text": String(l.text) % int(t[0]),
+					"stat": l.stat, "need": int(t[0]), "reward": t[1], "gives": t[2], "ladder": l.id, "tier": i})
+	return _all
 
 
 static func _book() -> ConfigFile:
@@ -85,7 +155,7 @@ static func _book() -> ConfigFile:
 
 
 static func milestone(id: String) -> Dictionary:
-	for m in MILESTONES:
+	for m in all():
 		if m.id == id:
 			return m
 	return {}
@@ -127,6 +197,12 @@ static func progress(stat: String) -> int:
 			return int(_book().get_value("mastery_stats", "boons_at_once", 0))
 		"nemeses_beaten":
 			return int(_book().get_value("mastery_stats", "nemeses_beaten", 0))
+		"matches":
+			return _critters().reduce(func(a, c): return a + int(StatBook.critter(c).matches), 0)
+		"gang_beaten":
+			return int(_book().get_value("mastery_stats", "gang_beaten", 0))
+		"doppels_beaten":
+			return DoppelData.mirror("beaten")
 	return 0
 
 
@@ -139,6 +215,11 @@ static func note_nemesis_beaten() -> void:
 	_book().set_value("mastery_stats", "nemeses_beaten", int(_book().get_value("mastery_stats", "nemeses_beaten", 0)) + 1)
 
 
+## You beat down a gang member (for Pack Breaker).
+static func note_gang_beaten() -> void:
+	_book().set_value("mastery_stats", "gang_beaten", int(_book().get_value("mastery_stats", "gang_beaten", 0)) + 1)
+
+
 ## How many boons you've held at once (for Green Thumb).
 static func note_boons(n: int) -> void:
 	if n > int(_book().get_value("mastery_stats", "boons_at_once", 0)):
@@ -149,7 +230,7 @@ static func note_boons(n: int) -> void:
 ## one-time rewards given). Returns them, for the game to announce.
 static func check() -> Array:
 	var fresh := []
-	for m in MILESTONES:
+	for m in all():
 		if has(m.id) or progress(m.stat) < int(m.need):
 			continue
 		_book().set_value("mastery", m.id, true)
@@ -172,21 +253,21 @@ static func check() -> Array:
 ## A mastered gun's mutation, for your carrots (Projectiles.mutations_for).
 ## The milestone that gives a Workshop look ("category:id"), or {}.
 static func giving(look: String) -> Dictionary:
-	for m in MILESTONES:
+	for m in all():
 		if m.reward.get("look", "") == look:
 			return m
 	return {}
 
 
 static func gun_mutation(gun_id: StringName) -> Dictionary:
-	for m in MILESTONES:
+	for m in all():
 		if m.reward.get("mutation", "") == String(gun_id) and has(m.id):
 			return Boons.gun_mutation(m.reward.kind)
 	return {}
 
 
 static func _reward(key: String, default: float) -> float:
-	for m in MILESTONES:
+	for m in all():
 		if m.reward.has(key) and has(m.id):
 			return float(m.reward[key])
 	return default
@@ -212,6 +293,25 @@ static func draft_size() -> int:
 	return int(_reward("draft", 3.0))
 
 
-## [name, what it takes, progress "12 / 20", what it gives, reached] for each milestone.
+## [name, what it takes, progress "12 / 20", what it gives, reached] for each milestone (not the ladders').
 static func rows() -> Array:
 	return MILESTONES.map(func(m): return [m.name, m.text, "%d / %d" % [mini(progress(m.stat), int(m.need)), int(m.need)], m.gives, has(m.id)])
+
+
+## A ladder's tiers (milestones), in order.
+static func tiers(ladder: String) -> Array:
+	return all().filter(func(m): return m.get("ladder", "") == ladder)
+
+
+## [name and stars ("Pistolero ★★☆"), what the tier you're on takes, progress
+## toward it, what it gives, every tier climbed, what the top tier gives] for
+## each ladder.
+static func ladder_rows() -> Array:
+	var out := []
+	for l in LADDERS:
+		var t := tiers(l.id)
+		var done := t.filter(func(m): return has(m.id)).size()
+		var on: Dictionary = t[mini(done, t.size() - 1)]
+		out.append(["%s %s" % [l.name, "★".repeat(done) + "☆".repeat(t.size() - done)], on.text,
+			"%d / %d" % [mini(progress(l.stat), int(on.need)), int(on.need)], on.gives, done == t.size(), t[-1].gives])
+	return out

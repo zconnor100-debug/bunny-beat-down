@@ -4,9 +4,11 @@ extends PanelContainer
 ## the club (beat-downs, accuracy, headshots, damage, longest beat-down) and
 ## for every critter you can play (matches, wins, best placing, beat-downs,
 ## beat-downs per time beaten, accuracy), with totals, your runs and the
-## signature guns you've won; and, on its second page, the milestones
-## (Mastery): what each takes, how far along you are, what it gives. Fits
-## without scrolling; B or Back closes it.
+## signature guns you've won; on its second page, the milestones (Mastery):
+## what each takes, how far along you are, what it gives; and on its third,
+## the ladders (Mastery.LADDERS), one row each at the tier you're climbing,
+## with a star for every tier climbed. Fits without scrolling; B or Back
+## closes it.
 
 signal closed
 
@@ -32,12 +34,13 @@ func _ready() -> void:
 	var milestones := VBoxContainer.new()
 	milestones.visible = false
 	v.add_child(milestones)
-	pages.add_child(UITheme.button("Trackers", func():
-		trackers.visible = true
-		milestones.visible = false))
-	pages.add_child(UITheme.button("Milestones", func():
-		trackers.visible = false
-		milestones.visible = true))
+	var ladders := VBoxContainer.new()
+	ladders.visible = false
+	v.add_child(ladders)
+	for page in [["Trackers", trackers], ["Milestones", milestones], ["Ladders", ladders]]:
+		pages.add_child(UITheme.button(page[0], func():
+			for p in [trackers, milestones, ladders]:
+				p.visible = p == page[1]))
 	trackers.add_child(UITheme.label("Guns", 28, UITheme.CARROT_LIGHT, true))
 	trackers.add_child(_table(["", "Beat-downs", "Accuracy", "Headshots", "Damage", "Longest"], gun_rows()))
 	trackers.add_child(UITheme.label("Critters", 28, UITheme.CARROT_LIGHT, true))
@@ -47,6 +50,10 @@ func _ready() -> void:
 	trackers.add_child(UITheme.label("Signature guns won: " + (", ".join(sigs.map(func(b): return RivalBook.signature_gun(b).display_name()))
 		if not sigs.is_empty() else "none yet (win a nemesis hunt)"), 21, UITheme.CREAM))
 	milestones.add_child(_milestones())
+	var about := UITheme.label("The long haul: every ladder has three tiers, each harder than the last.", 20, Color(UITheme.CREAM, 0.8))
+	about.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	ladders.add_child(about)
+	ladders.add_child(_milestones(Mastery.ladder_rows(), "Ladder", "The next tier", true))
 	var back := UITheme.button("Back", func(): closed.emit())
 	back.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	v.add_child(back)
@@ -86,20 +93,23 @@ static func critter_rows() -> Array:
 	return rows
 
 
-## The milestones: ✓ and gold once reached.
-func _milestones() -> GridContainer:
+## The milestones (or the ladders, with what each one's top tier gives): ✓
+## and gold once reached.
+func _milestones(rows := Mastery.rows(), what := "Milestone", takes := "What it takes", top := false) -> GridContainer:
 	var grid := GridContainer.new()
-	grid.columns = 4
+	grid.columns = 5 if top else 4
 	grid.add_theme_constant_override("h_separation", 26)
 	grid.add_theme_constant_override("v_separation", 3)
-	for h in ["Milestone", "What it takes", "", "What it gives"]:
+	for h in [what, takes, "", "What it gives"] + (["At the top"] if top else []):
 		grid.add_child(UITheme.label(h, 18, Color(UITheme.CREAM, 0.7)))
-	for r in Mastery.rows():
+	for r in rows:
 		var c: Color = UITheme.CARROT_LIGHT if r[4] else UITheme.CREAM
 		grid.add_child(UITheme.label(("✓ " if r[4] else "") + String(r[0]), 19, c, r[4]))
 		grid.add_child(UITheme.label(r[1], 18, Color(UITheme.CREAM, 0.9)))
 		grid.add_child(UITheme.label(r[2], 18, c))
 		grid.add_child(UITheme.label(r[3], 18, UITheme.LEAF if r[4] else Color(UITheme.CREAM, 0.75)))
+		if top:
+			grid.add_child(UITheme.label(r[5], 18, UITheme.LEAF if r[4] else Color(UITheme.CARROT_LIGHT, 0.85)))
 	return grid
 
 

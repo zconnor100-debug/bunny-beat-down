@@ -3,6 +3,8 @@ extends SceneTree
 ## the view through the red dot, flash colours and smoke, beat-down bursts,
 ## every reticle, and the Burrow's Workshop rows.
 ##   godot --path . -s tests/capture_workshop.gd -- <out_dir>
+## The looks only the Mastery ladders give (tests/earned_looks_stage.gd):
+##   godot --path . -s tests/capture_workshop.gd -- <out_dir> earned
 
 
 func _initialize() -> void:
@@ -11,8 +13,8 @@ func _initialize() -> void:
 
 
 func _start() -> void:
-	var stage: Node = load("res://tests/workshop_stage.gd").new()
 	var a := OS.get_cmdline_user_args()
+	var stage: Node = load("res://tests/earned_looks_stage.gd" if a.has("earned") else "res://tests/workshop_stage.gd").new()
 	if a.size() > 0:
 		stage.out_dir = a[0]
 	DirAccess.make_dir_recursive_absolute(stage.out_dir)

@@ -14,7 +14,9 @@ extends SceneTree
 ## cage", "reel toybox": tests/trailer_reel_stage.gd) and cut together by
 ## tools/make_reel.py. "The Hunt" phone cut is the same, a map at a time
 ## ("hunt island", "hunt cage", "hunt toybox": tests/trailer_hunt_stage.gd),
-## cut by tools/make_hunt_trailer.py.
+## cut by tools/make_hunt_trailer.py. "Your Arsenal" (16:9, the island:
+## tests/trailer_arsenal_stage.gd) is "arsenal", cut by the same tool with
+## --cut arsenal.
 
 
 func _initialize() -> void:
@@ -29,4 +31,6 @@ func _start() -> void:
 		stage = "res://tests/trailer_reel_stage.gd"   # (the phone reel: "reel island|cage|toybox")
 	if a.has("hunt"):
 		stage = "res://tests/trailer_hunt_stage.gd"   # (the hunt: "hunt island|cage|toybox")
+	if a.has("arsenal"):
+		stage = "res://tests/trailer_arsenal_stage.gd"   # (your arsenal, on the island, 16:9)
 	root.add_child(load(stage).new())

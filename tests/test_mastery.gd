@@ -98,3 +98,89 @@ func test_a_win_on_each_map_and_a_beaten_nemesis_earn_a_piece() -> void:
 	Mastery.note_nemesis_beaten()
 	Mastery.check()
 	check(Mastery.progress("nemeses_beaten") == 1 and Workshop.owns("wear_hat:laurel_wreath"), "your Nemesis beaten down: the laurel wreath")
+
+
+func test_ladders_climb_tier_by_tier_each_harder() -> void:
+	var ids := {}
+	for m in Mastery.all():
+		ids[m.id] = true
+	check(ids.size() == Mastery.all().size(), "every milestone and tier has its own id (%d)" % ids.size())
+	check(Mastery.LADDERS.size() >= 15, "fifteen ladders or more (%d)" % Mastery.LADDERS.size())
+	for l in Mastery.LADDERS:
+		var needs: Array = l.tiers.map(func(t): return int(t[0]))
+		check(needs.size() == 3 and needs[0] < needs[1] and needs[1] < needs[2], "%s: three tiers, each harder (%s)" % [l.id, needs])
+		check(String(l.text).contains("%d"), "%s says how many" % l.id)
+	for gun in StatBook.GUNS:
+		check(Mastery.LADDERS.any(func(l): return l.stat == "gun_kills:%s" % gun), "a ladder for the %s" % gun)
+	# climbing the Pistolero: 25, 50, then 100 pistol beat-downs
+	StatBook.begin_match(&"bun")
+	for i in 24:
+		StatBook.note_kill(&"carrot_pistol", 10.0)
+	Mastery.check()
+	var row: Array = Mastery.ladder_rows().filter(func(r): return String(r[0]).begins_with("Pistolero"))[0]
+	check(row[0] == "Pistolero ☆☆☆" and row[2] == "24 / 25" and row[3] == "50 acorns" and row[5] == "the Ruby gun skin",
+		"on the first tier, the Ruby skin at the top: %s" % [row])
+	var acorns := Burrow.acorns()
+	StatBook.note_kill(&"carrot_pistol", 10.0)
+	var fresh := Mastery.check()
+	check(fresh.map(func(m): return m.id) == ["pistolero_25"] and fresh[0].name == "Pistolero I" and Burrow.acorns() == acorns + 50,
+		"25: Pistolero I, 50 acorns (%s)" % [fresh.map(func(m): return m.id)])
+	for i in 25:
+		StatBook.note_kill(&"carrot_pistol", 10.0)
+	check(Mastery.check().map(func(m): return m.id) == ["pistolero_50"] and Burrow.acorns() == acorns + 150, "50: Pistolero II, 100 more")
+	check(not Workshop.owns("skin:ruby") and not Workshop.buy("skin:ruby"), "the Ruby skin can't be bought")
+	for i in 50:
+		StatBook.note_kill(&"carrot_pistol", 10.0)
+	fresh = Mastery.check()
+	check(fresh.any(func(m): return m.id == "pistolero_100") and Workshop.owns("skin:ruby"), "100: the Ruby skin, earned")
+	check(fresh.any(func(m): return m.id == "carrot_crusher_100"), "and a hundred beat-downs in all: Carrot Crusher I")
+	row = Mastery.ladder_rows().filter(func(r): return String(r[0]).begins_with("Pistolero"))[0]
+	check(row[0] == "Pistolero ★★★" and row[4] and row[2] == "100 / 100", "all climbed: %s" % [row])
+	check(Mastery.check().is_empty(), "each tier pays once")
+
+
+func test_the_new_stats_count() -> void:
+	check(Mastery.progress("matches") == 0 and Mastery.progress("gang_beaten") == 0 and Mastery.progress("doppels_beaten") == 0, "nothing yet")
+	for i in 3:
+		StatBook.begin_match(&"fox")
+		StatBook.end_match(5, 24, true)
+	check(Mastery.progress("matches") == 3, "three matches played (%d)" % Mastery.progress("matches"))
+	Mastery.note_gang_beaten()
+	Mastery.note_gang_beaten()
+	check(Mastery.progress("gang_beaten") == 2, "two gang members beaten")
+	DoppelData.reset_for_tests()
+	DoppelData.note_mirror("beaten")
+	check(Mastery.progress("doppels_beaten") == 1, "a Doppelbunny beaten")
+	DoppelData.reset_for_tests()
+
+
+func test_every_earned_only_look_is_a_milestones_reward_and_exists() -> void:
+	for cat in Workshop.LOOKS:
+		for o in Workshop.LOOKS[cat].options:
+			var item := "%s:%s" % [cat, o[0]]
+			if Workshop.earned_only(item):
+				check(not Mastery.giving(item).is_empty(), "%s is a milestone's reward" % item)
+			match cat:
+				"skin":
+					check(o[0] == "stock" or GunKit.SKINS.has(o[0]), "the %s skin is drawn" % o[0])
+				"kill_fx":
+					check(o[0] == "none" or FX.BEAT_DOWN_BURSTS.has(o[0]), "the %s burst is drawn" % o[0])
+				"reticle_color", "tracer", "flash":
+					check(Workshop.COLORS.has(o[0]) or o[0] == "rainbow", "the %s colour %s exists" % [cat, o[0]])
+	for m in Mastery.all():
+		if m.reward.has("look"):
+			check(Workshop.earned_only(m.reward.look) or Workshop.cost(m.reward.look) > 0, "%s gives a real look (%s)" % [m.id, m.reward.look])
+
+
+func test_the_trophy_room_shows_the_ladders() -> void:
+	var panel := TrophyPanel.new()
+	add_child(panel)
+	await wait_frames(2)
+	var tab := panel.find_children("*", "Button", true, false).filter(func(b): return b.text == "Ladders")
+	check(tab.size() == 1, "a Ladders tab")
+	tab[0].pressed.emit()
+	await wait_frames(2)
+	var shown := panel.find_children("*", "Label", true, false).filter(func(l): return l.is_visible_in_tree())
+	check(shown.any(func(l): return l.text == "Rumble On ☆☆☆"), "the Root Rumbler's ladder, nothing climbed")
+	check(not shown.any(func(l): return l.text.contains("Popcorn")), "the milestones page is hidden")
+	panel.queue_free()

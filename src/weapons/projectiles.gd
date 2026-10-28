@@ -376,6 +376,7 @@ func _on_hit(s: Shot, hit: Dictionary, stick := true) -> void:
 				through = _mutate_on_critter(s, hit.position, critter)
 			else:
 				critter.receive_corpse_shot(s.data, hit.position, dir, col)
+				through = _through_corpse(s, hit.position, col)
 		if s.pops:
 			_pop(s, hit.position)
 		if s.data.projectile == WeaponData.ProjectileKind.BOLT and not through:
@@ -420,6 +421,23 @@ func _mutate_on_critter(s: Shot, at: Vector3, critter: Node) -> bool:
 			n.shard = true
 			_add(n)
 	return through
+
+
+## A piercing carrot carries on through a ragdoll as well (it pushes it):
+## the one it just beat down falls apart right in its path, and stopping
+## there kept the Big Root .50 from ever reaching the critter behind.
+func _through_corpse(s: Shot, at: Vector3, col: Object) -> bool:
+	if s.pierce_left <= 0 or not col is CollisionObject3D:
+		return false
+	var bone: Array[RID] = [(col as CollisionObject3D).get_rid()]
+	var n := _follow(s, bone)
+	n.pos = at + s.vel.normalized() * 0.05
+	n.vel = s.vel
+	n.damage_scale = s.damage_scale
+	n.pierce_left = s.pierce_left
+	n.bounce_left = s.bounce_left
+	_add(n)
+	return true
 
 
 ## A carrot that carries on from another (pierced through, or a shard): the

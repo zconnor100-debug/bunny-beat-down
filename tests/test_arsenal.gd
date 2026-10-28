@@ -152,6 +152,23 @@ func test_the_big_root_goes_through_them_and_their_cover() -> void:
 		standing, you.current_spread_deg()])
 
 
+## The usual case: the slug beats the first one down, and it falls apart as a
+## ragdoll right in the slug's path; it carries on through that too.
+func test_the_big_root_goes_on_through_one_it_just_beat_down() -> void:
+	make_arena(120.0)
+	var you := spawn_critter(TEST_DEF, Vector3(0, 0.1, 0))
+	you.is_player = true
+	var a := spawn_critter("res://data/critters/fox.tres", Vector3(0, 0.1, -10.0), PI)
+	var b := spawn_critter("res://data/critters/fox.tres", Vector3(0, 0.1, -14.0), PI)
+	await wait_physics(3)
+	var hp := b.health
+	var from := Vector3(0.0, a.get_chest_position().y, -1.0)
+	Projectiles.fire(you, _gun(&"big_root_50"), from, Vector3(0, 0, -1), 0.0, you.visual.hitbox_rids)
+	await wait_physics(12)
+	check(not a.alive, "the first fox is down")
+	check(b.health < hp or not b.alive, "and the slug went on through its ragdoll into the next (%.0f of %.0f)" % [b.health, hp])
+
+
 func test_the_carrot_lobber_lobs_carrots_that_go_off() -> void:
 	make_arena()
 	var you := spawn_critter(TEST_DEF, Vector3(0, 0.1, 0))

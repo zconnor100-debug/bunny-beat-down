@@ -1154,6 +1154,8 @@ func _on_critter_died(victim: Node, info: DamageInfo) -> void:
 			player.health = minf(player.max_health, player.health + 20.0)
 		_boons_on_kill(c)
 		_scar(c, info)
+		if gang_of(c) != null:
+			Mastery.note_gang_beaten()
 		_gang_member_down(c)
 		_check_mastery()
 		if not RivalBook.took_gun(c.display_name).is_empty():

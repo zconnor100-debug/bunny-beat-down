@@ -18,11 +18,18 @@ gore, and floppy physics ears are included.
 
 Built in **Godot 4.6** (GDScript, Jolt physics, Forward+).
 
-▶ **[The Hunt](docs/trailer_hunt_phone.mp4)**, a 30-second phone trailer (with
-sound): Bun is the quarry of a hunting party of the Cast's nobles across all
-three maps (Buck Toothington sounds the "Tally-ho!", Sir Reynard wants you to
-keep running, it's terribly sporting), and the quarry bites back: a rocket,
-a golden shotgun and the toy train, the ragdolls in slow motion.
+▶ **[The Hunt](docs/trailer_hunt_phone.mp4)**, a 33-second phone trailer (with
+sound): Bun is the quarry of a hunting party across all three maps, every
+hunter in their own voice (Buck Toothington sounds the "Tally-ho!", Bandit
+Bill wants you to run, it's more fun when you run), and the quarry bites
+back: a rocket, a golden shotgun and the toy train, the ragdolls in slow
+motion.
+
+▶ **[Your Arsenal](docs/trailer_arsenal.mp4)**, 26 seconds in 1080p (with
+sound): a gang spots Bun and charges, shouting in their own voices; Bun
+calls in its arsenal, the Root Rumbler winds up and mows them down, the
+Carrot Lobber lobs a carrot bomb into a huddle, and the Big Root .50 goes
+through a gang member into Bun's own Doppelbunny.
 
 ▶ **[The 30-second trailer](docs/trailer_1080p.mp4)** in 1080p (with sound;
 also [cut for phones](docs/trailer_phone.mp4)):
@@ -360,7 +367,7 @@ and the final shot replayed from three angles. There's a
   Fragile Fluff (everyone on half health), Rocket Party (every gun a rocket
   launcher), Most Wanted (the nearest bots are told where you are), Stampede
   and Clover Drought.
-- **Milestones (mastery).** Eighteen goals read off your trackers, each
+- **Milestones (mastery).** Twenty-eight goals read off your trackers, each
   unlocking something for good (`Mastery`, the Trophy Room's second page
   shows your progress): master a gun and its carrots change in your paws
   (15 pistol beat-downs and they bounce, 25 with the SMG and they pop, 20
@@ -372,7 +379,20 @@ and the final shot replayed from three angles. There's a
   four; and five wardrobe pieces can only be earned (three wins for the
   mortarboard, 30 rogues beaten for the jester's cap, 25 sniper headshots
   for the star glasses, three runs for the fairy wings, two nemesis hunts
-  for the dark wings). Adding one is a row in a table.
+  for the dark wings), and Full House, every one of the 49 rogues beaten
+  down. Adding one is a row in a table.
+- **Ladders: the long haul.** Twenty more goals of three tiers each, every
+  tier harder than the last (`Mastery.LADDERS`; the Trophy Room's third
+  page shows a row for each, a star for every tier climbed). 25, 50 and 100
+  beat-downs with every gun, the club, carrot grenades and your arsenal:
+  acorns, then at 100 a gun skin made for that gun (Ruby, Toxic stripe,
+  Ember, Jade, Obsidian, Pearl, Royal, Zebra stripe, Carrot King, Sapphire,
+  Diamond; the grenades' is a Fireworks beat-down burst). And the totals:
+  100/250/500 beat-downs (a Gold rush burst), 100/250/500 headshots (a Ruby
+  reticle, then Ruby tracers), 10/25/50 wins (a Gold muzzle flash),
+  25/50/100 matches (Jade tracers), 5/10/25 runs, 5/10/25 Nemeses beaten,
+  25/50/100 gang members, and your Doppelbunny beaten in 3/5/10 Mirror
+  Matches (the Looking Glass skin). None of those looks can be bought.
 - **The Workshop (in the Burrow): gun upgrades and looks, bought with
   acorns.** Attachments go on every gun you pick up: a Red Dot Sight on the
   gun's own sight line (in first person you aim through its tube at the
@@ -384,7 +404,8 @@ and the final shot replayed from three angles. There's a
   gun's own materials: fern camo, candy stripe, midnight, bubblegum, frost,
   gilded), muzzle-flash colours (rainbow too), muzzle smoke, your tracer
   colour and the burst when you beat a critter down (confetti, autumn
-  leaves, a carrot shower, hearts). **Your wardrobe** is yours alone (no
+  leaves, a carrot shower, hearts), and more of each that only the
+  ladders give. **Your wardrobe** is yours alone (no
   rogue wears any of it): a hat (ear-flap beanie, flower crown, Santa hat,
   fedora, witch's and wizard's hats, a mortarboard, a jester's cap),
   something for your face (heart, 3D, pixel and star glasses), a necklace,
@@ -768,6 +789,14 @@ lines each: nearest foe, strafe, burst fire) and put together by
 send in a message. Godot renders the frames at full size even in a window
 that fits on the screen (a temporary `override.cfg` with the viewport at
 1080p and `stretch/mode="viewport"`). Its music is "Run Amok" by Kevin MacLeod.
+
+"The Hunt" and "Your Arsenal" are directed the same way, a map at a time
+(`tests/trailer_hunt_stage.gd`, `tests/trailer_arsenal_stage.gd`), and cut by
+`tools/make_hunt_trailer.py`. The hunters' lines are spoken for the trailer
+in each rogue's own voice (`tools/voices/say.py`, Maya1, like the game's)
+and laid in where the stage says they speak; the Arsenal's gang shout their
+in-game lines, heard from the camera. Their music: "Bushwick Tarantella" and
+"Voxel Revolution", by Kevin MacLeod.
 
 The other trailers are directed: the shots and the two critters' inputs are scripted
 (`tests/trailer_stage.gd`, `tests/trailer_cage_stage.gd` for the Hamster

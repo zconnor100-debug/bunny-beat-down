@@ -142,19 +142,31 @@ static func muzzle(pos: Vector3, dir: Vector3, big: bool, tint := FLASH, smoke :
 
 ## The burst when the player beats a critter down (a Workshop look):
 ## "confetti", "leaves", "carrots" or "hearts" ("none": nothing).
+## The Workshop's beat-down bursts: [shape, colours, gravity, size, and
+## anything else for _burst] for each.
+const BEAT_DOWN_BURSTS := {
+	"confetti": [["chip", [Color(1, 0.3, 0.35), Color(1, 0.85, 0.2), Color(0.3, 0.7, 1), Color(0.45, 0.9, 0.35)], 6.0, 0.09]],
+	"leaves": [["leaf", [Color(0.95, 0.45, 0.1), Color(0.85, 0.2, 0.1), Color(0.95, 0.75, 0.2)], 2.2, 0.16]],
+	"carrots": [["leaf", [Color(1.0, 0.5, 0.1)], 9.0, 0.14], ["blob", [Color(0.35, 0.75, 0.25)], 6.0, 0.06]],
+	"hearts": [["heart", [Color(1, 0.4, 0.6), Color(1, 0.6, 0.75)], -1.2, 0.16]],
+	# (earned only: Mastery ladders)
+	"fireworks": [["blob", [Color(1, 0.35, 0.4), Color(0.4, 0.65, 1), Color(1, 0.85, 0.3), Color(0.55, 1, 0.5)], 3.0, 0.07,
+		{"amount": 14, "speed": Vector2(6.0, 10.0), "spread": 180.0, "additive": true, "damping": 2.6, "lifetime": 1.4}]],
+	"gold_rush": [["chip", [Color(1.0, 0.82, 0.25), Color(0.95, 0.65, 0.15)], 11.0, 0.1, {"amount": 12, "speed": Vector2(3.0, 7.0)}],
+		["blob", [Color(1.0, 0.95, 0.6)], -0.5, 0.05, {"amount": 8, "additive": true, "lifetime": 1.0}]],
+}
+
+
 static func beat_down(pos: Vector3, style: String) -> void:
 	if instance == null:
 		return
-	var sets := {
-		"confetti": [["chip", [Color(1, 0.3, 0.35), Color(1, 0.85, 0.2), Color(0.3, 0.7, 1), Color(0.45, 0.9, 0.35)], 6.0, 0.09]],
-		"leaves": [["leaf", [Color(0.95, 0.45, 0.1), Color(0.85, 0.2, 0.1), Color(0.95, 0.75, 0.2)], 2.2, 0.16]],
-		"carrots": [["leaf", [Color(1.0, 0.5, 0.1)], 9.0, 0.14], ["blob", [Color(0.35, 0.75, 0.25)], 6.0, 0.06]],
-		"hearts": [["heart", [Color(1, 0.4, 0.6), Color(1, 0.6, 0.75)], -1.2, 0.16]],
-	}
-	for s in sets.get(style, []):
+	for s in BEAT_DOWN_BURSTS.get(style, []):
 		for col in s[1]:
-			instance._burst(pos, Vector3.UP, {"amount": 9, "lifetime": 1.8, "speed": Vector2(2.0, 5.0), "spread": 70.0, "gravity": s[2],
-				"size": s[3], "scale": Vector2(0.7, 1.3), "color": col, "fade": true, "damping": 1.4, "shape": s[0]})
+			var o := {"amount": 9, "lifetime": 1.8, "speed": Vector2(2.0, 5.0), "spread": 70.0, "gravity": s[2],
+				"size": s[3], "scale": Vector2(0.7, 1.3), "color": col, "fade": true, "damping": 1.4, "shape": s[0]}
+			if s.size() > 4:
+				o.merge(s[4], true)
+			instance._burst(pos, Vector3.UP, o)
 
 
 static func explosion(pos: Vector3, radius: float) -> void:

@@ -45,7 +45,8 @@ def main() -> None:
         "",
         f"Every release: {REPO}/releases · the source: {REPO}",
         "",
-        "Music in the trailers: \"Run Amok\" by Kevin MacLeod (incompetech.com), licensed under CC BY 4.0.",
+        "Music in the trailers: \"Run Amok\", \"Scheming Weasel (faster version)\", \"Bushwick Tarantella\" and "
+        "\"Voxel Revolution\" by Kevin MacLeod (incompetech.com), licensed under CC BY 4.0.",
     ]
     print("\n".join(out))
 

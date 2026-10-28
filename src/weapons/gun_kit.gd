@@ -16,6 +16,19 @@ const SKINS := {
 	"bubblegum": [0, Color(1.0, 0.55, 0.78), Color.WHITE, Color.WHITE, 0.75, 0.0, 0.25, 1.0],
 	"frost": [3, Color(0.72, 0.86, 1.0), Color(0.95, 0.98, 1.0), Color.WHITE, 0.8, 0.1, 0.2, 22.0],
 	"gilded": [4, Color(1.0, 0.78, 0.3), Color(0.82, 0.58, 0.18), Color.WHITE, 0.92, 1.0, 0.25, 12.0],
+	# earned only, at the top of a Mastery ladder (a hundred beat-downs with a gun, mostly)
+	"ruby": [0, Color(0.62, 0.04, 0.1), Color.WHITE, Color.WHITE, 0.88, 0.7, 0.16, 1.0],
+	"toxic": [2, Color(0.55, 0.95, 0.15), Color(0.07, 0.09, 0.05), Color.WHITE, 0.88, 0.0, 0.4, 12.0],
+	"ember": [1, Color(0.95, 0.36, 0.05), Color(0.55, 0.08, 0.03), Color(0.12, 0.06, 0.04), 0.9, 0.2, 0.5, 14.0],
+	"jade": [1, Color(0.1, 0.45, 0.32), Color(0.32, 0.72, 0.52), Color(0.05, 0.25, 0.17), 0.9, 0.35, 0.22, 12.0],
+	"obsidian": [1, Color(0.03, 0.025, 0.045), Color(0.09, 0.06, 0.14), Color(0.02, 0.02, 0.03), 0.97, 0.0, 0.32, 9.0],
+	"pearl": [3, Color(0.97, 0.84, 0.9), Color(0.8, 0.88, 1.0), Color.WHITE, 0.88, 0.45, 0.12, 9.0],
+	"royal": [4, Color(0.42, 0.18, 0.72), Color(0.95, 0.75, 0.3), Color.WHITE, 0.9, 0.9, 0.25, 12.0],
+	"zebra": [2, Color(0.05, 0.05, 0.05), Color(0.96, 0.95, 0.92), Color.WHITE, 0.9, 0.0, 0.5, 14.0],
+	"carrot_king": [2, Color(1.0, 0.5, 0.08), Color(1.0, 0.82, 0.25), Color.WHITE, 0.9, 0.8, 0.25, 10.0],
+	"sapphire": [0, Color(0.07, 0.18, 0.72), Color.WHITE, Color.WHITE, 0.88, 0.75, 0.14, 1.0],
+	"diamond": [3, Color(0.93, 0.98, 1.0), Color(0.75, 0.92, 1.0), Color.WHITE, 0.9, 0.2, 0.04, 40.0],
+	"looking_glass": [3, Color(0.42, 0.46, 0.52), Color(0.7, 0.74, 0.8), Color.WHITE, 0.9, 1.0, 0.03, 30.0],
 }
 const DOT_RED := Color(1.0, 0.12, 0.08)
 const TUBE_R := 0.03              ## the sight's tube (model units, round the gun's own sight)
