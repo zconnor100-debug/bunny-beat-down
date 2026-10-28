@@ -9,6 +9,7 @@ extends TestCase
 func before_each() -> void:
 	PlayerProfile.reset_for_tests()
 	RivalBook.reset_for_tests()
+	DoppelData.reset_for_tests()   # (other tests' matches feed it: no Mirror Match, no gallery card)
 	Boons.reset()
 	Run.in_match = false
 

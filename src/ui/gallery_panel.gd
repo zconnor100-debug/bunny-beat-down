@@ -9,7 +9,9 @@ extends PanelContainer
 ## bots, and the director). Pad friendly: every card is a button, so the list scrolls with
 ## the focus; the right stick (or the mouse wheel, or Page Up / Down) reads on down a long card.
 ## "Reset all rogues" (asked first) starts every one of them over, so new
-## rivals and nemeses can rise (RivalBook.reset_rogues).
+## rivals and nemeses can rise (RivalBook.reset_rogues). Once it has watched
+## you play, your Doppelbunny heads the list (DoppelData): how alike it plays,
+## and how you fight, as it sees it.
 
 signal closed
 
@@ -105,6 +107,13 @@ func _fill_list() -> void:
 		_list.remove_child(old)
 		old.queue_free()
 	var first: Button = null
+	if DoppelData.matches() > 0:
+		var d := UITheme.button(doppel_title(), _show_doppel)
+		d.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		d.add_theme_color_override("font_color", DoppelBrain.TAG_COLOR)
+		d.focus_entered.connect(_show_doppel)
+		_list.add_child(d)
+		first = d
 	for n in order():
 		var b := UITheme.button(card_title(n), func(): _show(n))
 		b.alignment = HORIZONTAL_ALIGNMENT_LEFT
@@ -274,12 +283,57 @@ static func memory_lines(n: String) -> Array:
 	return out
 
 
+static func doppel_title() -> String:
+	var m := DoppelData.model()
+	return "◇ Your Doppelbunny  ·  %s" % ("plays %d%% like you" % roundi(float(m.likeness) * 100.0) if not m.is_empty() else "watching you")
+
+
+## Your Doppelbunny, as text: how alike it plays (on moments it never learned
+## from), how you fight as it sees it, when it comes for you, and how your
+## Mirror Matches went.
+static func doppel_card() -> String:
+	var m := DoppelData.model()
+	var lines := ["You, in a cracked mirror  ·  silent  ·  learning",
+		"It watches every fight you're in and learns from it how you play: when you push, hold or back off, when you sprint, duck or go prone, when you heal and throw.", ""]
+	if m.is_empty():
+		lines.append("It has watched %s. It learns after each one." % _count(DoppelData.matches(), "match", "matches"))
+	else:
+		lines.append("Plays like you: %d%% of the time it moves as you would, on moments it never learned from (always guessing your favourite move: %d%%)." % [
+			roundi(float(m.likeness) * 100.0), roundi(float(m.baseline) * 100.0)])
+		lines.append("Its other calls (sprinting, crouching, firing, healing...) match yours %d%% of the time." % roundi(float(m.flags) * 100.0))
+		lines.append("Learned from %s, over %s." % [_count(int(m.moments), "moment", "moments"), _count(int(m.matches), "match", "matches")])
+	var h := DoppelData.habits()
+	var said := {"push": "push in", "hold": "hold", "back": "back off", "left": "circle left", "right": "circle right"}
+	lines.append("")
+	lines.append("How you fight, as it sees it:")
+	lines.append("  " + "  ·  ".join(DoppelSense.MOVES.map(func(k): return "%s %d%%" % [said[k], roundi(float(h.moves[k]) * 100.0)])))
+	lines.append("  sprinting %d%% of the time, crouched %d%%, prone %d%%, firing %d%%" % [roundi(h.flags.sprint * 100.0),
+		roundi(h.flags.crouch * 100.0), roundi(h.flags.prone * 100.0), roundi(h.flags.fire * 100.0)])
+	lines.append("")
+	if DoppelData.ready():
+		lines.append("It's ready. It will come for you in a Mirror Match on the Trail.")
+	else:
+		lines.append("It comes for you in a Mirror Match on the Trail once it has watched %d of your matches and plays more like you than guessing would." % DoppelData.READY_MATCHES)
+	if DoppelData.mirror("met") > 0:
+		lines.append("Mirror Matches: %d  ·  you beat it down %s  ·  it beat you down %s" % [DoppelData.mirror("met"),
+			_times(DoppelData.mirror("beaten")) if DoppelData.mirror("beaten") > 0 else "never", _times(DoppelData.mirror("beat_you")) if DoppelData.mirror("beat_you") > 0 else "never"])
+	return "\n".join(lines)
+
+
 static func _count(k: int, one: String, many: String) -> String:
 	return "%d %s" % [k, one if k == 1 else many]
 
 
 static func _times(k: int) -> String:
 	return "once" if k == 1 else ("twice" if k == 2 else "%d times" % k)
+
+
+func _show_doppel() -> void:
+	_portrait.show_doppel(Workshop.outfit(), PlayerProfile.favourite_gun())
+	_name.text = "Your Doppelbunny"
+	_name.add_theme_color_override("font_color", DoppelBrain.TAG_COLOR)
+	_detail.text = doppel_card()
+	_card_scroll.scroll_vertical = 0
 
 
 func _show(n: String) -> void:

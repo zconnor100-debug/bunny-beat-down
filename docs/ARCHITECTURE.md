@@ -281,7 +281,7 @@ The third map follows the cage's pattern (`ToyBox extends Island`,
   `RivalBook`). A sighting goes through `gang_spotted` to the mates'
   `share_sighting`; `AIBrain._rushing` reads the enemy's reload and
   `Events.clover_eaten`.
-- **The Doppelbunny's learning** (in progress: docs/plans/doppelbunny.md).
+- **The Doppelbunny** (docs/plans/doppelbunny.md).
   `DoppelRecorder`, a child of the player's critter in a match, notes every
   0.2 s of a fight the situation (`DoppelSense.features`: 24 numbers, all
   relative to the critter) and the decision taken through it
@@ -293,7 +293,15 @@ The third map follows the cage's pattern (`ToyBox extends Island`,
   is held back to measure likeness honestly against always guessing the
   most common move. Plain GDScript, every weight in one flat
   `PackedFloat32Array` written in place, trains about 3,000 moments a
-  second on the dev machine.
+  second on the dev machine. **`DoppelBrain`** extends `AIBrain`: it runs
+  the base `_fight` (paths, aim, trigger), then every 0.2 s in sight of its
+  target asks the network for the odds, samples a move and flags, and
+  overwrites the stick and buttons with them (holding fire when you would,
+  grenades through `_lob`). `Run.generate(seed, mirror)` turns one middle
+  match stop into a Mirror Match with its own RNG, so a seed's Trail is
+  otherwise unchanged; `MatchManager._spawn_doppel` dresses your critter
+  (`Outfits.dress_player`) under `mirror.gdshader`, and the doppel is kept
+  out of `RivalBook`, gangs and `_say`.
 - **`WarrenSim`** plays the rogues' off-screen matches: one per three hours
   of real time since its clock last moved (kept in its own `ConfigFile`,
   capped at twelve), caught up when the main menu opens. They're

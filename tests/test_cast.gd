@@ -9,6 +9,7 @@ const SPECIES := ["bandit_bunny", "squirrel", "fox", "raccoon", "frog", "beaver"
 
 func before_each() -> void:
 	RivalBook.reset_for_tests()
+	DoppelData.reset_for_tests()   # (other tests' matches feed it: the gallery would list it first)
 
 
 func test_the_cast_is_49_characters_who_each_fight_their_own_way() -> void:

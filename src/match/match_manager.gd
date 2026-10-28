@@ -90,6 +90,12 @@ var _nemesis_announced := false
 ## A run's stop (Run): its goal ({top, kills}) and whether you've made it.
 var run_goal: Dictionary = {}
 var run_goal_met := false
+## A Mirror Match (Run): your Doppelbunny (DoppelBrain: you, in a cracked
+## mirror, fighting the way you do), and whether you beat it down. It isn't
+## one of the cast, so the RivalBook keeps nothing of it (DoppelData does).
+var doppel: Critter
+var doppel_beaten := false
+var _difficulty := 1
 
 
 func setup(world_root_: Node3D, island_: Island, opponents: int, difficulty: int, seed_: int, pace_ := 1.0) -> void:
@@ -106,6 +112,7 @@ func setup(world_root_: Node3D, island_: Island, opponents: int, difficulty: int
 	Projectiles.own_tracer = Projectiles.tracer_color(Workshop.look("tracer"))
 	rng.seed = seed_ * 7 + 1
 	extra_rng.seed = seed_ * 13 + 5
+	_difficulty = difficulty
 	Boons.reset(Run.boons() if Run.in_match else {})
 	var moods := Storm.VARIANTS.keys().filter(func(k): return k != "classic")
 	briar_variant = "classic" if rng.randf() < 0.25 else moods[rng.randi() % moods.size()]
@@ -197,6 +204,8 @@ func spawn_player(def: CritterDef, skin_id: String) -> Critter:
 	rec.name = "DoppelRecorder"
 	rec.match_manager = self
 	player.add_child(rec)
+	if Run.in_match and Run.current().get("kind", "") == "mirror":
+		_spawn_doppel(def, skin_id)
 	# _spawn_critter already registered it; keep the player first in the list
 	# (registering it twice put it on the balloon twice: a second drop at the end of the route)
 	critters.erase(player)
@@ -212,6 +221,35 @@ func spawn_player(def: CritterDef, skin_id: String) -> Critter:
 		time_keeper.charges = Run.rewinds()
 		run_goal = Run.goal(total)
 	return player
+
+
+## A Mirror Match's Doppelbunny: your critter in your fur and outfit, in a
+## cracked mirror, carrying your favourite gun, with the brain that learned
+## how you fight (DoppelData), hunting you. Silent.
+func _spawn_doppel(def: CritterDef, skin_id: String) -> void:
+	var m := DoppelData.model()
+	if m.is_empty():
+		return
+	doppel = _spawn_critter(def, DoppelBrain.name_for(def))
+	doppel.visual.apply_skin(skin_id)
+	Outfits.dress_player(doppel)
+	doppel.visual.set_enemy_highlight(doppel.display_name, true)
+	DoppelBrain.look(doppel)
+	doppel.set_meta(&"softened", true)   # (it holds nothing against the director either: Critter.take_damage)
+	var brain := DoppelBrain.new()
+	brain.name = "AIBrain"
+	brain.island = island
+	brain.match_manager = self
+	brain.net = m.net
+	brain.traits = {"hunts_you": true, "no_slot": true}
+	brain.skill = clampf(_skill_for(_difficulty) + 0.1, 0.05, 0.98)
+	doppel.add_child(brain)
+	doppel.inventory.grenades = 2
+	var fav := WeaponDB.get_weapon(PlayerProfile.favourite_gun())
+	if fav:
+		doppel.give_weapon(WeaponInstance.new(fav, Rarity.Tier.PRIZE))
+		doppel.inventory.add_ammo(fav.ammo_type, Inventory.AMMO_PICKUP[fav.ammo_type] * 2)
+	DoppelData.note_mirror("met")
 
 
 ## The perks you took into this match from the Burrow.
@@ -517,7 +555,7 @@ func _gang_member_down(c: Critter) -> void:
 func _try_truce() -> void:
 	if gangs.size() >= GANGS_AT_ONCE or player == null:
 		return
-	var free := alive_critters().filter(func(c): return c != player and c.gang == "" and c != nemesis)
+	var free := alive_critters().filter(func(c): return c != player and c.gang == "" and c != nemesis and c != doppel)
 	var leading := player.alive and player_beat_downs >= LEADING_AT
 	for i in free.size():
 		for j in range(i + 1, free.size()):
@@ -671,6 +709,8 @@ func headlines() -> Array:
 		out.append("%s has a score to settle with %s." % [f[1], f[2]])
 	if nemesis:
 		out.push_front("NEMESIS HUNT: %s is hunting you. Beat them down for their signature gun." % Cast.title(nemesis.display_name))
+	if doppel:
+		out.push_front("MIRROR MATCH: %s is here, hunting you. It learned to fight like you." % doppel.display_name)
 	if gang.size() > 1:
 		out.append("%s %s have ganged up on you, as %s." % [", ".join(gang.slice(0, gang.size() - 1).map(func(c): return c.display_name)),
 			"and " + gang.back().display_name, gang_name])
@@ -819,6 +859,12 @@ func begin_drop() -> void:
 			if lead and b:
 				b.drop_spot = lead.drop_spot + Vector3(extra_rng.randf_range(-4, 4), 0.0, extra_rng.randf_range(-4, 4))
 				b.drop_progress = lead.drop_progress
+	if doppel and not fav_poi.is_empty():
+		# your Doppelbunny lands where you like to land
+		var db := doppel.get_node_or_null("AIBrain") as AIBrain
+		var at: Vector2 = fav_poi.center + Vector2(extra_rng.randf_range(-6, 6), extra_rng.randf_range(-6, 6))
+		db.drop_spot = Vector3(at.x, island.terrain.height_at(at.x, at.y), at.y)
+		db.drop_progress = clampf(dropship.progress_nearest(db.drop_spot), 0.02, 0.98)
 	dropship.launch()
 	_set_phase(Phase.DROPPING)
 	# the lobby's news, a line at a time once everyone's aboard
@@ -1014,12 +1060,28 @@ func _on_critter_died(victim: Node, info: DamageInfo) -> void:
 	if player == null:
 		return   # (no match ends before you've joined it)
 	var killer := info.attacker as Critter
-	if killer and killer != player and killer != c and critters.has(killer):
+	if killer and killer != player and killer != c and critters.has(killer) and killer != doppel:
 		RivalBook.note_bot_kill(killer.display_name, info.weapon_id, killer.global_position.distance_to(c.global_position))
 	if c == nemesis and killer != player:
 		nemesis = null
 		Events.headline.emit("%s was beaten down%s. Your nemesis hunt is off." % [c.display_name, " by %s" % killer.display_name if killer and killer != c else ""])
-	if c == player and killer and killer != player:
+	if c == player and killer and killer == doppel:
+		DoppelData.note_mirror("beat_you")
+		Events.headline.emit("%s beat you down. It fights like you, after all." % killer.display_name)
+	elif killer == player and c == doppel:
+		_note_player_kill(info)
+		StatBook.note_kill(info.weapon_id, player.global_position.distance_to(c.global_position))
+		doppel_beaten = true
+		DoppelData.note_mirror("beaten")
+		Events.rival_news.emit("MIRROR BROKEN!", "You beat down %s: you fight better than you do" % c.display_name)
+		_boons_on_kill(c)
+		_check_mastery()
+		FX.beat_down(c.get_chest_position(), Workshop.look("kill_fx"))
+	elif c == doppel and killer and killer != c:
+		Events.headline.emit("%s beat your Doppelbunny down before you could." % killer.display_name)
+	elif doppel and killer == doppel and killer != c:
+		pass   # (the cast keep score among themselves, and it isn't one of them)
+	elif c == player and killer and killer != player:
 		if RivalBook.note_you_died_to(killer.display_name, String(killer.def.id)):
 			killer.set_meta(&"new_rival", true)
 		_steal_gun(killer)
@@ -1059,7 +1121,7 @@ func _on_critter_died(victim: Node, info: DamageInfo) -> void:
 		# bots keep score among themselves too
 		if RivalBook.note_bot_beat(killer.display_name, c.display_name):
 			Events.headline.emit("%s got even with %s." % [killer.display_name, c.display_name])
-	if c != player and info.kind == DamageInfo.Kind.STORM:
+	if c != player and c != doppel and info.kind == DamageInfo.Kind.STORM:
 		RivalBook.note_director(c.display_name, 2)   # (the Briar took it: the director's fault)
 
 	if alive.size() <= 1 and phase != Phase.ENDED and kill_cam:
@@ -1072,7 +1134,7 @@ func _on_critter_died(victim: Node, info: DamageInfo) -> void:
 		var winner: Critter = alive[0] if alive.size() == 1 else null
 		if winner:
 			winner.placement = 1
-			if winner != player:
+			if winner != player and winner != doppel:
 				RivalBook.note_win(winner.display_name)
 			else:
 				StatBook.end_match(1, total, false)
@@ -1094,7 +1156,8 @@ func _on_critter_damaged(victim: Node, info: DamageInfo) -> void:
 			StatBook.note_hit(info.weapon_id, info.amount, info.headshot, blast)
 			_boons_on_hit(victim as Critter, info)
 	elif info.attacker is Critter and critters.has(info.attacker):
-		RivalBook.note_bot_hit(info.attacker.display_name, info.weapon_id, info.amount, info.headshot, blast)
+		if info.attacker != doppel:
+			RivalBook.note_bot_hit(info.attacker.display_name, info.weapon_id, info.amount, info.headshot, blast)
 		if victim == player and not thorns and Boons.has("bramble_coat") and (info.attacker as Critter).alive:
 			var back := DamageInfo.make(info.amount * Boons.value("bramble_coat") / 100.0, DamageInfo.Kind.BLEED, player, &"bramble")
 			back.position = (info.attacker as Critter).get_chest_position()
@@ -1200,7 +1263,7 @@ func _check_run_goal() -> void:
 
 ## The bots' carrots fired, for their trackers (yours count in Critter._fire).
 func _on_shot_fired(shooter: Node, _origin: Vector3, weapon_id: StringName) -> void:
-	if player and shooter != player and shooter is Critter and critters.has(shooter):
+	if player and shooter != player and shooter != doppel and shooter is Critter and critters.has(shooter):
 		var w := WeaponDB.get_weapon(weapon_id)
 		RivalBook.note_bot_shot(shooter.display_name, w.pellets if w else 1)
 
@@ -1232,8 +1295,11 @@ func taunt(c: Critter, event: String) -> void:
 	_say(c, said)
 
 
-## A bot says something: on screen (HUD, a speech bubble) and out loud.
+## A bot says something: on screen (HUD, a speech bubble) and out loud
+## (your Doppelbunny never says a word).
 func _say(c: Critter, said: Dictionary) -> void:
+	if doppel and c == doppel:
+		return
 	Events.taunt.emit(c, String(said.text))
 	RogueVoice.speak(c, said)
 

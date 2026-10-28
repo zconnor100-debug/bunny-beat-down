@@ -118,6 +118,18 @@ func show_player(wear: Array, gun := &"carrot_rifle") -> void:
 		Outfits.dress_player(c, wear))
 
 
+## Your Doppelbunny: you (as show_player), in a cracked mirror (DoppelBrain.look).
+func show_doppel(wear: Array, gun: StringName = &"") -> void:
+	var id := String(Settings.get_value(&"player_character"))
+	_show("doppel:%s:%s:%s:%s" % [id, Settings.get_value(&"player_skin"), ",".join(wear), gun], id, func(c: Critter):
+		c.visual.apply_skin(String(Settings.get_value(&"player_skin")))
+		var w := WeaponDB.get_weapon(gun if gun != &"" else &"carrot_rifle")
+		if w:
+			c.give_weapon(WeaponInstance.new(w, Rarity.Tier.PRIZE))
+		Outfits.dress_player(c, wear)
+		DoppelBrain.look(c))
+
+
 func shown_critter() -> Critter:
 	return _critter
 

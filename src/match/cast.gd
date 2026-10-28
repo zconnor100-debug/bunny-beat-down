@@ -200,14 +200,18 @@ const DIRECTOR_LINES := ["Oi, Director! I see what you're doing!", "This lobby i
 ## Gangs (Gang, MatchManager): a gang mate calling out the one they're after,
 ## the rush while it reloads or heals, a truce to team up (against a bot, or
 ## you), turning on a mate, the one turned on, walking out, and the job done.
+## (Spoken, a name ends a phrase, with a "." or "!": tools/voices/lines.py.)
 const GANG_SPOT_LINES := ["Over here! Over here!", "Found 'em! This way!", "There! Get over here, all of you!"]
 const GANG_RUSH_LINES := ["They're reloading! GO!", "Now! While they're busy!", "Rush 'em!"]
-const TRUCE_LINES := ["Truce? Just till {them} is down.", "You and me, against {them}. Deal?"]
-const TRUCE_YOU_LINES := ["Truce? Just till {you} is down.", "{you}'s winning. Not for long. Together?"]
-const BETRAY_LINES := ["Nothing personal, {them}.", "Sorry, partner. Only one of us wins.", "Did you really think we were friends, {them}?"]
+const TRUCE_LINES := ["Truce? Just till we get {them}.", "You and me, against {them}. Deal?"]
+const TRUCE_YOU_LINES := ["Truce? Just till we get {you}.", "Everyone's losing to {you}. Together?"]
+const BETRAY_LINES := ["Nothing personal, {them}.", "Sorry, partner. Only one of us wins.", "We were never friends, {them}."]
 const BETRAYED_LINES := ["{them}! I trusted you!", "You RAT, {them}!", "Of course. OF COURSE, {them}."]
 const SPLIT_LINES := ["I'm out!", "Every critter for themselves!", "Nope. Not dying for this gang."]
 const DONE_LINES := ["Pleasure doing business.", "That's that. Don't follow me.", "Truce over."]
+## The gang lines by the key prefix MatchManager picks them with (Cast.pick_say).
+const GANG_LINES := {"gspot": GANG_SPOT_LINES, "grush": GANG_RUSH_LINES, "gr": TRUCE_LINES, "gy": TRUCE_YOU_LINES,
+	"gb": BETRAY_LINES, "gt": BETRAYED_LINES, "gs": SPLIT_LINES, "gd": DONE_LINES}
 ## Grudge points against the director before a bot defies it: its hits on
 ## other bots aren't softened by the director's pacing (and it says so).
 const DEFIANT_AT := 3

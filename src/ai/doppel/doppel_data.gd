@@ -15,6 +15,8 @@ const MAX_MOMENTS := 30000
 const PER := DoppelSense.INPUTS + DoppelSense.LABELS
 const PASSES := 3
 const TRAIN_ON := 9000               ## the newest moments a training run learns from (about 10 s)
+const READY_MATCHES := 3             ## matches it has to watch before it comes for you...
+const READY_EDGE := 0.05             ## ...playing this much more like you than always guessing your favourite move
 
 static var _rows := PackedFloat32Array()
 static var _loaded := false
@@ -129,3 +131,43 @@ static func model() -> Dictionary:
 		return {}
 	d["net"] = net
 	return d
+
+
+## Ready to come for you (a Mirror Match on the Trail): it has watched
+## READY_MATCHES of your matches and plays more like you than guessing would.
+static func ready() -> bool:
+	if matches() < READY_MATCHES:
+		return false
+	var m := model()
+	return not m.is_empty() and float(m.likeness) > float(m.baseline) + READY_EDGE
+
+
+## How you fight, as it sees it: {moves: {DoppelSense.MOVES name: share},
+## flags: {DoppelSense.FLAGS name: share of moments}} over everything kept.
+static func habits() -> Dictionary:
+	var n := moments()
+	var moves := {}
+	var flags := {}
+	for m in DoppelSense.MOVES:
+		moves[m] = 0.0
+	for f in DoppelSense.FLAGS:
+		flags[f] = 0.0
+	if n == 0:
+		return {"moves": moves, "flags": flags}
+	for i in n:
+		var at := i * PER + DoppelSense.INPUTS
+		moves[DoppelSense.MOVES[int(_rows[at])]] += 1.0 / n
+		for k in DoppelSense.FLAGS.size():
+			flags[DoppelSense.FLAGS[k]] += _rows[at + 1 + k] / n
+	return {"moves": moves, "flags": flags}
+
+
+## The Mirror Matches: "met" (it came for you), "beaten" (you beat it down),
+## "beat_you" (it beat you down). Kept with your profile.
+static func note_mirror(what: String) -> void:
+	PlayerProfile._book().set_value("doppel", what, mirror(what) + 1)
+	PlayerProfile.save()
+
+
+static func mirror(what: String) -> int:
+	return int(PlayerProfile._book().get_value("doppel", what, 0))

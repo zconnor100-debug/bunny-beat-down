@@ -60,18 +60,34 @@ out.
 
 ## Status (2026-10-28)
 
-Built: the recorder, the labeller, the network, the trainer, storage, and
-`tests/test_doppel.gd`. From now on every match records your fights
-(locally) and trains after the match.
+Both parts are built, with `tests/test_doppel.gd`.
 
-On a scripted player ("backs off when hurt; far off, holds and goes prone;
-otherwise charges, sprinting"), trained on 2,700 moments in 3.3 s, it
-matches that player's move 92% of the time on held-back moments. Always
-guessing the player's most common move gets 41%. It also matches the
+**Part one: it learns you.** The recorder, the labeller, the network, the
+trainer and storage. Every match records your fights (locally) and trains
+after the match. On a scripted player ("backs off when hurt; far off, holds
+and goes prone; otherwise charges, sprinting"), trained on 2,700 moments in
+3.3 s, it matches that player's move 92% of the time on held-back moments.
+Always guessing the player's most common move gets 41%. It also matches the
 player's other actions, like sprinting and going prone, 98% of the time.
 
-Next: the rogue itself (`doppel_brain.gd`, its look, its gallery card).
-That waits on the two questions under "Your call".
+**Part two: it comes for you** (your calls: silent, in a Mirror Match).
+- `DoppelBrain` extends `AIBrain`: it lands, loots, paths, aims and shoots
+  as any bot, and in a fight asks the network every 0.2 s what you would do,
+  picking by its odds. In the arena, trained on the careful player, it goes
+  prone at range in about three moments of four, where a bot never does,
+  and holds where a bot pushes in. Hurt, it backs off. Trained on a reckless
+  player instead, it circles and jumps.
+- It looks like you: your critter, fur and outfit under a cracked-mirror
+  overlay (`mirror.gdshader`: a silver rim and Voronoi hairline cracks that
+  glint), named "Doppel-Bun", carrying your favourite gun, landing at your
+  favourite landmark. It never says a word, and the RivalBook keeps nothing
+  of it.
+- **Mirror Match:** once it has watched 3 matches and plays more like you
+  than guessing (by 5 points), a new run gets one Mirror Match stop in its
+  middle rows. It's in the lobby, hunting you; beat it down for a boon of
+  its own (on top of the goal's).
+- Its card heads the Rogues' Gallery: how alike it plays, how you fight as
+  it sees it, and how your Mirror Matches went.
 
 ## Speed check: done (2026-10-28)
 
@@ -119,10 +135,9 @@ seconds after a match, the fallbacks are:
 
 Large, about a week: the speed check, recorder and labeller, network and
 trainer, the rogue and its look, tests, and a gallery card with its likeness
-score. It needs no voice, since it's silent.
+score. It needs no voice: it's silent.
 
-## Your call
+## Your call (answered 2026-10-28)
 
-- **Voice:** silent, or an eerie echo voice later?
-- **When it shows up:** in every match once it's ready, or only as a special
-  event, such as a "Mirror Match" stop on the Trail?
+- **Voice:** silent.
+- **When it shows up:** only in a Mirror Match stop on the Trail.

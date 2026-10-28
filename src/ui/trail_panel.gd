@@ -231,6 +231,8 @@ static func stop_text(st: Dictionary, row: int, visited := false) -> String:
 		lines.append("Rest a while")
 	else:
 		lines.append(Run.MAP_NAMES.get(st.map, st.map))
+		if st.kind == "mirror":
+			lines.append("Your Doppelbunny hunts you")
 		var mods: Array = st.mods.filter(func(m): return m != "golden_hour").map(func(m): return Burrow.MODIFIERS[m].name)
 		if not mods.is_empty():
 			lines.append(", ".join(mods))

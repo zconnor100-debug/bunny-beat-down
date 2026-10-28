@@ -484,7 +484,8 @@ func _finish_run_stop() -> void:
 	var won := p.alive and match_manager.phase == MatchManager.Phase.ENDED
 	var placement := p.placement if not p.alive else (1 if won else match_manager.alive_critters().size())
 	var guns: Array = (p.inventory.weapons if p.alive else p.last_weapons).filter(func(w): return w != null and w != p.get_meta(&"stolen", null))
-	_run_result = Run.finish_match(placement, match_manager.total, p.kills, won, guns, match_manager.time_keeper.charges, Boons.held)
+	_run_result = Run.finish_match(placement, match_manager.total, p.kills, won, guns, match_manager.time_keeper.charges, Boons.held,
+		match_manager.doppel_beaten)
 	match_manager._check_mastery()   # (the runs' milestones)
 
 
@@ -497,9 +498,10 @@ func _run_line() -> String:
 		return "RUN COMPLETE! +%d 🌰" % Run.COMPLETE_ACORNS
 	if r.over:
 		return "Goal missed. Your last acorn helmet cracked: the run is over."
+	var mirror := " You broke the mirror: a boon for that too." if r.get("mirror", false) else ""
 	if r.met:
-		return "Goal made! A boon waits for you on the Trail."
-	return "Goal missed: an acorn helmet cracked (%d left)." % int(r.helmets)
+		return "Goal made! A boon waits for you on the Trail." + mirror
+	return "Goal missed: an acorn helmet cracked (%d left)." % int(r.helmets) + mirror
 
 
 # ---- end of match -------------------------------------------------------------------------------------

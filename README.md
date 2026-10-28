@@ -259,7 +259,7 @@ and the final shot replayed from three angles. There's a
     while the others work round to your sides; and they all rush you while
     you reload or eat a clover. Gangs also form mid-match: two bots near each
     other who both hate the same bot team up against it ("Truce? Just till
-    Rocco is down.") and split when it's down, or team up against you once
+    we get Rocco.") and split when it's down, or team up against you once
     you're leading the match. None of it lasts. When the win is in sight, a
     disloyal member turns on a mate ("Nothing personal."): a sneak readily, a
     noble never. Beat one down in front of the rest and a hurting, disloyal
@@ -296,7 +296,7 @@ and the final shot replayed from three angles. There's a
   helmets cracks; lose all three and the run is over. Your boons, your
   rewinds (three for the whole run) and one **keepsake** gun (pocketed at
   the end of a match) carry from stop to stop, and a run survives quitting
-  the game.
+  the game. Once your Doppelbunny is ready, a run has a **Mirror Match**.
 - **Boons: a build that grows as you go.** Acorn shrines on every map (hold
   interact to pray; bots walk on by) and every goal you make on the Trail
   offer one of three boons (`Boons`, `DraftPanel`); picking one again levels
@@ -311,6 +311,20 @@ and the final shot replayed from three angles. There's a
   them head there), and which guns you win with (they fight you at the
   range those guns are worst at). Sit still too long and the nearest bots
   come to flush you out; go on a hot streak and they sharpen up for a while.
+- **Your Doppelbunny: a rogue that learned to play like you.** Every match
+  quietly records how you fight (on your computer only): every 0.2 s of a
+  fight, your situation (health, ammo, gun, the enemy's distance and
+  bearing, cover, the Briar...) and what you did about it (push, hold, back
+  off or circle; sprint, crouch, go prone, jump, fire, heal, throw, club).
+  After the match a small neural network, written in plain GDScript and
+  trained on a background thread, learns your decisions from it and is
+  scored on moments it never trained on. Once it has watched three matches
+  and plays more like you than guessing would, a run gets a Mirror Match:
+  your own critter, fur and outfit in a cracked mirror, carrying your
+  favourite gun and landing where you like to land, hunts you in silence,
+  fighting the way you do. Beat it down for a boon. Its card heads the
+  Rogues' Gallery: how alike it plays ("plays 71% like you"), and how you
+  fight, as it sees it.
 - **The Burrow (roguelike progression).** Every match pays acorns (by
   placement, beat-downs, revenge on rivals and bounties). Spend them in the
   Burrow on perks that are real power, because there's nobody else's
@@ -565,7 +579,11 @@ The full write-up is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
     never does, cutting and running, never again), the Doppelbunny's
     learning (decisions read off the controls, watching you fight, a
     network that learns a made-up player's style and is measured on moments
-    it never saw, two styles making two players, the newest moments kept),
+    it never saw, two styles making two players, the newest moments kept)
+    and the Doppelbunny itself (going prone at range where a bot never
+    does, backing off hurt, a reckless player's Doppel circling and hopping
+    instead; a Mirror Match on the Trail once it's ready, dressed as you,
+    silent, a boon for beating it down),
     and the Trail and draft
     screens; milestones
     (reached once, paid once, each unlock acting only for you);

@@ -9,8 +9,10 @@ extends RefCounted
 ## Grudge Match), your rewinds (one pool for the whole run, not three a
 ## match), and a keepsake: one gun you were holding at the end of a match,
 ## pocketed for the start of the next. Picnics are rests: mend a helmet,
-## find two rewinds, or take a boon. Saved with the PlayerProfile after every
-## step, so a run survives quitting the game.
+## find two rewinds, or take a boon. Once your Doppelbunny is ready
+## (DoppelData.ready), a run has one Mirror Match: it's in the lobby, hunting
+## you, and beating it down is a boon of its own. Saved with the
+## PlayerProfile after every step, so a run survives quitting the game.
 
 const ROWS := 5
 const HELMETS := 3
@@ -22,6 +24,7 @@ const KINDS := {
 	"grudge": {"name": "Grudge Match", "text": "The bots you've made radical come for you, as a gang. Two boons if you make the goal."},
 	"golden": {"name": "Golden Grove", "text": "All loot one rarity better and double acorns, for a harder goal."},
 	"picnic": {"name": "Picnic", "text": "No fighting: mend a helmet, find two rewinds, or take a boon."},
+	"mirror": {"name": "Mirror Match", "text": "Your Doppelbunny is here, hunting you: it learned to fight like you. Beat it down for a boon."},
 	"finale": {"name": "The Big Beat Down", "text": "A full lobby and a nemesis hunting you. Make the top 3 to finish the run."},
 }
 ## The goal at each row: make the top this share of the lobby (at least 3)...
@@ -56,7 +59,7 @@ static func active() -> bool:
 
 ## Start a new run (the old one, if any, is given up).
 static func start(seed_: int) -> void:
-	var s := {"active": true, "seed": seed_, "trail": generate(seed_), "row": 0, "at": -1, "playing": -1,
+	var s := {"active": true, "seed": seed_, "trail": generate(seed_, DoppelData.ready()), "row": 0, "at": -1, "playing": -1,
 		"helmets": max_helmets(), "rewinds": REWINDS + Mastery.run_rewinds(), "boons": {}, "keepsake": {},
 		"pending": [], "last": {}, "over": false, "complete": false,
 		"stats": {"matches": 0, "wins": 0, "kills": 0, "goals": 0}}
@@ -65,8 +68,10 @@ static func start(seed_: int) -> void:
 
 
 ## The Trail: ROWS rows of stops (the last is the finale), each stop
-## {map, kind, mods, links} where links are the stops in the next row it leads to.
-static func generate(seed_: int) -> Array:
+## {map, kind, mods, links} where links are the stops in the next row it leads
+## to. With `mirror`, one match stop in the middle rows is a Mirror Match
+## (picked apart from the rest, so the same seed lays out the same Trail).
+static func generate(seed_: int, mirror := false) -> Array:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = seed_
 	var mods := Burrow.MODIFIERS.keys().filter(func(m): return m != "golden_hour")
@@ -113,6 +118,12 @@ static func generate(seed_: int) -> Array:
 			if not a.any(func(st): return st.links.has(j)):
 				var near := roundi(float(j) / maxf(b.size() - 1, 1) * (a.size() - 1))
 				a[near].links.append(j)
+	if mirror:
+		var pick := RandomNumberGenerator.new()
+		pick.seed = seed_ * 31 + 7
+		var row: Array = trail[pick.randi_range(1, ROWS - 2)]
+		var fights := row.filter(func(st): return st.kind != "picnic")
+		fights[pick.randi() % fights.size()].kind = "mirror"
 	return trail
 
 
@@ -179,8 +190,10 @@ static func goal_met(placement: int, total: int, kills: int) -> bool:
 
 
 ## A match stop is over for you. `keep`: the guns you were holding at the end
-## (a keepsake comes from these). Returns {met, helmets, over, complete}.
-static func finish_match(placement: int, total: int, kills: int, won: bool, keep: Array, rewinds_left: int, boons: Dictionary) -> Dictionary:
+## (a keepsake comes from these); `broke_mirror`: you beat your Doppelbunny
+## down (a Mirror Match). Returns {met, helmets, over, complete, mirror}.
+static func finish_match(placement: int, total: int, kills: int, won: bool, keep: Array, rewinds_left: int, boons: Dictionary,
+		broke_mirror := false) -> Dictionary:
 	var s := state()
 	if not s.get("active", false) or s.get("playing", -1) < 0:
 		return {}
@@ -202,6 +215,8 @@ static func finish_match(placement: int, total: int, kills: int, won: bool, keep
 	else:
 		s.helmets -= 1
 		_record("helmets_lost", 1)
+	if kind == "mirror" and broke_mirror:
+		pending.append("draft")
 	var options := keep.filter(func(w): return w is WeaponInstance).map(func(w): return (w as WeaponInstance).to_dict())
 	if not options.is_empty() and s.helmets > 0:
 		pending.append({"keepsake": options})
@@ -222,7 +237,7 @@ static func finish_match(placement: int, total: int, kills: int, won: bool, keep
 	s.playing = -1
 	_record_best(s)
 	_save(s)
-	return {"met": met, "helmets": s.helmets, "over": s.over, "complete": s.complete}
+	return {"met": met, "helmets": s.helmets, "over": s.over, "complete": s.complete, "mirror": kind == "mirror" and broke_mirror}
 
 
 static func _advance(s: Dictionary) -> void:

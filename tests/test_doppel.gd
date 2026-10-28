@@ -173,3 +173,148 @@ func test_the_newest_moments_are_kept_and_trained_on_after_a_match() -> void:
 	DoppelData._loaded = false   # (read back from the file)
 	check(DoppelData.moments() == DoppelData.MAX_MOMENTS and DoppelData.matches() == 2 and DoppelData._rows[DoppelData._rows.size() - PER] == 7.0,
 		"and they're saved")
+
+
+## A critter fighting with a DoppelBrain that learned `net` (or a plain
+## AIBrain), a rifle in its paws, you in its sights `far` metres off.
+func _fighter(net: DoppelNet, far: float) -> AIBrain:
+	var me := spawn_critter(TEST_DEF, Vector3(0, 0.1, 0))
+	var you := spawn_critter(TEST_DEF, Vector3(0, 0.1, -far), PI)
+	you.is_player = true
+	var b: AIBrain = DoppelBrain.new() if net else AIBrain.new()
+	if net:
+		(b as DoppelBrain).net = net
+	b.name = "AIBrain"
+	b.skill = 0.8
+	b.traits = {"no_slot": true}
+	me.add_child(b)
+	b.set_physics_process(false)
+	var rifle := WeaponDB.get_weapon(&"carrot_rifle")
+	me.give_weapon(WeaponInstance.new(rifle))
+	me.inventory.add_ammo(rifle.ammo_type, 60)
+	b.target = you
+	b.mode = AIBrain.Mode.FIGHT
+	return b
+
+
+## `n` thinks of a fight (in sight all along): how often it went prone, and pushed in.
+func _fights(b: AIBrain, n: int) -> Dictionary:
+	var prone := 0
+	var push := 0
+	for i in n:
+		b._last_seen_t = b._clock
+		b._last_seen_pos = b.target.get_chest_position()
+		b._act(DoppelRecorder.STEP)
+		prone += 1 if b.me.want_prone else 0
+		push += 1 if b.me.move_input.y > 0.5 else 0
+	return {"prone": prone, "push": push}
+
+
+func test_the_doppelbunny_fights_like_the_one_it_learned_from() -> void:
+	make_arena(160.0)
+	var careful: DoppelNet = DoppelNet.train(_style(_careful, 3000, 4), 4, 0.01, 2).net
+	var reckless: DoppelNet = DoppelNet.train(_style(_reckless, 2000, 6), 4, 0.01, 3).net
+	await wait_physics(2)
+	# far off (54 m, in rifle range): the careful player held and went prone; a bot closes in
+	var doppel := _fighter(careful, 54.0)
+	var bot := _fighter(null, 54.0)
+	await wait_physics(3)
+	var d := _fights(doppel, 60)
+	var b := _fights(bot, 60)
+	check(d.prone > 40 and b.prone == 0, "far off, it goes prone as the player did (%d of 60 moments); a bot never does (%d)" % [d.prone, b.prone])
+	check(d.push < 15 and b.push > 40, "and holds there, where a bot pushes in (%d vs %d)" % [d.push, b.push])
+	var picked: Dictionary = (doppel as DoppelBrain).picked
+	check(int(picked.get("hold", 0)) > int(picked.get("push", 0)) * 2, "it chose to hold, by the odds (%s)" % [picked])
+	# hurt, it backs off
+	doppel.me.health = doppel.me.max_health * 0.2
+	(doppel as DoppelBrain).picked = {}
+	_fights(doppel, 60)
+	picked = (doppel as DoppelBrain).picked
+	check(int(picked.get("back", 0)) > 40, "hurt, it backs off, as the player did (%s)" % [picked])
+	check(doppel.me.move_input == DoppelBrain.MOVE_STICK[(doppel as DoppelBrain)._move], "with the stick, as you would")
+	# another player: far off, it circles round, hopping
+	var other := _fighter(reckless, 54.0)
+	await wait_physics(2)
+	_fights(other, 60)
+	picked = (other as DoppelBrain).picked
+	check(int(picked.get("right", 0)) > 40 and int(picked.get("jump", 0)) > 30 and int(picked.get("prone", 0)) < 10,
+		"learned from someone reckless, it circles round, jumping, and never lies down (%s)" % [picked])
+
+
+func _match(opponents: int) -> MatchManager:
+	var cage := HamsterCage.new()
+	add_child(cage)
+	await cage.generate(31, 0, false)
+	add_child(FX.new())
+	add_child(Projectiles.new())
+	var mm := MatchManager.new()
+	add_child(mm)
+	mm.setup(self, cage, opponents, 1, 31)
+	return mm
+
+
+func test_a_mirror_match_on_the_trail() -> void:
+	PlayerProfile.reset_for_tests()
+	RivalBook.reset_for_tests()
+	check(not DoppelData.ready(), "(nothing learned yet: no Mirror Match)")
+	DoppelData.add_match(_style(_careful, 500, 11), false)
+	DoppelData.add_match(_style(_careful, 500, 12), false)
+	check(not DoppelData.ready(), "two matches watched: not yet")
+	DoppelData.add_match(_style(_careful, 500, 13))
+	DoppelData.wait()
+	check(DoppelData.ready(), "three, and it plays like you: it's ready (%s)" % [DoppelData.model().get("likeness")])
+	Run.start(77)
+	var trail: Array = Run.state().trail
+	var at := []
+	for r in trail.size():
+		for c in trail[r].size():
+			if trail[r][c].kind == "mirror":
+				at.append([r, c])
+	check(at.size() == 1 and at[0][0] >= 1 and at[0][0] <= Run.ROWS - 2, "one Mirror Match, in the middle of the Trail (%s)" % [at])
+	var plain := Run.generate(77)
+	plain[at[0][0]][at[0][1]].kind = "mirror"
+	check(plain == trail, "the rest of the Trail as it would be without it")
+	var st := Run.state()
+	st.row = at[0][0]
+	st.at = trail[at[0][0] - 1].map(func(x): return x.links.has(at[0][1])).find(true)
+	Run._save(st)
+	check(Run.choose(at[0][1]), "go to the Mirror Match")
+	Run.in_match = true
+	var mm := await _match(4)
+	var you := mm.spawn_player(load("res://data/critters/bun.tres"), "default")
+	var doppel := mm.doppel
+	if not check(doppel != null and doppel.display_name == "Doppel-Bun", "your Doppelbunny is in the lobby: %s" % [doppel]):
+		Run.in_match = false
+		return
+	var brain := doppel.get_node("AIBrain") as DoppelBrain
+	check(brain != null and brain.net != null and brain.traits.get("hunts_you", false), "with the brain that learned you, hunting you")
+	check(doppel.def == you.def and doppel.visual.name_tag.text == "◇ Doppel-Bun", "you, in a cracked mirror: %s" % doppel.visual.name_tag.text)
+	var mirrored := doppel.visual.find_children("*", "MeshInstance3D", true, false).filter(func(m): return m.material_overlay is ShaderMaterial \
+		and (m.material_overlay as ShaderMaterial).shader == DoppelBrain.SHADER)
+	check(mirrored.size() >= doppel.visual.meshes.size(), "the mirror over all of it (%d meshes)" % mirrored.size())
+	check(mm.headlines()[0].begins_with("MIRROR MATCH"), "the lobby news leads with it: %s" % mm.headlines()[0])
+	check(DoppelData.mirror("met") == 1, "(a Mirror Match met)")
+	var heard := []
+	var listen := func(c, text): heard.append([c, text])
+	Events.taunt.connect(listen)
+	mm.taunt(doppel, "spot")
+	mm._say(doppel, Cast.say("says", "anything"))
+	Events.taunt.disconnect(listen)
+	check(heard.is_empty(), "it never says a word")
+	for c in mm.critters:
+		c.place_at(Vector3(c.global_position.x, 40.0, c.global_position.z), 0.0)
+		if c != you:
+			c.get_node("AIBrain").process_mode = Node.PROCESS_MODE_DISABLED
+	await wait_physics(3)
+	doppel.take_damage(DamageInfo.make(9999.0, DamageInfo.Kind.BULLET, you, &"carrot_rifle"))
+	await wait_frames(2)
+	check(mm.doppel_beaten and DoppelData.mirror("beaten") == 1, "you beat it down")
+	check(not RivalBook._book().has_section(doppel.display_name), "(the rogues' book keeps nothing of it)")
+	var r := Run.finish_match(2, mm.total, 1, false, [], 3, {}, mm.doppel_beaten)
+	check(r.met and r.mirror and Run.pending().filter(func(p): return str(p) == "draft").size() == 2,
+		"the goal and the broken mirror: a boon each (%s)" % [Run.pending()])
+	check(GalleryPanel.doppel_card().contains("Mirror Matches: 1") and GalleryPanel.doppel_title().contains("like you"),
+		"the Rogues' Gallery keeps its card: %s" % GalleryPanel.doppel_title())
+	Run.in_match = false
+	PlayerProfile.reset_for_tests()
+	RivalBook.reset_for_tests()

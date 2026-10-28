@@ -228,7 +228,7 @@ func test_two_who_hate_the_same_bot_team_up_and_split_when_its_down() -> void:
 	var g := mm.gang_of(a)
 	check(g != null and b.gang == a.gang and g.enemy == x, "two grudge-holders near each other team up against %s" % x_n)
 	check(_brain(a).gang_enemy == x and _brain(b).gang_enemy == x, "and go after it first")
-	check(_said(a, Cast.TRUCE_LINES, {"them": x_n}), "\"Truce? Just till %s is down.\"" % x_n)
+	check(_said(a, Cast.TRUCE_LINES, {"them": x_n}), "\"Truce? Just till we get %s.\"" % x_n)
 	check(x.gang == "" and you.gang == "", "(it's not about you)")
 	x.take_damage(DamageInfo.make(9999.0, DamageInfo.Kind.BULLET, null))
 	await wait_physics(2)
