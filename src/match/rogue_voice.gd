@@ -4,13 +4,15 @@ extends AudioStreamPlayer3D
 ##
 ## Every line a rogue can say was spoken ahead of time by tools/voices/
 ## build_voices_maya.py (Maya1, a voice designed for each rogue from a
-## written description; those not yet recast by build_voices.py's Kokoro
-## TTS) and packed into one file per rogue, assets/voices/<rogue>.ogg,
+## written description) and packed into one file per rogue, assets/voices/<rogue>.ogg,
 ## with assets/voices/voices.json saying where each clip is. A line's `plan`
 ## there is its parts in order: a clip of its words, the name it calls you
 ## (`you`: your critter's, "Bun"), a number (`num`: the score so far), another
 ## rogue's name (`them`), or a pause; each part is a stretch of the rogue's
 ## file. Lines are looked up by the key they were picked with (Cast.say).
+## Lines added later (build_voices_maya.py --new-lines) are spoken into a
+## file of their own beside the rogue's (<rogue>_2.ogg), so the clips already
+## made are never re-encoded; such a clip names its file.
 
 const BANK := "res://assets/voices/voices.json"
 const MAX_AT_ONCE := 4          ## voices playing at once (the rest go unsaid)
@@ -24,7 +26,8 @@ static var _loaded := false
 static var _streams: Dictionary = {}   # file -> AudioStream
 static var _active: Array[RogueVoice] = []
 
-var _parts: Array = []   # [start, length] (a clip) or [-1, seconds] (a pause)
+var _parts: Array = []   # [start, length, file] (a clip) or [-1, seconds] (a pause)
+var _file := ""          # the file the stream is
 var _i := -1
 var _end := 0.0
 var _wait := 0.0
@@ -46,11 +49,13 @@ static func speak(c: Critter, said: Dictionary) -> RogueVoice:
 			_active.erase(v)
 	if _active.size() >= MAX_AT_ONCE:
 		return null
-	var stream := _stream(String(_bank.rogues[c.display_name].file))
+	var file := String(_bank.rogues[c.display_name].file)
+	var stream := _stream(file)
 	if stream == null:
 		return null
 	var v := RogueVoice.new()
 	v.stream = stream
+	v._file = file
 	v.bus = &"Voice"
 	# loud, and carrying: a taunt from across the field still reads over the
 	# gunfire, only a little muffled by the distance
@@ -67,8 +72,8 @@ static func speak(c: Critter, said: Dictionary) -> RogueVoice:
 	return v
 
 
-## A line's parts, as stretches of the rogue's file ([start, length]) and
-## pauses ([-1, seconds]); empty if the rogue or the line isn't voiced.
+## A line's parts, as stretches of the rogue's files ([start, length, file])
+## and pauses ([-1, seconds]); empty if the rogue or the line isn't voiced.
 static func plan(rogue: String, key: String, fields: Dictionary) -> Array:
 	var r: Dictionary = _load().get("rogues", {}).get(rogue, {})
 	var out := []
@@ -76,7 +81,10 @@ static func plan(rogue: String, key: String, fields: Dictionary) -> Array:
 		if step is float:
 			out.append([-1.0, step])
 		elif r.clips.has(step):
-			out.append(r.clips[step])
+			var clip: Array = r.clips[step]
+			out.append([clip[0], clip[1], clip[2] if clip.size() > 2 else r.file])
+		elif not String(step).contains(":"):
+			return []   # (its words aren't all there: a line added since this rogue was voiced)
 	# (a line whose words weren't all found isn't said at all)
 	return out if out.any(func(p): return float(p[0]) >= 0.0) else []
 
@@ -140,6 +148,13 @@ func _next() -> void:
 		stop()
 		_wait = float(p[1])
 		return
+	if String(p[2]) != _file:   # (a clip from a file of lines added later)
+		var other := _stream(String(p[2]))
+		if other == null:
+			_next()
+			return
+		_file = String(p[2])
+		stream = other
 	_end = float(p[0]) + float(p[1])
 	# (and by the clock, in case the audio isn't running: no sound device)
 	_due = Time.get_ticks_msec() + int((float(p[1]) / maxf(AudioServer.playback_speed_scale, 0.1) + 0.3) * 1000.0)

@@ -82,3 +82,29 @@ func test_a_taunt_carries_across_the_field_over_the_gunfire() -> void:
 	v.stop()
 	v.queue_free()
 	await wait_frames(2)
+
+
+func test_lines_added_later_play_from_their_own_file() -> void:
+	# (build_voices_maya.py --new-lines speaks new lines into a file beside the rogue's: <rogue>_2.ogg)
+	var nutsy: Dictionary = RogueVoice._load().rogues["Nutsy"]
+	var was: Dictionary = nutsy.clips
+	nutsy.clips = was.duplicate()
+	nutsy.clips["says"] = [0.0, 0.4, "rocco.ogg"]
+	make_arena()
+	var c := spawn_critter("res://data/critters/squirrel.tres", Vector3.ZERO)
+	c.display_name = "Nutsy"
+	await wait_physics(2)
+	var v := RogueVoice.speak(c, Cast.say("says", String(Cast.member("Nutsy").says)))
+	check(v != null and v._parts[0][2] == "rocco.ogg" and v.stream == RogueVoice._stream("rocco.ogg"), "a clip comes from the file it was added in")
+	var voice := RivalBook.personality_of("Nutsy")
+	var key := "p.%s.spot.0" % voice
+	var line := Cast.say(key, RivalBook.PERSONALITIES[voice].spot[0], {"you": "Bun", "k": 1, "w": 2})
+	check(not RogueVoice.plan("Nutsy", key, line.fields).is_empty() and RogueVoice.plan("Nutsy", key, line.fields)[0][2] == "nutsy.ogg",
+		"the rest from the rogue's own file")
+	check(not RogueVoice.plan("Nutsy", key, {"you": "Mister Nobody", "k": 1, "w": 2}).is_empty(), "a name it can't say is left out of the line")
+	var words: Array = RogueVoice.steps("Nutsy", key, line.fields).filter(func(s): return s is String and not s.contains(":"))
+	nutsy.clips.erase(words[0])
+	check(RogueVoice.plan("Nutsy", key, line.fields).is_empty(), "but a line whose words it wasn't given yet isn't said (only shown)")
+	nutsy.clips = was
+	v.queue_free()
+	await wait_frames(2)

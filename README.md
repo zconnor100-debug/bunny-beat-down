@@ -218,9 +218,10 @@ and the final shot replayed from three angles. There's a
     and it taunts you in its own voice, in speech bubbles and the kill feed
     ("Didn't see me, did you? 3–1.") and **out loud**: all 49 rogues have a
     voice of their own (designed for each with Maya1 from a written
-    description, many starting from a real speaker with the accent; those
-    not yet recast still speak with Kokoro TTS: hamsters squeak, frogs croak,
-    the nobles are British, the hotheads gabble), loud enough to carry across
+    description, many starting from a real speaker with the accent: a
+    Boston raccoon, a Geordie squirrel wheezing like a lifelong smoker, a
+    Jamaican frog, an ancient Transylvanian bunny; the hamsters pitched up to
+    a squeak, the fast talkers sped up), loud enough to carry across
     the field over the gunfire, and they comment on what you're wearing.
     Beat it and the game calls it **revenge**.
   - Beat the same bot down again and again and it **turns radical**: Sore,

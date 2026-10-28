@@ -2,19 +2,22 @@
  "Captain Carrot": {
   "desc": "Creative, alpha character. Male voice in their 30s with a american accent. Low pitch, deep timbre, very_fast pacing, excited tone at high intensity. A cocky, pumped-up action-movie hero barking one-liners, full of adrenaline.",
   "tag": "<excited>",
-  "accent": "American action hero"
+  "accent": "American action hero, faster and pumped",
+  "tempo": 1.1,
+  "pause": 0.25
  },
  "Vex": {
-  "desc": "Creative, spy character. Female voice in their 20s with a american accent. Low pitch, smooth timbre, slow pacing, dry tone at med intensity. Cool, quiet and calculating.",
-  "tag": "<whisper>",
-  "accent": "cool spy"
+  "desc": "Creative, spy character. Female voice in their 30s. Low pitch, smooth timbre, fast pacing, excited tone at high intensity. A sleek international spy, thrilled by the chase and enjoying every second of it, with a Russian accent.",
+  "tag": "<excited>",
+  "accent": "international spy, Russian-style (Slavic reference voice)",
+  "dialect": "slavic"
  },
  "Bunnicula": {
   "desc": "Creative, vampire character. Male voice in their 40s. Low pitch, gravelly timbre, slow pacing, sarcastic tone at med intensity. An ancient, centuries-old count from Transylvania, old and weary, with a heavy Eastern European accent.",
   "tag": "<sigh>",
   "accent": "ancient Transylvanian count (Eastern European reference voice)",
   "dialect": "vampire",
-  "tempo": 1.08
+  "tempo": 1.11
  },
  "Lop-Eared Larry": {
   "desc": "Creative, gangster character. Male voice in their 30s with a american accent. Normal pitch, nasally timbre, fast pacing, excited tone at high intensity. A jittery, fast-talking New Yorker from Brooklyn, always panicking.",
@@ -28,9 +31,12 @@
   "accent": "cheeky giggly British schoolgirl"
  },
  "Cottontail Kate": {
-  "desc": "Realistic female voice in the 30s age with a american accent. Normal pitch, warm timbre, slow pacing, neutral tone delivery at low intensity, entertainment domain, storyteller role, casual delivery. Calm, serene and soothing, a yoga teacher.",
+  "desc": "Realistic female voice in the 30s age. Normal pitch, warm timbre, conversational pacing, energetic tone delivery at low intensity, entertainment domain, storyteller role, casual delivery. A sunny, laid-back Australian yoga teacher, calm but upbeat.",
   "tag": "<exhale>",
-  "accent": "calm yoga teacher"
+  "accent": "sunny Aussie yoga teacher (Australian reference voice)",
+  "dialect": "australian",
+  "tempo": 1.15,
+  "pause": 0.3
  },
  "Hops McGee": {
   "desc": "Creative, animated_cartoon character. Male voice in their 30s with a thick Irish accent. Normal pitch, raspy timbre, fast pacing, energetic tone at high intensity. A hot-tempered brawler, always shouting.",
@@ -44,9 +50,10 @@
   "dialect": "australian"
  },
  "Acorn Al": {
-  "desc": "Creative, animated_cartoon character. Male voice in their 40s with a american accent. Normal pitch, gravelly timbre, slow pacing, dry tone at med intensity. A grumpy old miser who hoards acorns.",
+  "desc": "Creative, animated_cartoon character. Elderly male voice. Low pitch, raspy timbre, fast pacing, dry tone at med intensity. A grumpy old miser who hoards acorns, with the rough, gravelly voice of a lifelong chain smoker, wheezing and sighing heavily, with a thick Geordie, Newcastle accent.",
   "tag": "<sigh>",
-  "accent": "grumpy old miser"
+  "accent": "raspy old smoker, Geordie (Newcastle reference voice, a man in his fifties)",
+  "tag_at": "mid"
  },
  "Sir Scamper": {
   "desc": "Creative, animated_cartoon character. Male voice in their 30s with a british accent. Normal pitch, smooth timbre, conversational pacing, energetic tone at med intensity. A dashing swashbuckling cavalier, posh and gallant.",
@@ -65,14 +72,16 @@
   "dialect": "stammer"
  },
  "Kernel": {
-  "desc": "Creative, animated_cartoon character. Male voice in their 40s with a american accent. Low pitch, warm timbre, very_slow pacing, neutral tone at low intensity. A laid-back, sleepy philosopher.",
-  "tag": "<exhale>",
-  "accent": "laid-back philosopher"
+  "desc": "Creative, animated_cartoon character. Male voice in their 20s. Normal pitch, raspy timbre, fast pacing, excited tone at high intensity. A totally stoked California surfer dude who thinks he's a philosopher, laid-back but buzzing.",
+  "tag": "<chuckle>",
+  "accent": "stoked California surfer dude (Californian reference voice 1)",
+  "dialect": "surfer"
  },
  "Bushytail Betty": {
-  "desc": "Creative, animated_cartoon character. Female voice in their 20s with a american accent. High pitch, smooth timbre, brisk pacing, excited tone at high intensity. A bubbly, cheeky valley girl prankster.",
+  "desc": "Creative, animated_cartoon character. Female voice in their 20s. Normal pitch, smooth timbre, fast pacing, excited tone at high intensity. A bubbly, cheeky Valley girl prankster, like, totally.",
   "tag": "<giggle>",
-  "accent": "bubbly valley girl"
+  "accent": "bubbly Valley girl (Californian reference voice), pitched up",
+  "pitch": 3
  },
  "Sly": {
   "desc": "Creative, spy character. Male voice in their 30s with a american accent. Low pitch, smooth timbre, slow pacing, sarcastic tone at med intensity. A sly, silky con artist.",
@@ -120,9 +129,10 @@
   "accent": "cheeky city kid"
  },
  "Rocco": {
-  "desc": "Creative, animated_cartoon character. Male voice in their 30s with a thick Boston accent. Normal pitch, harsh timbre, fast pacing, energetic tone at high intensity. A loudmouth street brawler.",
+  "desc": "Creative, gangster character. Male voice in their 30s. Normal pitch, harsh timbre, fast pacing, energetic tone at high intensity. A loudmouth Boston townie brawler from Southie, wicked tough, with a thick Boston accent.",
   "tag": "<angry>",
-  "accent": "Boston"
+  "accent": "loudmouth Boston townie (Rhode Island / Massachusetts reference voice 2)",
+  "dialect": "boston"
  },
  "Masky": {
   "desc": "Creative, spy character. Male voice in their 30s with a american accent. Low pitch, smooth timbre, slow pacing, dry tone at low intensity. A whispering masked thief.",
@@ -145,9 +155,10 @@
   "accent": "pompous British queen"
  },
  "Croaker": {
-  "desc": "Creative, animated_cartoon character. Male voice in their 40s with a american accent. Low pitch, throaty timbre, very_slow pacing, dry tone at med intensity. A slow, heavy Southern drawl, a grumpy old swamp frog.",
+  "desc": "Creative, animated_cartoon character. Elderly male voice. Low pitch, throaty timbre, fast pacing, dry tone at med intensity. A grumpy old swamp frog, cranky and croaky, with a thick Jamaican accent.",
   "tag": "<sigh>",
-  "accent": "Southern drawl"
+  "accent": "grumpy old Jamaican swamp frog (Caribbean reference voice)",
+  "tag_at": "mid"
  },
  "Lily Pad Lou": {
   "desc": "Creative, mythical_godlike_magical character. Female voice in their 30s with a british accent. Normal pitch, ethereal timbre, conversational pacing, excited tone at low intensity. A dreamy, whimsical pond fairy, sing-song and wonder-struck.",
@@ -179,9 +190,10 @@
   "accent": "mob boss"
  },
  "Gulp": {
-  "desc": "Creative, animated_cartoon character. Male voice in their 40s with a american accent. Low pitch, throaty timbre, conversational pacing, excited tone at high intensity. A thick Southern bluegrass country accent, loud and boastful.",
+  "desc": "Creative, animated_cartoon character. Male voice in their 40s. Low pitch, throaty timbre, fast pacing, excited tone at high intensity. A loud, boastful hillbilly frog from the Kentucky hills, hollering with a thick Southern twang.",
   "tag": "<laugh>",
-  "accent": "Southern bluegrass"
+  "accent": "hollering Southern hillbilly (Georgia reference voice)",
+  "dialect": "bluegrass"
  },
  "Chompers": {
   "desc": "Creative, animated_cartoon character. Male voice in their 30s with a british accent. Normal pitch, gravelly timbre, fast pacing, energetic tone at high intensity. A hungry, hot-headed Highland brute with a thick Scottish brogue.",

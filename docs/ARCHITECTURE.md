@@ -314,15 +314,23 @@ The third map follows the cage's pattern (`ToyBox extends Island`,
   accent spelled out by `dialects.py`, its pitch and tempo), held steady by
   two anchor sentences in that voice (`tools/voices/anchors/`, some first
   made with a real speaker of the accent in front), the best of several
-  takes per line kept by Whisper and a voice encoder; rogues not yet recast
-  keep `tools/voices/build_voices.py`'s Kokoro-82M voices (two voice packs
-  blended, pitched for its species, paced for its personality:
-  `tools/voices/cast_voices.json`). Either way every line is rendered as parts: words, your name ("Bun!" with the
+  takes per line kept by Whisper and a voice encoder. (Before Maya1 every
+  rogue spoke with `tools/voices/build_voices.py`'s Kokoro-82M voices: two
+  voice packs blended, pitched for its species, paced for its personality,
+  `tools/voices/cast_voices.json`. It still provides the shared parts of
+  the pipeline.) Every line is rendered as parts: words, your name ("Bun!" with the
   punctuation it ends on), other rogues' names, numbers 0–60 for scores; a
   line's plan stitches them back together at run time. Each rogue's clips
   are one Ogg file (16 kHz, ~0.8 MB) with an index in
   `assets/voices/voices.json`; `test_voices` checks every rogue can say
-  every line with every name.
+  every line with every name. A new line renumbers the word clips (an id is
+  its words' place in the list of every line's words), so lines added later
+  don't rebuild everyone: `build_voices_maya.py --new-lines` matches each
+  rogue's clips to the new ids by their words (the bank keeps the list,
+  `segs`) and speaks only what's missing into a second file,
+  `<rogue>_2.ogg`. Such a clip names its file, so nothing already made is
+  re-encoded, and a line whose words a rogue hasn't been given yet is only
+  shown, never half-said.
 - **`PlayerProfile`** remembers the player's landings and beat-downs by
   weapon. `MatchManager` acts as a small director: some bots drop at your
   favourite landmark, `AIBrain.player_style` shifts the bots' preferred

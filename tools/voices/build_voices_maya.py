@@ -1,6 +1,7 @@
 """Speak every rogue's lines in a voice designed for it with Maya1 (Maya Research, Apache-2.0).
 
     HF_HOME=~/ai/hf-cache ~/ai/venvs/chatterbox/bin/python tools/voices/build_voices_maya.py [--only "Sly,Nutsy"]
+    ... build_voices_maya.py --new-lines [--dry-run]     (after lines.json gains lines: only what's new)
 
 The successor to build_voices.py (Kokoro): the same clips and the same bank
 (assets/voices/<rogue>.ogg + voices.json, which RogueVoice reads), but each
@@ -20,12 +21,20 @@ would wander from clip to clip. Three things hold it still:
 Accents Maya1 wasn't trained on come two ways: the words respelled in the
 accent ("dialect": dialects.py; the text on screen stays as written) and,
 for some, a short recording of a real speaker with that accent read in front
-of the first anchor sentence (VCTK, CC BY 4.0, or Kyutai's voice donations,
-CC0: the anchor's "ref"), so the voice starts out with the accent and the
-anchors carry it into every clip. A "pitch" (semitones) makes a squeakier
-critter; a "tempo" reads it faster at the same pitch, and a "pause" cuts the
-long pauses inside a line down to that many seconds (lines barked mid-fight
-have to land quickly).
+of the first anchor sentence (VCTK, CC BY 4.0, Kyutai's voice donations,
+CC0, or GLOBE's Common Voice speakers, CC0: the anchor's "ref"), so the voice
+starts out with the accent and the anchors carry it into every clip. A
+"tag" (an emotion Maya1 acts, like <sigh>) goes in front of the rogue's own
+line, or after its first sentence with "tag_at": "mid". A "pitch"
+(semitones) makes a squeakier critter; a "tempo" reads it faster at the same
+pitch, and a "pause" cuts the long pauses inside a line down to that many
+seconds (lines barked mid-fight have to land quickly).
+Lines added to the game later (lines.json gains templates, or a name) don't need
+every voice rebuilt: --new-lines speaks only the clips no rogue has yet, into a
+file of their own beside each rogue's (<rogue>_2.ogg, then _3...), and keeps
+every clip already made where it is (re-encoding them would cost quality).
+A clip's id is its words' place in the list of every line's words, so a new
+line renumbers them: the bank keeps that list ("segs") to match them up.
 Needs (in that venv): transformers, snac, librosa, chatterbox-tts (its voice
 encoder scores how alike two clips sound), ffmpeg and a CUDA GPU (~16 GB).
 """
@@ -221,6 +230,13 @@ def _capital(text: str) -> str:
     return re.sub(r"^((?:<[^>]+>\s*)*[^A-Za-z0-9<]*)([a-z])", lambda m: m.group(1) + m.group(2).upper(), text, count=1)
 
 
+def tagged(design: dict, text: str) -> str:
+    """The rogue's own line with its tag acted in it: in front, or with "tag_at": "mid" after the line's first sentence
+    ("Mine. <sigh> All of it. Mine."; a sigh in front was lost in the breath before the words)."""
+    head, _, rest = text.partition(". ")
+    return f'{head}. {design["tag"]} {rest}' if design.get("tag_at") == "mid" and rest else f'{design["tag"]} {text}'
+
+
 def anchors_for(m: Maya, name: str, design: dict) -> tuple:
     """The rogue's two anchor sentences (made once, then kept): [(text, codes)], and its voice (their mean)."""
     path = ANCHORS / (B.slug(name) + ".json")
@@ -247,7 +263,7 @@ def speak_all(m: Maya, name: str, design: dict, clips: dict, log) -> dict:
     seed = int(hashlib.sha1(name.encode()).hexdigest()[:6], 16) + 7
     desc = design["desc"]
     accent = lambda t: _capital(D.say(t, design.get("dialect")))
-    said = {cid: accent(f'{design["tag"]} {t}' if cid == "says" and design.get("tag") else t) for cid, t in clips.items()}
+    said = {cid: accent(tagged(design, t) if cid == "says" and design.get("tag") else t) for cid, t in clips.items()}
     prefix = sum(len(m.turn(desc, t)) + len(c) + 2 for t, c in anchors)
     best = {}   # clip id: (score, audio), the best take so far
 
@@ -329,9 +345,35 @@ def quickened(audio: np.ndarray, tempo: float = 1.0, pause: float | None = None)
     return audio
 
 
+def render(m: Maya, name: str, design: dict, clips: dict, log) -> dict:
+    """A rogue's clips spoken, pitched and quickened as its design says, and finished: {clip id: audio}."""
+    audio = speak_all(m, name, design, clips, log)
+    if design.get("pitch"):
+        audio = {cid: pitched(a, design["pitch"]) for cid, a in audio.items()}
+    if design.get("tempo") or design.get("pause"):
+        audio = {cid: quickened(a, design.get("tempo", 1.0), design.get("pause")) for cid, a in audio.items()}
+    return {cid: B.finish(a.astype(np.float32)) for cid, a in audio.items()}
+
+
+def pack(audio: dict, path: Path, named: bool = False) -> dict:
+    """Clips into one Ogg file with a short gap after each: {clip id: [start, length]} ([start, length, file] for a
+    file of lines added later: `named`)."""
+    pieces, index, t = [], {}, 0.0
+    gap = np.zeros(int(SR * B.GAP), np.float32)
+    for cid in sorted(audio):
+        x = audio[cid]
+        index[cid] = [round(t, 4), round(len(x) / SR, 4)] + ([path.name] if named else [])
+        pieces += [x, gap]
+        t += (len(x) + len(gap)) / SR
+    B.encode(np.concatenate(pieces), path)
+    return index
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--only", default="")
+    ap.add_argument("--new-lines", action="store_true", help="speak only the clips no rogue has yet (lines.json gained lines)")
+    ap.add_argument("--dry-run", action="store_true", help="with --new-lines: say what would be spoken, and stop")
     args = ap.parse_args()
     data = json.loads((HERE / "lines.json").read_text())
     templates, rogues, you = data["templates"], data["rogues"], data["you"]
@@ -355,36 +397,102 @@ def main() -> None:
     B.segs_text = segs
     B.names_needed = L.names_said(templates)
     only = {s.strip() for s in args.only.split(",") if s.strip()}
-    m = Maya()
     OUT.mkdir(parents=True, exist_ok=True)
     bank_path = OUT / "voices.json"
     bank = json.loads(bank_path.read_text()) if bank_path.exists() else {"rogues": {}}
     t0 = time.time()
     log = lambda s: print("[%5.0fs] %s" % (time.time() - t0, s), flush=True)
+    save = lambda: bank_path.write_text(json.dumps(bank, separators=(",", ":")) + "\n")
+    if args.new_lines:
+        new_lines(bank, data, designs, segs, seg_id, plans, only, args.dry_run, save, log)
+        return
+    m = Maya()
     for r in rogues:
         if only and r["name"] not in only:
             continue
         clips = {cid: L.spoken(t) for cid, t in B.rogue_clips(r, templates, plans, seg_id, you, rogues).items()}
-        audio = speak_all(m, r["name"], designs[r["name"]], clips, log)
-        d = designs[r["name"]]
-        if d.get("pitch"):
-            audio = {cid: pitched(a, d["pitch"]) for cid, a in audio.items()}
-        if d.get("tempo") or d.get("pause"):
-            audio = {cid: quickened(a, d.get("tempo", 1.0), d.get("pause")) for cid, a in audio.items()}
-        pieces, index, t = [], {}, 0.0
-        gap = np.zeros(int(SR * B.GAP), np.float32)
-        for cid in sorted(audio):
-            x = B.finish(audio[cid].astype(np.float32))
-            index[cid] = [round(t, 4), round(len(x) / SR, 4)]
-            pieces += [x, gap]
-            t += (len(x) + len(gap)) / SR
+        audio = render(m, r["name"], designs[r["name"]], clips, log)
         name = B.slug(r["name"]) + ".ogg"
-        B.encode(np.concatenate(pieces), OUT / name)
-        bank["rogues"][r["name"]] = {"file": name, "clips": index}
-        bank["plans"] = plans
+        index = pack(audio, OUT / name)
+        added = sorted({c[2] for c in bank["rogues"].get(r["name"], {}).get("clips", {}).values() if len(c) > 2})
+        if added:
+            log("%s: no longer uses %s (lines added before this build): delete them and their .import" % (r["name"], ", ".join(added)))
+        bank["rogues"][r["name"]] = {"file": name, "says": r["says"], "clips": index}
+        bank["plans"], bank["segs"] = plans, segs
         bank.setdefault("voices", {})[r["name"]] = {"engine": "maya1", **designs[r["name"]]}
-        bank_path.write_text(json.dumps(bank, separators=(",", ":")) + "\n")   # (after every rogue: a stopped build keeps what's done)
+        save()   # (after every rogue: a stopped build keeps what's done)
+        t = max(s + n for s, n, *_ in index.values())
         log("VOICED %-18s %4d clips %6.1f s %5.2f MB" % (r["name"], len(index), t, (OUT / name).stat().st_size / 1e6))
+    write_credits(bank)
+
+
+def new_lines(bank: dict, data: dict, designs: dict, segs: list, seg_id: dict, plans: dict, only: set, dry: bool, save,
+              log) -> None:
+    """Speak only what no clip says yet. Every rogue's clips are matched to the clip ids as they are now (words by
+    their words, a name or number by its id, its own line if it's still the same line); then, for each rogue (in
+    `only`), the clips it doesn't have are spoken into a new file beside its own. A rogue whose voice design changed
+    since it was built is left for a whole rebuild (new clips in another voice wouldn't match)."""
+    templates, rogues, you = data["templates"], data["rogues"], data["you"]
+    was_segs = bank.get("segs")
+    if was_segs is None:
+        if bank.get("plans") != plans:
+            sys.exit("the bank doesn't list its clips' words (built before it kept them) and lines.json has changed since: "
+                     "run --new-lines once with the lines.json it was built from (git), then again with the new one")
+        was_segs = segs   # (the lines it was built from: this records them)
+    was = {t: i for i, t in enumerate(was_segs)}
+    need, gone = {}, 0
+    for r in rogues:
+        name = r["name"]
+        entry = bank["rogues"].get(name)
+        if entry is None:
+            log(f"{name}: no voice yet: build it whole (--only)")
+            continue
+        old = entry["clips"]
+        keep, missing = {}, {}
+        for cid, text in B.rogue_clips(r, templates, plans, seg_id, you, rogues).items():
+            num = re.fullmatch(r"t(\d+)", cid)
+            if num:
+                at = was.get(segs[int(num.group(1))])
+                clip = None if at is None else old.get("t%d" % at)
+            elif cid == "says":
+                clip = old.get("says") if entry.get("says", r["says"]) == r["says"] else None
+            else:
+                clip = old.get(cid)
+            if clip:
+                keep[cid] = clip
+            else:
+                missing[cid] = L.spoken(text)
+        used = {tuple(c) for c in keep.values()}
+        gone += sum(1 for c in old.values() if tuple(c) not in used)
+        entry["clips"], entry["says"] = keep, r["says"]
+        if missing:
+            need[name] = missing
+    bank["plans"], bank["segs"] = plans, segs
+    changed = [n for n in need if bank.get("voices", {}).get(n) != {"engine": "maya1", **designs[n]}]
+    todo = {n: c for n, c in need.items() if n not in changed and (not only or n in only)}
+    for n in changed:
+        log(f"{n}: its voice design changed since it was built: rebuild it whole (--only \"{n}\")")
+    total = sum(len(c) for c in todo.values())
+    log(f"{len(rogues) - len(need)} rogues have every clip; {len(todo)} to speak ({total} clips, about {total * 5 / 60:.0f} min); "
+        f"{gone} old clips no line uses now")
+    for n, c in todo.items():
+        log(f"  {n}: {len(c)}: " + ", ".join(repr(t) for t in list(c.values())[:6]) + (" ..." if len(c) > 6 else ""))
+    if dry:
+        return
+    save()   # (every rogue's clips under the new ids first: the plans are everyone's)
+    if not todo:
+        write_credits(bank)
+        return
+    m = Maya()
+    for n, clips in todo.items():
+        slug, k = B.slug(n), 2
+        while (OUT / f"{slug}_{k}.ogg").exists():
+            k += 1
+        path = OUT / f"{slug}_{k}.ogg"
+        index = pack(render(m, n, designs[n], clips, log), path, named=True)
+        bank["rogues"][n]["clips"].update(index)
+        save()
+        log("VOICED %-18s %4d new clips in %s" % (n, len(index), path.name))
     write_credits(bank)
 
 
@@ -392,7 +500,9 @@ def write_credits(bank: dict) -> None:
     """Credits for the voices as they are: Maya1's rogues, any still in Kokoro's voices, and the recordings of real
     accented speakers some Maya1 voices were started from."""
     engine = lambda n: bank.get("voices", {}).get(n, {}).get("engine", "kokoro")
-    files = lambda names: sorted(OUT / bank["rogues"][n]["file"] for n in names)
+    # (each rogue's file, and any of lines added later)
+    files = lambda names: sorted({OUT / f for n in names for f in [bank["rogues"][n]["file"]]
+                                  + [c[2] for c in bank["rogues"][n]["clips"].values() if len(c) > 2]})
     maya = [n for n in bank["rogues"] if engine(n) == "maya1"]
     kokoro = [n for n in bank["rogues"] if engine(n) != "maya1"]
     entries = []
