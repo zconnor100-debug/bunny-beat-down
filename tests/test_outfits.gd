@@ -213,6 +213,56 @@ func test_the_mended_mirror_coat() -> void:
 	check(you != null and you.visual.meshes.all(func(m): return m.material_overlay == coat), "and the portrait shows you in it")
 	PlayerProfile.reset_for_tests()
 
+## Four more coats, each at the top of a long ladder (the Golden Acorn for 50
+## wins: the Gold muzzle flash moved down to 25), named in your look and
+## talked about by the rogues; a look that moved to a tier you'd already
+## reached is yours when the milestones are next checked.
+func test_the_coats_from_the_ladders() -> void:
+	PlayerProfile.reset_for_tests()
+	var gives := {"champion": "coat:golden_acorn", "trail_boss": "coat:starry_night", "pack_breaker": "coat:tiger_stripe",
+		"nemesis_hunter": "coat:smouldering", "mirror_mirror": "coat:mended_mirror"}
+	for ladder in gives:
+		var top: Dictionary = Mastery.tiers(ladder)[-1]
+		check(top.reward.get("look", "") == gives[ladder], "%s's top tier gives the %s" % [ladder, gives[ladder]])
+	check(Mastery.tiers("champion")[1].reward.get("look", "") == "flash:gold" and int(Mastery.tiers("champion")[1].reward.get("acorns", 0)) == 400,
+		"the Gold muzzle flash at 25 wins, with its 400 acorns")
+	check(int(Mastery.tiers("trail_boss")[-1].reward.get("acorns", 0)) == 1000, "Trail Boss III still gives its 1,000 acorns too")
+	for o in Workshop.LOOKS[Workshop.COAT].options.slice(1):
+		var m := Workshop.coat_material(o[0])
+		check(m != null and Workshop.earned_only("coat:" + o[0]), "the %s coat is drawn, and earned only" % o[1])
+		check(not Cast.OUTFIT_LINES.get(o[0], {}).get("spot", []).is_empty(), "the rogues have something to say about the %s coat" % o[1])
+	var gold := Workshop.coat_material("golden_acorn")
+	check(gold.shader == Workshop.COAT_TINT and gold.next_pass is ShaderMaterial and (gold.next_pass as ShaderMaterial).shader == Workshop.COAT_GLOW,
+		"a colour over your fur, and its glow over that")
+	check(Workshop.coat_material("tiger_stripe").next_pass == null, "stripes don't glow")
+	# a tier reached before its look moved there: the look comes when the milestones are next checked
+	PlayerProfile._book().set_value("mastery", "champion_25", true)
+	check(not Workshop.owns("flash:gold"), "Champion II reached back when it gave only acorns")
+	var acorns := Burrow.acorns()
+	Mastery.check()
+	check(Workshop.owns("flash:gold") and Burrow.acorns() == acorns, "the Gold muzzle flash is yours now (and no acorns twice)")
+	# worn: named in your look, and something for the rogues to talk about
+	PlayerProfile._book().set_value("mastery", "champion_50", true)
+	Mastery.check()
+	check(Workshop.set_look(Workshop.COAT, "golden_acorn"), "the Golden Acorn coat, worn")
+	Burrow.add_acorns(500)
+	Workshop.buy("wear_hat:fedora")
+	Workshop.set_look("wear_hat", "fedora")
+	check(Workshop.wearing() == ["fedora", "golden_acorn"], "a rogue sees your fedora and your coat (%s)" % [Workshop.wearing()])
+	check(Workshop.outfit() == ["fedora"], "(your outfit is still just the pieces)")
+	check(Workshop.outfit_phrase() == "fedora and golden acorn coat", "your look: %s" % Workshop.outfit_phrase())
+	check(KillCam.look_line(true, false, Workshop.outfit_phrase()) == "Dressed to win: your fedora and golden acorn coat", "and the final shot says so")
+	var rng := RandomNumberGenerator.new()
+	var said := {}
+	for i in 40:
+		rng.seed = i
+		var line := Cast.outfit_say(Workshop.wearing(), "spot", "Bun", rng)
+		said[String(line.get("key", "")).get_slice(".", 1)] = true
+	check(said.has("golden_acorn") and said.has("fedora"), "the rogues talk about both (%s)" % [said.keys()])
+	Workshop.set_look("wear_hat", "none")
+	check(Workshop.outfit_phrase() == "golden acorn coat", "just the coat: %s" % Workshop.outfit_phrase())
+	PlayerProfile.reset_for_tests()
+
 func test_the_gallery_shows_each_rogue_dressed() -> void:
 	var gallery := GalleryPanel.new()
 	add_child(gallery)
@@ -272,13 +322,12 @@ func test_rogues_talk_about_what_you_wear() -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 5
 	check(Cast.outfit_line([], "spot", "Bun", rng) == "", "nothing worn: nothing said")
-	var pieces := []
-	for cat in Workshop.WARDROBE:
-		for o in Workshop.LOOKS[cat].options:
-			if o[0] != "none":
-				pieces.append(o[0])
+	var pieces := []   # (and coats: Workshop.wearing)
+	for cat in Workshop.WARDROBE + [Workshop.COAT]:
+		for o in Workshop.LOOKS[cat].options.slice(1):
+			pieces.append(o[0])
 	for id in Cast.OUTFIT_LINES:
-		check(pieces.has(id), "%s lines are about a wardrobe piece" % id)
+		check(pieces.has(id), "%s lines are about something you wear" % id)
 	for id in pieces:
 		check(Cast.OUTFIT_LINES.has(id), "the %s has lines of its own" % id)
 		for event in ["spot", "kill", "lose"]:

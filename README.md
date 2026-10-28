@@ -245,7 +245,8 @@ and the final shot replayed from three angles. There's a
     Boston raccoon, a Geordie squirrel wheezing like a lifelong smoker, a
     Jamaican frog, an ancient Transylvanian bunny; the hamsters pitched up to
     a squeak, the fast talkers sped up), loud enough to carry across
-    the field over the gunfire, and they comment on what you're wearing.
+    the field over the gunfire, and they comment on what you're wearing
+    (your coat too).
     Beat it and the game calls it **revenge**.
   - Beat the same bot down again and again and it **turns radical**: Sore,
     Vengeful, Unhinged, then your Nemesis. Its name tag says so; it picks
@@ -389,9 +390,10 @@ and the final shot replayed from three angles. There's a
   Ember, Jade, Obsidian, Pearl, Royal, Zebra stripe, Carrot King, Sapphire,
   Diamond; the grenades' is a Fireworks beat-down burst). And the totals:
   100/250/500 beat-downs (a Gold rush burst), 100/250/500 headshots (a Ruby
-  reticle, then Ruby tracers), 10/25/50 wins (a Gold muzzle flash),
-  25/50/100 matches (Jade tracers), 5/10/25 runs, 5/10/25 Nemeses beaten,
-  25/50/100 gang members, and your Doppelbunny beaten in 3/5/10 Mirror
+  reticle, then Ruby tracers), 10/25/50 wins (a Gold muzzle flash at 25,
+  the Golden Acorn coat at 50), 25/50/100 matches (Jade tracers), 5/10/25
+  runs (the Starry Night coat), 5/10/25 Nemeses beaten (the Smouldering
+  coat), 25/50/100 gang members (the Tiger Stripe coat), and your Doppelbunny beaten in 3/5/10 Mirror
   Matches (the Looking Glass skin at 5; at 10 the Mended Mirror, a coat for
   your critter: its cracked mirror, the cracks mended in gold). None of
   those looks can be bought.
@@ -414,8 +416,13 @@ and the final shot replayed from three angles. There's a
   and something on your back (butterfly, fairy or dark wings, a jetpack),
   fitted to whichever critter you play like the rogues' outfits and shown
   on you beside the list as you browse, bought or not (your gun in the skin
-  you're browsing, too), and a coat over all of it (the Mended Mirror, for
-  beating your Doppelbunny ten times). A hat takes the acorn helmet's place. `tests/capture_workshop.gd` renders them
+  you're browsing, too), and a coat over all of it, each from the top of a
+  ladder: the Mended Mirror (your Doppelbunny's cracks, mended in gold),
+  the Golden Acorn (gilded, in an acorn cup's scales, glinting), the Starry
+  Night (the night sky, twinkling), the Tiger Stripe and the Smouldering
+  (charcoal, embers breathing in its cracks). A coat is your fur's colour
+  multiplied, so your face and stitches still show (`src/fx/coat_tint.gdshader`,
+  its glow `coat_glow.gdshader` the next pass). A hat takes the acorn helmet's place. `tests/capture_workshop.gd` renders them
   all.
 - **Rewind.** The game records the last ten seconds of the match, and you
   get three rewinds a match (on a run, three for the whole run): press **T** (or pick *Rewind* in the pause

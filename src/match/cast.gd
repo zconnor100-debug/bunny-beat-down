@@ -138,8 +138,9 @@ const HEAT_LINES := [
 		"kill": ["You made me what I am, {you}.", "This is what you made, {you}. {k}–{w}."],
 		"lose": ["I'll be back. I'm always back.", "{w}. See you next match, {you}."]},
 ]
-## What a bot says about what you're wearing: lines for each piece, by event:
-## spotting you, beating you down, being beaten down by you.
+## What a bot says about what you're wearing: lines for each piece (and each
+## coat: Workshop.wearing), by event: spotting you, beating you down, being
+## beaten down by you.
 const OUTFIT_LINES := {
 	"cheese_hat": {"spot": ["Is that... CHEESE on your head, {you}?", "I can smell your hat from here, {you}."],
 		"kill": ["Say cheese, {you}!"], "lose": ["Beaten by a walking cheese board..."]},
@@ -185,6 +186,17 @@ const OUTFIT_LINES := {
 		"kill": ["Grounded, {you}."], "lose": ["...okay, the wings ARE scary."]},
 	"jetpack": {"spot": ["A JETPACK? Cheater, {you}!", "Nice jetpack, {you}. Does it go?"],
 		"kill": ["Out of fuel, {you}?"], "lose": ["Flew right past me..."]},
+	# your coat
+	"mended_mirror": {"spot": ["Is that a MIRROR, {you}? I'll crack it again!", "Gold in the cracks? Fancy, {you}."],
+		"kill": ["Seven years' bad luck, {you}."], "lose": ["Beaten by a broken mirror..."]},
+	"golden_acorn": {"spot": ["Solid gold, {you}? Hold still, I'll melt you down!", "All that gold won't stop a carrot, {you}."],
+		"kill": ["Gold doesn't bounce, {you}."], "lose": ["Gold. Of course you're gold."]},
+	"starry_night": {"spot": ["Twinkle twinkle, {you}!", "Look, everyone! A walking night sky!"],
+		"kill": ["Lights out, little star."], "lose": ["Starstruck. I'm starstruck."]},
+	"tiger_stripe": {"spot": ["Here, kitty kitty, {you}!", "Stripes, {you}? You're no tiger."],
+		"kill": ["Not so fierce now, {you}."], "lose": ["Rawr. Fine. You win."]},
+	"smouldering": {"spot": ["Something's burning... oh, it's you, {you}.", "Hot stuff, {you}. Too hot."],
+		"kill": ["Put out, {you}."], "lose": ["Burned. Properly burned."]},
 }
 ## How often a bot talks about your outfit instead of its usual line.
 const OUTFIT_TAUNT_CHANCE := 0.35

@@ -121,15 +121,19 @@ const LADDERS := [
 	{"id": "noggin_knocker", "name": "Noggin Knocker", "text": "Land %d headshots.", "stat": "heads",
 		"tiers": [[100, {"acorns": 150}, "150 acorns"], [250, {"look": "reticle_color:ruby"}, "the Ruby reticle"], [500, {"look": "tracer:ruby"}, "Ruby tracers"]]},
 	{"id": "champion", "name": "Champion", "text": "Win %d matches.", "stat": "wins",
-		"tiers": [[10, {"acorns": 200}, "200 acorns"], [25, {"acorns": 400}, "400 acorns"], [50, {"look": "flash:gold"}, "the Gold muzzle flash"]]},
+		"tiers": [[10, {"acorns": 200}, "200 acorns"], [25, {"acorns": 400, "look": "flash:gold"}, "400 acorns and the Gold muzzle flash"],
+			[50, {"look": "coat:golden_acorn"}, "the Golden Acorn coat"]]},
 	{"id": "old_hand", "name": "Old Hand", "text": "Play %d matches.", "stat": "matches",
 		"tiers": [[25, {"acorns": 100}, "100 acorns"], [50, {"acorns": 200}, "200 acorns"], [100, {"look": "tracer:jade"}, "Jade tracers"]]},
 	{"id": "trail_boss", "name": "Trail Boss", "text": "Finish %d runs.", "stat": "runs_done",
-		"tiers": [[5, {"acorns": 250}, "250 acorns"], [10, {"acorns": 500}, "500 acorns"], [25, {"acorns": 1000}, "1,000 acorns"]]},
+		"tiers": [[5, {"acorns": 250}, "250 acorns"], [10, {"acorns": 500}, "500 acorns"],
+			[25, {"acorns": 1000, "look": "coat:starry_night"}, "1,000 acorns and the Starry Night coat"]]},
 	{"id": "nemesis_hunter", "name": "Nemesis Hunter", "text": "Beat down a Nemesis %d times.", "stat": "nemeses_beaten",
-		"tiers": [[5, {"acorns": 150}, "150 acorns"], [10, {"acorns": 300}, "300 acorns"], [25, {"acorns": 600}, "600 acorns"]]},
+		"tiers": [[5, {"acorns": 150}, "150 acorns"], [10, {"acorns": 300}, "300 acorns"],
+			[25, {"acorns": 600, "look": "coat:smouldering"}, "600 acorns and the Smouldering coat"]]},
 	{"id": "pack_breaker", "name": "Pack Breaker", "text": "Beat down %d gang members.", "stat": "gang_beaten",
-		"tiers": [[25, {"acorns": 100}, "100 acorns"], [50, {"acorns": 200}, "200 acorns"], [100, {"acorns": 400}, "400 acorns"]]},
+		"tiers": [[25, {"acorns": 100}, "100 acorns"], [50, {"acorns": 200}, "200 acorns"],
+			[100, {"acorns": 400, "look": "coat:tiger_stripe"}, "400 acorns and the Tiger Stripe coat"]]},
 	{"id": "mirror_mirror", "name": "Mirror, Mirror", "text": "Beat your Doppelbunny in %d Mirror Matches.", "stat": "doppels_beaten",
 		"tiers": [[3, {"acorns": 150}, "150 acorns"], [5, {"look": "skin:looking_glass"}, "the Looking Glass gun skin"],
 			[10, {"look": "coat:mended_mirror"}, "the Mended Mirror coat"]]},
@@ -228,23 +232,29 @@ static func note_boons(n: int) -> void:
 
 
 ## Check every milestone: the ones newly reached are marked (and their
-## one-time rewards given). Returns them, for the game to announce.
+## one-time rewards given). Returns them, for the game to announce. A look
+## that's since moved to a tier you'd already reached is yours too.
 static func check() -> Array:
 	var fresh := []
+	var owned: Array = (_book().get_value("workshop", "owned", []) as Array).duplicate()
+	var looks := owned.size()
 	for m in all():
-		if has(m.id) or progress(m.stat) < int(m.need):
+		var r: Dictionary = m.reward
+		if has(m.id):
+			if r.has("look") and not owned.has(r.look):
+				owned.append(r.look)
+			continue
+		if progress(m.stat) < int(m.need):
 			continue
 		_book().set_value("mastery", m.id, true)
-		var r: Dictionary = m.reward
 		if r.has("acorns"):
 			Burrow.add_acorns(int(r.acorns))
-		if r.has("look"):
-			var owned: Array = (_book().get_value("workshop", "owned", []) as Array).duplicate()
-			if not owned.has(r.look):
-				owned.append(r.look)
-				_book().set_value("workshop", "owned", owned)
+		if r.has("look") and not owned.has(r.look):
+			owned.append(r.look)
 		fresh.append(m)
-	if not fresh.is_empty():
+	if owned.size() > looks:
+		_book().set_value("workshop", "owned", owned)
+	if not fresh.is_empty() or owned.size() > looks:
 		PlayerProfile.save()
 	return fresh
 

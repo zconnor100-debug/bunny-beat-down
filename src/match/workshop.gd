@@ -52,13 +52,25 @@ const LOOKS := {
 	"wear_back": {"label": "Back", "options": [["none", "None", 0], ["butterfly_wings", "Butterfly wings", 120],
 		["jetpack", "Jetpack", 150], ["fairy_wings", "Fairy wings", -1], ["dark_wings", "Dark wings", -1],
 		["windup_key", "Wind-up key", -1]]},
-	"coat": {"label": "Coat", "options": [["natural", "Your own fur", 0], ["mended_mirror", "Mended mirror", -1]]},
+	"coat": {"label": "Coat", "options": [["natural", "Your own fur", 0], ["mended_mirror", "Mended mirror", -1],
+		["golden_acorn", "Golden acorn", -1], ["starry_night", "Starry night", -1], ["tiger_stripe", "Tiger stripe", -1],
+		["smouldering", "Smouldering", -1]]},
 }
 
 ## Your wardrobe's slots, in the order they're shown.
 const WARDROBE := ["wear_hat", "wear_face", "wear_neck", "wear_back"]
 ## Shown with the wardrobe (on you, in the portrait), after its slots.
 const COAT := "coat"
+const COAT_TINT := preload("res://src/fx/coat_tint.gdshader")
+const COAT_GLOW := preload("res://src/fx/coat_glow.gdshader")
+## The coats besides the Mended Mirror: [its colour's pattern (coat_tint), colour
+## a, colour b, pattern scale, its glow's pattern (coat_glow, 0: none), glow colour].
+const COATS := {
+	"golden_acorn": [1, Color(1.0, 0.8, 0.36), Color(0.72, 0.46, 0.12), 3.5, 1, Color(1.0, 0.8, 0.38)],
+	"starry_night": [2, Color(0.08, 0.1, 0.3), Color(0.26, 0.14, 0.42), 7.0, 2, Color(1.0, 0.96, 0.82)],
+	"tiger_stripe": [3, Color(1.0, 0.6, 0.22), Color(0.07, 0.05, 0.05), 2.2, 0, Color.BLACK],
+	"smouldering": [4, Color(0.2, 0.18, 0.18), Color(0.34, 0.28, 0.25), 2.6, 4, Color(1.0, 0.42, 0.08)],
+}
 
 ## The palette the looks pick from.
 const COLORS := {
@@ -69,7 +81,7 @@ const COLORS := {
 }
 
 
-static var _mended: ShaderMaterial
+static var _coats := {}   # coat id -> its overlay (coat_material)
 
 
 static func _book() -> ConfigFile:
@@ -141,8 +153,12 @@ static func look_name(category: String, id: String) -> String:
 	return opt[1] if not opt.is_empty() else id
 
 
-## A worn piece's name, the way it reads in a sentence ("ear-flap beanie").
+## A worn piece's name, the way it reads in a sentence ("ear-flap beanie",
+## "golden acorn coat").
 static func piece_name(id: String) -> String:
+	for o in LOOKS[COAT].options:
+		if o[0] == id:
+			return String(o[1]).to_lower() + " coat"
 	for cat in WARDROBE:
 		for o in LOOKS[cat].options:
 			if o[0] == id:
@@ -151,9 +167,10 @@ static func piece_name(id: String) -> String:
 	return id.replace("_", " ")
 
 
-## What you're wearing, as a phrase ("wizard's hat and pixel shades"), or "".
+## What you're wearing, as a phrase ("wizard's hat, pixel shades and
+## golden acorn coat"), or "".
 static func outfit_phrase() -> String:
-	var names := outfit().map(func(id): return piece_name(id))
+	var names := wearing().map(func(id): return piece_name(id))
 	if names.size() <= 1:
 		return "" if names.is_empty() else names[0]
 	return ", ".join(names.slice(0, names.size() - 1)) + " and " + names[names.size() - 1]
@@ -179,19 +196,45 @@ static func kit(skin := "") -> Dictionary:
 ## A coat's overlay, over your fur and all you wear (Outfits.dress_player),
 ## or null for your own fur. The Mended Mirror: your Doppelbunny's cracked
 ## mirror (DoppelBrain.look), its cracks mended in gold, with a softer rim and
-## no flashes of a bad reflection (so the two of you are told apart).
+## no flashes of a bad reflection (so the two of you are told apart). The
+## others (COATS): a colour multiplied over you, and its glow over that.
 static func coat_material(id: String) -> ShaderMaterial:
-	if id != "mended_mirror":
-		return null
-	if _mended == null:
-		_mended = ShaderMaterial.new()
-		_mended.shader = DoppelBrain.SHADER
-		_mended.set_shader_parameter(&"rim_color", Color(1.0, 0.78, 0.42))
-		_mended.set_shader_parameter(&"crack_color", Color(1.0, 0.76, 0.22))
-		_mended.set_shader_parameter(&"crack_width", 0.07)
-		_mended.set_shader_parameter(&"rim_strength", 0.45)
-		_mended.set_shader_parameter(&"flashes", 0.0)
-	return _mended
+	if _coats.has(id):
+		return _coats[id]
+	var m: ShaderMaterial = null
+	if id == "mended_mirror":
+		m = ShaderMaterial.new()
+		m.shader = DoppelBrain.SHADER
+		m.set_shader_parameter(&"rim_color", Color(1.0, 0.78, 0.42))
+		m.set_shader_parameter(&"crack_color", Color(1.0, 0.76, 0.22))
+		m.set_shader_parameter(&"crack_width", 0.07)
+		m.set_shader_parameter(&"rim_strength", 0.45)
+		m.set_shader_parameter(&"flashes", 0.0)
+	elif COATS.has(id):
+		var c: Array = COATS[id]
+		m = ShaderMaterial.new()
+		m.shader = COAT_TINT
+		m.set_shader_parameter(&"pattern", c[0])
+		m.set_shader_parameter(&"color_a", c[1])
+		m.set_shader_parameter(&"color_b", c[2])
+		m.set_shader_parameter(&"scale", c[3])
+		if int(c[4]) > 0:
+			var glow := ShaderMaterial.new()
+			glow.shader = COAT_GLOW
+			glow.set_shader_parameter(&"pattern", c[4])
+			glow.set_shader_parameter(&"glow_color", c[5])
+			glow.set_shader_parameter(&"scale", c[3])
+			m.next_pass = glow
+	if m:
+		_coats[id] = m
+	return m
+
+
+## Everything a rogue can see on you (and talk about: Cast.OUTFIT_LINES):
+## your outfit, then your coat if it isn't your own fur.
+static func wearing() -> Array:
+	var coat := look(COAT)
+	return outfit() + ([] if coat == LOOKS[COAT].options[0][0] else [coat])
 
 
 ## Earned only (a Milestone's reward), not for sale.

@@ -1339,7 +1339,7 @@ func taunt(c: Critter, event: String) -> void:
 	# line, or in its own voice
 	var said := Cast.heat_say(c.display_name, event, you, rng) if rng.randf() < 0.75 else {}
 	if said.is_empty() and rng.randf() < Cast.OUTFIT_TAUNT_CHANCE:
-		said = Cast.outfit_say(Workshop.outfit(), event, you, rng)
+		said = Cast.outfit_say(Workshop.wearing(), event, you, rng)
 	if said.is_empty() and event == "spot" and rng.randf() < 0.4:
 		var own := String(Cast.member(c.display_name).get("says", ""))
 		if own != "":
