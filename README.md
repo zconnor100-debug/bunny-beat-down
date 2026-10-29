@@ -426,8 +426,9 @@ and the final shot replayed from three angles. There's a
   you're browsing, too), and a coat over all of it, each from the top of a
   ladder: the Mended Mirror (your Doppelbunny's cracks, mended in gold),
   the Golden Acorn (gilded, in an acorn cup's scales, glinting), the Starry
-  Night (the night sky, twinkling), the Tiger Stripe, the Smouldering
-  (charcoal, embers breathing in its cracks) and the Patchwork (a crazy
+  Night (a twilight sky full of sparkling stars in every colour), the Tiger
+  Stripe (bright amber, bold black stripes), the Smouldering (charcoal,
+  red-hot embers breathing in its cracks) and the Patchwork (a crazy
   quilt in the three maps' colours, some patches plaid or dotted, big
   stitches at the seams, each patch's colour lifted so it shows on any fur).
   **The coat rack** (`CoatRack`, under the coat) shows them all at once, each

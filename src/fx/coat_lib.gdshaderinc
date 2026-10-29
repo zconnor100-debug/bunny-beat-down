@@ -71,3 +71,12 @@ vec4 coat_cells(vec3 p, out vec3 cell_id) {
 	}
 	return vec4(near, sqrt(d2) - sqrt(d1));
 }
+
+// The tiger stripe's stripes: 1 in a black stripe, 0 on the amber. Bands
+// round you (by height), wavering, each breaking up and thinning at its ends.
+float coat_tiger(vec3 p, float height, float scale) {
+	float w = height * scale + (coat_noise(p * 1.4) - 0.5) * 1.6;
+	float band = abs(fract(w) - 0.5) * 2.0;   // (1 in a stripe's middle)
+	float width = 0.5 + 0.2 * coat_noise(p * 3.0);
+	return smoothstep(width, width + 0.06, band);
+}

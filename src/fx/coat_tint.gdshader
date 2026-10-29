@@ -3,8 +3,8 @@
 // the next pass (coat_glow.gdshader). In the model's own space, so the
 // pattern goes where you go.
 //   1 golden acorn: gilded, in an acorn cup's scales
-//   2 starry night: the night sky, violet up top
-//   3 tiger stripe: amber, with black stripes round you
+//   2 starry night: a twilight sky, violet up top
+//   3 tiger stripe: amber, with bold black stripes round you
 //   4 smouldering: charcoal
 //   5 patchwork: a crazy quilt, its patches in the three maps' colours
 //     (plain, plaid or dotted), sewn together with big stitches (colour a:
@@ -38,10 +38,7 @@ void fragment() {
 	} else if (pattern == 2) {
 		c = mix(color_a, color_b, smoothstep(0.2, 3.0, height + (coat_noise(p * 1.2) - 0.5) * 0.8));
 	} else if (pattern == 3) {
-		float w = height * scale + (coat_noise(p * 1.4) - 0.5) * 1.6;
-		float band = abs(fract(w) - 0.5) * 2.0;   // (1 in a stripe's middle)
-		float width = 0.72 + 0.18 * coat_noise(p * 3.0);   // (stripes thin out and break up)
-		c = mix(color_a, color_b, smoothstep(width, width + 0.06, band));
+		c = mix(color_a, color_b, coat_tiger(p, height, scale));
 	} else if (pattern == 4) {
 		c = mix(color_a, color_b, coat_noise(p * scale));
 	} else if (pattern == 5) {

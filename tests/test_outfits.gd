@@ -236,7 +236,8 @@ func test_the_coats_from_the_ladders() -> void:
 	var gold := Workshop.coat_material("golden_acorn")
 	check(gold.shader == Workshop.COAT_TINT and gold.next_pass is ShaderMaterial and (gold.next_pass as ShaderMaterial).shader == Workshop.COAT_GLOW,
 		"a colour over your fur, and its glow over that")
-	check(Workshop.coat_material("tiger_stripe").next_pass == null, "stripes don't glow")
+	check((Workshop.coat_material("tiger_stripe").next_pass as ShaderMaterial).get_shader_parameter(&"pattern") == 3,
+		"the tiger stripe's amber is lit up, to be bright on any fur")
 	check((Workshop.coat_material("patchwork").next_pass as ShaderMaterial).get_shader_parameter(&"pattern") == 5,
 		"the patchwork's colours are lifted, to show on any fur")
 	# a tier reached before its look moved there: the look comes when the milestones are next checked

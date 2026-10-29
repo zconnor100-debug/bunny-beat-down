@@ -67,9 +67,9 @@ const COAT_GLOW := preload("res://src/fx/coat_glow.gdshader")
 ## a, colour b, pattern scale, its glow's pattern (coat_glow, 0: none), glow colour].
 const COATS := {
 	"golden_acorn": [1, Color(1.0, 0.8, 0.36), Color(0.72, 0.46, 0.12), 3.5, 1, Color(1.0, 0.8, 0.38)],
-	"starry_night": [2, Color(0.08, 0.1, 0.3), Color(0.26, 0.14, 0.42), 7.0, 2, Color(1.0, 0.96, 0.82)],
-	"tiger_stripe": [3, Color(1.0, 0.6, 0.22), Color(0.07, 0.05, 0.05), 2.2, 0, Color.BLACK],
-	"smouldering": [4, Color(0.2, 0.18, 0.18), Color(0.34, 0.28, 0.25), 2.6, 4, Color(1.0, 0.42, 0.08)],
+	"starry_night": [2, Color(0.2, 0.27, 0.62), Color(0.5, 0.34, 0.8), 7.0, 2, Color(1.0, 1.0, 1.0)],
+	"tiger_stripe": [3, Color(1.0, 0.66, 0.26), Color(0.05, 0.04, 0.04), 3.2, 3, Color(1.0, 0.55, 0.14)],
+	"smouldering": [4, Color(0.2, 0.18, 0.18), Color(0.34, 0.28, 0.25), 2.6, 4, Color(1.0, 0.24, 0.05)],
 	"patchwork": [5, Color(1.0, 0.96, 0.86), Color(0.36, 0.3, 0.26), 2.4, 5, Color(0.4, 0.4, 0.4)],
 }
 
