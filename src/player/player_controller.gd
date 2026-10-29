@@ -345,7 +345,7 @@ func _update_focus() -> void:
 				continue
 			var to := n3.global_position + Vector3.UP * 0.3 - eye
 			var d := to.length()
-			if d > INTERACT_RANGE * critter.visual.rig.world_scale + 0.8:
+			if d > INTERACT_RANGE * critter.visual.rig.world_scale + 0.8 + ((n as LootCrate).reach if n is LootCrate else 0.0):
 				continue
 			var facing := to.normalized().dot(fwd)
 			var score := facing * 2.0 - d * 0.3

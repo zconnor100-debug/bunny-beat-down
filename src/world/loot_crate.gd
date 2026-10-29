@@ -12,11 +12,13 @@ const CHANNEL_RANGE := 2.6
 const CHANNEL_MAX_SPEED := 2.0
 
 ## Garden crates are drawn big: you should spot one across a clearing.
-const CRATE_SCALE := 1.6
+const CRATE_SCALE := 2.0
 
 var opened := false
 var model_path := MODEL
-var model_scale := 1.0      ## the plain garden crate uses CRATE_SCALE
+var model_scale := 1.0      ## the plain garden crate uses CRATE_SCALE (treasure chests their own)
+var height := 0.55          ## how tall it stands (what's inside comes out over the top)
+var reach := 0.4            ## its middle to its furthest side (it's opened from its side)
 var weights: Array = Rarity.CRATE_WEIGHTS
 var supply := false         ## landed supply drop: hide the chute, extra loot
 var open_time := 0.0        ## seconds to unlock (0 = instant)
@@ -69,6 +71,8 @@ func _ready() -> void:
 	cs.shape = shape
 	cs.position.y = size.y * 0.5
 	add_child(cs)
+	height = size.y
+	reach = maxf(size.x, size.z) * 0.5
 
 
 ## Called every physics tick while `by` holds interact on this container.
@@ -80,7 +84,7 @@ func channel(by: Critter, delta: float) -> bool:
 		open(by)
 		return true
 	var flat_v := Vector2(by.velocity.x, by.velocity.z).length()
-	if by.global_position.distance_to(global_position) > CHANNEL_RANGE * maxf(by.visual.rig.world_scale, 1.0) \
+	if by.global_position.distance_to(global_position) > CHANNEL_RANGE * maxf(by.visual.rig.world_scale, 1.0) + reach \
 			or flat_v > CHANNEL_MAX_SPEED or by.want_fire or not by.alive:
 		return false
 	if _channeler != by:
@@ -126,7 +130,7 @@ func open(by: Node) -> void:
 		var tw := create_tween()
 		tw.tween_property(_lid, "rotation:x", -1.9, 0.35).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	if open_time > 0.0:
-		FX.muzzle(global_position + Vector3.UP * 0.6, Vector3.UP, true)   # a puff of golden sparkle
+		FX.muzzle(global_position + Vector3.UP * height, Vector3.UP, true)   # a puff of golden sparkle
 	var parent := get_parent()
 	var up := global_transform.basis.y
 	if not contents.is_empty():
@@ -156,4 +160,4 @@ func _spill(specs: Array, parent: Node, up: Vector3) -> void:
 	for i in specs.size():
 		var a := -0.6 + 1.2 * i / maxf(specs.size() - 1, 1)
 		var out := global_transform.basis * Vector3(sin(a), 0, cos(a))
-		Pickup.spawn(parent, specs[i], global_position + up * 0.8, out * 2.5 + up * 3.5)
+		Pickup.spawn(parent, specs[i], global_position + up * (height + 0.25), out * 2.5 + up * 3.5)

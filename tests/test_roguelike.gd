@@ -174,8 +174,8 @@ func test_acorn_shrines_offer_you_a_boon() -> void:
 	check(sh.is_in_group(&"shrines") and not sh.is_in_group(&"crates") and not sh.is_in_group(&"treasure"), "bots don't go looking for them")
 	var you := mm.spawn_player(load("res://data/critters/bun.tres"), "default")
 	var bot: Critter = mm.critters.filter(func(c): return c != you)[0]
-	you.place_at(sh.global_position + Vector3(0.9, 0.2, 0), 0.0)
-	bot.place_at(sh.global_position + Vector3(-0.9, 0.2, 0), 0.0)
+	you.place_at(sh.global_position + Vector3(AcornShrine.STUMP_RADIUS + 0.9, 0.2, 0), 0.0)
+	bot.place_at(sh.global_position + Vector3(-AcornShrine.STUMP_RADIUS - 0.9, 0.2, 0), 0.0)
 	await wait_physics(20)
 	var offered := []
 	mm.boons_offered.connect(func(choices, _t): offered.append(choices))

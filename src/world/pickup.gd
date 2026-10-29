@@ -4,7 +4,8 @@ extends RigidBody3D
 ## scooped up by walking over them; weapons need the interact key (or an AI deciding it wants them).
 ## Rare loot gets a coloured light beam so it reads from across a clearing;
 ## lucky clovers are huge (half a critter tall) and glow green, and shield
-## acorns are just as big and glow orange.
+## acorns are just as big and glow orange. Ammo is drawn big too, like the
+## guns, so you can spot it.
 
 const MODELS := {
 	"ammo_0": "res://assets/props/ammo_light.glb",
@@ -16,6 +17,7 @@ const MODELS := {
 }
 const AUTO_RADIUS := 1.1
 const GROUND_GUN_SCALE := 2.1          ## guns lying about are drawn big (1.2 = as held), to spot them
+const GROUND_AMMO_SCALE := 2.5         ## and ammo (a box of light carrots: a hand's width otherwise)
 const CLOVER_HEIGHT := 1.25           ## half the height of a Bun
 const CLOVER_GLOW := Color(0.3, 1.0, 0.35)
 const CLOVER_SHADER := preload("res://src/fx/clover_glow.gdshader")
@@ -258,6 +260,8 @@ func _make_model() -> Node3D:
 		if spec.get("type") == "weapon":
 			m.rotation = Vector3(0, 0, PI / 2.2)
 			m.scale = Vector3.ONE * CritterVisual.WEAPON_SCALE * GROUND_GUN_SCALE
+		elif spec.get("type") == "ammo":
+			m.scale = Vector3.ONE * GROUND_AMMO_SCALE
 		elif spec.get("type") == "clover":
 			m.scale = Vector3.ONE * CLOVER_HEIGHT / maxf(ModelUtil.aabb_of(m).size.y, 0.01)
 		return m

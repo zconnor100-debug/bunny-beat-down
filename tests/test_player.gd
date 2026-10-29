@@ -72,6 +72,39 @@ func test_walk_over_ammo_and_heal() -> void:
 	check(player.inventory.clovers == 1, "one clover used")
 
 
+## Ammo, chests and shrines are drawn big, like the guns lying about, so you
+## spot them across a clearing; what's in a chest comes out over its top.
+func test_loot_is_drawn_big_to_spot_it() -> void:
+	var ammo := Pickup.spawn(self, Pickup.ammo_spec(WeaponData.AmmoType.LIGHT, 20), Vector3(6, 0.3, 0))
+	ammo.freeze = true
+	var crate := LootCrate.new()
+	crate.model_scale = LootCrate.CRATE_SCALE
+	add_child(crate)
+	crate.global_position = Vector3(-8, 0, 0)
+	var chest := TreasureChest.new(false)
+	add_child(chest)
+	chest.global_position = Vector3(-8, 0, 8)
+	var golden := TreasureChest.new(true)
+	add_child(golden)
+	golden.global_position = Vector3(8, 0, 8)
+	var shrine := AcornShrine.new()
+	add_child(shrine)
+	shrine.global_position = Vector3(0, 0, 12)
+	await wait_frames(2)
+	var box := ModelUtil.aabb_of(ammo._spin)
+	check(maxf(box.size.x, box.size.z) > 0.6, "a box of light carrots is drawn big (%.2f m)" % maxf(box.size.x, box.size.z))
+	var widths := [crate, chest, golden].map(func(c): return snappedf(c.reach * 2.0, 0.01))
+	check(widths[0] > 1.5 and widths[1] > widths[0] and widths[2] > widths[1], "a garden crate, a chest bigger, the golden one bigger still (%s m)" % [widths])
+	check(chest.height > 1.2, "a chest stands %.2f m" % chest.height)
+	check(shrine.height > 1.7, "a shrine stands %.2f m, its acorn on top" % shrine.height)
+	var spilled := []
+	chest.open(player)
+	for p in get_tree().get_nodes_in_group(&"pickups"):
+		if p != ammo:
+			spilled.append(p)
+	check(not spilled.is_empty() and spilled.all(func(p): return p.global_position.y > chest.height), "the loot comes out over the top, not inside it")
+
+
 func test_treasure_chest_needs_a_held_unlock() -> void:
 	var chest := TreasureChest.new(false)
 	add_child(chest)

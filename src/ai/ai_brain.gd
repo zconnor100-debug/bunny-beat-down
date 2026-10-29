@@ -639,7 +639,7 @@ func _loot(delta: float) -> void:
 		_loot_goal = null
 		mode = Mode.ROAM
 		return
-	if d < 1.7 * maxf(me.visual.rig.world_scale, 1.0):
+	if d < 1.7 * maxf(me.visual.rig.world_scale, 1.0) + ((_loot_goal as LootCrate).reach if _loot_goal is LootCrate else 0.0):
 		if _loot_goal is Pickup:
 			var pk := _loot_goal as Pickup
 			if pk.is_weapon() and me.inventory.first_free_slot() < 0:

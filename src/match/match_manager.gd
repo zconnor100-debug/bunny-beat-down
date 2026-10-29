@@ -638,7 +638,7 @@ func _spawn_shrines() -> void:
 		var p := island.random_land_point(2.5)
 		if spots.any(func(q): return q.distance_to(p) < island.terrain.island_radius * 0.45):
 			continue
-		p = island.clear_loot_spot(p, Vector3(0.6, 0.5, 0.6))
+		p = island.clear_loot_spot(p, AcornShrine.ROOM)
 		if p == Vector3.INF:
 			continue
 		spots.append(p)
@@ -786,12 +786,18 @@ func _spawn_loot() -> void:
 	for lp in island.loot_points:
 		var pos: Vector3 = lp.pos
 		# (chests and crates are bigger than a carrot gun lying about)
-		var half := Vector3(0.9, 0.5, 0.9) if lp.has("chest") or lp.get("crate", false) else Vector3(0.35, 0.3, 0.35)
-		pos = island.clear_loot_spot(pos, half, not lp.get("inside", false))
+		var half := TreasureChest.ROOM if lp.has("chest") else Vector3(0.9, 0.55, 0.9) if lp.get("crate", false) else Vector3(0.35, 0.3, 0.35)
+		pos = island.clear_loot_spot(lp.pos, half, not lp.get("inside", false))
+		var snug := false   # (a chest in a tight corner: a smaller one)
+		if pos == Vector3.INF and lp.has("chest"):
+			pos = island.clear_loot_spot(lp.pos, TreasureChest.SNUG_ROOM, not lp.get("inside", false))
+			snug = true
 		if pos == Vector3.INF:
 			continue
 		if lp.has("chest"):
 			var chest := TreasureChest.new(lp.chest == "golden")
+			if snug:
+				chest.model_scale = TreasureChest.SNUG_SCALE
 			chest.rng.seed = rng.randi()
 			world_root.add_child(chest)
 			chest.global_position = pos

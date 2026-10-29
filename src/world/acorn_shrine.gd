@@ -7,9 +7,14 @@ extends LootCrate
 
 const STUMP := "res://assets/env/stump_mossy/stump_mossy.glb"
 const ACORN := "res://assets/env/acorn/acorn.glb"
-const STUMP_HEIGHT := 0.7
-const ACORN_HEIGHT := 0.4
-const HOVER := 0.03                ## the acorn bobs just over the stump
+## Drawn big, like the guns lying about, so you spot one from across a
+## clearing: the stump to a Bun's waist, the acorn a head tall.
+const STUMP_HEIGHT := 1.0
+const ACORN_HEIGHT := 0.8
+const STUMP_RADIUS := 0.75         ## (its collider; the roots splay wider)
+const HOVER := 0.05                ## the acorn bobs just over the stump
+## Room a shrine needs on the ground (half its size).
+const ROOM := Vector3(1.0, 0.9, 1.0)
 const GLOW := Color(1.0, 0.8, 0.35)
 
 signal used(by: Critter)
@@ -44,7 +49,7 @@ func _ready() -> void:
 	halo.texture = FXTextures.soft_blob()
 	halo.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	halo.modulate = Color(GLOW, 0.55)
-	halo.pixel_size = 1.1 / maxf(halo.texture.get_width(), 1.0)
+	halo.pixel_size = 2.2 / maxf(halo.texture.get_width(), 1.0)
 	halo.shaded = false
 	halo.no_depth_test = false
 	halo.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
@@ -52,15 +57,17 @@ func _ready() -> void:
 	holder.add_child(halo)
 	_light = OmniLight3D.new()
 	_light.light_color = GLOW
-	_light.light_energy = 2.0
-	_light.omni_range = 3.5
-	_light.position = Vector3(0, STUMP_HEIGHT + HOVER + 0.2, 0.35)
+	_light.light_energy = 2.4
+	_light.omni_range = 5.0
+	_light.position = Vector3(0, STUMP_HEIGHT + HOVER + ACORN_HEIGHT * 0.5, 0.6)
 	_light.shadow_enabled = false
 	add_child(_light)
 	var cs := CollisionShape3D.new()
 	var shape := CylinderShape3D.new()
-	shape.radius = 0.45
+	shape.radius = STUMP_RADIUS
 	shape.height = STUMP_HEIGHT
+	height = STUMP_HEIGHT + ACORN_HEIGHT
+	reach = STUMP_RADIUS
 	cs.shape = shape
 	cs.position.y = STUMP_HEIGHT * 0.5
 	add_child(cs)
@@ -70,7 +77,7 @@ func _process(delta: float) -> void:
 	if opened or _acorn == null:
 		return
 	_t += delta
-	_acorn.position.y = STUMP_HEIGHT + HOVER + sin(_t * 2.0) * 0.06
+	_acorn.position.y = STUMP_HEIGHT + HOVER + sin(_t * 2.0) * 0.1
 	_acorn.rotation.y += delta * 0.8
 
 
@@ -87,7 +94,7 @@ func open(by: Node) -> void:
 	opened = true
 	progress = 1.0
 	Audio.play_at(&"crate_open", global_position, 2.0)
-	FX.muzzle(global_position + Vector3.UP * (STUMP_HEIGHT + 0.4), Vector3.UP, true, Color(GLOW, 0.9))
+	FX.muzzle(global_position + Vector3.UP * (STUMP_HEIGHT + ACORN_HEIGHT * 0.5), Vector3.UP, true, Color(GLOW, 0.9))
 	var tw := create_tween()
 	tw.tween_property(_acorn, "scale", Vector3.ONE * 1.6, 0.25).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	tw.tween_property(_acorn, "scale", Vector3.ONE * 0.01, 0.35)
@@ -117,8 +124,8 @@ static func _fallback(mesh: PrimitiveMesh, c: Color, at: Vector3) -> Node3D:
 	mesh.material = mat
 	if mesh is CylinderMesh:
 		(mesh as CylinderMesh).height = STUMP_HEIGHT
-		(mesh as CylinderMesh).top_radius = 0.45
-		(mesh as CylinderMesh).bottom_radius = 0.5
+		(mesh as CylinderMesh).top_radius = STUMP_RADIUS
+		(mesh as CylinderMesh).bottom_radius = STUMP_RADIUS * 1.1
 	elif mesh is SphereMesh:
 		(mesh as SphereMesh).radius = ACORN_HEIGHT * 0.4
 		(mesh as SphereMesh).height = ACORN_HEIGHT

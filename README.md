@@ -138,7 +138,9 @@ and the final shot replayed from three angles. There's a
   - a balloon (or toy-plane, or paper-airplane) drop, freefall, and a giant
     leaf, flower or dandelion umbrella to glide down on;
   - floor loot, garden crates and **treasure chests**: hold E for up to 5 s,
-    out in the open, for the best gear;
+    out in the open, for the best gear; guns, ammo, crates, chests and acorn
+    shrines are all drawn big, so you spot them across a clearing (a chest
+    about a Bun's waist high, the golden one bigger still);
   - big glowing pickups: green **lucky clover** bottles to heal and orange
     **acorn shields** for armor;
   - critter cottages, stumps, log piles and stone walls for cover;
