@@ -18,6 +18,8 @@ uniform vec2 wind_dir = vec2(0.8, 0.6);
 uniform vec3 player_pos = vec3(0.0, -1000.0, 0.0);
 uniform float push_radius = 1.2;
 uniform float translucency = 0.35;
+uniform float dry = 0.0;            // dried to straw: its own light and shade, in dry_color
+uniform vec3 dry_color : source_color = vec3(0.98, 0.84, 0.52);
 
 void vertex() {
 	vec3 origin = (MODEL_MATRIX * vec4(0.0, 0.0, 0.0, 1.0)).xyz;
@@ -38,6 +40,7 @@ void vertex() {
 
 void fragment() {
 	vec4 c = texture(albedo_tex, UV) * albedo_color;
+	c.rgb = mix(c.rgb, vec3(dot(c.rgb, vec3(0.3, 0.59, 0.11))) * dry_color * 2.1, dry);
 	ALBEDO = c.rgb;
 	// leaves right in front of the camera dissolve (screen-door) instead of
 	// filling the view; VERTEX is view-space here, so its length is the distance

@@ -563,13 +563,16 @@ static var _meshes: Dictionary = {}
 ## A scatter entry (like SwampPlants.entry) for batched cage ground cover:
 ## "fluff" (paper bedding tufts: they hide you like bushes), "seeds" (loose
 ## seeds and pellets, decoration), "plant" (plastic aquarium plants, like
-## reeds), "snowball" (snow clumps in the winter corner, cover).
+## reeds), "snowball" (snow clumps in the winter corner, cover), "shavings"
+## (big curls of wood shaving lying on the bedding, decoration).
 static func entry(kind: String) -> Dictionary:
 	match kind:
 		"fluff":
 			return {"id": "cage_fluff", "category": "bush", "height_m": 2.2, "footprint_radius_m": 1.8, "scale_range": [0.7, 1.4], "_mesh": _mesh("fluff")}
 		"seeds":
 			return {"id": "cage_seeds", "category": "lily", "height_m": 0.4, "footprint_radius_m": 1.2, "scale_range": [0.8, 1.3], "_mesh": _mesh("seeds")}
+		"shavings":
+			return {"id": "cage_shavings", "category": "lily", "height_m": 1.2, "footprint_radius_m": 1.6, "scale_range": [0.9, 1.7], "_mesh": _mesh("shavings")}
 		"plant":
 			return {"id": "cage_plant", "category": "reed", "height_m": 6.0, "footprint_radius_m": 1.5, "scale_range": [0.7, 1.3], "_mesh": _mesh("plant")}
 		_:
@@ -600,6 +603,21 @@ static func _mesh(kind: String) -> ArrayMesh:
 					k._ellipsoid(&"seed_shell", at, Vector3(0.22, 0.45, 0.12), Basis(Vector3.UP, rng.randf() * TAU) * Basis(Vector3.RIGHT, PI * 0.5), false, 5, 8)
 				else:
 					k._rod(&"pellet", at, at + Vector3(rng.randf_range(-0.5, 0.5), 0.0, rng.randf_range(-0.5, 0.5)), 0.17, false)
+		"shavings":
+			# curls of shaving: ribbons rolled round and round, getting tighter
+			for i in 5:
+				var c := Vector3(rng.randf_range(-1.3, 1.3), 0.0, rng.randf_range(-1.3, 1.3))
+				var b := Basis(Vector3.UP, rng.randf() * TAU)
+				var r := rng.randf_range(0.35, 0.6)
+				var w := rng.randf_range(0.5, 0.85)
+				var turns := rng.randf_range(1.0, 1.6)
+				for s in 12:
+					var a0 := TAU * turns * s / 12.0
+					var a1 := TAU * turns * (s + 1) / 12.0
+					var p0 := Vector3(0, r + sin(a0) * r * (1.0 - 0.3 * s / 12.0), cos(a0) * r * (1.0 - 0.3 * s / 12.0))
+					var p1 := Vector3(0, r + sin(a1) * r * (1.0 - 0.3 * (s + 1) / 12.0), cos(a1) * r * (1.0 - 0.3 * (s + 1) / 12.0))
+					k._box(&"shaving", c + b * ((p0 + p1) * 0.5), Vector3(w, (p1 - p0).length() + 0.04, 0.05),
+						b * Basis(IKMath.from_to(Vector3.UP, (p1 - p0).normalized())), false)
 		"plant":
 			for i in 7:
 				var a := TAU * i / 7.0 + rng.randf()
@@ -651,6 +669,8 @@ static func _model_mesh(kind: String) -> ArrayMesh:
 				var at := Vector3(rng.randf_range(-1.2, 1.2), 0.0, rng.randf_range(-1.2, 1.2))
 				var id := "cage_seed" if i % 2 == 0 else "cage_peanut"
 				parts.append([env(id), xf(Basis(Vector3.UP, rng.randf() * TAU), rng.randf_range(0.4, 0.5), at)])
+		"shavings":
+			return null   # (made in code)
 		"plant":
 			if not ResourceLoader.exists(made("cage/plant")):
 				return null

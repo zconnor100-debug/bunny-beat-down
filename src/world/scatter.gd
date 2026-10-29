@@ -395,12 +395,13 @@ func _foliage_mesh(e: Dictionary) -> Mesh:
 	var out := src.duplicate() as ArrayMesh
 	out.shadow_mesh = null
 	for i in out.get_surface_count():
-		out.surface_set_material(i, _foliage_material(src.surface_get_material(i) as BaseMaterial3D, height, cat))
+		out.surface_set_material(i, _foliage_material(src.surface_get_material(i) as BaseMaterial3D, height, cat, float(e.get("dry", 0.0))))
 	_foliage_mats[key] = out
 	return out
 
 
-func _foliage_material(src: BaseMaterial3D, height: float, cat: String) -> Material:
+## `dry` (0..1): dried to straw (the Hamster Cage's hay is the island's grass).
+func _foliage_material(src: BaseMaterial3D, height: float, cat: String, dry := 0.0) -> Material:
 	if src == null:
 		return null
 	var m := ShaderMaterial.new()
@@ -415,5 +416,6 @@ func _foliage_material(src: BaseMaterial3D, height: float, cat: String) -> Mater
 	m.set_shader_parameter(&"alpha_scissor", src.alpha_scissor_threshold if cutout else 0.01)
 	m.set_shader_parameter(&"model_height", maxf(height, 0.1))
 	m.set_shader_parameter(&"wind_strength", 0.16 if cat == "grass" else 0.08)
+	m.set_shader_parameter(&"dry", dry)
 	_foliage_shader_mats.append(m)
 	return m

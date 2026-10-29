@@ -2,7 +2,8 @@ extends "res://tests/island_stage.gd"
 ## Stage for tests/capture_cage.gd: a tour of the Hamster Cage map. Overhead,
 ## an oblique view, every landmark at critter height, the fridge through the
 ## glass, and the toy plane. `only` limits the tour to landmarks whose name
-## contains it (quick looks while iterating).
+## contains it (quick looks while iterating); "floor" shows the open bedding
+## between them, "winter", "fridge" and "room" those corners.
 
 var only := ""
 
@@ -48,6 +49,20 @@ func _run() -> void:
 		if only == "fridge":
 			get_tree().quit()
 			return
+	if only == "floor":
+		# the open bedding between the landmarks, from above and at critter height
+		_look(Vector3(-300, 360, 760), Vector3(60, 0, -60), 60.0)
+		await _wait(1.5)
+		await _snap("60_floor_oblique")
+		var k := 0
+		for at: Vector2 in [Vector2(-20, -40), Vector2(180, 130), Vector2(-200, -200), Vector2(330, 160), Vector2(60, 280), Vector2(-120, 30)]:
+			var to := at + Vector2(70, -50).rotated(k * 1.1)
+			_look(Vector3(at.x, _ground(at) + 6.0, at.y), Vector3(to.x, _ground(to) + 3.0, to.y), 70.0)
+			await _wait(0.6)
+			await _snap("61_floor_%d" % k)
+			k += 1
+		get_tree().quit()
+		return
 	if only == "winter":
 		# the cold corner: the open fridge from critter height, the wind and
 		# snow over the drifts, the icicles from below, and the whole corner

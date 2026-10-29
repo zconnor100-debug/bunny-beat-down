@@ -1,8 +1,10 @@
 class_name CageFloor
 extends Terrain
 ## The floor of the hamster tank, on the island's heightfield machinery: a
-## rectangle of wood-shaving bedding in gentle dunes, heaped up against the
-## glass, with two other biomes in it: a LAGOON of spilled water over aquarium
+## rectangle of wood-shaving bedding in rolling hills (like the island's
+## meadows: broad rises, smaller rolls between them, and the hamster's own
+## big heaps of bedding, the `mounds`), heaped up against the glass, with
+## two other biomes in it: a LAGOON of spilled water over aquarium
 ## gravel round the water bowls (west), and a WINTER corner of snow drifts
 ## where the open fridge's cold pours over the north wall (north-east).
 ## Biome weights reuse the island's slots: x bedding, y lagoon, z winter.
@@ -14,11 +16,15 @@ const BEDDING := 4.0             ## base height of the bedding
 const LAGOON_LEVEL := 3.2        ## the lagoon's still water
 const OUTSIDE := -40.0
 const MAX_HEAP := 17.0           ## the bedding piled against the glass stops here
+const MAX_HILL := 34.0           ## and out in the middle, the tallest hills here
 const LAGOON_AT := Vector2(-340, 110)
 const LAGOON_R := 250.0
 const WINTER_AT := Vector2(400, -300)
 const WINTER_R := 320.0
 
+## The hamster's heaps of bedding: [Vector2 centre, radius, height] (set
+## before generate_heights).
+var mounds: Array = []
 ## Bathing-sand circles: [Vector2 centre, radius] (painted with sand).
 var sand_spots: Array = []
 ## Gravel and snow ramps up to bowl rims and the like: [a, b, width, h_a, h_b].
@@ -60,17 +66,32 @@ func generate_heights() -> void:
 			var w := biome_at(x, z)
 			var edge := maxf(edge_distance(x, z), 0.0)
 			var detail := _n_detail.get_noise_2d(x, z) * 0.35
-			# bedding: soft dunes, heaped up against the glass
-			var dunes := pow(_n_base.get_noise_2d(x, z) * 0.5 + 0.5, 1.5) * 8.5
+			# bedding: broad rolling hills, smaller rolls between them and the
+			# hamster's heaps, piled up against the glass
+			var hills := pow(_n_base.get_noise_2d(x, z) * 0.5 + 0.5, 1.3) * 21.0
+			var rolls := (_n_mesa.get_noise_2d(x, z) * 0.5 + 0.5) * 6.5
 			var heap := smoothstep(80.0, 0.0, edge) * (6.0 + _n_patch.get_noise_2d(x, z) * 3.0)
-			var bed := BEDDING + dunes + detail + heap
+			var bed := BEDDING + hills + rolls + mound_at(x, z) + detail + heap
+			bed = minf(bed, lerpf(MAX_HILL, MAX_HEAP, smoothstep(60.0, 0.0, edge)))
 			# winter: rolling snow drifts, deepest where the cold spills over the glass
 			var drift := pow(clampf(_n_mesa.get_noise_2d(x, z) * 0.5 + 0.5, 0.0, 1.0), 1.3) * 7.0
 			var snow := BEDDING + 0.6 + drift + smoothstep(110.0, 0.0, edge) * 10.0 + detail * 0.4
 			# lagoon: knee-deep water over gravel, with a few deeper pools
 			var pools := smoothstep(-0.1, 0.45, _n_bog.get_noise_2d(x, z))
 			var lagoon := LAGOON_LEVEL - 0.9 - pools * 1.6 + detail * 0.5
-			heights[zi * RES + xi] = minf(bed * w.x + lagoon * w.y + snow * w.z, MAX_HEAP)
+			heights[zi * RES + xi] = bed * w.x + lagoon * w.y + minf(snow, MAX_HEAP) * w.z
+
+
+## How much the hamster's heaps raise the bedding here: a rounded dome each,
+## its edge wandering a little.
+func mound_at(x: float, z: float) -> float:
+	var h := 0.0
+	for m in mounds:
+		var r: float = m[1] * (1.0 + _n_patch.get_noise_2d(x * 0.5, z * 0.5) * 0.25)
+		var d := Vector2(x, z).distance_to(m[0]) / r
+		if d < 1.0:
+			h = maxf(h, float(m[2]) * (0.5 + 0.5 * cos(PI * d)))
+	return h
 
 
 ## Raise the ground along a ramp (a gravel slope up to a bowl's rim, say):

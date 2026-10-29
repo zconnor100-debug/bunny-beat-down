@@ -68,11 +68,19 @@ void fragment() {
 	alb *= mix(vec3(1.05, 0.97, 0.86), vec3(0.95, 0.97, 1.02), smoothstep(0.3, 0.7, texture(macro_noise, p / 13.0).r));
 	vec3 nrm = mix(texture(bedding_normal, p / bedding_tile).rgb, texture(bedding_normal, q / fine_tile).rgb, 0.55 * near);
 	float rgh = 0.9;
-	// tufts of white paper bedding
-	alb = mix(alb, paper_color * mix(0.9, 1.05, macro2), ctl.r);
+	// tufts of paper bedding: white, and in places the pastel kind (pink, sky
+	// blue, mint), a patch at a time
+	float hue = texture(macro_noise, p / 420.0 + vec2(0.37, 0.61)).r;
+	vec3 pastel = mix(vec3(1.0, 0.78, 0.86), vec3(0.76, 0.86, 1.0), smoothstep(0.42, 0.5, hue));
+	pastel = mix(pastel, vec3(0.8, 1.0, 0.84), smoothstep(0.56, 0.64, hue));
+	vec3 paper = paper_color * mix(vec3(1.0), pastel, smoothstep(0.3, 0.38, hue) * (1.0 - smoothstep(0.7, 0.78, hue)) * 0.8);
+	alb = mix(alb, paper * mix(0.9, 1.05, macro2), ctl.r);
 	// trodden trails: packed, darker shavings
 	alb = mix(alb, alb * vec3(0.72, 0.66, 0.6), ctl.g * 0.85);
 	alb *= mix(1.0, 0.82, ctl.b);
+	// the lie of the land: hollows a little darker and warmer, the tops of the
+	// hills and heaps paler (dry, loose shavings), so the rolling hills read
+	alb *= mix(vec3(0.82, 0.77, 0.7), vec3(1.08, 1.06, 1.01), smoothstep(5.0, 26.0, world_pos.y));
 	// bathing sand
 	alb = mix(alb, soft(sand_albedo, p / sand_tile) * vec3(1.08, 1.04, 0.95), ctl.a);
 	nrm = mix(nrm, texture(sand_normal, p / sand_tile).rgb, ctl.a);

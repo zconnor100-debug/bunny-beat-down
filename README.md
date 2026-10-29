@@ -478,8 +478,13 @@ and the final shot replayed from three angles. There's a
   - **Bedding**: a giant exercise wheel, *Tube Town* (Habitrail pods joined
     by tunnels you can run through), hamster huts, a food bowl heaped with
     seeds, a sand bath, a shelf with a ramp, the water bottle on the glass,
-    cardboard rolls, chew blocks, and giant seeds, pellets, broccoli and
-    carrots lying everywhere as cover (paper-bedding tufts hide you like bushes).
+    cardboard rolls, chew blocks, broccoli and carrots lying about as cover.
+    The bedding rolls in hills like the island's meadows, with the hamster's
+    own big heaps of it (a cardboard burrow dug into each one's side),
+    patches of timothy hay (the island's grass, dried to straw), hay cubes,
+    curls of shaving, white and pastel paper bedding (its tufts hide you like
+    bushes), and the giant seeds and pellets spilled round the food bowl and
+    a few cheek-pouch stashes rather than all over the floor.
   - **The Hamster Gym**: perches on stilts at 7, 14 and 21 m, joined by
     see-through Habitrail tubes in every colour that you walk up inside,
     with a skybridge tube, two slide tubes back down and a hammock. Lookout

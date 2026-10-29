@@ -5,7 +5,10 @@ extends Island
 ##   * BEDDING, the cage proper: the giant exercise wheel, a Habitrail "Tube
 ##     Town" of pods and tunnels, hamster huts, a food bowl heaped with seeds,
 ##     a sand bath, a shelf with a ramp, the water bottle on the glass,
-##     cardboard rolls, chew blocks and food lying everywhere as cover;
+##     cardboard rolls, chew blocks and food lying about as cover; the
+##     bedding rolls in hills, with the hamster's heaps (burrows dug in
+##     their sides), patches of hay, hay cubes, and seeds spilled round the
+##     bowl and a few stashes;
 ##   * the LAGOON (west): spilled water over aquarium gravel round a cluster
 ##     of brimming water bowls, an aquarium castle, shells and plastic plants;
 ##   * the WINTER corner (north-east), next to the giant fridge the owner left
@@ -75,6 +78,7 @@ func generate(seed_: int, quality := 2, bake_nav := true) -> void:
 
 	progress.emit(0.05, "Laying fresh bedding")
 	await get_tree().process_frame
+	_plan_mounds()
 	terrain.generate_heights()
 	_choose_cage_pois()
 	_shape_cage_pois()
@@ -120,7 +124,7 @@ func _choose_cage_pois() -> void:
 	for k in CAGE_POIS:
 		var c: Vector2 = k.at + Vector2(rng.randf_range(-12, 12), rng.randf_range(-12, 12))
 		var h := terrain.height_at(c.x, c.y)
-		var target := clampf(h, CageFloor.BEDDING + 0.5, CageFloor.BEDDING + 6.0)
+		var target := clampf(h, CageFloor.BEDDING + 0.5, CageFloor.BEDDING + 14.0)
 		match k.kit:
 			"castle":
 				target = CageFloor.LAGOON_LEVEL + 0.7     # a gravel island in the lagoon
@@ -130,6 +134,26 @@ func _choose_cage_pois() -> void:
 				c.y = CageFloor.HZ - 28.0                 # right under the bottle on the south glass
 		pois.append({"name": k.name, "kit": k.kit, "radius": k.radius, "center": c, "height": target,
 			"biome": k.biome, "buildings": []})
+
+
+## The hamster's heaps of bedding (CageFloor.mounds): out in the open
+## bedding, clear of the landmarks, the lagoon and the winter corner.
+func _plan_mounds() -> void:
+	var cf := terrain as CageFloor
+	var mrng := RandomNumberGenerator.new()   # (its own: the landmarks land where they always did for a seed)
+	mrng.seed = seed_value * 31 + 7
+	for i in 300:
+		if cf.mounds.size() >= 7:
+			break
+		var c := Vector2(mrng.randf_range(-CageFloor.HX + 120.0, CageFloor.HX - 120.0), mrng.randf_range(-CageFloor.HZ + 100.0, CageFloor.HZ - 100.0))
+		var r := mrng.randf_range(45.0, 80.0)
+		if c.distance_to(CageFloor.LAGOON_AT) < CageFloor.LAGOON_R * 0.85 + r or c.distance_to(CageFloor.WINTER_AT) < CageFloor.WINTER_R * 0.8 + r:
+			continue
+		if CAGE_POIS.any(func(k): return c.distance_to(k.at) < float(k.radius) * 1.45 + r + 25.0):
+			continue
+		if cf.mounds.any(func(m): return c.distance_to(m[0]) < float(m[1]) + r + 20.0):
+			continue
+		cf.mounds.append([c, r, mrng.randf_range(11.0, 17.0)])
 
 
 func _shape_cage_pois() -> void:
@@ -286,7 +310,7 @@ func _build_lookouts() -> void:
 		var yaw := rng.randf() * TAU
 		# the deck and the far end of the ramp both need room
 		var reach := kit.footprint
-		if not _cage_spot_ok(at, reach) or not in_poi(at, 1.6).is_empty() or terrain.normal_at(at.x, at.y).y < 0.95:
+		if not _cage_spot_ok(at, reach) or not in_poi(at, 1.6).is_empty() or terrain.normal_at(at.x, at.y).y < 0.95 or not _ramp_lands(kit, at, yaw):
 			kit.free()
 			continue
 		var near := pois[0] as Dictionary
@@ -296,6 +320,15 @@ func _build_lookouts() -> void:
 		_place_kit(near, kit, at, yaw)
 		scatter.add_obstacle(at, reach)
 		made += 1
+
+
+## A lookout at `at`, turned `yaw`: does its ramp meet the bedding (not stop
+## in the air over a dip, or bury itself deep in a hill)?
+func _ramp_lands(kit: Node3D, at: Vector2, yaw: float) -> bool:
+	var foot: Vector3 = Basis(Vector3.UP, yaw) * (kit.get_meta(&"ramp_foot", Vector3.ZERO) as Vector3)
+	var h := terrain.height_at(at.x, at.y)
+	var ground := terrain.height_at(at.x + foot.x, at.y + foot.z)
+	return ground > h + foot.y - 0.5 and ground < h + foot.y + 2.0
 
 
 ## Tube Town: four round pods in a diamond, joined in a loop by Habitrail
@@ -469,32 +502,45 @@ func _drips(bottle: Node3D) -> void:
 
 func _scatter_cage(quality: int) -> void:
 	var density: float = [0.35, 0.6, 1.0, 1.4, 1.75][clampi(quality, 0, 4)]
-	# solid food and toys: [builder, count, spacing radius, biome weights it likes (bed, lagoon, winter)]
+	# where the hamster spilled its food: round the seed bowl and a few
+	# cheek-pouch stashes out in the bedding (the seeds and pellets lie there,
+	# not all over the floor)
+	var spills: Array = pois.filter(func(p): return p.kit == "seed_bowl").map(func(p): return p.center)
+	for i in 80:
+		if spills.size() >= 6:
+			break
+		var p := _random_land(CageFloor.BEDDING - 2.0)
+		if terrain.biome_at(p.x, p.y).x > 0.8 and _cage_spot_ok(p, 6.0) and not spills.any(func(s): return s.distance_to(p) < 170.0):
+			spills.append(p)
+	var spilled := func() -> Vector2:
+		var s: Vector2 = spills[rng.randi() % spills.size()]
+		return s + Vector2.from_angle(rng.randf() * TAU) * rng.randf_range(8.0, 45.0)
+	# solid food and toys: [builder, count, spacing radius, biome weights it likes (bed, lagoon, winter), spilled]
 	var solids := [
-		[func(): return CageProps.sunflower_seed(rng, rng.randf_range(1.8, 2.8)), 170, 1.6, Vector3(1.0, 0.1, 0.0)],
-		[func(): return CageProps.pellet(rng, rng.randf_range(2.0, 3.0)), 80, 1.6, Vector3(1.0, 0.0, 0.0)],
-		[func(): return CageProps.broccoli(rng, rng.randf_range(0.8, 1.3)), 26, 3.4, Vector3(1.0, 0.2, 0.0)],
-		[func(): return CageProps.carrot_stick(rng), 18, 3.6, Vector3(1.0, 0.0, 0.1)],
-		[func(): return CageProps.corn_cob(rng), 14, 4.2, Vector3(1.0, 0.0, 0.0)],
-		[func(): return CageProps.apple_slice(rng), 12, 3.0, Vector3(1.0, 0.0, 0.0)],
-		[func(): return CageProps.block(rng, rng.randf_range(2.5, 4.5)), 26, 3.2, Vector3(1.0, 0.0, 0.0)],
-		[func(): return CageProps.roll(rng, 9.0, 2.7), 10, 5.0, Vector3(1.0, 0.0, 0.0)],
-		[func(): return CageProps.hamster_ball(rng, rng.randf_range(4.5, 6.0)), 4, 6.0, Vector3(1.0, 0.0, 0.0)],
-		[func(): return CageGym.bendy_bridge(rng, rng.randf_range(15.0, 20.0)), 6, 11.0, Vector3(1.0, 0.1, 0.3)],
-		[func(): return CageGym.coconut(rng, rng.randf_range(4.5, 6.0)), 6, 7.5, Vector3(1.0, 0.4, 0.0)],
-		[func(): return CageGym.chew_sticks(rng), 10, 7.0, Vector3(1.0, 0.0, 0.2)],
-		[func(): return CageGym.egg_carton(rng), 5, 14.0, Vector3(1.0, 0.0, 0.0)],
-		[func(): return CageProps.pea(rng, rng.randf_range(1.2, 2.0)), 60, 2.0, Vector3(0.0, 0.0, 1.0)],
-		[func(): return CageProps.ice_cube(rng, rng.randf_range(3.0, 6.5)), 34, 4.0, Vector3(0.0, 0.0, 1.0)],
-		[func(): return CageProps.popsicle(rng), 10, 5.0, Vector3(0.0, 0.0, 1.0)],
-		[func(): return CageProps.shell(rng, rng.randf_range(2.5, 4.0)), 18, 3.0, Vector3(0.0, 1.0, 0.0)],
+		[func(): return CageProps.sunflower_seed(rng, rng.randf_range(1.8, 2.8)), 36, 1.6, Vector3(1.0, 0.1, 0.0), true],
+		[func(): return CageProps.pellet(rng, rng.randf_range(2.0, 3.0)), 22, 1.6, Vector3(1.0, 0.0, 0.0), true],
+		[func(): return CageProps.broccoli(rng, rng.randf_range(0.8, 1.3)), 26, 3.4, Vector3(1.0, 0.2, 0.0), false],
+		[func(): return CageProps.carrot_stick(rng), 18, 3.6, Vector3(1.0, 0.0, 0.1), false],
+		[func(): return CageProps.corn_cob(rng), 14, 4.2, Vector3(1.0, 0.0, 0.0), false],
+		[func(): return CageProps.apple_slice(rng), 12, 3.0, Vector3(1.0, 0.0, 0.0), false],
+		[func(): return CageProps.block(rng, rng.randf_range(2.5, 4.5)), 26, 3.2, Vector3(1.0, 0.0, 0.0), false],
+		[func(): return CageProps.roll(rng, 9.0, 2.7), 10, 5.0, Vector3(1.0, 0.0, 0.0), false],
+		[func(): return CageProps.hamster_ball(rng, rng.randf_range(4.5, 6.0)), 4, 6.0, Vector3(1.0, 0.0, 0.0), false],
+		[func(): return CageGym.bendy_bridge(rng, rng.randf_range(15.0, 20.0)), 6, 11.0, Vector3(1.0, 0.1, 0.3), false],
+		[func(): return CageGym.coconut(rng, rng.randf_range(4.5, 6.0)), 6, 7.5, Vector3(1.0, 0.4, 0.0), false],
+		[func(): return CageGym.chew_sticks(rng), 10, 7.0, Vector3(1.0, 0.0, 0.2), false],
+		[func(): return CageGym.egg_carton(rng), 5, 14.0, Vector3(1.0, 0.0, 0.0), false],
+		[func(): return CageProps.pea(rng, rng.randf_range(1.2, 2.0)), 60, 2.0, Vector3(0.0, 0.0, 1.0), false],
+		[func(): return CageProps.ice_cube(rng, rng.randf_range(3.0, 6.5)), 34, 4.0, Vector3(0.0, 0.0, 1.0), false],
+		[func(): return CageProps.popsicle(rng), 10, 5.0, Vector3(0.0, 0.0, 1.0), false],
+		[func(): return CageProps.shell(rng, rng.randf_range(2.5, 4.0)), 18, 3.0, Vector3(0.0, 1.0, 0.0), false],
 	]
 	for s in solids:
 		var made := 0
 		for i in int(s[1]) * 6:
 			if made >= int(s[1]):
 				break
-			var p := _random_land(CageFloor.BEDDING - 2.0)
+			var p: Vector2 = (spilled as Callable).call() if s[4] else _random_land(CageFloor.BEDDING - 2.0)
 			var likes: Vector3 = s[3]
 			if rng.randf() > terrain.biome_at(p.x, p.y).dot(likes) or not _cage_spot_ok(p, float(s[2])):
 				continue
@@ -504,29 +550,110 @@ func _scatter_cage(quality: int) -> void:
 			kit.rotation.y = rng.randf() * TAU
 			scatter.add_obstacle(p, float(s[2]))
 			made += 1
-	# batched: bedding fluff and loose seeds, snow clumps, plastic plants in the lagoon
+	_build_burrows()
+	_place_hay_cubes(16)
+	# batched: bedding fluff, hay, shavings, snow clumps, plastic plants in the
+	# lagoon; [entry, how many, biome weights it likes, how likely here (0..1)]
 	var area := CageFloor.HX * CageFloor.HZ * 4.0
-	var batched := [[CageProps.entry("fluff"), area / 220.0, Vector3(1.0, 0.0, 0.1)], [CageProps.entry("seeds"), area / 110.0, Vector3(1.0, 0.0, 0.0)],
-		[CageProps.entry("snowball"), area / 110.0, Vector3(0.0, 0.0, 1.0)], [CageProps.entry("plant"), area / 160.0, Vector3(0.0, 1.0, 0.0)]]
+	var hay_n := FastNoiseLite.new()   # (hay lies in patches, as it was dropped)
+	hay_n.seed = rng.randi()
+	hay_n.frequency = 0.011
+	var paper := func(p: Vector2) -> float: return 0.25 + 0.75 * terrain.control_at(p.x, p.y).r
+	var hay := func(p: Vector2) -> float: return smoothstep(0.05, 0.35, hay_n.get_noise_2d(p.x, p.y))
+	var anywhere := func(_p: Vector2) -> float: return 1.0
+	var batched := [[CageProps.entry("fluff"), area / 400.0, Vector3(1.0, 0.0, 0.1), paper],
+		[_hay_entry("grass_tall", "cage_hay_tall", [1.5, 2.3]), area / 90.0, Vector3(1.0, 0.0, 0.0), hay],
+		[_hay_entry("grass_clump_b", "cage_hay_clump", [1.6, 2.6]), area / 70.0, Vector3(1.0, 0.0, 0.0), hay],
+		[CageProps.entry("shavings"), area / 1400.0, Vector3(1.0, 0.0, 0.0), anywhere],
+		[CageProps.entry("snowball"), area / 110.0, Vector3(0.0, 0.0, 1.0), anywhere],
+		[CageProps.entry("plant"), area / 160.0, Vector3(0.0, 1.0, 0.0), anywhere]]
 	for b in batched:
 		var e: Dictionary = b[0]
+		if e.is_empty():
+			continue
 		var likes: Vector3 = b[2]
 		for i in int(float(b[1]) * density):
 			var p := Vector2(rng.randf_range(-CageFloor.HX + 4.0, CageFloor.HX - 4.0), rng.randf_range(-CageFloor.HZ + 4.0, CageFloor.HZ - 4.0))
-			var w := terrain.biome_at(p.x, p.y)
-			if rng.randf() > w.dot(likes):
+			if rng.randf() > terrain.biome_at(p.x, p.y).dot(likes) * float((b[3] as Callable).call(p)):
 				continue
-			var h := terrain.height_at(p.x, p.y)
-			var wet := water_level_at(Vector3(p.x, h, p.y)) > h - 0.1
-			if (e.category == "reed") != wet and not (e.category == "reed" and w.y > 0.5 and rng.randf() < 0.3):
+			_place_batched(e, p)
+	# the loose seeds and pellets, only where the food was spilled
+	var seeds := CageProps.entry("seeds")
+	for s: Vector2 in spills:
+		for i in int(150.0 * density):
+			_place_batched(seeds, s + Vector2.from_angle(rng.randf() * TAU) * 52.0 * sqrt(rng.randf()))
+
+
+## One piece of batched ground cover at `p`, unless it would be in the way
+## (a landmark, a trail, the sand bath, something solid) or the wrong side of
+## the water line (reeds in it, the rest out of it).
+func _place_batched(e: Dictionary, p: Vector2) -> void:
+	if not (terrain as CageFloor).inside(p.x, p.y, 4.0):
+		return
+	var w := terrain.biome_at(p.x, p.y)
+	var h := terrain.height_at(p.x, p.y)
+	var wet := water_level_at(Vector3(p.x, h, p.y)) > h - 0.1
+	if (e.category == "reed") != wet and not (e.category == "reed" and w.y > 0.5 and rng.randf() < 0.3):
+		return
+	var sr: Array = e.scale_range
+	var sc := rng.randf_range(sr[0], sr[1])
+	if not in_poi(p, 0.7).is_empty() or scatter.blocked(p, float(e.get("footprint_radius_m", 1.0)) * sc):
+		return
+	if terrain.control_at(p.x, p.y).g > 0.4 or terrain.control_at(p.x, p.y).a > 0.4:
+		return   # nothing grows on the trails or in the sand bath
+	scatter.place(e, Vector3(p.x, h, p.y), rng.randf() * TAU, sc)
+
+
+## Timothy hay: the island's grass, dried to straw and grown to a critter's
+## height (Scatter's foliage shader, `dry`). {} without the model.
+func _hay_entry(model: String, id: String, scale_range: Array) -> Dictionary:
+	for e in scatter.by_category.get("grass", []):
+		if e.id == model:
+			var hay: Dictionary = e.duplicate()
+			hay.id = id
+			hay.dry = 0.85
+			hay.scale_range = scale_range
+			return hay
+	return {}
+
+
+## Hay cubes out on the bedding: cover, like the island's hay bales.
+func _place_hay_cubes(n: int) -> void:
+	var cube := {}
+	for e in scatter.by_category.get("cover", []):
+		if e.id == "cover_haybale":
+			cube = e
+	if cube.is_empty():
+		return
+	var made := 0
+	for i in n * 8:
+		if made >= n:
+			break
+		var p := _random_land(CageFloor.BEDDING - 2.0)
+		if terrain.biome_at(p.x, p.y).x < 0.8 or not _cage_spot_ok(p, 4.0):
+			continue
+		scatter.place(cube, Vector3(p.x, terrain.height_at(p.x, p.y), p.y), rng.randf() * TAU, rng.randf_range(2.0, 2.6))
+		scatter.add_obstacle(p, 4.0)
+		made += 1
+
+
+## A burrow or two dug into each of the hamster's heaps (CageFloor.mounds): a
+## cardboard tube half buried in its side, its mouth facing out.
+func _build_burrows() -> void:
+	for m in (terrain as CageFloor).mounds:
+		for j in rng.randi_range(1, 2):
+			var out := Vector2.from_angle(rng.randf() * TAU)
+			var mouth: Vector2 = m[0] + out * float(m[1]) * 0.55
+			var mid := mouth - out * 3.5   # (the tube's middle, its back end in the heap)
+			if not _cage_spot_ok(mouth, 3.0) or not _cage_spot_ok(mid, 6.0):
 				continue
-			var sr: Array = e.scale_range
-			var sc := rng.randf_range(sr[0], sr[1])
-			if not in_poi(p, 0.7).is_empty() or scatter.blocked(p, float(e.get("footprint_radius_m", 1.0)) * sc):
-				continue
-			if terrain.control_at(p.x, p.y).g > 0.4 or terrain.control_at(p.x, p.y).a > 0.4:
-				continue   # nothing grows on the trails or in the sand bath
-			scatter.place(e, Vector3(p.x, h, p.y), rng.randf() * TAU, sc)
+			var tube := CageProps.roll(rng, 12.0, 2.6)
+			add_child(tube)
+			var box := ModelUtil.aabb_of(tube)
+			var along := Vector3.RIGHT if box.size.x > box.size.z else Vector3.BACK   # (the tube's own long axis)
+			tube.global_position = Vector3(mid.x, terrain.height_at(mouth.x, mouth.y) - 2.6 * 0.45, mid.y)
+			tube.global_basis = Basis(IKMath.from_to(along, Vector3(out.x, 0.0, out.y)))
+			scatter.add_obstacle(mid, 7.0)
 
 
 func _cage_spot_ok(p: Vector2, radius: float) -> bool:

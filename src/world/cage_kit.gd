@@ -642,6 +642,8 @@ static func mat(key: StringName) -> Material:
 				m = _flat(Color(0.88, 0.74, 0.5), 0.8)
 			&"paper_fluff":
 				m = _flat(Color(0.97, 0.95, 0.9), 0.95)
+			&"shaving":   # (a big curl of the bedding's own pale pine)
+				m = _flat(Color(0.96, 0.84, 0.62), 0.9)
 			# the room and the fridge
 			&"laminate":
 				m = _soft("laminate", 90.0, Color(1.05, 1.0, 0.95), 0.8)

@@ -67,6 +67,7 @@ static func lookout(rng: RandomNumberGenerator, height: float, colour: StringNam
 	var run := height / tan(deg_to_rad(25.0))
 	k._ramp(&"wood_light", Vector3(size * 0.5 + run, -0.15, 0.0), Vector3(size * 0.5 - 0.3, height, 0.0), 5.0, &"paint_yellow")
 	k.footprint = size * 0.5 + run * 0.5 + 3.0
+	k.set_meta(&"ramp_foot", Vector3(size * 0.5 + run, -0.15, 0.0))   # (where it meets the ground)
 	k.floor_y = height
 	k.loot_spots = [Vector3(-2.0, height, 1.5)]
 	if is_equal_approx(height, roundf(height)) and int(height) in LOOKOUT_HEIGHTS:
