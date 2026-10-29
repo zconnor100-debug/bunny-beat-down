@@ -528,6 +528,17 @@ and the final shot replayed from three angles. There's a
   - A corner of **pillow hills** under a patchwork quilt with a blanket fort
     and a giant teddy, and a **fishbowl** with goldfish: climb the slide,
     jump in and swim.
+  - The floor stays flat; its hills and cover are **toys strewn about**:
+    heaps of socks tipped out of the laundry basket (hundreds of striped,
+    polka-dot, knitted and tube socks, dyed every colour: run up them),
+    wooden unit-block forts with ramp blocks up to a tower, Lincoln Log
+    cabins to duck into, big stuffed animals (a denim whale, a shark, an
+    octopus, an elephant, a sheep and a seal), a spare train come off the
+    rails and a take-apart toy
+    airplane in pieces (walk through its fuselage, or up the wing leaning on
+    it onto its back). Loot sits on top of and inside them. The play rug has
+    a cotton fringe, and the loose crayons have scribbled on the floor: suns,
+    houses, smiley faces.
 
   ![Toy Box Bash: the bedroom, the toy train, Dollhouse Manor and the pillow fort](docs/screenshots/toy_box_bash.jpg)
 - **Full UI**: menus, settings, pause, loading screen, gamepad support, and a
@@ -575,7 +586,12 @@ The full write-up is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
   light), `CageFloor` extends `Terrain`, and its toys are built by a
   `CageKit` that adds lathes, panel rings and ellipsoids to the buildings'
   boxes and logs. Toy Box Bash does the same (`ToyBox`, `ToyFloor`,
-  `ToyProps`, `ToyRoom`), plus `ToyTrain`: `AnimatableBody3D` cars
+  `ToyProps`, `ToyRoom`; the strewn toys are placed by
+  `ToyBox._build_clutter` with their own seeded RNG, each where it fits flat
+  and dry, clear of the landmarks and the track; the sock heaps collide
+  as smooth domes no steeper than about 33° so the bots climb them too, and
+  are drawn as MultiMeshes of the sock models, dyed per sock),
+  plus `ToyTrain`: `AnimatableBody3D` cars
   following a resampled loop, so riders are carried by the physics engine,
   and a bumper `Area3D` that bonks critters on the line.
 - **Both indoor maps are drawn as models; the code keeps the gameplay.**

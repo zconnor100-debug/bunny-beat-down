@@ -288,6 +288,7 @@ static func crayon(rng: RandomNumberGenerator, length := 16.0, standing := false
 	k._rod(&"paper", base + dir * length * 0.15, base + dir * length * 0.65, r + 0.08, false)
 	k._rod(StringName("crayon_" + String(col)), base + dir * length * 0.3, base + dir * length * 0.5, r + 0.12, false)
 	k._cone(StringName("crayon_" + String(col)), base + dir * length * 0.8, base + dir * length, r)
+	k.set_meta(&"crayon", col)
 	return k.finish()
 
 
@@ -553,11 +554,372 @@ static func pillow(rng: RandomNumberGenerator) -> CageKit:
 	return k.dress(made("toy/pillow"), Transform3D(b * Basis.from_scale(Vector3(rx / 6.0, 1.0, rz / 4.1)), Vector3.DOWN * 0.1), {"accent": key}).finish()
 
 
+# ---- the floor's hills and cover (the floor itself stays flat) ----------------------------------
+
+const SOCK_COLOURS := [&"red", &"blue", &"yellow", &"lime", &"purple", &"orange", &"teal", &"pink", &"white", &"grey", &"navy", &"white"]
+const PLUSH_KINDS := ["whale", "shark", "octopus", "elephant", "sheep", "seal"]
+## The sock models a heap is made of (assets/env/<id>), how often each turns
+## up, how often it's dyed (the white tube sock and the knitted one come in
+## every bright colour, the striped one sometimes) and how much a dye lifts
+## it (the knitted one is a dark wool underneath).
+const SOCK_MODELS := ["toy_sock_striped", "toy_sock_dots", "toy_sock_knit", "toy_sock_tube"]
+const SOCK_SHARE := [0.12, 0.06, 0.36, 0.46]
+const SOCK_DYED := [0.35, 0.0, 1.0, 1.0]
+const SOCK_LIFT := [1.0, 1.0, 2.1, 1.0]
+const SOCK_DYES := [&"red", &"blue", &"yellow", &"lime", &"purple", &"orange", &"teal", &"pink", &"white", &"sky"]
+const UNIT := 2.0                    ## a wooden unit block's thickness (its width 2x, its length 4x)
+
+
+static func _sock_key(rng: RandomNumberGenerator) -> StringName:
+	return StringName("sock_" + String(SOCK_COLOURS[rng.randi() % SOCK_COLOURS.size()]))
+
+
+## A soft dome's profile for CageKit._lathe, rim to top: y = h (1 + cos(pi d/r)) / 2,
+## never steeper than atan(h pi / 2r).
+static func _dome_profile(r: float, h: float, steps := 12) -> Array:
+	var prof := []
+	for i in steps + 1:
+		var t := float(i) / steps
+		prof.append(Vector2(r * (1.0 - t), h * (0.5 - 0.5 * cos(PI * t))))
+	return prof
+
+
+## [the dome's surface point over (x, z), and a basis whose Y is its normal,
+## turned `yaw` about it].
+static func _on_dome(r: float, h: float, x: float, z: float, yaw: float) -> Array:
+	var d := minf(Vector2(x, z).length(), r)
+	var slope := -h * 0.5 * PI / r * sin(PI * d / r)
+	var radial := Vector2(x, z).normalized() if d > 0.01 else Vector2.ZERO
+	var n := Vector3(-slope * radial.x, 1.0, -slope * radial.y).normalized()
+	return [Vector3(x, h * (0.5 + 0.5 * cos(PI * d / r)), z), Basis(IKMath.from_to(Vector3.UP, n)) * Basis(Vector3.UP, yaw)]
+
+
+## A sock lying flat in `b`'s XZ plane (b.y up off what it lies on): the leg
+## from the cuff to the heel at `at`, the foot turning off to the toe, a
+## band at the cuff and sometimes stripes.
+static func _sock(k: CageKit, at: Vector3, b: Basis, rng: RandomNumberGenerator) -> void:
+	var cloth := _sock_key(rng)
+	var trim := _sock_key(rng)
+	var r := rng.randf_range(0.55, 0.7)
+	var foot := Vector3(cos(1.25), 0, -sin(1.25)) if rng.randf() < 0.5 else Vector3(cos(1.25), 0, sin(1.25))
+	var lift := b.y * r * 0.75
+	var heel := at + lift
+	var cuff := heel - b.x * rng.randf_range(3.4, 4.4)
+	var toe := heel + b * foot * rng.randf_range(2.6, 3.3)
+	k._rod(cloth, cuff, heel, r, false)
+	k._rod(cloth, heel, toe, r, false)
+	k._ellipsoid(cloth, heel, Vector3.ONE * r * 1.05, b, false, 4, 8)
+	k._ellipsoid(trim if rng.randf() < 0.5 else cloth, toe, Vector3(r * 1.3, r, r), b * Basis(Vector3.UP, -atan2(foot.z, foot.x)), false, 4, 8)
+	k._rod(trim, cuff, cuff + b.x * 0.5, r + 0.07, false)
+	if rng.randf() < 0.5:
+		for i in 2:
+			var s := cuff.lerp(heel, 0.35 + i * 0.25)
+			k._rod(trim, s, s + b.x * 0.3, r + 0.04, false)
+
+
+## A heap of socks tipped out of the laundry basket: a soft hill to run up
+## (its collider a smooth dome, never steeper than about 33 degrees, so the
+## bots climb it too; all you see of it is socks), the sock models heaped two
+## deep over it, odd socks round its foot. Its loot spot is on top.
+static func sock_hill(rng: RandomNumberGenerator) -> CageKit:
+	var k := CageKit.blank("SockHill", rng, &"cloth")
+	var r := rng.randf_range(16.0, 20.0)
+	var h := r * rng.randf_range(0.36, 0.4)
+	k._lathe(&"", _dome_profile(r, h), 24, Vector3.ZERO, true)   # (the collider alone)
+	var socks := {}   # model id -> [[Transform3D, Color], ...]
+	# two layers spread evenly over the dome (sunflower spirals): the lower
+	# sunk most of the way in, filling the upper's gaps
+	for layer in 2:
+		var n := int(r * r * (0.3 if layer == 0 else 0.42))
+		for i in n:
+			var d := r * 0.97 * sqrt((i + 0.5) / n)
+			var a := i * 2.39996 + layer * 1.3 + rng.randf_range(-0.2, 0.2)
+			var s: Array = _on_dome(r, h, cos(a) * d, sin(a) * d, rng.randf() * TAU)
+			var b: Basis = (s[1] as Basis) * Basis(Vector3.RIGHT, rng.randf_range(-0.25, 0.25))
+			_heap_sock(socks, rng, b, s[0], 1.0 if layer == 0 else 0.55)
+	# odd socks round its foot
+	for i in rng.randi_range(5, 8):
+		var a := rng.randf() * TAU
+		_heap_sock(socks, rng, Basis(Vector3.UP, rng.randf() * TAU), Vector3(cos(a), 0, sin(a)) * (r + rng.randf_range(0.5, 3.0)), 0.0)
+	for id in socks:
+		var mesh := _sock_mesh(id)
+		var list: Array = socks[id]
+		if mesh == null:
+			for e in list:   # (no model: the code-built socks)
+				_sock(k, (e[0] as Transform3D).origin, (e[0] as Transform3D).basis.orthonormalized(), rng)
+			continue
+		var mm := MultiMesh.new()
+		mm.transform_format = MultiMesh.TRANSFORM_3D
+		mm.use_colors = true
+		mm.mesh = mesh
+		mm.instance_count = list.size()
+		for i in list.size():
+			mm.set_instance_transform(i, list[i][0])
+			mm.set_instance_color(i, list[i][1])
+		var mmi := MultiMeshInstance3D.new()
+		mmi.name = "Socks_" + id.trim_prefix("toy_sock_")
+		mmi.multimesh = mm
+		k.add_child(mmi)
+	k.footprint = r + 2.5
+	k.loot_spots = [Vector3(0, h, 0)]
+	return k.finish()
+
+
+## One more sock for a heap (see sock_hill): a sock model, lying in `b`'s XZ
+## plane at `at`, sunk `sink` of its thickness in; dyed if it's a plain one.
+static func _heap_sock(socks: Dictionary, rng: RandomNumberGenerator, b: Basis, at: Vector3, sink: float) -> void:
+	var m := 0
+	var pick := rng.randf()
+	while m < SOCK_MODELS.size() - 1 and pick > SOCK_SHARE[m]:
+		pick -= SOCK_SHARE[m]
+		m += 1
+	var id: String = SOCK_MODELS[m]
+	var mesh := _sock_mesh(id)
+	var thick := mesh.get_aabb().size.y if mesh else 1.2
+	var sc := rng.randf_range(0.85, 1.15)
+	var col := Color.WHITE.darkened(rng.randf() * 0.12)
+	if rng.randf() < SOCK_DYED[m]:
+		col = CageKit._cloth(String(SOCK_DYES[rng.randi() % SOCK_DYES.size()])).lerp(Color.WHITE, 0.08) * SOCK_LIFT[m]
+		col.a = 1.0
+	if not socks.has(id):
+		socks[id] = []
+	(socks[id] as Array).append([Transform3D(b * Basis.from_scale(Vector3.ONE * sc), at - b.y * thick * sc * sink), col])
+
+
+static var _sock_meshes: Dictionary = {}
+
+
+## A sock model's mesh, its materials taking each sock's colour from the
+## MultiMesh (null without the model).
+static func _sock_mesh(id: String) -> Mesh:
+	if _sock_meshes.has(id):
+		return _sock_meshes[id]
+	var mesh: Mesh = null
+	if ResourceLoader.exists(env(id)):
+		var src := ModelUtil.first_mesh(env(id))
+		if src:
+			mesh = src.duplicate()
+			for i in mesh.get_surface_count():
+				var m := mesh.surface_get_material(i) as BaseMaterial3D
+				if m:
+					m = m.duplicate() as BaseMaterial3D
+					m.vertex_color_use_as_albedo = true
+					mesh.surface_set_material(i, m)
+	_sock_meshes[id] = mesh
+	return mesh
+
+
+## A wooden unit-block fort (the plain maple blocks every nursery has, a few
+## painted): a platform two blocks high with ramp blocks up two sides, a
+## tower on its back corner with another ramp and a parapet of cubes, pillar
+## blocks, an arch gate in front, and tumbled blocks round about. Loot on
+## the platform and the tower.
+static func block_fort(rng: RandomNumberGenerator) -> CageKit:
+	var k := CageKit.blank("BlockFort", rng, &"wood")
+	var u := UNIT
+	var paint := func() -> StringName: return StringName("paint_" + String([&"red", &"blue", &"yellow", &"lime"][rng.randi() % 4]))
+	var half := u * 4.0           # the platform: 16 m square, 4 m high
+	# two courses of long blocks, crossing
+	for i in 4:
+		var z := -half + u + i * u * 2.0
+		k._box(&"maple", Vector3(0, u * 0.5, z), Vector3(half * 2.0, u, u * 2.0))
+		var x := -half + u + i * u * 2.0
+		k._box(&"maple", Vector3(x, u * 1.5, 0), Vector3(u * 2.0, u, half * 2.0))
+	# ramp blocks: up the +X side and the +Z side
+	var ramp_a: StringName = paint.call()
+	k._prism(ramp_a, [Vector2(half, 0.0), Vector2(half + u * 4.0, 0.0), Vector2(half, u * 2.0)], u * 1.5, u * 2.0)
+	k._prism(paint.call(), [Vector2(half, 0.0), Vector2(half + u * 4.0, 0.0), Vector2(half, u * 2.0)], -u * 1.5, u * 2.0, true)
+	# the tower on the back corner (-X, -Z): two more courses, a ramp up from the platform
+	var top := u * 4.0
+	for i in 2:
+		var z := -half + u + i * u * 2.0
+		k._box(&"maple", Vector3(-half * 0.5, u * 2.5, z), Vector3(half, u, u * 2.0))
+		var x := -half + u + i * u * 2.0
+		k._box(&"maple", Vector3(x, u * 3.5, -half * 0.5), Vector3(u * 2.0, u, half))
+	k._prism(paint.call(), [Vector2(u * 4.0, u * 2.0), Vector2(0.0, u * 2.0), Vector2(0.0, top)], -half + u, u * 2.0, true)
+	# a parapet of cubes along the tower's outer edges, with gaps to shoot through
+	for c in [Vector2(-half + u * 0.5, -half + u * 0.5), Vector2(-half + u * 0.5, -half + u * 2.5), Vector2(-half + u * 2.5, -half + u * 0.5)]:
+		k._box(paint.call(), Vector3(c.x, top + u * 0.5, c.y), Vector3.ONE * u)
+	# pillar blocks on the platform's +X corners, a long block across them
+	for zs in [-1.0, 1.0]:
+		var c := Vector3(half - u * 0.5, u * 2.0, zs * (half - u * 0.5))
+		k._rod(&"maple", c, c + Vector3.UP * u * 4.0, u * 0.5)
+	k._box(&"maple", Vector3(half - u * 0.5, u * 6.0 + u * 0.25, 0), Vector3(u, u * 0.5, half * 2.0 + u))
+	# the arch gate out in front (-X): two legs and an arch block, a bunny's height under it
+	var gate := Vector3(-half - u * 6.0, 0, half * 0.25)
+	for zs in [-1.0, 1.0]:
+		k._box(&"maple", gate + Vector3(0, u, zs * u * 1.5), Vector3(u * 2.0, u * 2.0, u))
+	k._box(&"maple", gate + Vector3(0, u * 2.0 + u * 0.4, 0), Vector3(u * 2.0, u * 0.8, u * 4.0))
+	for i in 6:
+		var a0 := PI * i / 6.0
+		var a1 := PI * (i + 1) / 6.0
+		var rr := u * 1.0
+		var p0 := gate + Vector3(0, u * 2.0 - 0.02 - rr * (1.0 - sin(a0)) * 0.6, cos(a0) * rr)
+		var p1 := gate + Vector3(0, u * 2.0 - 0.02 - rr * (1.0 - sin(a1)) * 0.6, cos(a1) * rr)
+		k._box(&"maple", (p0 + p1) * 0.5 + Vector3.DOWN * 0.15, Vector3(u * 2.0, 0.3, p0.distance_to(p1) + 0.1),
+			Basis(Vector3.RIGHT, atan2(p1.y - p0.y, p1.z - p0.z)), false)
+	# tumbled blocks lying round about
+	for i in rng.randi_range(4, 6):
+		var a := rng.randf() * TAU
+		var d := rng.randf_range(half + u * 5.0, half + u * 7.5)
+		var at := Vector3(cos(a) * d, 0, sin(a) * d)
+		if at.distance_to(gate) < u * 5.0:
+			continue
+		var long := rng.randf() < 0.6
+		var size := Vector3(u * (4.0 if long else 2.0), u, u * 2.0)
+		var mat: StringName = &"maple" if rng.randf() < 0.65 else paint.call()
+		if rng.randf() < 0.35:
+			size = Vector3(size.x, size.z, size.y)   # (stood on its long edge)
+		k._box(mat, at + Vector3.UP * size.y * 0.5, size, Basis(Vector3.UP, rng.randf() * TAU))
+	k.footprint = half + u * 8.0
+	k.floor_y = u * 2.0
+	k.loot_spots = [Vector3(half * 0.5, u * 2.0, half * 0.4), Vector3(-half * 0.5, top, -half * 0.5)]
+	return k.finish()
+
+
+## A Lincoln Log cabin: notched redwood logs (each wall's courses half a
+## log above or below the next wall's, so they cross at the corners), a
+## doorway and windows, gable ends and a green slatted roof; a pile of
+## spare logs and a few loose roof slats beside it. Walk in for its loot.
+static func log_cabin(rng: RandomNumberGenerator) -> CageKit:
+	var k := CageKit.blank("LogCabin", rng, &"wood")
+	var w := rng.randf_range(13.0, 15.0)
+	var d := rng.randf_range(10.0, 11.5)
+	var r := 0.75
+	var wall_h := r * 2.0 * 4.0 + r
+	var door := [0.0, 3.6, 0.0, 4.6]
+	var window := [0.0, 2.6, 2.0, 4.4]
+	k._log_wall(Vector3(-w * 0.5, 0, d * 0.5), Vector3(w * 0.5, 0, d * 0.5), wall_h, r, [door], 0.0, &"lincoln")
+	k._log_wall(Vector3(-w * 0.5, 0, -d * 0.5), Vector3(w * 0.5, 0, -d * 0.5), wall_h, r, [window], 0.0, &"lincoln")
+	for xs in [-1.0, 1.0]:
+		k._log_wall(Vector3(xs * w * 0.5, 0, -d * 0.5), Vector3(xs * w * 0.5, 0, d * 0.5), wall_h, r, [window], r, &"lincoln")
+	# gable ends of shorter and shorter logs, and the green slat roof (ridge along X)
+	var eave := wall_h + r * 0.5
+	var ridge := eave + d * 0.32
+	for xs in [-1.0, 1.0]:
+		k._gable_end(&"lincoln", d, eave - 0.2, ridge - 0.2, xs * w * 0.5, r * 1.6)
+	for zs in [-1.0, 1.0]:
+		for i in 5:
+			var t0 := float(i) / 5.0
+			var t1 := float(i + 1) / 5.0
+			var p0 := Vector3(0, lerpf(eave - 0.4, ridge, t0), zs * lerpf(d * 0.5 + 1.2, 0.0, t0))
+			var p1 := Vector3(0, lerpf(eave - 0.4, ridge, t1), zs * lerpf(d * 0.5 + 1.2, 0.0, t1))
+			var ang := atan2(p1.y - p0.y, absf(p1.z - p0.z))
+			k._box(&"lincoln_green", (p0 + p1) * 0.5 + Vector3.UP * 0.2, Vector3(w + 2.6, 0.32, p0.distance_to(p1) + 0.12),
+				Basis(Vector3.RIGHT, zs * ang))
+	# a pile of spare logs (three, two, one) and loose roof slats
+	var pile := Vector3(w * 0.5 + 4.2, 0, rng.randf_range(-1.0, 1.0))
+	var length := rng.randf_range(7.0, 9.0)
+	for row in 3:
+		for i in 3 - row:
+			var x := (i - (2 - row) * 0.5) * r * 2.05
+			var y := r + row * r * 1.75
+			k._log(&"lincoln", pile + Vector3(x, y, -length * 0.5), pile + Vector3(x, y, length * 0.5), r)
+	for i in rng.randi_range(2, 3):
+		var at := Vector3(rng.randf_range(-w * 0.5, w * 0.5), 0.16, -d * 0.5 - rng.randf_range(3.0, 5.0))
+		k._box(&"lincoln_green", at, Vector3(rng.randf_range(4.0, 6.0), 0.32, 1.4), Basis(Vector3.UP, rng.randf_range(-0.6, 0.6)), false)
+	k.footprint = w * 0.5 + 7.0
+	k.floor_y = 0.0
+	k.loot_spots = [Vector3(-w * 0.25, 0, -d * 0.2), Vector3(w * 0.25, 0, 0.0)]
+	return k.finish()
+
+
+## A big, well-loved stuffed animal flopped on the floor (soft cover), one
+## of the plush models (assets/env/toy_plush_<kind>): "whale", "shark",
+## "octopus", "elephant", "sheep" or "seal". It collides as its model's
+## convex hull (without the model, it's a plush lump its size).
+static func plush(rng: RandomNumberGenerator, kind := "") -> CageKit:
+	if kind == "":
+		kind = PLUSH_KINDS[rng.randi() % PLUSH_KINDS.size()]
+	var k := CageKit.blank("Plush" + kind.capitalize(), rng, &"cloth")
+	var path := env("toy_plush_" + kind)
+	if not _plush_boxes.has(path):
+		var m := ModelUtil.instantiate(path) if ResourceLoader.exists(path) else null
+		_plush_boxes[path] = ModelUtil.aabb_of(m) if m else AABB(Vector3(-5, 0, -5), Vector3(10, 9, 10))
+		if m:
+			m.free()
+	var box: AABB = _plush_boxes[path]
+	var fur := StringName("plush_" + String([&"pink", &"teal", &"purple", &"yellow", &"blue"][rng.randi() % 5]))
+	k._ellipsoid(fur, box.get_center(), box.size * 0.5, Basis(), true, 10, 18)
+	k.footprint = maxf(box.size.x, box.size.z) * 0.5 + 2.0
+	return k.dress(path, Transform3D(), {}, true).finish()
+
+
+static var _plush_boxes: Dictionary = {}
+
+
+## A take-apart toy airplane in pieces, the screws out of it: the chunky
+## plastic fuselage (open at both ends and down one side where its panel came
+## off: walk through it), one wing leaning on it (a ramp up onto its back),
+## the other lying flat, the nose cone, the propeller, the tail fin, the
+## wheels, giant screws and the toy screwdriver. Forward is -X.
+static func takeapart_plane(rng: RandomNumberGenerator) -> CageKit:
+	var k := CageKit.blank("TakeApartPlane", rng, &"wood")
+	var body: StringName = [&"plastic_blue", &"plastic_red", &"plastic_teal"][rng.randi() % 3]
+	var wing: StringName = &"plastic_yellow"
+	var r := 4.4
+	var t := 0.5
+	var length := 24.0
+	var cy := r + t
+	# the fuselage: a ring of panels along X, its +Z side panels gone
+	k._ring(body, Vector3(0, cy, 0), Basis(Vector3.UP, Vector3.RIGHT, Vector3.FORWARD), r, length, t, 16, [[PI * 1.5, 1.3]])
+	for xs in [-1.0, 1.0]:
+		k._ring(&"plastic_white", Vector3(xs * (length * 0.5 - 0.4), cy, 0), Basis(Vector3.UP, Vector3.RIGHT, Vector3.FORWARD), r + t, 0.8, 0.25, 16,
+			[[PI * 1.5, 1.3]], false)
+	# screw holes: dark dots along its back and down its sides
+	for i in 6:
+		var x := -length * 0.5 + 2.0 + i * (length - 4.0) / 5.0
+		for a in [0.0, PI * 0.5]:
+			k._ellipsoid(&"plastic_black", Vector3(x, cy + cos(a) * (r + t + 0.02), -sin(a) * (r + t + 0.02)), Vector3(0.45, 0.45, 0.45), Basis(), false, 4, 8)
+	# the wing leaning on its -Z side: a ramp from the floor up onto its back
+	var foot := Vector3(-1.0, 0.0, -(r + t) - 15.0)
+	var lean_top := Vector3(-1.0, cy * 2.0 - 0.05, -0.6)
+	var span := lean_top - foot
+	var ramp_b := Basis(Vector3.RIGHT, -atan2(span.y, span.z))
+	k._box(wing, (foot + lean_top) * 0.5 + ramp_b.y * 0.35, Vector3(6.0, 0.7, span.length()), ramp_b)
+	k._box(&"plastic_red", (foot + lean_top) * 0.5 + ramp_b.y * 0.72, Vector3(1.0, 0.06, span.length() * 0.7), ramp_b, false)
+	# the other wing lying flat beyond the open side (low enough to step onto)
+	var flat := Vector3(2.0, 0.32, r + t + 9.0)
+	k._box(wing, flat, Vector3(6.0, 0.64, 17.0), Basis(Vector3.UP, rng.randf_range(-0.3, 0.3)))
+	k._ellipsoid(&"plastic_red", flat + Vector3(0, 0.62, 4.0), Vector3(1.6, 0.05, 1.6), Basis(), false, 3, 12)
+	# the nose cone off in front, tipped on its side
+	var nose := Vector3(-length * 0.5 - 6.5, 0, -1.0)
+	k._ellipsoid(&"plastic_white", nose + Vector3(0, r * 0.85, 0), Vector3(3.0, r * 0.85, r * 0.85), Basis(), true, 8, 14)
+	# the propeller lying flat by the nose: a hub and three blades
+	var prop := nose + Vector3(-2.0, 0.3, 7.5)
+	k._rod(&"plastic_red", prop, prop + Vector3.UP * 1.0, 1.2, false)
+	for i in 3:
+		var a := TAU * i / 3.0 + rng.randf()
+		k._box(&"plastic_red", prop + Vector3(cos(a) * 3.4, 0.0, sin(a) * 3.4), Vector3(5.6, 0.5, 1.5), Basis(Vector3.UP, -a) * Basis(Vector3.RIGHT, 0.25), false)
+	# the tail fin stood on the floor behind, and the wheels
+	var tail := Vector3(length * 0.5 + 6.0, 0, 3.0)
+	k._prism(&"plastic_red", [Vector2(tail.x - 3.0, 0.0), Vector2(tail.x + 3.5, 0.0), Vector2(tail.x + 2.4, 5.6), Vector2(tail.x + 0.6, 5.6)], tail.z, 0.6)
+	for i in 2:
+		var at := tail + Vector3(rng.randf_range(-2.0, 4.0), 0, -7.0 - i * 5.5)
+		k._rod(&"plastic_black", at + Vector3.UP * 0.0, at + Vector3.UP * 1.3, 2.1)
+		k._rod(&"plastic_yellow", at + Vector3.UP * 1.3, at + Vector3.UP * 1.45, 1.0, false)
+	# giant screws, and the screwdriver that took it apart
+	for i in rng.randi_range(4, 6):
+		var a := rng.randf() * TAU
+		var at := Vector3(cos(a) * rng.randf_range(15.0, 19.0), 0.0, sin(a) * rng.randf_range(10.0, 13.0))
+		var dir := Vector3(cos(a + 1.7), 0, sin(a + 1.7))
+		k._rod(&"metal", at + Vector3.UP * 0.4, at + Vector3.UP * 0.4 + dir * 2.4, 0.35, false)
+		k._rod(&"plastic_orange", at + Vector3.UP * 0.6 - dir * 0.3, at + Vector3.UP * 0.6, 0.6, false)
+	var sd := Vector3(-length * 0.5 - 2.0, 0.0, r + t + 6.0)
+	k._rod(&"plastic_red", sd + Vector3(0, 0.7, 0), sd + Vector3(5.0, 0.7, 1.0), 0.7, false)
+	k._rod(&"metal", sd + Vector3(5.0, 0.7, 1.0), sd + Vector3(9.5, 0.6, 1.9), 0.22, false)
+	k._box(&"metal", sd + Vector3(9.8, 0.6, 1.95), Vector3(0.6, 0.12, 0.5), Basis(Vector3.UP, -0.2), false)
+	k.footprint = 23.0
+	k.loot_spots = [Vector3(2.0, 0.5, 0.0), Vector3(-4.0, cy * 2.0, 0.0)]
+	return k.finish()
+
+
 static var _meshes: Dictionary = {}
 
 
 ## Batched floor clutter (MultiMesh via Scatter): "bricks" (tiny plastic
-## bricks — mind your feet) and "marbles" (glass marbles) are decoration;
+## bricks — mind your feet), "marbles" (glass marbles) and "fringe" (the play
+## rug's tassels, 4 m to a piece) are decoration;
 ## "stuffing" (pillow stuffing tufts in the pillow corner) hides you like bushes.
 static func entry(kind: String) -> Dictionary:
 	match kind:
@@ -565,6 +927,8 @@ static func entry(kind: String) -> Dictionary:
 			return {"id": "toy_bricks", "category": "lily", "height_m": 0.6, "footprint_radius_m": 1.4, "scale_range": [0.8, 1.2], "_mesh": _mesh("bricks")}
 		"marbles":
 			return {"id": "toy_marbles", "category": "lily", "height_m": 0.8, "footprint_radius_m": 1.2, "scale_range": [0.8, 1.3], "_mesh": _mesh("marbles")}
+		"fringe":
+			return {"id": "toy_fringe", "category": "lily", "height_m": 0.3, "footprint_radius_m": 2.0, "scale_range": [1.0, 1.0], "_mesh": _mesh("fringe")}
 		_:
 			var e := CageProps.entry("fluff")
 			e["id"] = "toy_stuffing"
@@ -583,7 +947,17 @@ static func _mesh(kind: String) -> ArrayMesh:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = hash(kind)
 	var k := CageKit.blank("tmp", rng)
-	if kind == "bricks":
+	if kind == "fringe":
+		# a 4 m run of the rug's cotton tassels, knotted at the rug's edge (x 0)
+		# and lying out along +X, each a little askew
+		for i in 9:
+			var z := -2.0 + (i + 0.5) * 4.0 / 9.0
+			var length := rng.randf_range(2.2, 2.9)
+			var a := rng.randf_range(-0.14, 0.14)
+			var root := Vector3(0.12, 0.14, z)
+			k._ellipsoid(&"fringe", root, Vector3(0.3, 0.16, 0.22), Basis(), false, 3, 6)
+			k._box(&"fringe", root + Vector3(cos(a), 0, sin(a)) * length * 0.5 + Vector3.DOWN * 0.05, Vector3(length, 0.14, 0.22), Basis(Vector3.UP, -a), false)
+	elif kind == "bricks":
 		for i in 3:
 			var at := Vector3(rng.randf_range(-1.2, 1.2), 0.3, rng.randf_range(-1.2, 1.2))
 			var b := Basis(Vector3.UP, rng.randf() * TAU)

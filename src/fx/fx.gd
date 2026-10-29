@@ -110,6 +110,8 @@ static func impact(pos: Vector3, normal: Vector3, surface: StringName) -> void:
 			col = Color(0.35, 0.5, 0.2)
 		&"water":
 			col = Color(0.8, 0.9, 1.0, 0.8)
+		&"cloth":   # (stuffing fluff out of socks and plush)
+			col = Color(0.95, 0.93, 0.9)
 	instance._burst(pos, normal, {"amount": 7, "lifetime": 0.8, "speed": Vector2(0.4, 1.6), "spread": 45.0, "gravity": 1.5,
 		"size": 0.12, "scale": Vector2(0.6, 1.4), "color": Color(col, 0.65), "fade": true, "damping": 2.5})
 	instance._burst(pos, normal, {"amount": 6, "lifetime": 0.6, "speed": Vector2(2.0, 4.5), "spread": 35.0, "gravity": 16.0,

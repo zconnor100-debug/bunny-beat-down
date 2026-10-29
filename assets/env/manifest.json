@@ -1744,6 +1744,166 @@
     "tris": 92
   },
   {
+    "id": "toy_sock_striped",
+    "file": "assets/env/toy_sock_striped/toy_sock_striped.glb",
+    "category": "toy",
+    "height_m": 2.39,
+    "footprint_radius_m": 4.24,
+    "collision": "none",
+    "collision_radius_m": 0.0,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 1.0,
+    "sink_m": 0.01,
+    "tris": 881
+  },
+  {
+    "id": "toy_sock_dots",
+    "file": "assets/env/toy_sock_dots/toy_sock_dots.glb",
+    "category": "toy",
+    "height_m": 2.07,
+    "footprint_radius_m": 4.76,
+    "collision": "none",
+    "collision_radius_m": 0.0,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 1.0,
+    "sink_m": 0.0,
+    "tris": 882
+  },
+  {
+    "id": "toy_sock_knit",
+    "file": "assets/env/toy_sock_knit/toy_sock_knit.glb",
+    "category": "toy",
+    "height_m": 1.58,
+    "footprint_radius_m": 3.61,
+    "collision": "none",
+    "collision_radius_m": 0.0,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 1.0,
+    "sink_m": 0.0,
+    "tris": 882
+  },
+  {
+    "id": "toy_sock_tube",
+    "file": "assets/env/toy_sock_tube/toy_sock_tube.glb",
+    "category": "toy",
+    "height_m": 0.98,
+    "footprint_radius_m": 4.25,
+    "collision": "none",
+    "collision_radius_m": 0.0,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 1.0,
+    "sink_m": 0.0,
+    "tris": 420
+  },
+  {
+    "id": "toy_plush_whale",
+    "file": "assets/env/toy_plush_whale/toy_plush_whale.glb",
+    "category": "toy",
+    "height_m": 7.0,
+    "footprint_radius_m": 12.9,
+    "collision": "none",
+    "collision_radius_m": 0.0,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 1.0,
+    "sink_m": 0.0,
+    "tris": 7530
+  },
+  {
+    "id": "toy_plush_shark",
+    "file": "assets/env/toy_plush_shark/toy_plush_shark.glb",
+    "category": "toy",
+    "height_m": 10.0,
+    "footprint_radius_m": 10.69,
+    "collision": "none",
+    "collision_radius_m": 0.0,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 1.0,
+    "sink_m": 0.0,
+    "tris": 7840
+  },
+  {
+    "id": "toy_plush_octopus",
+    "file": "assets/env/toy_plush_octopus/toy_plush_octopus.glb",
+    "category": "toy",
+    "height_m": 10.0,
+    "footprint_radius_m": 10.53,
+    "collision": "none",
+    "collision_radius_m": 0.0,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 1.0,
+    "sink_m": 0.0,
+    "tris": 1592
+  },
+  {
+    "id": "toy_plush_elephant",
+    "file": "assets/env/toy_plush_elephant/toy_plush_elephant.glb",
+    "category": "toy",
+    "height_m": 14.0,
+    "footprint_radius_m": 6.42,
+    "collision": "none",
+    "collision_radius_m": 0.0,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 1.0,
+    "sink_m": 0.0,
+    "tris": 3588
+  },
+  {
+    "id": "toy_plush_sheep",
+    "file": "assets/env/toy_plush_sheep/toy_plush_sheep.glb",
+    "category": "toy",
+    "height_m": 12.0,
+    "footprint_radius_m": 7.32,
+    "collision": "none",
+    "collision_radius_m": 0.0,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 1.0,
+    "sink_m": 0.0,
+    "tris": 7839
+  },
+  {
+    "id": "toy_plush_seal",
+    "file": "assets/env/toy_plush_seal/toy_plush_seal.glb",
+    "category": "toy",
+    "height_m": 12.0,
+    "footprint_radius_m": 4.75,
+    "collision": "none",
+    "collision_radius_m": 0.0,
+    "scale_range": [
+      0.85,
+      1.15
+    ],
+    "density_weight": 1.0,
+    "sink_m": 0.0,
+    "tris": 4368
+  },
+  {
     "id": "room_couch",
     "file": "assets/env/room_couch/room_couch.glb",
     "category": "room",

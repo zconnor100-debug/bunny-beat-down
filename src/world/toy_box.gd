@@ -4,7 +4,8 @@ extends Island
 ## Oak floorboards with a printed town play rug in the middle (see ToyFloor),
 ## a corner of pillow hills under a patchwork quilt, and a spill where the
 ## fishbowl's water slopped out. A wooden TOY TRAIN loops the whole room on
-## its own track: ride it, or get bonked by it (see ToyTrain). Landmarks:
+## its own track: ride it, or get bonked by it (see ToyTrain). The floor
+## stays flat; its hills and cover are toys (see _build_clutter). Landmarks:
 ## the three-storey Dollhouse Manor, Brick City, an alphabet-block castle,
 ## the Loop-de-Loop race track, Crayon Canyon, Domino Run, a tea party, the
 ## fishbowl (swim in it), the pillow fort, a giant teddy, the toy chest, a
@@ -17,6 +18,8 @@ const PILLOWS := 2
 const TRACK_RECT := Rect2(-460.0, -330.0, 920.0, 660.0)
 const TRACK_CORNER := 110.0
 const BOWL_RIM := 26.0
+const SCRIBBLE_SIZE := 28.0   ## metres across each crayon scribble on the floor (a Decal)
+const SCRIBBLE_PX := 320
 
 const TOY_POIS := [
 	{"name": "Dollhouse Manor", "kit": "dollhouse", "radius": 30.0, "at": Vector2(170, -120), "biome": FLOORB},
@@ -39,6 +42,10 @@ var train: ToyTrain
 var track_points := PackedVector3Array()
 ## The fishbowl: {center: Vector2, base, level, r} (r: the water's radius).
 var fishbowl: Dictionary = {}
+## The big toys strewn on the floor (see _build_clutter): its hills and cover.
+var clutter: Array[Node3D] = []
+## Crayon scribbled on the floor by the loose crayons (see _draw_scribbles).
+var scribbles: Array[Decal] = []
 var _mat_img: Image
 
 
@@ -87,12 +94,18 @@ func generate(seed_: int, quality := 2, bake_nav := true) -> void:
 	progress.emit(0.45, "Getting the toys out")
 	await get_tree().process_frame
 	_build_toy_pois()
+	progress.emit(0.5, "Tipping out the laundry basket")
+	await get_tree().process_frame
+	_build_clutter()
 	progress.emit(0.55, "Leaving bricks everywhere")
 	await get_tree().process_frame
 	_scatter_toys(quality)
+	_fringe_rug()
 	scatter.flush_batches(quality)
+	_draw_scribbles()
 	_collect_foliage_materials()
 	_plan_loot()
+	_clutter_loot()
 
 	if bake_nav:
 		progress.emit(0.7, "Laying the train track")
@@ -397,8 +410,8 @@ func _scatter_toys(quality: int) -> void:
 			made += 1
 	# crayons are long: they keep their whole length clear
 	var crayons := 0
-	for i in 16 * 8:
-		if crayons >= 16:
+	for i in 22 * 8:
+		if crayons >= 22:
 			break
 		var p := _random_land(ToyFloor.FLOOR - 2.0)
 		if rng.randf() > terrain.biome_at(p.x, p.y).dot(Vector3(1.0, 0.2, 0.3)):
@@ -425,6 +438,256 @@ func _scatter_toys(quality: int) -> void:
 			if water_level_at(Vector3(p.x, h, p.y)) > h - 0.1:
 				continue
 			scatter.place(e, Vector3(p.x, h, p.y), rng.randf() * TAU, sc)
+
+
+# ---- the floor's hills and cover --------------------------------------------------------------
+
+## The toys strewn between the landmarks, big enough to be the bedroom
+## floor's hills and cover (the floor itself stays flat): heaps of socks to
+## run up, wooden block forts with ramp blocks, Lincoln Log cabins, stuffed
+## animals, a spare train come off the rails and a take-apart toy airplane in
+## pieces. Their own rng, so the landmarks land where they always did.
+func _build_clutter() -> void:
+	var crng := RandomNumberGenerator.new()
+	crng.seed = seed_value * 53 + 11
+	var plush_kinds := ToyProps.PLUSH_KINDS.duplicate()
+	var plan := [
+		[func(): return ToyProps.takeapart_plane(crng), 1],
+		[func(): return _derailment(crng), 1],
+		[func(): return ToyProps.block_fort(crng), 2],
+		[func(): return ToyProps.sock_hill(crng), 4],
+		[func(): return ToyProps.log_cabin(crng), 2],
+		[func(): return ToyProps.plush(crng, plush_kinds[clutter.size() % plush_kinds.size()]), 6],
+	]
+	for step in plan:
+		for n in int(step[1]):
+			var kit: Node3D = (step[0] as Callable).call()
+			var r: float = kit.footprint if kit is Building else float(kit.get_meta(&"footprint", 20.0))
+			var placed := false
+			for attempt in 400:
+				var p := Vector2(crng.randf_range(-ToyFloor.HX, ToyFloor.HX), crng.randf_range(-ToyFloor.HZ, ToyFloor.HZ))
+				if not _clutter_spot_ok(p, r):
+					continue
+				kit.name = "%s_%d" % [kit.name, clutter.size()]
+				add_child(kit)
+				kit.global_position = Vector3(p.x, terrain.height_at(p.x, p.y), p.y)
+				kit.rotation.y = crng.randf() * TAU
+				scatter.add_obstacle(p, r)
+				clutter.append(kit)
+				placed = true
+				break
+			if not placed:
+				kit.free()
+
+
+## Room for a big toy `r` across at p: on the open floor or the rug (flat and
+## dry), clear of the landmarks, the train track and everything else.
+func _clutter_spot_ok(p: Vector2, r: float) -> bool:
+	if not (terrain as ToyFloor).inside(p.x, p.y, r + 8.0) or _near_track(p, r + 6.0) or scatter.blocked(p, r + 3.0):
+		return false
+	for poi in pois:
+		if p.distance_to(poi.center) < poi.radius + r + 6.0:
+			return false
+	for i in 9:
+		var q := p + (Vector2.ZERO if i == 0 else Vector2.from_angle(TAU * i / 8.0) * r * 0.9)
+		var h := terrain.height_at(q.x, q.y)
+		if absf(h - ToyFloor.FLOOR - 0.12) > 0.4 or water_level_at(Vector3(q.x, h, q.y)) > h - 0.3:
+			return false
+	return true
+
+
+## A spare train come off the rails: the engine and the caboose on their
+## sides, an open car upside down, the tender slewed across, loose track
+## pieces and its cargo of blocks spilled (forward is -Z).
+func _derailment(crng: RandomNumberGenerator) -> Node3D:
+	var root := Node3D.new()
+	root.name = "Derailment"
+	var builder := ToyTrain.new()
+	var cars := [
+		[builder._locomotive(crng, 0), Vector3(0, 0, -15.0), Basis(Vector3.UP, 0.25) * Basis(Vector3.BACK, PI * 0.5)],
+		[builder._tender(crng, 1), Vector3(3.0, 0, -2.5), Basis(Vector3.UP, 0.95)],
+		[builder._open_car(crng, 2), Vector3(-1.5, 0, 9.5), Basis(Vector3.UP, -0.3) * Basis(Vector3.BACK, PI)],
+		[builder._caboose(crng, 5), Vector3(6.0, 0, 25.0), Basis(Vector3.UP, 0.5) * Basis(Vector3.BACK, -PI * 0.5)],
+	]
+	builder.free()
+	for c in cars:
+		var kit: CageKit = c[0]
+		var b: Basis = c[2]
+		# rest it on the floor: its lowest point, turned, at y 0
+		var box := ModelUtil.aabb_of(kit)
+		var low := INF
+		for i in 8:
+			low = minf(low, (b * box.get_endpoint(i)).y)
+		root.add_child(kit)
+		kit.transform = Transform3D(b, c[1] + Vector3.UP * -low)
+	for i in 3:
+		var piece := CageKit.blank("TrackPiece", crng)
+		var length := crng.randf_range(7.0, 10.0)
+		piece._box(&"rail_wood", Vector3(0, 0.3, 0), Vector3(ToyTrain.TRACK_WIDTH, 0.6, length))
+		for xs in [-1.0, 1.0]:
+			piece._box(&"rail_groove", Vector3(xs * 1.3, 0.61, 0), Vector3(0.5, 0.04, length), Basis(), false)
+		root.add_child(piece.finish())
+		piece.position = [Vector3(-12.0, 0, -4.0), Vector3(12.0, 0, 10.0), Vector3(-14.0, 0, 26.0)][i]
+		piece.rotation.y = crng.randf_range(-0.8, 0.8)
+	for i in 4:
+		var block := ToyProps.letter_block(crng, crng.randf_range(3.0, 3.8))
+		root.add_child(block)
+		block.position = Vector3(crng.randf_range(-11.5, -10.0), 0, 4.0 + i * 4.2)
+		block.rotation.y = crng.randf() * TAU
+	root.set_meta(&"footprint", 31.0)
+	return root
+
+
+## The loot on the clutter: atop the sock hills, on the block forts, in the
+## cabins and the airplane, and on the airplane's back.
+func _clutter_loot() -> void:
+	for kit in clutter:
+		if kit is Building:
+			for spot in (kit as Building).world_loot_spots():
+				loot_points.append({"pos": spot, "crate": false, "poi": "", "inside": true, "yaw": rng.randf() * TAU})
+
+
+## The play rug's cotton fringe along its north and south ends.
+func _fringe_rug() -> void:
+	var e := ToyProps.entry("fringe")
+	var r := ToyFloor.RUG
+	for side in [[r.position.y, PI * 0.5, -1.0], [r.end.y, -PI * 0.5, 1.0]]:
+		var x := r.position.x + 2.0
+		while x < r.end.x - 1.9:
+			var at := Vector2(x, float(side[0]))
+			if in_poi(at, 0.7).is_empty():
+				scatter.place(e, Vector3(at.x, terrain.height_at(at.x, at.y + float(side[2]) * 1.5), at.y), float(side[1]), 1.0)
+			x += 4.0
+
+
+## Crayon on the floorboards: by most loose crayons (in its colour) a kid's
+## scribble, a sun, a house or a smiley face, waxed onto the floor (or the
+## rug): one Decal each, its strokes drawn into a little texture of its own
+## and broken up by the floor's grain where the wax skipped.
+func _draw_scribbles() -> void:
+	var srng := RandomNumberGenerator.new()
+	srng.seed = seed_value * 97 + 5
+	var grain := _wax_grain(srng)
+	var k := SCRIBBLE_PX / SCRIBBLE_SIZE
+	var full := Rect2i(0, 0, SCRIBBLE_PX, SCRIBBLE_PX)
+	var crayons := get_children().filter(func(c): return c.has_meta(&"crayon"))
+	for c in crayons:
+		if srng.randf() < 0.35:
+			continue
+		var col: Color = CageKit.PLASTIC.get(c.get_meta(&"crayon"), Color.RED) * 0.92
+		col.a = 1.0
+		var tip := Vector2(c.global_position.x, c.global_position.z) + Island.yaw_axis(c.rotation.y) * srng.randf_range(8.0, 14.0)
+		var at := tip + Vector2.from_angle(srng.randf() * TAU) * srng.randf_range(4.0, 9.0)
+		var pts := _scribble(srng, srng.randi() % 5, Vector2.ZERO)
+		var mask := Image.create_empty(SCRIBBLE_PX, SCRIBBLE_PX, false, Image.FORMAT_RGBA8)
+		for i in pts.size() - 1:
+			if pts[i] == Vector2.INF or pts[i + 1] == Vector2.INF:
+				continue
+			var a := pts[i] * k + Vector2.ONE * SCRIBBLE_PX * 0.5
+			var b := pts[i + 1] * k + Vector2.ONE * SCRIBBLE_PX * 0.5
+			var steps := maxi(1, int(a.distance_to(b) / 2.0))
+			for st in steps + 1:
+				var q := a.lerp(b, float(st) / steps)
+				mask.fill_rect(Rect2i(int(q.x) - 5, int(q.y) - 5, 11, 11), Color.WHITE)
+		# the crayon's colour through the strokes, then through the grain (every
+		# pixel keeps the colour, so filtering never darkens a stroke's edge)
+		var solid := Image.create_empty(SCRIBBLE_PX, SCRIBBLE_PX, false, Image.FORMAT_RGBA8)
+		solid.fill(col)
+		var stroke := Image.create_empty(SCRIBBLE_PX, SCRIBBLE_PX, false, Image.FORMAT_RGBA8)
+		stroke.fill(Color(col, 0.0))
+		stroke.blit_rect_mask(solid, mask, full, Vector2i.ZERO)
+		var img := Image.create_empty(SCRIBBLE_PX, SCRIBBLE_PX, false, Image.FORMAT_RGBA8)
+		img.fill(Color(col, 0.0))
+		img.blit_rect_mask(stroke, grain, full, Vector2i.ZERO)
+		img.generate_mipmaps()
+		var d := Decal.new()
+		d.name = "Scribble"
+		d.texture_albedo = ImageTexture.create_from_image(img)
+		d.size = Vector3(SCRIBBLE_SIZE, 1.2, SCRIBBLE_SIZE)
+		d.cull_mask = 1
+		d.upper_fade = 0.3
+		d.lower_fade = 0.3
+		d.albedo_mix = 0.88
+		d.distance_fade_enabled = true
+		d.distance_fade_begin = 160.0
+		d.distance_fade_length = 40.0
+		add_child(d)
+		d.global_position = Vector3(at.x, terrain.height_at(at.x, at.y) + 0.1, at.y)
+		d.rotation.y = srng.randf() * TAU
+		scribbles.append(d)
+
+
+## Where the wax caught and where it skipped: a mask (alpha) of streaky
+## grain, shared by every scribble.
+func _wax_grain(srng: RandomNumberGenerator) -> Image:
+	var fn := FastNoiseLite.new()
+	fn.seed = srng.randi()
+	fn.frequency = 0.09
+	fn.fractal_octaves = 2
+	var noise := fn.get_image(SCRIBBLE_PX, SCRIBBLE_PX)
+	var lum := noise.get_data()
+	var data := PackedByteArray()
+	data.resize(SCRIBBLE_PX * SCRIBBLE_PX * 4)
+	for i in lum.size():
+		data[i * 4 + 3] = 255 if lum[i] > 70 else 0
+	return Image.create_from_data(SCRIBBLE_PX, SCRIBBLE_PX, false, Image.FORMAT_RGBA8, data)
+
+
+## A doodle's strokes round `c` (metres; Vector2.INF lifts the crayon):
+## 0 a loopy scribble, 1 zigzag shading, 2 a sun, 3 a house, 4 a smiley.
+func _scribble(srng: RandomNumberGenerator, kind: int, c: Vector2) -> PackedVector2Array:
+	var out := PackedVector2Array()
+	var circle := func(o: Vector2, r: float, a0: float, a1: float) -> void:
+		for i in 25:
+			out.append(o + Vector2.from_angle(lerpf(a0, a1, i / 24.0)) * r * srng.randf_range(0.96, 1.04))
+		out.append(Vector2.INF)
+	var turn := srng.randf() * TAU
+	match kind:
+		0:
+			var p := c
+			var dir := Vector2.from_angle(srng.randf() * TAU)
+			var bend := 0.0
+			for i in 140:
+				bend = clampf(bend + srng.randf_range(-0.25, 0.25), -0.7, 0.7)
+				dir = dir.rotated(bend)
+				if p.distance_to(c) > 10.0:
+					dir = dir.lerp((c - p).normalized(), 0.35).normalized()
+				p += dir * 1.1
+				out.append(p)
+		1:
+			var d := Vector2.from_angle(turn)
+			var n := d.orthogonal()
+			for i in 16:
+				out.append(c + d * (i - 8.0) * 0.9 + n * (6.0 if i % 2 == 0 else -6.0) * srng.randf_range(0.8, 1.0))
+		2:
+			var r := srng.randf_range(3.5, 5.0)
+			circle.call(c, r, 0.0, TAU)
+			for i in 9:
+				var a := TAU * i / 9.0 + turn
+				out.append(c + Vector2.from_angle(a) * (r + 1.5))
+				out.append(c + Vector2.from_angle(a) * (r + 4.5))
+				out.append(Vector2.INF)
+		3:
+			var s := srng.randf_range(3.6, 5.0)
+			var x := Vector2.from_angle(turn) * s
+			var y := x.orthogonal()
+			for p in [-x - y, x - y, x + y, -x + y, -x - y]:
+				out.append(c + p)
+			out.append(Vector2.INF)
+			for p in [-x - y, -y * 2.2, x - y]:
+				out.append(c + p * 1.0)
+			out.append(Vector2.INF)
+			for p in [y, y - y * 0.9, y - y * 0.9 + x * 0.35, y + x * 0.35]:
+				out.append(c + p)
+		_:
+			var r := srng.randf_range(4.5, 6.0)
+			circle.call(c, r, 0.0, TAU)
+			var up := Vector2.from_angle(turn)
+			var side := up.orthogonal()
+			for e in [-1.0, 1.0]:
+				circle.call(c + up * r * 0.35 + side * e * r * 0.38, r * 0.12, 0.0, TAU)
+			circle.call(c, r * 0.6, turn + PI * 0.15 + PI * 0.5, turn + PI * 0.85 + PI * 0.5)
+	return out
 
 
 # ---- materials and water ----------------------------------------------------------------------

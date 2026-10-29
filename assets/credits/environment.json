@@ -1227,6 +1227,136 @@
     ]
   },
   {
+    "asset": "Sock",
+    "author": "Polutopia",
+    "author_url": "https://sketchfab.com/Polutopia",
+    "source_url": "https://sketchfab.com/3d-models/sock-8171b4b119d1407da0a2286646930f3b",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "toy_sock_striped: rescaled x2.55 to critter-world size, grounded and centred; rotated [0, 90, 0] deg; decimated 11924 -> 881 triangles (seams welded first, no cracks); normal map re-baked from the full-detail source onto the decimated mesh; textures re-encoded <= 512px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Environment scenery: grey and green striped knit sock lying on its side (Toy Box Bash's sock heaps) (toy_sock_striped)",
+    "files": [
+      "assets/env/toy_sock_striped/toy_sock_striped.glb"
+    ]
+  },
+  {
+    "asset": "sock",
+    "author": "moonyuet2008",
+    "author_url": "https://sketchfab.com/moonyuet2008",
+    "source_url": "https://sketchfab.com/3d-models/sock-5b4220b04bd943d3b721d9cb2528df44",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "toy_sock_dots: rescaled x0.25 to critter-world size, grounded and centred; rotated [0, 90, 0] deg; decimated 33276 -> 882 triangles (seams welded first, no cracks); normal map re-baked from the full-detail source onto the decimated mesh; textures re-encoded <= 512px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Environment scenery: navy polka-dot sock lying on its side (the sock heaps) (toy_sock_dots)",
+    "files": [
+      "assets/env/toy_sock_dots/toy_sock_dots.glb"
+    ]
+  },
+  {
+    "asset": "Socks",
+    "author": "oscarherry3d",
+    "author_url": "https://sketchfab.com/oscarherry3d",
+    "source_url": "https://sketchfab.com/3d-models/socks-3d79cc9684bd4c6094e1c0778e334ce4",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "toy_sock_knit: rescaled x1.07 to critter-world size, grounded and centred; decimated 3000 -> 882 triangles (seams welded first, no cracks); normal map re-baked from the full-detail source onto the decimated mesh; textures re-encoded <= 512px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Environment scenery: folded knitted sock (the sock heaps) (toy_sock_knit)",
+    "files": [
+      "assets/env/toy_sock_knit/toy_sock_knit.glb"
+    ]
+  },
+  {
+    "asset": "BFBBR - Sock",
+    "author": "SMF Features Developed From Cheryl Hill",
+    "author_url": "https://sketchfab.com/cherylhill28",
+    "source_url": "https://sketchfab.com/3d-models/bfbbr-sock-85c8738e0937427c92fcdd5263638f90",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "toy_sock_tube: rescaled x2.85 to critter-world size, grounded and centred; rotated [90, 0, 0] deg; textures re-encoded <= 512px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Environment scenery: white tube sock with blue and red stripes, lying flat (the sock heaps) (toy_sock_tube)",
+    "files": [
+      "assets/env/toy_sock_tube/toy_sock_tube.glb"
+    ]
+  },
+  {
+    "asset": "Denim Whale Plush",
+    "author": "Mattyew",
+    "author_url": "https://sketchfab.com/mattyu",
+    "source_url": "https://sketchfab.com/3d-models/denim-whale-plush-e099fdc80c954e44b784d9b9127ec4fc",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "toy_plush_whale: rescaled x34.2672 to critter-world size, grounded and centred; textures re-encoded <= 1024px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Environment scenery: denim whale plush (Toy Box Bash's stuffed animals) (toy_plush_whale)",
+    "files": [
+      "assets/env/toy_plush_whale/toy_plush_whale.glb"
+    ]
+  },
+  {
+    "asset": "Stuffed animal of Shark (サメのぬいぐるみ)",
+    "author": "horse_water",
+    "author_url": "https://sketchfab.com/horse_water",
+    "source_url": "https://sketchfab.com/3d-models/stuffed-animal-of-shark-ec56e06c502a4cf2adf1b6beea43dc28",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "toy_plush_shark: rescaled x6.8719 to critter-world size, grounded and centred; decimated 33792 -> 7840 triangles (seams welded first, no cracks); normal map re-baked from the full-detail source onto the decimated mesh; textures re-encoded <= 1024px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Environment scenery: grinning shark plush (toy_plush_shark)",
+    "files": [
+      "assets/env/toy_plush_shark/toy_plush_shark.glb"
+    ]
+  },
+  {
+    "asset": "Octopus Plush",
+    "author": "Surgdan",
+    "author_url": "https://sketchfab.com/bogdan.g",
+    "source_url": "https://sketchfab.com/3d-models/octopus-plush-caa4cac496bd488eac62ed03dcacc6fa",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "toy_plush_octopus: rescaled x6.7227 to critter-world size, grounded and centred; textures re-encoded <= 1024px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Environment scenery: mint green octopus plush (toy_plush_octopus)",
+    "files": [
+      "assets/env/toy_plush_octopus/toy_plush_octopus.glb"
+    ]
+  },
+  {
+    "asset": "Stuffed Elephant",
+    "author": "kand8998",
+    "author_url": "https://sketchfab.com/KaitlynAndrus",
+    "source_url": "https://sketchfab.com/3d-models/stuffed-elephant-b7213c7db85b419aad79f3f2e51ff445",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "toy_plush_elephant: rescaled x6.6105 to critter-world size, grounded and centred; textures re-encoded <= 1024px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Environment scenery: blue elephant plush with chevron ears (toy_plush_elephant)",
+    "files": [
+      "assets/env/toy_plush_elephant/toy_plush_elephant.glb"
+    ]
+  },
+  {
+    "asset": "Stuffed Sheep",
+    "author": "Drazen",
+    "author_url": "https://sketchfab.com/drazenk",
+    "source_url": "https://sketchfab.com/3d-models/stuffed-sheep-43fdd8ea0b034857ae45bca783c2a06b",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "toy_plush_sheep: rescaled x0.0742 to critter-world size, grounded and centred; decimated 12336 -> 7839 triangles (seams welded first, no cracks); textures re-encoded <= 1024px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Environment scenery: sheep plush with a red ribbon (toy_plush_sheep)",
+    "files": [
+      "assets/env/toy_plush_sheep/toy_plush_sheep.glb"
+    ]
+  },
+  {
+    "asset": "Seal Stuffed Animal",
+    "author": "tori1243",
+    "author_url": "https://sketchfab.com/tori1243",
+    "source_url": "https://sketchfab.com/3d-models/seal-stuffed-animal-340d21aab6b04e898f53a371fc1badc9",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "toy_plush_seal: rescaled x6.0525 to critter-world size, grounded and centred; textures re-encoded <= 1024px (JPEG colour/ORM, PNG normals) | exported as GLB (+Y up, metres)",
+    "used_for": "Environment scenery: teal seal plush (toy_plush_seal)",
+    "files": [
+      "assets/env/toy_plush_seal/toy_plush_seal.glb"
+    ]
+  },
+  {
     "asset": "Stylized Low-Poly Couch",
     "author": "TepidGames",
     "author_url": "https://sketchfab.com/TepidGames",

@@ -350,11 +350,12 @@ func _build_tub() -> void:
 
 ## A solid of revolution about +Y through `centre`. `profile` is (radius, y)
 ## points; the surface faces the side to the right of the profile's direction
-## in the (radius, y) plane. `solid` adds it to the prop's concave collider.
+## in the (radius, y) plane. `solid` adds it to the prop's concave collider
+## (with no `mat`, it is only a collider).
 ## `dir` < 0 flips which side faces out (for the inside of a bowl, say).
 func _lathe(mat: StringName, profile: Array, seg: int, centre: Vector3, solid := true, uv_scale := 1.0) -> void:
 	seg = _segments(seg)
-	var st := _st(mat)
+	var st := _st(mat) if mat != &"" else null
 	for i in profile.size() - 1:
 		var p0: Vector2 = profile[i]
 		var p1: Vector2 = profile[i + 1]
@@ -498,9 +499,10 @@ func _ramp(mat: StringName, a: Vector3, b: Vector3, width: float, slats := &"") 
 func _face(st: SurfaceTool, p: Array, uv: Array, n: Vector3, solid: bool) -> void:
 	var order := [0, 1, 2] if (p[1] - p[0]).cross(p[2] - p[0]).dot(n) < 0.0 else [0, 2, 1]
 	for k in order:
-		st.set_normal(n)
-		st.set_uv(uv[k])
-		st.add_vertex(p[k])
+		if st:
+			st.set_normal(n)
+			st.set_uv(uv[k])
+			st.add_vertex(p[k])
 	if solid:
 		for k in order:
 			_concave.append(p[k])
@@ -572,6 +574,14 @@ static func mat(key: StringName) -> Material:
 		m = tm
 	elif s.begins_with("crayon_"):
 		m = _toy(PLASTIC.get(StringName(s.substr(7)), Color.WHITE) * 0.92, 0.75, 0.0, 1.6, 0.9)   # (waxy)
+	elif s.begins_with("sock_"):
+		# knitted cotton: matte, fuzzy, a little mottled
+		m = _toy(_cloth(s.substr(5)), 0.95, 0.0, 1.8, 2.6, 0.1, 0.25)
+	elif s.begins_with("plush_"):
+		# pastel plush: softer still, and fuzzier (a "_light" one for tummies and paws)
+		var light := s.ends_with("_light")
+		var c := _cloth(s.substr(6).trim_suffix("_light")).lerp(Color.WHITE, 0.3 + (0.3 if light else 0.0))
+		m = _toy(c, 1.0, 0.0, 2.4, 1.4, 0.12, 0.15)
 	elif s.begins_with("pillow_"):
 		m = _soft("plaid", 7.0, PLASTIC.get(StringName(s.substr(7)), Color.WHITE).lerp(Color.WHITE, 0.45), 0.6, 1.0)
 	elif s.begins_with("paint_"):
@@ -714,6 +724,14 @@ static func mat(key: StringName) -> Material:
 				m = _flat(Color(0.86, 0.72, 0.52), 1.0)
 			&"button_eye":
 				m = _gloss(Color(0.04, 0.03, 0.03), 0.15, 1.0)
+			&"maple":   # (sanded unit blocks)
+				m = _soft("floorboards", 2.6, Color(2.0, 1.7, 1.25), 0.55)
+			&"lincoln":   # (Lincoln Logs' stained redwood)
+				m = _soft("floorboards", 3.0, Color(1.35, 0.74, 0.46), 0.6)
+			&"lincoln_green":
+				m = _soft("planks", 2.4, Color(0.42, 0.78, 0.36), 0.45, 1.0)
+			&"fringe":   # (the play rug's cotton tassels)
+				m = _toy(Color(0.97, 0.93, 0.82), 0.95, 0.0, 1.4, 4.0, 0.05, 0.2)
 			&"bowl_glass":
 				m = _clear(Color(0.86, 0.95, 1.0, 0.16), 0.03)
 			&"paper":
@@ -795,6 +813,20 @@ static func _toy(c: Color, rough: float, coat: float, grain: float, grain_scale:
 	sm.set_shader_parameter(&"noise_tex", _toy_noise)
 	sm.set_shader_parameter(&"bump_tex", _toy_bump)
 	return sm
+
+
+## A cloth colour (socks and plush) by name: the plastics' colours, grey and sky.
+static func _cloth(name: String) -> Color:
+	match name:
+		"grey":
+			return Color(0.6, 0.6, 0.64)
+		"sky":
+			return Color(0.62, 0.84, 1.0)
+		"navy":
+			return Color(0.2, 0.26, 0.52)
+		"shadow":   # (the dark between the socks in a heap)
+			return Color(0.2, 0.2, 0.26)
+	return PLASTIC.get(StringName(name), Color.WHITE)
 
 
 static func _gloss(c: Color, rough: float, coat: float) -> StandardMaterial3D:

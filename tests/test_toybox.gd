@@ -46,6 +46,34 @@ func test_toybox_layout_and_paths() -> void:
 			if b.name.begins_with("Dollhouse") and ok:
 				floors[snappedf(spot.y - b.global_position.y, 1.0)] = true
 	check(floors.size() >= 3, "all three dollhouse floors are reachable (%s)" % [floors.keys()])
+	# the floor's hills and cover are big toys: every one found room, and a bot
+	# can walk to the loot on and in them (up the sock hills, the block forts'
+	# ramps and the airplane's wing, into the cabins)
+	check(toy.clutter.size() == 16, "every big toy found room on the floor (%d)" % toy.clutter.size())
+	var kinds := toy.clutter.map(func(k): return String(k.name).get_slice("_", 0))
+	for want in ["TakeApartPlane", "Derailment", "BlockFort", "SockHill", "LogCabin"]:
+		check(want in kinds, "there's a %s" % want)
+	check(kinds.filter(func(n): return n.begins_with("Plush")).size() == 6, "and six stuffed animals")
+	for k in toy.clutter.filter(func(k): return k is Building):
+		for spot in (k as Building).world_loot_spots():
+			var to := NavigationServer3D.map_get_closest_point(map, spot)
+			var path := Island.find_path(map, from, to)
+			check(to.distance_to(spot) < 2.0 and path.size() >= 2 and path[path.size() - 1].distance_to(to) < 3.0,
+				"%s: a bot can walk to the loot at %s" % [k.name, spot.snapped(Vector3.ONE * 0.1)])
+	# ... and the floor itself stays flat: no hills in it outside the pillow corner
+	var bumps := 0
+	for zi in range(-40, 41):
+		for xi in range(-55, 56):
+			var x := xi * 10.0
+			var z := zi * 10.0
+			if tf.biome_at(x, z).x > 0.98:
+				var h := tf.height_at(x, z)
+				bumps += int(h < ToyFloor.FLOOR - 0.05 or h > ToyFloor.FLOOR + ToyFloor.RUG_RAISE + 0.05)
+	check(bumps == 0, "the bare floor is flat, rug and all (%d bumps)" % bumps)
+	# crayon scribbled on the floor beside the loose crayons
+	check(toy.scribbles.size() >= 6, "crayon scribbles on the floor (%d)" % toy.scribbles.size())
+	for d in toy.scribbles:
+		check(absf(d.global_position.y - tf.height_at(d.global_position.x, d.global_position.z)) < 0.3, "a scribble lies on the floor")
 	# the paper plane flies wall to wall under the ceiling
 	var ship := Dropship.new()
 	add_child(ship)
@@ -138,6 +166,10 @@ func test_train_riders_shoot_and_rewind() -> void:
 	bot.get_node("AIBrain").process_mode = Node.PROCESS_MODE_DISABLED
 	var train := toy.train
 	train.running = false
+	# its open cars well into the east straight (the loop starts into the NE
+	# corner: 173 m of curve, then 440 m straight), so the car runs straight
+	# while we shoot from it
+	train.set_distance(259.0)
 	await wait_physics(2)
 	var car := train.cars[3]
 	me.place_at(car.global_position + Vector3.UP * (ToyTrain.DECK + 0.6), 0.0)
@@ -152,12 +184,17 @@ func test_train_riders_shoot_and_rewind() -> void:
 	me.give_weapon(WeaponInstance.new(WeaponDB.get_weapon(&"carrot_rifle")))
 	await wait_physics(30)
 	var side := along.cross(Vector3.UP).normalized()
-	me.aim_point = me.get_eye_position() + side * 30.0
+	# (aimed down the sights, far off to the side: hip-fire spread, or a near
+	# aim point left behind as the car moves on, would tip a 480 m/s carrot
+	# back along the track by more than the train's speed)
+	me.want_aim = true
+	me.aim_point = me.get_eye_position() + side * 2000.0
 	me.look_yaw = atan2(-side.x, -side.z)
 	var before := Projectiles.instance._shots.size()
 	me.want_fire = true
 	await wait_physics(2)
 	me.want_fire = false
+	me.want_aim = false
 	check(Projectiles.instance._shots.size() > before, "fired a carrot from the train")
 	if Projectiles.instance._shots.size() > before:
 		var v: Vector3 = Projectiles.instance._shots[Projectiles.instance._shots.size() - 1].vel

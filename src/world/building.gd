@@ -290,8 +290,8 @@ func _plank_wall(mat: StringName, a: Vector3, b: Vector3, height: float, thick: 
 ## A wall of stacked logs: one collision box per solid piece, logs cut at the
 ## openings and running past the corners (`offset` staggers the courses of
 ## adjacent walls by half a log, like notched corners).
-func _log_wall(a: Vector3, b: Vector3, height: float, r: float, openings: Array, offset: float) -> void:
-	_begin_wall("log", &"bark", a, b, height, r * 2.0, openings)
+func _log_wall(a: Vector3, b: Vector3, height: float, r: float, openings: Array, offset: float, mat := &"bark") -> void:
+	_begin_wall("log", mat, a, b, height, r * 2.0, openings)
 	var along := (b - a)
 	var length := along.length()
 	var dir := along / length
@@ -320,7 +320,7 @@ func _log_wall(a: Vector3, b: Vector3, height: float, r: float, openings: Array,
 				spans = next
 		for s in spans:
 			if s[1] - s[0] > 0.2:
-				_log(&"bark", mid + dir * s[0] + Vector3.UP * y, mid + dir * s[1] + Vector3.UP * y, r * (0.92 + _rng.randf() * 0.12), false)
+				_log(mat, mid + dir * s[0] + Vector3.UP * y, mid + dir * s[1] + Vector3.UP * y, r * (0.92 + _rng.randf() * 0.12), false)
 	_wall = -1
 
 
