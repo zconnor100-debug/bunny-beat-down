@@ -395,7 +395,8 @@ and the final shot replayed from three angles. There's a
   Diamond; the grenades' is a Fireworks beat-down burst). And the totals:
   100/250/500 beat-downs (a Gold rush burst), 100/250/500 headshots (a Ruby
   reticle, then Ruby tracers), 10/25/50 wins (a Gold muzzle flash at 25,
-  the Golden Acorn coat at 50), 25/50/100 matches (Jade tracers), 5/10/25
+  the Golden Acorn coat at 50), 25/50/100 matches (Jade tracers at 50, the
+  Patchwork coat at 100), 5/10/25
   runs (the Starry Night coat), 5/10/25 Nemeses beaten (the Smouldering
   coat), 25/50/100 gang members (the Tiger Stripe coat), and your Doppelbunny beaten in 3/5/10 Mirror
   Matches (the Looking Glass skin at 5; at 10 the Mended Mirror, a coat for
@@ -423,8 +424,13 @@ and the final shot replayed from three angles. There's a
   you're browsing, too), and a coat over all of it, each from the top of a
   ladder: the Mended Mirror (your Doppelbunny's cracks, mended in gold),
   the Golden Acorn (gilded, in an acorn cup's scales, glinting), the Starry
-  Night (the night sky, twinkling), the Tiger Stripe and the Smouldering
-  (charcoal, embers breathing in its cracks). A coat is your fur's colour
+  Night (the night sky, twinkling), the Tiger Stripe, the Smouldering
+  (charcoal, embers breathing in its cracks) and the Patchwork (a crazy
+  quilt in the three maps' colours, some patches plaid or dotted, big
+  stitches at the seams, each patch's colour lifted so it shows on any fur).
+  **The coat rack** (`CoatRack`, under the coat) shows them all at once, each
+  on you on its own turntable: wear one you've earned, and see how far along
+  you are to the rest (dimmed until then). A coat is your fur's colour
   multiplied, so your face and stitches still show (`src/fx/coat_tint.gdshader`,
   its glow `coat_glow.gdshader` the next pass). A hat takes the acorn helmet's place. `tests/capture_workshop.gd` renders them
   all.

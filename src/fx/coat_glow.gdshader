@@ -3,6 +3,8 @@
 //     now and then in its scales
 //   2 starry night: stars, twinkling, and a faint violet rim
 //   4 smouldering: embers glowing in its cracks, breathing
+//   5 patchwork: each patch's own colour, lifted (so it shows on dark fur
+//     as well as white), the seams left dark
 shader_type spatial;
 render_mode blend_add, unshaded, cull_back, depth_draw_never, shadows_disabled, fog_disabled;
 
@@ -66,6 +68,10 @@ void fragment() {
 		float crack = 1.0 - smoothstep(0.0, 0.13, cell.w);
 		float breath = 0.55 + 0.45 * sin(TIME * 1.6 + coat_noise(p * 3.0) * 6.0);
 		c = glow_color * (crack * breath * 2.2 + rim * 0.25);
+	} else if (pattern == 5) {
+		vec3 id;
+		vec4 cell = coat_cells(p * scale, id);
+		c = glow_color * coat_patch(coat_hash3(id)) * smoothstep(0.02, 0.05, cell.w) * (1.0 + rim * 0.6);
 	}
 	ALBEDO = c * strength;
 }

@@ -258,6 +258,44 @@ func test_browsing_the_workshop_keeps_your_place_and_shows_the_skin() -> void:
 	check(Workshop.look("skin") == "stock", "only trying them on: still wearing the stock skin")
 
 
+## The coat rack: every coat at once, on you, side by side. Wear one
+## you've earned; one you haven't is dimmed, with how far along you are.
+func test_the_coat_rack() -> void:
+	var book := PlayerProfile._book()
+	book.set_value("workshop", "owned", ["coat:starry_night"])
+	var panel := BurrowPanel.new()
+	add_child(panel)
+	await wait_frames(6)
+	var open: Button = panel._list.find_children("*", "Button", true, false).filter(func(b): return b.text == "Open")[0]
+	open.pressed.emit()
+	await wait_frames(6)
+	var rack: CoatRack = panel._rack
+	var coats: Array = Workshop.LOOKS[Workshop.COAT].options
+	check(rack != null and not panel._shelves.visible, "the rack takes the list's place")
+	check(rack._portraits.size() == coats.size(), "every coat on its own turntable (%d)" % rack._portraits.size())
+	var starry: Critter = (rack._portraits["starry_night"] as CritterPortrait).shown_critter()
+	check(starry != null and starry.visual.meshes[0].material_overlay == Workshop.coat_material("starry_night"), "each worn by you")
+	check(rack._portraits["natural"].modulate == Color.WHITE and rack._portraits["starry_night"].modulate == Color.WHITE
+		and rack._portraits["patchwork"].modulate == CoatRack.LOCKED, "yours bright, the rest dimmed")
+	check(CoatRack.how_to("patchwork") == "Play 100 matches. (0 / 100)" and CoatRack.how_to("starry_night").begins_with("Earned:"),
+		"with what earns each and how far along you are (%s)" % CoatRack.how_to("patchwork"))
+	check(get_viewport().gui_get_focus_owner() == rack._buttons["natural"], "the coat you're wearing has the focus")
+	rack._buttons["patchwork"].pressed.emit()
+	check(Workshop.look(Workshop.COAT) == "natural" and rack._title.text.begins_with("Not yet"), "one you haven't earned stays on the rack")
+	rack._buttons["starry_night"].pressed.emit()
+	check(Workshop.look(Workshop.COAT) == "starry_night" and rack._buttons["starry_night"].text == "Wearing ✓", "one you have, you put on")
+	rack.closed.emit()
+	await wait_frames(6)
+	check(panel._rack == null and panel._shelves.visible, "back to the list")
+	check(panel.shown(Workshop.COAT) == "starry_night" and get_viewport().gui_get_focus_owner() == open_button(panel),
+		"showing the coat you put on, the rack's row in focus")
+
+
+func open_button(panel: BurrowPanel) -> Button:
+	var open := panel._list.find_children("*", "Button", true, false).filter(func(b): return b.text == "Open")
+	return open[0] if not open.is_empty() else null
+
+
 func _arrow(panel: BurrowPanel, cat: String) -> Button:
 	for h in panel._list.get_children():
 		if h is HBoxContainer and (h.get_child(0) as Label).text.begins_with(Workshop.LOOKS[cat].label + ":"):

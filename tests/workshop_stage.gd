@@ -110,6 +110,12 @@ func _run() -> void:
 	panel._rebuild(Workshop.COAT + ":act")
 	await _wait(0.6)
 	await _snap("88_burrow_coat")
+	# the coat rack: every coat on you, the ones not yet earned dimmed
+	owned.append_array(["coat:golden_acorn", "coat:starry_night"])
+	PlayerProfile._book().set_value("workshop", "owned", owned)
+	panel._open_rack()
+	await _wait(1.2)
+	await _snap("89_coat_rack")
 	get_tree().quit()
 
 

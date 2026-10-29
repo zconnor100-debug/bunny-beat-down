@@ -220,13 +220,15 @@ func test_the_mended_mirror_coat() -> void:
 func test_the_coats_from_the_ladders() -> void:
 	PlayerProfile.reset_for_tests()
 	var gives := {"champion": "coat:golden_acorn", "trail_boss": "coat:starry_night", "pack_breaker": "coat:tiger_stripe",
-		"nemesis_hunter": "coat:smouldering", "mirror_mirror": "coat:mended_mirror"}
+		"nemesis_hunter": "coat:smouldering", "mirror_mirror": "coat:mended_mirror", "old_hand": "coat:patchwork"}
 	for ladder in gives:
 		var top: Dictionary = Mastery.tiers(ladder)[-1]
 		check(top.reward.get("look", "") == gives[ladder], "%s's top tier gives the %s" % [ladder, gives[ladder]])
 	check(Mastery.tiers("champion")[1].reward.get("look", "") == "flash:gold" and int(Mastery.tiers("champion")[1].reward.get("acorns", 0)) == 400,
 		"the Gold muzzle flash at 25 wins, with its 400 acorns")
 	check(int(Mastery.tiers("trail_boss")[-1].reward.get("acorns", 0)) == 1000, "Trail Boss III still gives its 1,000 acorns too")
+	check(Mastery.tiers("old_hand")[1].reward.get("look", "") == "tracer:jade" and int(Mastery.tiers("old_hand")[1].reward.get("acorns", 0)) == 200,
+		"Jade tracers at 50 matches, with their 200 acorns")
 	for o in Workshop.LOOKS[Workshop.COAT].options.slice(1):
 		var m := Workshop.coat_material(o[0])
 		check(m != null and Workshop.earned_only("coat:" + o[0]), "the %s coat is drawn, and earned only" % o[1])
@@ -235,12 +237,16 @@ func test_the_coats_from_the_ladders() -> void:
 	check(gold.shader == Workshop.COAT_TINT and gold.next_pass is ShaderMaterial and (gold.next_pass as ShaderMaterial).shader == Workshop.COAT_GLOW,
 		"a colour over your fur, and its glow over that")
 	check(Workshop.coat_material("tiger_stripe").next_pass == null, "stripes don't glow")
+	check((Workshop.coat_material("patchwork").next_pass as ShaderMaterial).get_shader_parameter(&"pattern") == 5,
+		"the patchwork's colours are lifted, to show on any fur")
 	# a tier reached before its look moved there: the look comes when the milestones are next checked
 	PlayerProfile._book().set_value("mastery", "champion_25", true)
 	check(not Workshop.owns("flash:gold"), "Champion II reached back when it gave only acorns")
 	var acorns := Burrow.acorns()
-	Mastery.check()
-	check(Workshop.owns("flash:gold") and Burrow.acorns() == acorns, "the Gold muzzle flash is yours now (and no acorns twice)")
+	var fresh := Mastery.check()   # (other tests' rogues may hand you a milestone or two meanwhile: those pay)
+	var paid: int = fresh.reduce(func(n, m): return n + int(m.reward.get("acorns", 0)), 0)
+	check(Workshop.owns("flash:gold") and Burrow.acorns() == acorns + paid and not fresh.any(func(m): return m.id == "champion_25"),
+		"the Gold muzzle flash is yours now (and no acorns twice)")
 	# worn: named in your look, and something for the rogues to talk about
 	PlayerProfile._book().set_value("mastery", "champion_50", true)
 	Mastery.check()

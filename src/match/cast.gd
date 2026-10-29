@@ -197,6 +197,8 @@ const OUTFIT_LINES := {
 		"kill": ["Not so fierce now, {you}."], "lose": ["Rawr. Fine. You win."]},
 	"smouldering": {"spot": ["Something's burning... oh, it's you, {you}.", "Hot stuff, {you}. Too hot."],
 		"kill": ["Put out, {you}."], "lose": ["Burned. Properly burned."]},
+	"patchwork": {"spot": ["Nice quilt, {you}. Did your granny make it?", "Patches, {you}? I'll give you a few more holes!"],
+		"kill": ["Sew THAT back together, {you}."], "lose": ["Beaten by a blanket..."]},
 }
 ## How often a bot talks about your outfit instead of its usual line.
 const OUTFIT_TAUNT_CHANCE := 0.35

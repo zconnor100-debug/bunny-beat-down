@@ -13,6 +13,16 @@ vec3 coat_up(mat4 model) {
 	return normalize(vec3(model[0].y, model[1].y, model[2].y));
 }
 
+// The patchwork's patches: the island's moss, the Hamster Cage's pink and
+// teal, the Toy Box's red, blue and yellow.
+const vec3 COAT_PATCHES[6] = vec3[6](vec3(0.5, 0.74, 0.32), vec3(1.0, 0.62, 0.76), vec3(0.42, 0.84, 0.84),
+	vec3(0.92, 0.3, 0.24), vec3(0.36, 0.52, 0.96), vec3(1.0, 0.84, 0.3));
+
+// A patch's colour, from its cell's random numbers.
+vec3 coat_patch(vec3 rnd) {
+	return COAT_PATCHES[min(int(rnd.x * 6.0), 5)];
+}
+
 vec3 coat_hash3(vec3 p) {
 	p = vec3(dot(p, vec3(127.1, 311.7, 74.7)), dot(p, vec3(269.5, 183.3, 246.1)), dot(p, vec3(113.5, 271.9, 124.6)));
 	return fract(sin(p) * 43758.5453);

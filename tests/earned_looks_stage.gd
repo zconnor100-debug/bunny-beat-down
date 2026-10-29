@@ -66,7 +66,7 @@ func _run() -> void:
 	var coat_ids: Array = Workshop.LOOKS[Workshop.COAT].options.map(func(o): return o[0])
 	var rows := [coat_ids.map(func(id): return ["bun", [], id]),
 		[["fox", [], "golden_acorn"], ["beaver", ["wizard_hat", "jetpack"], "starry_night"], ["frog", [], "tiger_stripe"],
-			["hamster", [], "smouldering"], ["squirrel", [], "mended_mirror"], ["bun", [], "doppel"]]]
+			["hamster", [], "smouldering"], ["squirrel", [], "mended_mirror"], ["raccoon", [], "patchwork"], ["bun", [], "doppel"]]]
 	for r in rows.size():
 		var coats: Array[Critter] = []
 		for i in rows[r].size():
@@ -82,7 +82,7 @@ func _run() -> void:
 			if spec[2] == "doppel":
 				DoppelBrain.look(c)
 			coats.append(c)
-		cam.fov = 34
+		cam.fov = 34.0 * maxf(1.0, rows[r].size() / 6.0)   # (wider for a longer row)
 		cam.global_position = Vector3(0, 2.4, -3.5 + r * 30.0)
 		cam.look_at(Vector3(0, 1.3, 6.0 + r * 30.0), Vector3.UP)
 		await _wait(0.6)

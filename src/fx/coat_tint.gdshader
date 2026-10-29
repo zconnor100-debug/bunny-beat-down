@@ -6,6 +6,10 @@
 //   2 starry night: the night sky, violet up top
 //   3 tiger stripe: amber, with black stripes round you
 //   4 smouldering: charcoal
+//   5 patchwork: a crazy quilt, its patches in the three maps' colours
+//     (plain, plaid or dotted), sewn together with big stitches (colour a:
+//     the thread, b: the seams), lit up by its glow so the colours show on
+//     any fur
 shader_type spatial;
 render_mode blend_mul, unshaded, cull_back, depth_draw_never, shadows_disabled, fog_disabled;
 
@@ -40,6 +44,22 @@ void fragment() {
 		c = mix(color_a, color_b, smoothstep(width, width + 0.06, band));
 	} else if (pattern == 4) {
 		c = mix(color_a, color_b, coat_noise(p * scale));
+	} else if (pattern == 5) {
+		vec3 id;
+		vec4 cell = coat_cells(p * scale, id);
+		vec3 rnd = coat_hash3(id);
+		c = coat_patch(rnd);
+		if (rnd.y < 0.35) {   // (plaid: stripes three ways, so any cut through it is checked)
+			vec3 g = step(0.5, fract(p * scale * 4.0 + rnd));
+			c *= 1.0 - 0.13 * (g.x + g.y + g.z);
+		} else if (rnd.y < 0.7) {   // (dotted)
+			vec3 dot_id;
+			vec4 dots = coat_cells(p * scale * 5.0, dot_id);
+			c = mix(c, mix(c, vec3(1.0), 0.75), 1.0 - smoothstep(0.24, 0.3, length(dots.xyz)));
+		}
+		float stitch = step(0.5, fract(dot(p, vec3(0.8, 1.0, 0.9)) * scale * 9.0));   // (a running stitch: on, off)
+		c = mix(c, color_a, stitch * (smoothstep(0.05, 0.065, cell.w) - smoothstep(0.1, 0.115, cell.w)));
+		c = mix(c, color_b, 1.0 - smoothstep(0.02, 0.035, cell.w));
 	}
 	ALBEDO = c;
 }

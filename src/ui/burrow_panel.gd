@@ -6,7 +6,8 @@ extends PanelContainer
 ## (fit or take them off) and looks (browse each with ◂ ▸; one you own is
 ## worn as soon as you pick it), your wardrobe among them: a portrait beside
 ## the list shows you wearing what you're browsing, bought or not (your coat
-## too), your gun in the skin you're browsing. Pad
+## too), your gun in the skin you're browsing, and the coat rack (CoatRack:
+## every coat at once, on you). Pad
 ## friendly: every row is buttons, and the list scrolls with the focus.
 
 signal closed
@@ -16,6 +17,10 @@ var _list: VBoxContainer
 var _browse: Dictionary = {}        # look category -> option index shown
 var _portrait: CritterPortrait
 var _scroll: ScrollContainer
+var _box: VBoxContainer
+var _shelves: HBoxContainer        # the list and the portrait (hidden while the coat rack is out)
+var _back: Button
+var _rack: CoatRack
 
 
 func _ready() -> void:
@@ -24,6 +29,7 @@ func _ready() -> void:
 	var v := VBoxContainer.new()
 	v.add_theme_constant_override("separation", 14)
 	add_child(v)
+	_box = v
 	var title := UITheme.label("The Burrow", 52, UITheme.CARROT_LIGHT, true)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(title)
@@ -33,6 +39,7 @@ func _ready() -> void:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 16)
 	v.add_child(row)
+	_shelves = row
 	_scroll = ScrollContainer.new()
 	_scroll.custom_minimum_size = Vector2(720, 560)
 	_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
@@ -44,9 +51,9 @@ func _ready() -> void:
 	_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_list.add_theme_constant_override("separation", 8)
 	_scroll.add_child(_list)
-	var back := UITheme.button("Back", func(): closed.emit())
-	back.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	v.add_child(back)
+	_back = UITheme.button("Back", func(): closed.emit())
+	_back.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	v.add_child(_back)
 	for cat in Workshop.LOOKS:
 		_browse[cat] = _index_of(cat, Workshop.look(cat))
 	_rebuild()
@@ -55,7 +62,10 @@ func _ready() -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed(&"ui_cancel"):
 		get_viewport().set_input_as_handled()
-		closed.emit()
+		if _rack:
+			_close_rack()
+		else:
+			closed.emit()
 
 
 func _rebuild(focus_key := "") -> void:
@@ -104,6 +114,7 @@ func _rebuild(focus_key := "") -> void:
 	_heading("Workshop: wardrobe (yours alone: no rogue wears these)")
 	for cat in Workshop.WARDROBE + [Workshop.COAT]:
 		_look_row(cat, focus)
+	focus["coat_rack"] = _row("The coat rack — every coat side by side, on you", "Open", _open_rack)
 	var to_focus: Control = focus.get(focus_key)
 	if to_focus == null:
 		to_focus = UITheme.first_focusable(_list)
@@ -129,6 +140,26 @@ func _refocus(c: Control, keep: int) -> void:
 	_scroll.follow_focus = true
 	if c.has_focus():
 		_scroll.ensure_control_visible(c)
+
+
+## Every coat at once, on you, in place of the list (Back, or cancel, puts
+## the list back).
+func _open_rack() -> void:
+	_shelves.visible = false
+	_back.visible = false
+	_rack = CoatRack.new()
+	_rack.closed.connect(_close_rack)
+	_box.add_child(_rack)
+	_box.move_child(_rack, _shelves.get_index())
+
+
+func _close_rack() -> void:
+	_rack.queue_free()
+	_rack = null
+	_shelves.visible = true
+	_back.visible = true
+	_browse[Workshop.COAT] = _index_of(Workshop.COAT, Workshop.look(Workshop.COAT))   # (you may have put another on)
+	_rebuild("coat_rack")
 
 
 func _heading(text: String) -> void:
