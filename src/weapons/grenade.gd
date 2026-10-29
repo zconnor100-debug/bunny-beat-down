@@ -171,6 +171,11 @@ func _physics_process(delta: float) -> void:
 	if left < _next_beep:
 		_next_beep -= 0.33
 		Audio.play_at(&"match_countdown_beep", global_position, -10.0, 0.0, {"unit_size": 3.0})
+	_move(delta)
+
+
+## Fly, bounce off what it hits and roll to a stop (then lie still).
+func _move(delta: float) -> void:
 	if _resting:
 		return
 	velocity.y -= _gravity * delta

@@ -72,6 +72,7 @@ var want_melee := false            ## edge-triggered: swing the club
 var _throw_t := -1.0               # seconds into a grenade throw (-1: not throwing)
 var _throw_vel := Vector3.ZERO     # what it's thrown at (zero: where we look, as it leaves the paw)
 var _held_grenade: Node3D          # the grenade in the left paw, wound back
+var _flare: Array = []             # a flare's being thrown, not a grenade: [the gun it calls in, its `lit`]
 
 var inventory := Inventory.new()
 var current_slot := 0
@@ -878,6 +879,7 @@ func reset_actions() -> void:
 	want_jump = false
 	want_melee = false
 	_throw_t = -1.0
+	_flare = []
 	_drop_held_grenade()
 	visual.poser.throw = -1.0
 
@@ -912,7 +914,12 @@ func _melee_tick(delta: float) -> void:
 # ---- grenades ---------------------------------------------------------------------------
 
 func can_throw() -> bool:
-	return alive and inventory.grenades > 0 and _throw_t < 0.0 and state == State.GROUND and not swimming and _prone < 0.2
+	return inventory.grenades > 0 and can_throw_flare()
+
+
+## Free to throw something (a grenade you have, or your call-in's flare).
+func can_throw_flare() -> bool:
+	return alive and _throw_t < 0.0 and state == State.GROUND and not swimming and _prone < 0.2
 
 
 func is_throwing() -> bool:
@@ -958,6 +965,23 @@ func throw_grenade(vel := Vector3.ZERO) -> bool:
 	return true
 
 
+## Throw your call-in's flare (Flare) for `gun`, as a grenade's thrown, at
+## `vel`; `lit` is called where it lies, burning, when the crate should come.
+func throw_flare(vel: Vector3, gun: StringName, lit: Callable) -> bool:
+	if not can_throw_flare():
+		return false
+	_throw_t = 0.0
+	_throw_vel = vel
+	_flare = [gun, lit]
+	_reload_timer = -1.0
+	var paw: Node3D = visual.attachments.get(&"l_hand")
+	if paw:
+		_held_grenade = Flare.make_flare_model()
+		paw.add_child(_held_grenade)
+		_held_grenade.scale = Vector3.ONE / maxf(paw.global_basis.get_scale().x, 0.001)
+	return true
+
+
 func _throw_tick(delta: float) -> void:
 	if _throw_t < 0.0:
 		return
@@ -966,7 +990,12 @@ func _throw_tick(delta: float) -> void:
 	if was < THROW_TIME * THROW_RELEASE and _throw_t >= THROW_TIME * THROW_RELEASE:
 		_drop_held_grenade()
 		var parent: Node = Projectiles.instance if Projectiles.instance and Projectiles.instance.is_inside_tree() else Despawner.debris_parent(self)
-		Grenade.spawn(parent, self, throw_origin(), _throw_vel if _throw_vel != Vector3.ZERO else throw_velocity(), visual.hitbox_rids)
+		var vel := _throw_vel if _throw_vel != Vector3.ZERO else throw_velocity()
+		if _flare.is_empty():
+			Grenade.spawn(parent, self, throw_origin(), vel, visual.hitbox_rids)
+		else:
+			Flare.spawn_flare(parent, self, throw_origin(), vel, visual.hitbox_rids, _flare[0], _flare[1])
+			_flare = []
 		Audio.play_at(&"melee_swing", global_position, -5.0, 0.15)
 	if _throw_t >= THROW_TIME:
 		_throw_t = -1.0

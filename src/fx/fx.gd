@@ -202,6 +202,28 @@ static func smoke_trail(parent: Node3D) -> GPUParticles3D:
 	return p
 
 
+## A flare's red smoke, rising in a column you can see across the map, and
+## sparks spitting off its burning tip (world-space particles).
+static func flare_smoke(parent: Node3D) -> GPUParticles3D:
+	if instance == null:
+		return null
+	var p: GPUParticles3D = instance._make_particles({"amount": 140, "lifetime": 7.0, "speed": Vector2(0.6, 1.4), "spread": 18.0,
+		"gravity": -1.6, "size": 1.5, "scale": Vector2(0.8, 2.6), "color": Color(0.98, 0.2, 0.14, 0.62), "fade": true, "damping": 0.15}, false)
+	p.one_shot = false
+	p.local_coords = false
+	p.visibility_aabb = AABB(Vector3(-10, -2, -10), Vector3(20, 60, 20))
+	p.rotation = Vector3(-PI * 0.5, 0.0, 0.0)   # (its particles start off along -Z: up)
+	p.emitting = true
+	parent.add_child(p)
+	var sparks: GPUParticles3D = instance._make_particles({"amount": 24, "lifetime": 0.5, "speed": Vector2(1.0, 2.8), "spread": 70.0,
+		"gravity": 6.0, "size": 0.05, "scale": Vector2(0.5, 1.2), "color": Color(1.0, 0.6, 0.25), "fade": true, "additive": true}, false)
+	sparks.one_shot = false
+	sparks.local_coords = false
+	sparks.emitting = true
+	p.add_child(sparks)
+	return p
+
+
 # --- internals -----------------------------------------------------------------
 
 ## The explosion's flash of light.

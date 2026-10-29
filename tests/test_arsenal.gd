@@ -4,8 +4,9 @@ extends TestCase
 ## as it keeps going and slows you down; the Big Root .50 goes through
 ## critters and thin cover and steadies when you kneel; the Carrot Lobber's
 ## carrots go off on whoever they hit, or a moment after they land. You win
-## them on the Trail (a Grudge or Mirror Match) and call them in from your
-## third beat-down, once a match: a crate drops beside you and you take one.
+## them on the Trail (a Grudge or Mirror Match) and call one in from your
+## third beat-down, once a match: pick it, throw its flare, and a crate drops
+## on the flare with it inside.
 ## No bot ever picks one up, opens that crate, steals one or keeps one.
 
 const TEST_DEF := "res://data/critters/test_critter.tres"
@@ -262,6 +263,94 @@ func test_won_on_the_trail_then_called_in_once_a_match() -> void:
 
 
 # ---- the Cunning boons: for a gang, and your Doppelbunny --------------------------------------------
+
+## Calling it in by flare: RB brings up the pick of your guns, the D-pad picks
+## one out and A takes it: a flare in your paw. Held RB aims it along its arc,
+## let go throws it; it lands burning, and a crate with only that gun in it
+## (for you alone) comes down on it.
+func test_called_in_by_flare() -> void:
+	PlayerProfile.reset_for_tests()
+	Arsenal.unlock(&"root_rumbler")
+	Arsenal.unlock(&"carrot_lobber")
+	var mm := await _match(4)
+	var you := mm.spawn_player(load("res://data/critters/bun.tres"), "default")
+	for c in mm.critters:
+		c.place_at(Vector3(c.global_position.x, 30.0, c.global_position.z), 0.0)
+		if c != you:
+			c.get_node("AIBrain").process_mode = Node.PROCESS_MODE_DISABLED
+	mm.phase = MatchManager.Phase.PLAYING
+	await wait_physics(int(Engine.physics_ticks_per_second * 1.5))
+	var pc := you.get_node("PlayerController") as PlayerController
+	var rig := CameraRig.new()   # (as game.gd wires it)
+	add_child(rig)
+	rig.set_target(you)
+	rig.first_person = false
+	rig.yaw = you.look_yaw
+	rig.pitch = -0.2
+	pc.rig = rig
+	pc.match_manager = mm
+	await _press(JOY_BUTTON_RIGHT_SHOULDER)
+	check(not pc.call_menu, "not before your third beat-down")
+	var bots := mm.critters.filter(func(c): return c != you)
+	for i in Arsenal.CALL_AT:
+		bots[i].take_damage(DamageInfo.make(9999.0, DamageInfo.Kind.BULLET, you, &"carrot_rifle"))
+	await wait_frames(2)
+	await _press(JOY_BUTTON_RIGHT_SHOULDER)
+	check(pc.call_menu and pc.call_choice == 0, "three beat-downs: RB brings up the pick of your guns")
+	await _press(JOY_BUTTON_DPAD_RIGHT)
+	check(pc.call_choice == 1 and you.inventory.shields == 0, "the D-pad picks one out (and puts on no shield)")
+	var want: StringName = Arsenal.unlocked()[1]
+	await _press(JOY_BUTTON_A)
+	check(not pc.call_menu and pc.flare_gun == want and not mm.called_in, "A takes it: its flare's in your paw, nothing called in yet")
+	await _press(JOY_BUTTON_RIGHT_SHOULDER, 0.5)
+	await wait_physics(20)
+	check(mm.called_in and pc.flare_gun == &"", "held and let go: the flare's thrown, the call-in spoken for")
+	var flares := _all(get_tree().root).filter(func(n): return n is Flare)
+	if not check(flares.size() == 1, "one flare, burning (%d)" % flares.size()):
+		return
+	var flare: Flare = flares[0]
+	await wait_physics(int(Engine.physics_ticks_per_second * (Flare.WAIT + 2.5)))
+	var drops := get_tree().get_nodes_in_group(&"supply_drops")
+	check(drops.size() == 1, "it lands, and a crate's sent down")
+	await wait_physics(int(Engine.physics_ticks_per_second * (Arsenal.CALL_HEIGHT / Arsenal.CALL_FALL + 0.5)))
+	var crates := get_tree().get_nodes_in_group(&"crates").filter(func(n): return (n as LootCrate).player_only)
+	if not check(crates.size() == 1, "landed: a crate for you alone (%d)" % crates.size()):
+		return
+	var crate: LootCrate = crates[0]
+	var gap := Vector2(crate.global_position.x - flare.global_position.x, crate.global_position.z - flare.global_position.z).length()
+	check(gap < 1.0, "right on the flare (%.1f m off)" % gap)
+	crate.open(you)
+	await wait_frames(2)
+	var guns := get_tree().get_nodes_in_group(&"pickups").filter(_arsenal_gun)
+	check(guns.size() == 1 and ((guns[0] as Pickup).spec.weapon as WeaponInstance).data.id == want and not (guns[0] as Pickup).spec.has("one_of"),
+		"inside: the gun you picked, and only that (%d)" % guns.size())
+	PlayerProfile.reset_for_tests()
+
+
+func _arsenal_gun(n: Node) -> bool:
+	return (n as Pickup).is_weapon() and WeaponDB.is_arsenal(((n as Pickup).spec.weapon as WeaponInstance).data)
+
+
+## A pad button pressed (and let go `hold` seconds later).
+func _press(button: JoyButton, hold := 0.05) -> void:
+	var e := InputEventJoypadButton.new()
+	e.button_index = button
+	e.pressed = true
+	Input.parse_input_event(e)
+	await wait_physics(maxi(1, roundi(hold * 60.0)))
+	var r := InputEventJoypadButton.new()
+	r.button_index = button
+	r.pressed = false
+	Input.parse_input_event(r)
+	await wait_frames(2)
+
+
+func _all(n: Node) -> Array:
+	var out := [n]
+	for c in n.get_children():
+		out.append_array(_all(c))
+	return out
+
 
 ## A bare match: you, and three bots ganged up on you (no brains running).
 func _pack() -> Array:

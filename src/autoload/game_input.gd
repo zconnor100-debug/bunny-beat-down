@@ -31,14 +31,14 @@ const BINDINGS := {
 	# put on an Acorn Shield you carry: J (beside H), or tap D-pad → (held, it
 	# swaps the camera's shoulder: PlayerController.SHOULDER_HOLD)
 	&"shield": [[KEY, KEY_J], [PAD_BUTTON, JOY_BUTTON_DPAD_RIGHT]],
-	# carrot grenade: hold to aim along its arc, let go to throw (LB on a pad;
-	# LB + RB together still calls your arsenal in)
+	# carrot grenade: hold to aim along its arc, let go to throw (LB on a pad)
 	&"grenade": [[KEY, KEY_X], [MOUSE, MOUSE_BUTTON_MIDDLE], [PAD_BUTTON, JOY_BUTTON_LEFT_SHOULDER]],
 	&"weapon_1": [[KEY, KEY_1]],
 	&"weapon_2": [[KEY, KEY_2]],
 	&"weapon_3": [[KEY, KEY_3]],
-	&"weapon_next": [[MOUSE, MOUSE_BUTTON_WHEEL_DOWN], [PAD_BUTTON, JOY_BUTTON_RIGHT_SHOULDER]],
-	&"weapon_prev": [[MOUSE, MOUSE_BUTTON_WHEEL_UP], [PAD_BUTTON, JOY_BUTTON_Y]],
+	# (Y on a pad steps round your three guns)
+	&"weapon_next": [[MOUSE, MOUSE_BUTTON_WHEEL_DOWN], [PAD_BUTTON, JOY_BUTTON_Y]],
+	&"weapon_prev": [[MOUSE, MOUSE_BUTTON_WHEEL_UP]],
 	&"drop_weapon": [[KEY, KEY_G], [PAD_BUTTON, JOY_BUTTON_DPAD_LEFT]],
 	# melee: F / R3 swing the club, even with a gun out (it's stowed for the
 	# swing); fire with empty paws swings too, and so does B on a pad
@@ -47,8 +47,9 @@ const BINDINGS := {
 	&"toggle_camera": [[KEY, KEY_V], [PAD_BUTTON, JOY_BUTTON_BACK]],
 	&"swap_shoulder": [[KEY, KEY_Q]],   # (on a pad: hold D-pad →)
 	&"map": [[KEY, KEY_M], [PAD_BUTTON, JOY_BUTTON_DPAD_UP]],
-	# call your arsenal in (Arsenal): B, or LB + RB together on a pad (CALL_IN_CHORD)
-	&"call_in": [[KEY, KEY_B]],
+	# call your arsenal in (Arsenal): B / RB opens the pick of your guns; pick
+	# one, then hold B / RB to aim its flare along the arc and let go to throw
+	&"call_in": [[KEY, KEY_B], [PAD_BUTTON, JOY_BUTTON_RIGHT_SHOULDER]],
 	# rewind ten seconds (see TimeKeeper): T, or from the pause menu on a pad
 	&"rewind": [[KEY, KEY_T]],
 	&"pause": [[KEY, KEY_ESCAPE], [PAD_BUTTON, JOY_BUTTON_START]],
@@ -78,9 +79,6 @@ const PAD_BUTTON_NAMES := {
 ## 8BitDo Ultimate, map L4 → L3 and R4 → R3 on the pad and L4 + R4 does it.
 const CHORDS := [[JOY_BUTTON_LEFT_STICK, JOY_BUTTON_RIGHT_STICK], [JOY_BUTTON_PADDLE1, JOY_BUTTON_PADDLE2]]
 const CHORD_SECONDS := 0.15
-## LB + RB together calls your arsenal in (alone, LB readies a grenade and RB
-## changes gun; the chord takes those back).
-const CALL_IN_CHORD := [JOY_BUTTON_LEFT_SHOULDER, JOY_BUTTON_RIGHT_SHOULDER]
 const PAD_AXIS_NAMES := {JOY_AXIS_TRIGGER_LEFT: "LT", JOY_AXIS_TRIGGER_RIGHT: "RT"}
 
 ## True while the player is on a gamepad (their last button or stick push came
@@ -109,8 +107,6 @@ func _enter_tree() -> void:
 ## The button to show in a prompt for `action` on the device in use:
 ## "SPACE" / "E" on keyboard, "A" / "Y" on a gamepad.
 func prompt(action: StringName) -> String:
-	if action == &"call_in" and using_pad:
-		return "%s + %s" % [PAD_BUTTON_NAMES[CALL_IN_CHORD[0]], PAD_BUTTON_NAMES[CALL_IN_CHORD[1]]]
 	for b in BINDINGS.get(action, []):
 		if using_pad and b[0] == PAD_BUTTON:
 			return PAD_BUTTON_NAMES.get(b[1], "?")

@@ -4,16 +4,18 @@ extends RefCounted
 ## the Carrot Lobber, the Big Root .50), your answers to a gang and to your
 ## Doppelbunny. Each is won on the Trail (make the goal in a Grudge Match or a
 ## Mirror Match: Run) and kept for good. In any match, from your CALL_AT-th
-## beat-down, you can call them in once (MatchManager.call_in): a crate drops
-## beside you with every one you've won in it, and you take one. No bot ever
-## carries one, picks one up or opens that crate (Pickup.anyone_may_take). Kept
-## with your profile.
+## beat-down, you can call one in once: RB (B) opens the pick of the ones
+## you've won, and the one you pick comes as a flare in your paw; throw it
+## like a carrot grenade (Flare) and a crate with that gun in it comes down on
+## it (MatchManager.claim_call_in, send_call_in). No bot ever carries one,
+## picks one up or opens that crate (Pickup.anyone_may_take). Kept with your
+## profile.
 
 const CALL_AT := 3                      ## beat-downs in a match before you can call it in
 const REWARD_KINDS := ["grudge", "mirror"]   ## the Trail stops that win you one (Run.KINDS)
 const CALL_HEIGHT := 28.0               ## metres up it drops from
 const CALL_FALL := 9.0                  ## m/s (a supply drop drifts down at 3.5)
-const CALL_DISTANCE := 6.0              ## metres from you it lands, about
+const CALL_DISTANCE := 6.0              ## metres from you it lands, about (no flare)
 
 
 ## The guns you've won (ids, in WeaponDB.arsenal order).
@@ -38,18 +40,21 @@ static func unlock(id: StringName) -> void:
 		PlayerProfile.save()
 
 
-## What a call-in brings (Pickup specs): every gun you've won, full, one of
+## What a call-in brings (Pickup specs): the gun you picked (`gun`), full,
+## and a fill of its carrots; or, picking none, every gun you've won, one of
 ## which you take (the rest go back: "one_of"), and a fill of each one's
 ## carrots. All of it yours alone.
-static func call_in_contents() -> Array:
+static func call_in_contents(gun: StringName = &"") -> Array:
 	var out := []
-	for id in unlocked():
+	var guns := [gun] if gun != &"" and unlocked().has(gun) else unlocked()
+	for id in guns:
 		var data := WeaponDB.get_weapon(id)
 		var spec := Pickup.weapon_spec(WeaponInstance.new(data, Rarity.Tier.PRIZE))
-		spec["one_of"] = "call_in"
+		if guns.size() > 1:
+			spec["one_of"] = "call_in"
 		out.append(spec)
 	var types := {}
-	for id in unlocked():
+	for id in guns:
 		types[WeaponDB.get_weapon(id).ammo_type] = true
 	for t in types:
 		var ammo := Pickup.ammo_spec(t, Inventory.AMMO_PICKUP[t] * 2)

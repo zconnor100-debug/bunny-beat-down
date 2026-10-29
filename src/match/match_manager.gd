@@ -1029,12 +1029,47 @@ func can_call_in() -> bool:
 		and player_beat_downs >= Arsenal.CALL_AT and phase == Phase.PLAYING and not Arsenal.unlocked().is_empty()
 
 
-## Call your arsenal in: a crate drops beside you (Arsenal.call_in_contents),
-## for you alone. True if it's on its way.
-func call_in() -> bool:
+## Call your arsenal in at once: a crate drops at `at` (or beside you) with
+## `gun` in it (or every one you've won: Arsenal.call_in_contents), for you
+## alone. True if it's on its way.
+func call_in(gun: StringName = &"", at := Vector3.INF) -> bool:
+	if not claim_call_in():
+		return false
+	send_call_in(gun, at)
+	return true
+
+
+## Your call-in is spoken for (a flare's thrown: Flare): it can't be called
+## again this match. False if it can't be called now.
+func claim_call_in() -> bool:
 	if not can_call_in():
 		return false
 	called_in = true
+	return true
+
+
+## The crate comes down on `at` (a flare), or beside you, with `gun` in it.
+func send_call_in(gun: StringName = &"", at := Vector3.INF) -> void:
+	var spot := at
+	if spot == Vector3.INF and player:
+		spot = _beside_player()
+	if spot == Vector3.INF or world_root == null:
+		return
+	var drop := SupplyDrop.new()
+	drop.landing = spot
+	drop.fall_speed = Arsenal.CALL_FALL
+	drop.contents = Arsenal.call_in_contents(gun)
+	drop.player_only = true
+	drop.rng.seed = rng.randi()
+	world_root.add_child(drop)
+	drop.global_position = spot + Vector3.UP * Arsenal.CALL_HEIGHT
+	Events.supply_drop_incoming.emit(spot)
+	var data := WeaponDB.get_weapon(gun) if gun != &"" else null
+	Events.announce.emit("CALLED IN", "Your %s is on its way." % data.display_name if data else "Your arsenal is on its way. Take one.")
+
+
+## Somewhere clear a few metres from you (straight ahead, then either side).
+func _beside_player() -> Vector3:
 	var at := player.global_position
 	var spot := Vector3.INF
 	for i in 8:
@@ -1046,19 +1081,7 @@ func call_in() -> bool:
 		if hit and (hit.normal as Vector3).y > 0.7:
 			spot = hit.position
 			break
-	if spot == Vector3.INF:
-		spot = at
-	var drop := SupplyDrop.new()
-	drop.landing = spot
-	drop.fall_speed = Arsenal.CALL_FALL
-	drop.contents = Arsenal.call_in_contents()
-	drop.player_only = true
-	drop.rng.seed = rng.randi()
-	world_root.add_child(drop)
-	drop.global_position = spot + Vector3.UP * Arsenal.CALL_HEIGHT
-	Events.supply_drop_incoming.emit(spot)
-	Events.announce.emit("CALLED IN", "Your arsenal is on its way. Take one.")
-	return true
+	return spot if spot != Vector3.INF else at
 
 
 func _spawn_supply_drop() -> void:

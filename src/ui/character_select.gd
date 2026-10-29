@@ -300,9 +300,10 @@ func _on_preview_input(event: InputEvent) -> void:
 		accept_event()
 
 
-## LB on a pad (it throws grenades in a match, so it isn't weapon_prev).
-static func _left_shoulder(event: InputEvent) -> bool:
-	return event is InputEventJoypadButton and event.pressed and (event as InputEventJoypadButton).button_index == JOY_BUTTON_LEFT_SHOULDER
+## LB / RB on a pad (in a match they throw grenades and call your arsenal in,
+## so they aren't the gun-switching actions).
+static func _shoulder(event: InputEvent, button: JoyButton) -> bool:
+	return event is InputEventJoypadButton and event.pressed and (event as InputEventJoypadButton).button_index == button
 
 
 ## D-pad, arrow keys, WASD and the shoulder buttons step through critters
@@ -311,10 +312,11 @@ static func _left_shoulder(event: InputEvent) -> bool:
 func _unhandled_input(event: InputEvent) -> void:
 	if _done or event is InputEventJoypadMotion:
 		return
-	if event.is_action_pressed(&"ui_left") or event.is_action_pressed(&"move_left") or _left_shoulder(event) \
+	if event.is_action_pressed(&"ui_left") or event.is_action_pressed(&"move_left") or _shoulder(event, JOY_BUTTON_LEFT_SHOULDER) \
 			or (event.is_action_pressed(&"weapon_prev") and not event is InputEventJoypadButton):
 		_cycle(-1)
-	elif event.is_action_pressed(&"ui_right") or event.is_action_pressed(&"move_right") or event.is_action_pressed(&"weapon_next"):
+	elif event.is_action_pressed(&"ui_right") or event.is_action_pressed(&"move_right") or _shoulder(event, JOY_BUTTON_RIGHT_SHOULDER) \
+			or (event.is_action_pressed(&"weapon_next") and not event is InputEventJoypadButton):
 		_cycle(1)
 	elif event.is_action_pressed(&"ui_up") or event.is_action_pressed(&"move_forward"):
 		_cycle_skin(1)

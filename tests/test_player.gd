@@ -143,9 +143,9 @@ func _pad(button: JoyButton, hold: float) -> void:
 	await wait_frames(2)
 
 
-## On a pad LB throws grenades (hold to aim, let go to throw); LB + RB
-## together still calls your arsenal in, so a grenade LB began to ready goes
-## away again; Y is the previous gun now.
+## On a pad LB throws grenades (hold to aim, let go to throw), Y steps round
+## your guns, and RB calls your arsenal in (with nothing to call in, it does
+## nothing at all: no gun change, no grenade).
 func test_lb_throws_a_grenade() -> void:
 	player.inventory.grenades = 2
 	var slot := player.current_slot
@@ -153,21 +153,20 @@ func test_lb_throws_a_grenade() -> void:
 	Input.parse_input_event(lb)
 	await wait_frames(2)
 	check(pc.readying_grenade, "LB readies a throw")
-	var rb := _button(JOY_BUTTON_RIGHT_SHOULDER)
-	Input.parse_input_event(rb)
-	await wait_frames(2)
-	check(not pc.readying_grenade and player.current_slot == slot, "LB + RB is the call-in chord: no grenade, no gun change")
-	for e: InputEventJoypadButton in [lb, rb]:
-		var up := e.duplicate() as InputEventJoypadButton
-		up.pressed = false
-		Input.parse_input_event(up)
+	var up := lb.duplicate() as InputEventJoypadButton
+	up.pressed = false
+	Input.parse_input_event(up)
 	await wait_physics(10)
-	check(player.inventory.grenades == 2, "and nothing was thrown")
+	check(player.inventory.grenades == 1, "let go: one's thrown (%d left)" % player.inventory.grenades)
+	await _pad(JOY_BUTTON_RIGHT_SHOULDER, 0.1)
+	check(player.current_slot == slot and not pc.call_menu and not pc.readying_grenade, "RB (nothing to call in yet) changes nothing")
+	await wait_physics(40)   # (the first throw's follow-through)
 	await _pad(JOY_BUTTON_LEFT_SHOULDER, 0.5)
 	await wait_physics(5)
-	check(player.inventory.grenades == 1, "LB held and let go throws one (%d left)" % player.inventory.grenades)
-	check(InputMap.action_has_event(&"weapon_prev", _button(JOY_BUTTON_Y)) and InputMap.action_has_event(&"grenade", _button(JOY_BUTTON_LEFT_SHOULDER)),
-		"Y is the previous gun, LB the grenade")
+	check(player.inventory.grenades == 0, "LB held and let go throws another (%d left)" % player.inventory.grenades)
+	check(InputMap.action_has_event(&"weapon_next", _button(JOY_BUTTON_Y)) and InputMap.action_has_event(&"grenade", _button(JOY_BUTTON_LEFT_SHOULDER))
+		and InputMap.action_has_event(&"call_in", _button(JOY_BUTTON_RIGHT_SHOULDER)) and not InputMap.action_has_event(&"weapon_next", _button(JOY_BUTTON_RIGHT_SHOULDER)),
+		"Y steps round the guns, LB is the grenade, RB the call-in")
 
 
 func _button(b: JoyButton) -> InputEventJoypadButton:

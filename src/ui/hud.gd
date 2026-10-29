@@ -28,6 +28,8 @@ var _clovers: ItemBadge
 var _shields: ItemBadge
 var _grenades: ItemBadge
 var _arsenal_label: Label          ## your arsenal: beat-downs to go, or ready to call in (Arsenal)
+var _call_menu: CallInMenu         ## the pick of your arsenal's guns, calling it in
+var _pc: PlayerController
 var _rewind_label: Label
 var _news_frame := -1          # the frame a rival's news (REVENGE!...) was shown
 var _rewind_tint: ColorRect
@@ -184,6 +186,14 @@ func setup(player_: Critter, rig_: CameraRig, mm: MatchManager) -> void:
 	_arsenal_label.offset_left = 30
 	_arsenal_label.offset_top = -252
 	_root.add_child(_arsenal_label)
+	_call_menu = CallInMenu.new()
+	_call_menu.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+	_call_menu.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	_call_menu.grow_vertical = Control.GROW_DIRECTION_BOTH
+	_call_menu.offset_top = 150
+	_call_menu.offset_bottom = 150
+	_call_menu.visible = false
+	_root.add_child(_call_menu)
 	_rewind_label = UITheme.label("", 20, Color("9fe3ff"))
 	_rewind_label.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT)
 	_rewind_label.offset_left = 30
@@ -257,6 +267,7 @@ func setup(player_: Critter, rig_: CameraRig, mm: MatchManager) -> void:
 		Audio.play(&"match_countdown_beep", -4.0)
 		show_message("Supply drop incoming!", "Golden carrots inbound — check your map", 3.5))
 	var pc_node := player.get_node_or_null("PlayerController") as PlayerController
+	_pc = pc_node
 	if pc_node:
 		pc_node.interact_hint_changed.connect(func(t): _hint.text = t)
 
@@ -409,7 +420,14 @@ func _process(delta: float) -> void:
 	_shields.show_count(player.inventory.shields, Inventory.MAX_SHIELDS, GameInput.prompt(&"shield"))
 	_grenades.show_count(player.inventory.grenades, Inventory.MAX_GRENADES, GameInput.prompt(&"grenade"))
 	_arsenal_label.text = ""
-	if match_manager and match_manager.phase == MatchManager.Phase.PLAYING and player.alive and not match_manager.called_in \
+	_call_menu.visible = _pc != null and _pc.call_menu and player.alive
+	if _call_menu.visible:
+		_call_menu.show_pick(Arsenal.unlocked(), _pc.call_choice)
+	if _pc and _pc.flare_gun != &"" and player.alive:
+		var data := WeaponDB.get_weapon(_pc.flare_gun)
+		_arsenal_label.text = "A flare for your %s: hold [%s] to aim it, let go to throw" % [data.display_name if data else "gun", GameInput.prompt(&"call_in")]
+		_arsenal_label.add_theme_color_override("font_color", UITheme.CARROT_LIGHT)
+	elif match_manager and match_manager.phase == MatchManager.Phase.PLAYING and player.alive and not match_manager.called_in \
 			and not Arsenal.unlocked().is_empty():
 		var to_go := Arsenal.CALL_AT - match_manager.player_beat_downs
 		_arsenal_label.text = "Your arsenal is ready: [%s] to call it in" % GameInput.prompt(&"call_in") if to_go <= 0 \

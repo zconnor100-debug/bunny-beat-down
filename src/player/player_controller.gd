@@ -7,8 +7,11 @@ extends Node
 ## reloads otherwise; A only jumps; B swings your club when your paws are empty; R3 swings it
 ## any time (the gun is stowed for the swing); L3 + R3 together flips first /
 ## third person. Crouch is a toggle: once to crouch, again to lie down and
-## crawl, a third time (or jump, or sprint) to stand. Hold Y (X / the middle
+## crawl, a third time (or jump, or sprint) to stand. Hold LB (X / the middle
 ## mouse button) to aim a carrot grenade along its arc; let go to throw it.
+## Y steps round your guns. RB (B) calls your arsenal in: the pick of your
+## guns comes up (call_menu), and the one you pick is a flare in your paw
+## (flare_gun): hold RB (B) to aim it like a grenade, let go to throw it.
 
 signal interact_hint_changed(text: String)
 
@@ -39,11 +42,17 @@ var _sprint_latch := false         # pad: L3 clicks sprint on until you stop mov
 var _latch_before := false         # (undone if that click was half of an L3 + R3 chord)
 var _pad_pressed_at := {}          # button -> msec of its last press (for chords)
 var _pending_melee := -1.0         # seconds until a pad R3 swing (it may yet be a chord)
-var _slot_before := -1             # the gun before a pad RB (put back if it was half of LB + RB)
 var assist_target: Critter = null  ## who the aim assist is helping with (HUD / tests)
 var readying_grenade := false      ## the grenade button's held: the arc shows, letting go throws
 var _arc: ThrowArc
 var _shield_held := -1.0           # seconds D-pad → has been held (-1: it isn't)
+## Calling your arsenal in (Arsenal): the pick of your guns is up, and which
+## one's picked out; then the flare in your paw (the gun it calls in), and
+## whether it's being aimed (RB / B held: the arc shows, letting go throws).
+var call_menu := false
+var call_choice := 0
+var flare_gun: StringName = &""
+var readying_flare := false
 
 
 func _ready() -> void:
@@ -54,6 +63,9 @@ func _ready() -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if not enabled or rig == null:
+		return
+	if call_menu and critter.alive and _call_menu_input(event):
+		get_viewport().set_input_as_handled()
 		return
 	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		var sens: float = deg_to_rad(Settings.get_value(&"mouse_sensitivity"))
@@ -79,9 +91,6 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventJoypadButton and event.pressed and _chord(event.button_index):
 		rig.toggle_first_person()
 		return
-	if event is InputEventJoypadButton and event.pressed and critter.alive and _call_in_chord(event.button_index):
-		_call_in()
-		return
 	if not critter.alive:
 		return
 	if event.is_action_pressed(&"interact") and _can_interact():
@@ -103,9 +112,11 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif event.is_action_pressed(&"shield"):
 		critter.use_shield()
 	elif event.is_action_pressed(&"call_in"):
-		_call_in()
+		_call_in_pressed()
 	elif event.is_action_pressed(&"grenade"):
 		readying_grenade = critter.can_throw()
+		if readying_grenade:
+			_put_flare_away()
 		if not readying_grenade and critter.inventory.grenades <= 0:
 			Audio.play(&"dry_fire", -8.0)
 	elif event.is_action_pressed(&"melee"):
@@ -144,6 +155,10 @@ func _physics_process(delta: float) -> void:
 		critter.want_fire = false
 		critter.want_aim = false
 		_put_grenade_away()
+		if not critter.alive:
+			call_menu = false
+			flare_gun = &""
+			_put_flare_away()
 		return
 	# gamepad look
 	var look := Input.get_vector(&"look_left", &"look_right", &"look_down", &"look_up")
@@ -164,8 +179,8 @@ func _physics_process(delta: float) -> void:
 			critter.want_melee = true
 	critter.look_yaw = rig.yaw
 	critter.look_pitch = rig.pitch
-	critter.want_fire = Input.is_action_pressed(&"fire") and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED
-	critter.want_aim = Input.is_action_pressed(&"aim")
+	critter.want_fire = Input.is_action_pressed(&"fire") and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED and not call_menu
+	critter.want_aim = Input.is_action_pressed(&"aim") and not call_menu
 	var was_aiming := rig.aiming
 	rig.aiming = critter.want_aim and critter.current_weapon() != null
 	if rig.aiming and not was_aiming and critter.current_weapon().data.scoped:
@@ -187,6 +202,7 @@ func _physics_process(delta: float) -> void:
 		_jump_buffer = 0.0
 	critter.aim_point = rig.aim_point(critter.visual.hitbox_rids)
 	_update_grenade()
+	_update_flare()
 	_update_focus()
 	# treasure chests: keep unlocking while interact (X on a pad) is held
 	var holding := Input.is_action_pressed(&"interact")
@@ -229,28 +245,98 @@ func _chord(button: JoyButton) -> bool:
 	return false
 
 
-## True when `button` completes LB + RB (GameInput.CALL_IN_CHORD); what its
-## first half started (RB's gun change, LB's grenade) is put back.
-func _call_in_chord(button: JoyButton) -> bool:
-	if not button in GameInput.CALL_IN_CHORD:
-		return false
-	var now := Time.get_ticks_msec()
-	var other: JoyButton = GameInput.CALL_IN_CHORD[0] if button == GameInput.CALL_IN_CHORD[1] else GameInput.CALL_IN_CHORD[1]
-	if now - int(_pad_pressed_at.get(other, -100000)) <= GameInput.CHORD_SECONDS * 1000.0:
-		_pad_pressed_at.erase(other)
-		_pad_pressed_at.erase(button)
-		if _slot_before >= 0:
-			critter.switch_to(_slot_before)
-		_put_grenade_away()
-		return true
-	_slot_before = critter.current_slot
-	return false
-
-
-## Call your arsenal in (MatchManager.call_in), if you can.
-func _call_in() -> void:
-	if match_manager == null or not match_manager.has_method("call_in") or not match_manager.call_in():
+## RB / B: with a flare in your paw, start aiming it; otherwise bring up the
+## pick of your arsenal's guns, if you can call it in yet.
+func _call_in_pressed() -> void:
+	if flare_gun != &"":
+		readying_flare = critter.can_throw_flare()
+		if readying_flare:
+			_put_grenade_away()
+		return
+	if match_manager and match_manager.has_method("can_call_in") and match_manager.can_call_in():
+		call_menu = true
+		call_choice = clampi(call_choice, 0, maxi(Arsenal.unlocked().size() - 1, 0))
+		Audio.play(&"ui_click", -6.0)
+	else:
 		Audio.play(&"dry_fire", -8.0)
+
+
+## The pick of your guns is up: the D-pad / arrows / wheel / Y choose, 1-3
+## pick that one, A / Enter / E / X / a click / RB / B pick, and B / Esc /
+## Backspace / a right click put it away. Walking and looking carry on (and the
+## D-pad's other jobs wait). True if the menu used `event`.
+func _call_menu_input(event: InputEvent) -> bool:
+	if not (event is InputEventKey or event is InputEventJoypadButton or event is InputEventMouseButton) \
+			or not event.is_pressed() or event.is_echo():
+		return false
+	var guns := Arsenal.unlocked()
+	if guns.is_empty():
+		call_menu = false
+		return false
+	if event.is_action_pressed(&"ui_left") or event.is_action_pressed(&"weapon_prev"):
+		call_choice = posmod(call_choice - 1, guns.size())
+		Audio.play(&"ui_hover", -6.0)
+		return true
+	if event.is_action_pressed(&"ui_right") or event.is_action_pressed(&"weapon_next"):
+		call_choice = posmod(call_choice + 1, guns.size())
+		Audio.play(&"ui_hover", -6.0)
+		return true
+	for i in mini(guns.size(), 3):
+		if event.is_action_pressed(StringName("weapon_%d" % (i + 1))):
+			call_choice = i
+			_pick_call_in(guns)
+			return true
+	if event.is_action_pressed(&"ui_cancel") or (event is InputEventKey and (event as InputEventKey).keycode == KEY_BACKSPACE) \
+			or (event is InputEventMouseButton and (event as InputEventMouseButton).button_index == MOUSE_BUTTON_RIGHT):
+		call_menu = false
+		return true
+	if event.is_action_pressed(&"ui_accept") or event.is_action_pressed(&"call_in") or event.is_action_pressed(&"interact") \
+			or (event is InputEventMouseButton and (event as InputEventMouseButton).button_index == MOUSE_BUTTON_LEFT):
+		_pick_call_in(guns)
+		return true
+	return event is InputEventJoypadButton and (event as InputEventJoypadButton).button_index in \
+		[JOY_BUTTON_DPAD_UP, JOY_BUTTON_DPAD_DOWN, JOY_BUTTON_DPAD_LEFT, JOY_BUTTON_DPAD_RIGHT]
+
+
+## The picked gun's flare is in your paw (see _update_flare).
+func _pick_call_in(guns: Array) -> void:
+	flare_gun = guns[clampi(call_choice, 0, guns.size() - 1)]
+	call_menu = false
+	Audio.play(&"ui_click", -4.0)
+
+
+## While RB / B is held with the flare, its arc shows where it'll come down;
+## let go and it's thrown along exactly that arc. The call-in is spoken for as
+## it leaves your paw (MatchManager.claim_call_in), and the crate is sent when
+## it's lying there burning (MatchManager.send_call_in).
+func _update_flare() -> void:
+	if not readying_flare:
+		return
+	if flare_gun == &"" or not critter.can_throw_flare():
+		_put_flare_away()
+		return
+	var vel := critter.throw_velocity()
+	if Input.is_action_pressed(&"call_in"):
+		if _arc == null:
+			_arc = ThrowArc.new()
+			critter.add_child(_arc)
+		_arc.show_arc(Grenade.arc(critter.get_world_3d().direct_space_state, critter.throw_origin(), vel, critter.visual.hitbox_rids), 1.2)
+		return
+	_put_flare_away()
+	var mm := match_manager
+	var gun := flare_gun
+	if mm == null or not mm.has_method("claim_call_in") or not mm.claim_call_in():
+		Audio.play(&"dry_fire", -8.0)
+		flare_gun = &""
+		return
+	flare_gun = &""
+	critter.throw_flare(vel, gun, func(at: Vector3): mm.send_call_in(gun, at))
+
+
+func _put_flare_away() -> void:
+	readying_flare = false
+	if _arc and not readying_grenade:
+		_arc.hide_arc()
 
 
 ## The opponent nearest the crosshair ray, if the ray passes within

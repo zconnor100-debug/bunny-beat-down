@@ -92,8 +92,12 @@ and the final shot replayed from three angles. There's a
 
   You win each one on the Trail (make the goal in a Grudge Match or a Mirror
   Match) and keep it for good. In any match, from your third beat-down, call
-  them in once (B, or LB + RB together): a crate drops beside you with every
-  one you've won, and you take one.
+  one in, once: RB (B) brings up the pick of the ones you've won, each on its
+  gun badge; pick one and you're holding a flare. Hold RB (B) to aim it
+  along its arc like a carrot grenade and let go to throw it: it lands
+  burning under a tall column of red smoke (everyone can see where), and a
+  moment later a crate with that gun in it comes down right on it, for you
+  alone.
 
   Carrots fly fast enough that you barely lead a running critter at the
   range each gun is made for: 260 m/s for shotgun pellets up to 480 for the
@@ -777,10 +781,11 @@ python3 tools/compress_textures.py && godot --headless --import
 | Crouch → crawl → stand (each press) | Ctrl or C | B (with a gun out) |
 | Pick up / open (with a gun or crate in front of you), else reload | E / R | X |
 | Club swing (any time) | F, or LMB with empty paws | R3, or B / RT with empty paws |
-| Switch weapon / drop it | 1-3, mouse wheel / G | Y / RB / D-pad ← |
+| Switch weapon / drop it | 1-3, mouse wheel / G | Y / D-pad ← |
 | Heal (lucky clover) | H | D-pad ↓ |
 | Put on an Acorn Shield you carry | J | D-pad → (tap) |
 | Carrot grenade: hold to aim its arc, let go to throw | X or middle mouse (hold) | LB (hold) |
+| Call in your arsenal: pick a gun, then hold to aim its flare, let go to throw | B, then B (hold) | RB, then RB (hold) |
 | First / third person | V | Back, or L3 + R3 together |
 | Swap shoulder | Q | D-pad → (hold) |
 | Map | M (hold) | D-pad ↑ |

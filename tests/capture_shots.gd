@@ -1,6 +1,6 @@
 extends SceneTree
 ## Renders screenshots for visual review and the README (needs a GPU window).
-##   godot --path . -s tests/capture_shots.gd -- <out_dir> [menu|game|all|scope|incoming|rewind|ui]
+##   godot --path . -s tests/capture_shots.gd -- <out_dir> [menu|game|all|scope|incoming|rewind|ui|callin]
 ## Drives the real game: menu → loading → balloon → landing → a staged fight.
 
 var out_dir := "user://shots"
@@ -147,6 +147,87 @@ func _run() -> void:
 		await _wait(0.8)
 		await _snap("17_sniper_scope")
 		Input.action_release(&"aim")
+	if which in ["callin"]:
+		# calling your arsenal in: the pick of your guns, the flare in your paw,
+		# its arc, the flare burning, and the crate coming down on it
+		change_scene_to_file("res://scenes/game.tscn")
+		var gc: Node = null
+		while gc == null or gc.match_manager == null:
+			await process_frame
+			gc = current_scene
+		await _wait(1.0)
+		var mc = gc.match_manager
+		mc.player_jump()
+		var pl = mc.player
+		var t5 := Time.get_ticks_msec()
+		while pl.state != 3 and Time.get_ticks_msec() - t5 < 40000:
+			pl.want_jump = pl.state == 1
+			_unpause(gc)
+			await process_frame
+		# somewhere open (nothing within 16 m), so the flare and the crate show
+		var open_at: Vector3 = gc.island.random_land_point(6.0)
+		for k in 300:
+			var q: Vector3 = gc.island.random_land_point(6.0)
+			if not gc.island.scatter.blocked(Vector2(q.x, q.z), 16.0, false) and gc.island.terrain.normal_at(q.x, q.z).y > 0.97 \
+					and gc.island.terrain.normal_at(q.x - sin(gc.rig.yaw) * 12.0, q.z - cos(gc.rig.yaw) * 12.0).y > 0.95:
+				open_at = q
+				break
+		pl.place_at(open_at + Vector3.UP * 0.3, gc.rig.yaw)
+		for c in mc.critters:   # (the bots stand down for the pictures)
+			if c != pl and c.has_node("AIBrain"):
+				c.get_node("AIBrain").process_mode = Node.PROCESS_MODE_DISABLED
+				c.want_fire = false
+		# (the call-in waits for the match proper: everyone down)
+		var playing: int = load("res://src/match/match_manager.gd").Phase.PLAYING
+		var t6 := Time.get_ticks_msec()
+		while mc.phase != playing and Time.get_ticks_msec() - t6 < 40000:
+			_unpause(gc)
+			await process_frame
+		pl.max_health = 100000.0
+		pl.health = pl.max_health
+		pl.give_weapon(load("res://src/weapons/weapon_instance.gd").new(load("res://data/weapons/carrot_rifle.tres"), 2))
+		var arsenal = load("res://src/match/arsenal.gd")
+		for id in [&"root_rumbler", &"carrot_lobber", &"big_root_50"]:
+			arsenal.unlock(id)
+		mc.player_beat_downs = arsenal.CALL_AT
+		var pcc = pl.get_node("PlayerController")
+		gc.rig.pitch = -0.15
+		await _wait(0.8)
+		pcc.call_menu = true
+		pcc.call_choice = 1
+		await _wait(0.5)
+		_unpause(gc)
+		await _snap("24_call_in_menu")
+		pcc.call_menu = false
+		pcc.flare_gun = &"carrot_lobber"
+		await _wait(0.4)
+		_unpause(gc)
+		await _snap("25_flare_in_paw")
+		gc.rig.pitch = 0.12   # (a good long toss)
+		var down := InputEventAction.new()
+		down.action = &"call_in"
+		down.pressed = true
+		Input.parse_input_event(down)
+		await _wait(0.6)
+		_unpause(gc)
+		await _snap("26_flare_arc")
+		var up := InputEventAction.new()
+		up.action = &"call_in"
+		up.pressed = false
+		Input.parse_input_event(up)
+		await _wait(0.4)
+		gc.rig.pitch = -0.12
+		await _wait(2.2)
+		_unpause(gc)
+		await _snap("27_flare_burning")
+		gc.rig.pitch = 0.12
+		await _wait(1.4)
+		_unpause(gc)
+		await _snap("28_crate_coming")
+		gc.rig.pitch = -0.15
+		await _wait(4.5)
+		_unpause(gc)
+		await _snap("29_crate_landed")
 	if which in ["incoming"]:
 		# three bots open up on you from the front: tracers, blood on the lens,
 		# damage arcs and the shooters' name tags
@@ -290,6 +371,13 @@ func _run() -> void:
 		await _wait(2.5)
 		await _snap("12_victory")
 	quit()
+
+
+## (A pad on this machine drives every Godot window: if it paused the game
+## mid-capture, carry on.)
+func _unpause(g: Node) -> void:
+	if g.get("_pause") != null and g._pause:
+		g._toggle_pause()
 
 
 func _report_surroundings(g: Node, pl: Node3D) -> void:
