@@ -145,7 +145,8 @@ and the final shot replayed from three angles. There's a
     **acorn shields** for armor; you carry them (up to five clovers and three
     shields, pictured above your gun slots with how many you hold, beside
     your carrot grenades) and use
-    them when you like;
+    them when you like; your three gun slots are long badges with each
+    gun's picture and name, framed in its rarity's colour;
   - critter cottages, stumps, log piles and stone walls for cover;
   - the shrinking **Briar**, in a different mood every match (see below),
     and supply drops;

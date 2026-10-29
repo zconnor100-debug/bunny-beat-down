@@ -148,3 +148,15 @@ func _match() -> MatchManager:
 	add_child(mm)
 	mm.setup(self, cage, 4, 1, 31)
 	return mm
+
+
+func test_every_gun_has_its_picture_on_the_gun_badges() -> void:
+	var badge := GunBadge.new(0)
+	add_child(badge)
+	for w in WeaponDB.all() + WeaponDB.arsenal():
+		check(ResourceLoader.exists("res://assets/ui/gun_%s.png" % w.id), "%s has a HUD picture" % w.id)
+		badge.show_gun(WeaponInstance.new(w, Rarity.Tier.PRIZE), true)
+		check(badge._picture.texture != null and badge._name.text != "Empty", "%s's badge shows it" % w.id)
+	badge.show_gun(null, false)
+	check(badge._picture.texture == null and badge._name.text == "Empty" and badge.modulate.a < 1.0, "an empty slot is dimmed")
+	badge.queue_free()

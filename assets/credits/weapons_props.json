@@ -961,5 +961,27 @@
       "assets/ui/item_grenade.png",
       "assets/ui/item_shield.png"
     ]
+  },
+  {
+    "asset": "HUD gun pictures (every carrot gun and arsenal gun, side on)",
+    "author": "Bunny Beat Down project",
+    "author_url": "",
+    "license": "MIT (project)",
+    "license_url": "",
+    "source_url": "tests/item_icons_stage.gd",
+    "changes": "Rendered in the game from its own gun models (assets/weapons/*.glb); textures those models sample are credited with them.",
+    "used_for": "The HUD's gun badges (your three gun slots)",
+    "files": [
+      "assets/ui/gun_big_root_50.png",
+      "assets/ui/gun_carrot_lmg.png",
+      "assets/ui/gun_carrot_lobber.png",
+      "assets/ui/gun_carrot_pistol.png",
+      "assets/ui/gun_carrot_rifle.png",
+      "assets/ui/gun_carrot_rocket_launcher.png",
+      "assets/ui/gun_carrot_shotgun.png",
+      "assets/ui/gun_carrot_smg.png",
+      "assets/ui/gun_carrot_sniper.png",
+      "assets/ui/gun_root_rumbler.png"
+    ]
   }
 ]

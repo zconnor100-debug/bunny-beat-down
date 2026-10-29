@@ -294,6 +294,7 @@ notices are available in-game under Credits → Engine licenses.
 | [Melee Nail Corncob](tools/weapons/blender/assets/melee.py) | Bunny Beat Down project | MIT (project) | Raccoon's club: a corncob with rusty nails | Original model generated from code (Blender Python): procedural geometry, scripted materials and a baked PBR atlas. Third-party textures/scans it samples are credited separately. |
 | [Melee Trout Stick](tools/weapons/blender/assets/melee.py) | Bunny Beat Down project | MIT (project) | Beaver's club: a gnawed branch with a skewered trout | Original model generated from code (Blender Python): procedural geometry, scripted materials and a baked PBR atlas. Third-party textures/scans it samples are credited separately. |
 | [HUD item pictures (lucky clover, Acorn Shield, carrot grenade)](tests/item_icons_stage.gd) | Bunny Beat Down project | MIT (project) | The HUD's item badges above the gun slots | Rendered in the game from its own pickup models (the Pickup Health flask in its clover glow, the code-built Acorn Shield, and the carrot grenade); textures those models sample are credited with them. |
+| [HUD gun pictures (every carrot gun and arsenal gun, side on)](tests/item_icons_stage.gd) | Bunny Beat Down project | MIT (project) | The HUD's gun badges (your three gun slots) | Rendered in the game from its own gun models (assets/weapons/*.glb); textures those models sample are credited with them. |
 
 ## Sound & Music
 

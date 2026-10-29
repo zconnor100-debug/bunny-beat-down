@@ -23,7 +23,7 @@ var _sub_message: Label
 var _hint: Label
 var _ammo_label: Label
 var _weapon_name: Label
-var _slots: Array[PanelContainer] = []
+var _slots: Array[GunBadge] = []
 var _clovers: ItemBadge
 var _shields: ItemBadge
 var _grenades: ItemBadge
@@ -174,15 +174,9 @@ func setup(player_: Critter, rig_: CameraRig, mm: MatchManager) -> void:
 	slots.add_theme_constant_override("separation", 10)
 	br.add_child(slots)
 	for i in Inventory.SLOTS:
-		var pc := PanelContainer.new()
-		pc.custom_minimum_size = Vector2(132, 52)
-		var l := UITheme.label("%d" % (i + 1), 17)
-		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		l.autowrap_mode = TextServer.AUTOWRAP_WORD
-		pc.add_child(l)
-		slots.add_child(pc)
-		_slots.append(pc)
+		var gb := GunBadge.new(i)
+		slots.add_child(gb)
+		_slots.append(gb)
 
 	# bottom-left: your arsenal (bars are drawn by the overlay)
 	_arsenal_label = UITheme.label("", 22, UITheme.CREAM)
@@ -410,11 +404,7 @@ func _process(delta: float) -> void:
 		_weapon_name.add_theme_color_override("font_color", UITheme.CREAM)
 		_ammo_label.text = ""
 	for i in _slots.size():
-		var sw: WeaponInstance = player.inventory.weapons[i]
-		var l := _slots[i].get_child(0) as Label
-		l.text = "%d  %s" % [i + 1, sw.data.display_name.replace("Carrot ", "") if sw else "—"]
-		var sb := _slot_style(sw.rarity if sw else -1, i == player.current_slot)
-		_slots[i].add_theme_stylebox_override("panel", sb)
+		_slots[i].show_gun(player.inventory.weapons[i], i == player.current_slot)
 	_clovers.show_count(player.inventory.clovers, Inventory.MAX_CLOVERS, GameInput.prompt(&"heal"))
 	_shields.show_count(player.inventory.shields, Inventory.MAX_SHIELDS, GameInput.prompt(&"shield"))
 	_grenades.show_count(player.inventory.grenades, Inventory.MAX_GRENADES, GameInput.prompt(&"grenade"))
@@ -472,22 +462,6 @@ func _process(delta: float) -> void:
 	_fps.visible = Settings.get_value(&"show_fps")
 	if _fps.visible:
 		_fps.text = "%d FPS" % Engine.get_frames_per_second()
-
-
-var _slot_styles: Dictionary = {}
-
-
-## Weapon-slot frame, cached per (rarity, selected) so the HUD allocates nothing per frame.
-func _slot_style(rarity: int, selected: bool) -> StyleBoxFlat:
-	var key := rarity * 2 + int(selected)
-	if not _slot_styles.has(key):
-		var sb := StyleBoxFlat.new()
-		sb.bg_color = Color(UITheme.INK, 0.95 if selected else 0.75)
-		sb.border_color = Rarity.COLORS[rarity] if rarity >= 0 else Color(UITheme.CREAM, 0.3)
-		sb.set_border_width_all(4 if selected else 2)
-		sb.set_corner_radius_all(12)
-		_slot_styles[key] = sb
-	return _slot_styles[key]
 
 
 func _on_critter_died(victim: Node, info: DamageInfo) -> void:
