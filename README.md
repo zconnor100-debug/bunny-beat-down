@@ -40,14 +40,14 @@ nemesis and its gang, and the rewind.
 ▶ **[The island trailer](docs/trailer.mp4)**: a rival sneaks up on you, you
 rewind, and this time you turn around.
 
-▶ **[The Hamster Cage cut](https://github.com/zconnor100-debug/bunny-beat-down/releases/download/v0.6.0/trailer_hamster_cage.mp4)**: up the Hamster
+▶ **[The Hamster Cage cut](docs/trailer_hamster_cage.mp4)** (with sound): up the Hamster
 Gym's see-through tubes, a rewind you can watch, and the final shot slowed
-down and replayed. There's also a **[vertical phone cut](https://github.com/zconnor100-debug/bunny-beat-down/releases/download/v0.6.0/trailer_hamster_cage_vertical.mp4)**.
+down and replayed. There's also a **[vertical phone cut](docs/trailer_hamster_cage_phone.mp4)**.
 
-▶ **[The Toy Box Bash cut](https://github.com/zconnor100-debug/bunny-beat-down/releases/download/v0.6.0/trailer_toybox.mp4)**: a paper-airplane
+▶ **[The Toy Box Bash cut](docs/trailer_toybox.mp4)** (with sound): a paper-airplane
 drop, a ride on the toy train, the rewind running the whole train backwards,
 and the final shot replayed from three angles. There's a
-**[vertical phone cut](https://github.com/zconnor100-debug/bunny-beat-down/releases/download/v0.6.0/trailer_toybox_vertical.mp4)** of it too.
+**[vertical phone cut](docs/trailer_toybox_phone.mp4)** of it too.
 
 ![Trailer: a rival fox creeps up on Bun, a rewind, and revenge](docs/screenshots/trailer.gif)
 
@@ -806,8 +806,8 @@ that fits on the screen (a temporary `override.cfg` with the viewport at
 in each rogue's own voice (`tools/voices/say.py`, Maya1, like the game's)
 and laid in where the stage says they speak; the Arsenal's gang shout their
 in-game lines, heard from the camera. The trailers cut before the rogues
-had voices (the island trailer, the 30-second trailer and its phone cut)
-have them laid in since, each line where its speech bubble comes up
+had voices (the island trailer, the 30-second trailer and its phone cut,
+and the Hamster Cage and Toy Box Bash cuts and theirs) have them laid in since, each line where its speech bubble comes up
 (`tools/add_voices.py`; Sly's "Don't turn around, Bun." is his own in-game
 clip). Recorded tall, the Arsenal's stage
 frames every shot for a phone (the pack closer together, the cameras
