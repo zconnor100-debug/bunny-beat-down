@@ -1,6 +1,6 @@
 extends "res://tests/workshop_stage.gd"
 ## Stage for tests/capture_workshop.gd with "earned": the looks only the
-## Mastery ladders give. Each earned gun skin on the gun whose ladder gives
+## Mastery ladders give. Each earned gun skin (from any tier) on the gun whose ladder gives
 ## it (held by a Bun, in two rows), close-ups, then the two earned beat-down
 ## bursts and the earned flash and tracer colours, then the coats (on a Bun
 ## each, then on other critters beside a Doppelbunny's silver mirror).
@@ -18,10 +18,11 @@ func _run() -> void:
 	# [skin, the gun whose ladder gives it] for each earned skin
 	var pairs := []
 	for l in Mastery.LADDERS:
-		var look: String = l.tiers[-1][1].get("look", "")
-		if look.begins_with("skin:"):
-			var gun := String(l.stat).get_slice(":", 1)
-			pairs.append([look.get_slice(":", 1), gun if WeaponDB.get_weapon(StringName(gun)) and gun != "melee" else "carrot_rifle"])
+		for t in l.tiers:
+			var look: String = t[1].get("look", "")
+			if look.begins_with("skin:"):
+				var gun := String(l.stat).get_slice(":", 1)
+				pairs.append([look.get_slice(":", 1), gun if WeaponDB.get_weapon(StringName(gun)) and gun != "melee" else "carrot_rifle"])
 	for i in pairs.size():
 		var c := Critter.new()
 		c.def = load("res://data/critters/bun.tres")

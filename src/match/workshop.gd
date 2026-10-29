@@ -30,7 +30,7 @@ const LOOKS := {
 		["midnight", "Midnight", 60], ["bubblegum", "Bubblegum", 60], ["frost", "Frost", 80], ["gilded", "Gilded", 150],
 		["ruby", "Ruby", -1], ["toxic", "Toxic stripe", -1], ["ember", "Ember", -1], ["jade", "Jade", -1], ["obsidian", "Obsidian", -1],
 		["pearl", "Pearl", -1], ["royal", "Royal", -1], ["zebra", "Zebra stripe", -1], ["carrot_king", "Carrot King", -1],
-		["sapphire", "Sapphire", -1], ["diamond", "Diamond", -1], ["looking_glass", "Looking Glass", -1]]},
+		["sapphire", "Sapphire", -1], ["diamond", "Diamond", -1], ["looking_glass", "Looking Glass", -1], ["nemesis", "Nemesis", -1]]},
 	"flash": {"label": "Muzzle flash", "options": [["carrot", "Carrot", 0], ["lime", "Lime", 30], ["blueberry", "Blueberry", 30],
 		["plum", "Plum", 30], ["bubblegum", "Bubblegum", 30], ["rainbow", "Rainbow", 80], ["gold", "Gold", -1]]},
 	"smoke": {"label": "Muzzle smoke", "options": [["none", "None", 0], ["puff", "White puff", 25], ["matching", "Matching colour", 40],

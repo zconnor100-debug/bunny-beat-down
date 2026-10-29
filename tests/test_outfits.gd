@@ -442,3 +442,20 @@ func test_a_hugging_bandana_lies_on_the_face() -> void:
 	check(worst > -INF, "Squeaks wears a bandana over his mouth")
 	check(worst < f.head_d * 0.1, "nowhere more than a little in front of his face: %.3f" % worst)
 	c.queue_free()
+
+
+## Nemesis Hunter's middle tier: the Nemesis gun skin, gold with Ns all over
+## it glowing red like the Smouldering coat's embers.
+func test_the_nemesis_gun_skin() -> void:
+	PlayerProfile.reset_for_tests()
+	check(Workshop.earned_only("skin:nemesis") and not Workshop.buy("skin:nemesis"), "the Nemesis skin isn't for sale")
+	check(Mastery.tiers("nemesis_hunter")[1].reward.get("look", "") == "skin:nemesis", "it's the Nemesis Hunter's reward at 10")
+	for i in 9:
+		Mastery.note_nemesis_beaten()
+	Mastery.check()
+	check(not Workshop.owns("skin:nemesis"), "nine Nemeses beaten: not yet")
+	Mastery.note_nemesis_beaten()
+	Mastery.check()
+	check(Workshop.owns("skin:nemesis") and Workshop.set_look("skin", "nemesis"), "ten: the skin is yours, and on your guns")
+	check(GunKit.skin_material("nemesis").get_shader_parameter(&"pattern") == 5, "gold, with its Ns glowing")
+	PlayerProfile.reset_for_tests()

@@ -130,7 +130,7 @@ const LADDERS := [
 		"tiers": [[5, {"acorns": 250}, "250 acorns"], [10, {"acorns": 500}, "500 acorns"],
 			[25, {"acorns": 1000, "look": "coat:starry_night"}, "1,000 acorns and the Starry Night coat"]]},
 	{"id": "nemesis_hunter", "name": "Nemesis Hunter", "text": "Beat down a Nemesis %d times.", "stat": "nemeses_beaten",
-		"tiers": [[5, {"acorns": 150}, "150 acorns"], [10, {"acorns": 300}, "300 acorns"],
+		"tiers": [[5, {"acorns": 150}, "150 acorns"], [10, {"acorns": 300, "look": "skin:nemesis"}, "300 acorns and the Nemesis gun skin"],
 			[25, {"acorns": 600, "look": "coat:smouldering"}, "600 acorns and the Smouldering coat"]]},
 	{"id": "pack_breaker", "name": "Pack Breaker", "text": "Beat down %d gang members.", "stat": "gang_beaten",
 		"tiers": [[25, {"acorns": 100}, "100 acorns"], [50, {"acorns": 200}, "200 acorns"],

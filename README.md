@@ -399,8 +399,9 @@ and the final shot replayed from three angles. There's a
   reticle, then Ruby tracers), 10/25/50 wins (a Gold muzzle flash at 25,
   the Golden Acorn coat at 50), 25/50/100 matches (Jade tracers at 50, the
   Patchwork coat at 100), 5/10/25
-  runs (the Starry Night coat), 5/10/25 Nemeses beaten (the Smouldering
-  coat), 25/50/100 gang members (the Tiger Stripe coat), and your Doppelbunny beaten in 3/5/10 Mirror
+  runs (the Starry Night coat), 5/10/25 Nemeses beaten (the Nemesis gun
+  skin at 10, gold with Ns all over it glowing red; the Smouldering coat at
+  25), 25/50/100 gang members (the Tiger Stripe coat), and your Doppelbunny beaten in 3/5/10 Mirror
   Matches (the Looking Glass skin at 5; at 10 the Mended Mirror, a coat for
   your critter: its cracked mirror, the cracks mended in gold). None of
   those looks can be bought.
