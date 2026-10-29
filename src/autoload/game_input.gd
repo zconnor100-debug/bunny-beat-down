@@ -31,13 +31,14 @@ const BINDINGS := {
 	# put on an Acorn Shield you carry: J (beside H), or tap D-pad → (held, it
 	# swaps the camera's shoulder: PlayerController.SHOULDER_HOLD)
 	&"shield": [[KEY, KEY_J], [PAD_BUTTON, JOY_BUTTON_DPAD_RIGHT]],
-	# carrot grenade: hold to aim along its arc, let go to throw
-	&"grenade": [[KEY, KEY_X], [MOUSE, MOUSE_BUTTON_MIDDLE], [PAD_BUTTON, JOY_BUTTON_Y]],
+	# carrot grenade: hold to aim along its arc, let go to throw (LB on a pad;
+	# LB + RB together still calls your arsenal in)
+	&"grenade": [[KEY, KEY_X], [MOUSE, MOUSE_BUTTON_MIDDLE], [PAD_BUTTON, JOY_BUTTON_LEFT_SHOULDER]],
 	&"weapon_1": [[KEY, KEY_1]],
 	&"weapon_2": [[KEY, KEY_2]],
 	&"weapon_3": [[KEY, KEY_3]],
 	&"weapon_next": [[MOUSE, MOUSE_BUTTON_WHEEL_DOWN], [PAD_BUTTON, JOY_BUTTON_RIGHT_SHOULDER]],
-	&"weapon_prev": [[MOUSE, MOUSE_BUTTON_WHEEL_UP], [PAD_BUTTON, JOY_BUTTON_LEFT_SHOULDER]],
+	&"weapon_prev": [[MOUSE, MOUSE_BUTTON_WHEEL_UP], [PAD_BUTTON, JOY_BUTTON_Y]],
 	&"drop_weapon": [[KEY, KEY_G], [PAD_BUTTON, JOY_BUTTON_DPAD_LEFT]],
 	# melee: F / R3 swing the club, even with a gun out (it's stowed for the
 	# swing); fire with empty paws swings too, and so does B on a pad
@@ -77,7 +78,8 @@ const PAD_BUTTON_NAMES := {
 ## 8BitDo Ultimate, map L4 → L3 and R4 → R3 on the pad and L4 + R4 does it.
 const CHORDS := [[JOY_BUTTON_LEFT_STICK, JOY_BUTTON_RIGHT_STICK], [JOY_BUTTON_PADDLE1, JOY_BUTTON_PADDLE2]]
 const CHORD_SECONDS := 0.15
-## LB + RB together calls your arsenal in (each alone changes gun; the chord takes that back).
+## LB + RB together calls your arsenal in (alone, LB readies a grenade and RB
+## changes gun; the chord takes those back).
 const CALL_IN_CHORD := [JOY_BUTTON_LEFT_SHOULDER, JOY_BUTTON_RIGHT_SHOULDER]
 const PAD_AXIS_NAMES := {JOY_AXIS_TRIGGER_LEFT: "LT", JOY_AXIS_TRIGGER_RIGHT: "RT"}
 

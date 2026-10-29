@@ -143,7 +143,8 @@ and the final shot replayed from three angles. There's a
     about a Bun's waist high, the golden one bigger still);
   - big glowing pickups: green **lucky clover** bottles to heal and orange
     **acorn shields** for armor; you carry them (up to five clovers and three
-    shields, pictured above your gun slots with how many you hold) and use
+    shields, pictured above your gun slots with how many you hold, beside
+    your carrot grenades) and use
     them when you like;
   - critter cottages, stumps, log piles and stone walls for cover;
   - the shrinking **Briar**, in a different mood every match (see below),
@@ -170,7 +171,7 @@ and the final shot replayed from three angles. There's a
   stowed for the swing and comes straight back). Each swing winds up over the
   shoulder and whips down across the body, connecting the moment the club
   passes chest height, and hits whoever is in front of you. Bots brawl with bare paws and bash point-blank with a gun out.
-- **Carrot grenades**: stubby round carrots with a pin in them. Hold Y (X or
+- **Carrot grenades**: stubby round carrots with a pin in them. Hold LB (X or
   the middle mouse button) and the arc shows where it will come down, with a
   ring as wide as the blast; let go and the left paw winds back over the
   shoulder and lobs it, up to about 25 m. It bounces, thuds off critters,
@@ -757,10 +758,10 @@ python3 tools/compress_textures.py && godot --headless --import
 | Crouch → crawl → stand (each press) | Ctrl or C | B (with a gun out) |
 | Pick up / open (with a gun or crate in front of you), else reload | E / R | X |
 | Club swing (any time) | F, or LMB with empty paws | R3, or B / RT with empty paws |
-| Switch weapon / drop it | 1-3, mouse wheel / G | LB / RB / D-pad ← |
+| Switch weapon / drop it | 1-3, mouse wheel / G | Y / RB / D-pad ← |
 | Heal (lucky clover) | H | D-pad ↓ |
 | Put on an Acorn Shield you carry | J | D-pad → (tap) |
-| Carrot grenade: hold to aim its arc, let go to throw | X or middle mouse (hold) | Y (hold) |
+| Carrot grenade: hold to aim its arc, let go to throw | X or middle mouse (hold) | LB (hold) |
 | First / third person | V | Back, or L3 + R3 together |
 | Swap shoulder | Q | D-pad → (hold) |
 | Map | M (hold) | D-pad ↑ |

@@ -300,13 +300,19 @@ func _on_preview_input(event: InputEvent) -> void:
 		accept_event()
 
 
+## LB on a pad (it throws grenades in a match, so it isn't weapon_prev).
+static func _left_shoulder(event: InputEvent) -> bool:
+	return event is InputEventJoypadButton and event.pressed and (event as InputEventJoypadButton).button_index == JOY_BUTTON_LEFT_SHOULDER
+
+
 ## D-pad, arrow keys, WASD and the shoulder buttons step through critters
 ## (sideways) and skins (up / down); A, Space or Enter drops in. The left
 ## stick is ignored: it skipped past choices.
 func _unhandled_input(event: InputEvent) -> void:
 	if _done or event is InputEventJoypadMotion:
 		return
-	if event.is_action_pressed(&"ui_left") or event.is_action_pressed(&"move_left") or event.is_action_pressed(&"weapon_prev"):
+	if event.is_action_pressed(&"ui_left") or event.is_action_pressed(&"move_left") or _left_shoulder(event) \
+			or (event.is_action_pressed(&"weapon_prev") and not event is InputEventJoypadButton):
 		_cycle(-1)
 	elif event.is_action_pressed(&"ui_right") or event.is_action_pressed(&"move_right") or event.is_action_pressed(&"weapon_next"):
 		_cycle(1)

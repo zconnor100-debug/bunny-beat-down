@@ -26,7 +26,7 @@ var _weapon_name: Label
 var _slots: Array[PanelContainer] = []
 var _clovers: ItemBadge
 var _shields: ItemBadge
-var _grenade_label: Label
+var _grenades: ItemBadge
 var _arsenal_label: Label          ## your arsenal: beat-downs to go, or ready to call in (Arsenal)
 var _rewind_label: Label
 var _news_frame := -1          # the frame a rival's news (REVENGE!...) was shown
@@ -155,11 +155,14 @@ func setup(player_: Critter, rig_: CameraRig, mm: MatchManager) -> void:
 	_ammo_label = UITheme.label("", 46, UITheme.CREAM, true)
 	_ammo_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	br.add_child(_ammo_label)
-	# what you carry to use, above the gun slots: Acorn Shields and lucky clovers
+	# what you carry to use, above the gun slots: carrot grenades, Acorn Shields
+	# and lucky clovers
 	var items := HBoxContainer.new()
 	items.alignment = BoxContainer.ALIGNMENT_END
 	items.add_theme_constant_override("separation", 10)
 	br.add_child(items)
+	_grenades = ItemBadge.new("grenade")
+	items.add_child(_grenades)
 	_shields = ItemBadge.new("shield")
 	items.add_child(_shields)
 	_clovers = ItemBadge.new("clover")
@@ -179,12 +182,7 @@ func setup(player_: Critter, rig_: CameraRig, mm: MatchManager) -> void:
 		slots.add_child(pc)
 		_slots.append(pc)
 
-	# bottom-left: grenades and your arsenal (bars are drawn by the overlay)
-	_grenade_label = UITheme.label("", 22, UITheme.CARROT_LIGHT)
-	_grenade_label.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT)
-	_grenade_label.offset_left = 30
-	_grenade_label.offset_top = -218
-	_root.add_child(_grenade_label)
+	# bottom-left: your arsenal (bars are drawn by the overlay)
 	_arsenal_label = UITheme.label("", 22, UITheme.CREAM)
 	_arsenal_label.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT)
 	_arsenal_label.offset_left = 30
@@ -417,8 +415,7 @@ func _process(delta: float) -> void:
 		_slots[i].add_theme_stylebox_override("panel", sb)
 	_clovers.show_count(player.inventory.clovers, Inventory.MAX_CLOVERS, GameInput.prompt(&"heal"))
 	_shields.show_count(player.inventory.shields, Inventory.MAX_SHIELDS, GameInput.prompt(&"shield"))
-	_grenade_label.text = "Carrot grenades: %d   hold [%s] to aim, let go to throw" % [player.inventory.grenades, GameInput.prompt(&"grenade")] \
-		if player.inventory.grenades > 0 else ""
+	_grenades.show_count(player.inventory.grenades, Inventory.MAX_GRENADES, GameInput.prompt(&"grenade"))
 	_arsenal_label.text = ""
 	if match_manager and match_manager.phase == MatchManager.Phase.PLAYING and player.alive and not match_manager.called_in \
 			and not Arsenal.unlocked().is_empty():

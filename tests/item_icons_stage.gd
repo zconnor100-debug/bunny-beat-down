@@ -1,7 +1,8 @@
 extends Node
 ## Stage for tests/capture_item_icons.gd: the HUD's item pictures (ItemBadge),
-## a lucky clover bottle (in its green glow) and an Acorn Shield, each the
-## pickup's own model on a clear background, saved to assets/ui/item_<name>.png.
+## a lucky clover bottle (in its green glow), an Acorn Shield and a carrot
+## grenade, each the game's own model on a clear background, saved to
+## assets/ui/item_<name>.png.
 
 const SIZE := 160
 const OUT := "res://assets/ui/"
@@ -17,6 +18,7 @@ func _ready() -> void:
 		(gi as GeometryInstance3D).material_overlay = glow
 	await _render(clover, "item_clover.png")
 	await _render(AcornShield.make(), "item_shield.png")
+	await _render(Grenade.make_model(), "item_grenade.png")
 	get_tree().quit()
 
 

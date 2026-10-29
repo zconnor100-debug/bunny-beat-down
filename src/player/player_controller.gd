@@ -39,7 +39,7 @@ var _sprint_latch := false         # pad: L3 clicks sprint on until you stop mov
 var _latch_before := false         # (undone if that click was half of an L3 + R3 chord)
 var _pad_pressed_at := {}          # button -> msec of its last press (for chords)
 var _pending_melee := -1.0         # seconds until a pad R3 swing (it may yet be a chord)
-var _slot_before := -1             # the gun before a pad LB / RB (put back if it was half of LB + RB)
+var _slot_before := -1             # the gun before a pad RB (put back if it was half of LB + RB)
 var assist_target: Critter = null  ## who the aim assist is helping with (HUD / tests)
 var readying_grenade := false      ## the grenade button's held: the arc shows, letting go throws
 var _arc: ThrowArc
@@ -229,8 +229,8 @@ func _chord(button: JoyButton) -> bool:
 	return false
 
 
-## True when `button` completes LB + RB (GameInput.CALL_IN_CHORD); the gun
-## change its first half made is put back.
+## True when `button` completes LB + RB (GameInput.CALL_IN_CHORD); what its
+## first half started (RB's gun change, LB's grenade) is put back.
 func _call_in_chord(button: JoyButton) -> bool:
 	if not button in GameInput.CALL_IN_CHORD:
 		return false
@@ -241,6 +241,7 @@ func _call_in_chord(button: JoyButton) -> bool:
 		_pad_pressed_at.erase(button)
 		if _slot_before >= 0:
 			critter.switch_to(_slot_before)
+		_put_grenade_away()
 		return true
 	_slot_before = critter.current_slot
 	return false

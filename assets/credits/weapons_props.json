@@ -948,16 +948,17 @@
     ]
   },
   {
-    "asset": "HUD item pictures (lucky clover, Acorn Shield)",
+    "asset": "HUD item pictures (lucky clover, Acorn Shield, carrot grenade)",
     "author": "Bunny Beat Down project",
     "author_url": "",
     "license": "MIT (project)",
     "license_url": "",
     "source_url": "tests/item_icons_stage.gd",
-    "changes": "Rendered in the game from its own pickup models (the Pickup Health flask in its clover glow, and the code-built Acorn Shield); textures those models sample are credited with them.",
+    "changes": "Rendered in the game from its own pickup models (the Pickup Health flask in its clover glow, the code-built Acorn Shield, and the carrot grenade); textures those models sample are credited with them.",
     "used_for": "The HUD's item badges above the gun slots",
     "files": [
       "assets/ui/item_clover.png",
+      "assets/ui/item_grenade.png",
       "assets/ui/item_shield.png"
     ]
   }
