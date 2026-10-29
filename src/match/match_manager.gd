@@ -59,6 +59,12 @@ var revenges := 0                    ## rivals the player beat down this match (
 var _taunted: Dictionary = {}       # "name|event" -> true (spot taunts once a match)
 var _supply_t := 0.0
 const SUPPLY_INTERVAL := 75.0
+## Your call-in's flare (flare_lit): how far off a bot can see its smoke, how
+## many come for the crate (the nearest, and their gangs), and how long they
+## hold round it.
+const FLARE_SEEN := 170.0
+const FLARE_RESPONDERS := 3
+const FLARE_CONTEST := 45.0
 ## Shrines, gangs, the nemesis: rolled on their own generator, so a seed's
 ## loot and lobby come out as they always did.
 var extra_rng := RandomNumberGenerator.new()
@@ -1049,7 +1055,10 @@ func claim_call_in() -> bool:
 
 
 ## The crate comes down on `at` (a flare), or beside you, with `gun` in it.
+## A flare's smoke brings the bots that see it (flare_lit).
 func send_call_in(gun: StringName = &"", at := Vector3.INF) -> void:
+	if at != Vector3.INF:
+		flare_lit(at)
 	var spot := at
 	if spot == Vector3.INF and player:
 		spot = _beside_player()
@@ -1066,6 +1075,48 @@ func send_call_in(gun: StringName = &"", at := Vector3.INF) -> void:
 	Events.supply_drop_incoming.emit(spot)
 	var data := WeaponDB.get_weapon(gun) if gun != &"" else null
 	Events.announce.emit("CALLED IN", "Your %s is on its way." % data.display_name if data else "Your arsenal is on its way. Take one.")
+
+
+## A flare's burning at `at`: the bots that can see its smoke column (within
+## FLARE_SEEN, the nearest FLARE_RESPONDERS, and the gangs they run with) come
+## for the crate and hold round it (AIBrain.contest), the first of them
+## calling it out. They can never take what's in it; they're there for you.
+func flare_lit(at: Vector3) -> Array[Critter]:
+	var seen := []
+	for c in alive_critters():
+		if c == player or (doppel and c == doppel):
+			continue
+		var brain := c.get_node_or_null("AIBrain") as AIBrain
+		var d := c.global_position.distance_to(at)
+		if brain == null or brain.process_mode == Node.PROCESS_MODE_DISABLED or d > FLARE_SEEN or not c.inventory.has_any_weapon():
+			continue
+		if _sees_smoke(c, at):
+			seen.append([d, c])
+	seen.sort_custom(func(a, b): return a[0] < b[0])
+	var coming: Array[Critter] = []
+	for s in seen:
+		if coming.size() >= FLARE_RESPONDERS:
+			break
+		var c: Critter = s[1]
+		var g := gang_of(c)
+		for m in (g.alive() if g else [c]):
+			if not m in coming and m != player and m.get_node_or_null("AIBrain"):
+				coming.append(m)
+	for c in coming:
+		(c.get_node("AIBrain") as AIBrain).contest(at, FLARE_CONTEST)
+	if not coming.is_empty():
+		_say(coming[0], Cast.pick_say(Cast.FLARE_LINES, "fl", rng))
+	return coming
+
+
+## Can `c` see a flare's smoke at `at` (somewhere up its column, over the trees)?
+func _sees_smoke(c: Critter, at: Vector3) -> bool:
+	var space := c.get_world_3d().direct_space_state
+	for up in [8.0, 18.0, 28.0]:
+		var q := PhysicsRayQueryParameters3D.create(c.get_eye_position(), at + Vector3.UP * up, Layers.SIGHT_MASK)
+		if not space.intersect_ray(q):
+			return true
+	return false
 
 
 ## Somewhere clear a few metres from you (straight ahead, then either side).

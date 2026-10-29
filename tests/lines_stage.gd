@@ -27,6 +27,8 @@ func _ready() -> void:
 	for i in Cast.DIRECTOR_LINES.size():
 		templates["d.%d" % i] = Cast.DIRECTOR_LINES[i]
 	templates["hunt"] = Cast.HUNT_LINE
+	for i in Cast.FLARE_LINES.size():
+		templates["fl.%d" % i] = Cast.FLARE_LINES[i]
 	for prefix in Cast.GANG_LINES:
 		var lines: Array = Cast.GANG_LINES[prefix]
 		for i in lines.size():

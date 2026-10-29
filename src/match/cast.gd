@@ -222,6 +222,8 @@ const TRUCE_YOU_LINES := ["Truce? Just till we get {you}.", "Everyone's losing t
 const BETRAY_LINES := ["Nothing personal, {them}.", "Sorry, partner. Only one of us wins.", "We were never friends, {them}."]
 const BETRAYED_LINES := ["{them}! I trusted you!", "You RAT, {them}!", "Of course. OF COURSE, {them}."]
 const SPLIT_LINES := ["I'm out!", "Every critter for themselves!", "Nope. Not dying for this gang."]
+## A rogue sees your call-in's flare burning (MatchManager.flare_lit).
+const FLARE_LINES := ["A flare! Somebody's getting a present!", "Red smoke! Free stuff!", "Ooh, a care package. Mine!"]
 const DONE_LINES := ["Pleasure doing business.", "That's that. Don't follow me.", "Truce over."]
 ## The gang lines by the key prefix MatchManager picks them with (Cast.pick_say).
 const GANG_LINES := {"gspot": GANG_SPOT_LINES, "grush": GANG_RUSH_LINES, "gr": TRUCE_LINES, "gy": TRUCE_YOU_LINES,

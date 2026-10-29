@@ -1,6 +1,6 @@
 extends SceneTree
 ## Renders screenshots for visual review and the README (needs a GPU window).
-##   godot --path . -s tests/capture_shots.gd -- <out_dir> [menu|game|all|scope|incoming|rewind|ui|callin]
+##   godot --path . -s tests/capture_shots.gd -- <out_dir> [menu|game|all|scope|incoming|rewind|ui|callin|callbots]
 ## Drives the real game: menu → loading → balloon → landing → a staged fight.
 
 var out_dir := "user://shots"
@@ -147,9 +147,11 @@ func _run() -> void:
 		await _wait(0.8)
 		await _snap("17_sniper_scope")
 		Input.action_release(&"aim")
-	if which in ["callin"]:
+	if which in ["callin", "callbots"]:
 		# calling your arsenal in: the pick of your guns, the flare in your paw,
-		# its arc, the flare burning, and the crate coming down on it
+		# its arc, the flare burning, and the crate coming down on it; with
+		# "callbots", three bots out beyond it see the smoke and come for it
+		var bots_too := which == "callbots"
 		change_scene_to_file("res://scenes/game.tscn")
 		var gc: Node = null
 		while gc == null or gc.match_manager == null:
@@ -183,9 +185,23 @@ func _run() -> void:
 		while mc.phase != playing and Time.get_ticks_msec() - t6 < 40000:
 			_unpause(gc)
 			await process_frame
+		mc.phase = playing   # (a slow GPU can leave stragglers in the air: start without them)
 		pl.max_health = 100000.0
 		pl.health = pl.max_health
 		pl.give_weapon(load("res://src/weapons/weapon_instance.gd").new(load("res://data/weapons/carrot_rifle.tres"), 2))
+		if bots_too:
+			var fwd: Vector3 = -Basis(Vector3.UP, gc.rig.yaw).z
+			var side: Vector3 = fwd.cross(Vector3.UP)
+			var k := 0
+			for c in mc.critters:
+				if k >= 3 or c == pl or not c.alive or c.state != 3 or not c.has_node("AIBrain"):
+					continue
+				var at: Vector3 = pl.global_position + fwd * 85.0 + side * (k - 1) * 22.0
+				at.y = gc.island.terrain.height_at(at.x, at.z) + 0.3
+				c.place_at(at, gc.rig.yaw + PI)
+				c.give_weapon(load("res://src/weapons/weapon_instance.gd").new(load("res://data/weapons/carrot_rifle.tres"), 1))
+				c.get_node("AIBrain").process_mode = Node.PROCESS_MODE_INHERIT
+				k += 1
 		var arsenal = load("res://src/match/arsenal.gd")
 		for id in [&"root_rumbler", &"carrot_lobber", &"big_root_50"]:
 			arsenal.unlock(id)
@@ -217,6 +233,13 @@ func _run() -> void:
 		Input.parse_input_event(up)
 		await _wait(0.4)
 		gc.rig.pitch = -0.12
+		if bots_too:
+			for shot in [["30_bots_see_it", 6.0], ["31_bots_coming", 7.0], ["32_bots_holding", 10.0]]:
+				await _wait(shot[1])
+				_unpause(gc)
+				await _snap(shot[0])
+			quit()
+			return
 		await _wait(2.2)
 		_unpause(gc)
 		await _snap("27_flare_burning")

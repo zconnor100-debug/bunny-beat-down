@@ -97,6 +97,13 @@ static var player_muffled := false
 static var vision_scale := 1.0
 var _hunt_pos := Vector3.INF      # the director sent us to flush the player out of hiding
 var _hunt_until := 0.0
+## A flare's crate we've come for (`contest`): where it is, the spot a few
+## metres off it we hold, and until when.
+var _contest_pos := Vector3.INF
+var _hold_pos := Vector3.INF
+var _contest_until := 0.0
+const CONTEST_NEAR := 7.0
+const CONTEST_FAR := 14.0
 
 var _think_t := randf() * THINK_INTERVAL
 var _last_seen_pos := Vector3.ZERO
@@ -423,6 +430,9 @@ func _choose_mode() -> void:
 	if me.health < _t("heal_at", 60.0) and me.inventory.clovers > 0:
 		mode = Mode.HEAL
 		return
+	if contesting() and armed and not _storm_unsafe(_hold_pos):
+		mode = Mode.ROAM   # (to the spot by the flare, and holding it: _roam)
+		return
 	if traits.get("hunts_you", false) and armed and _clock >= _next_sense and match_manager and match_manager.player \
 			and match_manager.player.alive and match_manager.player.state == Critter.State.GROUND and not settling():
 		# radical: it goes looking for you (roughly where you are)
@@ -598,7 +608,46 @@ func hunt(pos: Vector3, seconds := 30.0) -> void:
 	_hunt_until = _clock + seconds
 
 
+## A flare's burning by a crate (your call-in: MatchManager.flare_lit): come
+## for it. Head for a spot CONTEST_NEAR to CONTEST_FAR metres off it on our
+## side, and hold there, low, watching it, until `seconds` are up; whoever
+## comes for the crate gets a fight.
+func contest(pos: Vector3, seconds := 45.0) -> void:
+	var away := me.global_position - pos
+	away.y = 0.0
+	var dir := away.normalized() if away.length() > 1.0 else Vector3.FORWARD.rotated(Vector3.UP, randf() * TAU)
+	var hold := pos + dir.rotated(Vector3.UP, randf_range(-1.0, 1.0)) * randf_range(CONTEST_NEAR, CONTEST_FAR)
+	if me.is_inside_tree():
+		var on_mesh := NavigationServer3D.map_get_closest_point(me.get_world_3d().navigation_map, hold)
+		if on_mesh.distance_to(hold) < 6.0:
+			hold = on_mesh
+	_contest_pos = pos
+	_hold_pos = hold
+	_contest_until = _clock + seconds
+	_think_t = minf(_think_t, 0.05)
+
+
+## Coming for (or holding by) a flare's crate (see `contest`).
+func contesting() -> bool:
+	return _contest_pos != Vector3.INF and _clock < _contest_until
+
+
 func _roam() -> void:
+	if contesting():
+		var d := me.global_position.distance_to(_hold_pos)
+		if d > 2.0:
+			_set_dest(_hold_pos)
+			_follow_path(false)
+			me.want_sprint = d > 12.0
+		else:
+			# there: down low, watching the crate
+			me.move_input = Vector2.ZERO
+			me.want_crouch = true
+			me.look_yaw = lerp_angle(me.look_yaw, _yaw_to(_contest_pos), 0.15)
+			me.look_pitch = lerpf(me.look_pitch, 0.0, 0.1)
+			me.aim_point = me.get_eye_position() + me.look_direction() * 30.0
+		return
+	_contest_pos = Vector3.INF
 	if _hunt_pos != Vector3.INF and (_clock >= _hunt_until or me.global_position.distance_to(_hunt_pos) < 6.0):
 		_hunt_pos = Vector3.INF
 	if _dest == Vector3.INF or me.global_position.distance_to(_dest) < 4.0:

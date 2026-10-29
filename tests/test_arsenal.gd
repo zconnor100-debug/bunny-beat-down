@@ -331,6 +331,52 @@ func _arsenal_gun(n: Node) -> bool:
 	return (n as Pickup).is_weapon() and WeaponDB.is_arsenal(((n as Pickup).spec.weapon as WeaponInstance).data)
 
 
+## Your flare's smoke brings the bots that can see it: the nearest few (and
+## the gangs they run with) come for the crate and hold round it, one of them
+## calling it out; one too far off to see it, or with nothing to fight with,
+## stays out of it.
+func test_a_flare_brings_them_running() -> void:
+	make_arena(500.0)
+	var mm := MatchManager.new()
+	add_child(mm)
+	mm.world_root = self
+	var you := spawn_critter(TEST_DEF, Vector3(200, 0.1, 200))   # (well out of their sight)
+	you.is_player = true
+	mm.player = you
+	mm.critters.append(you)
+	var at := Vector3(0, 0, -20)
+	# near and armed, near and armed, far and armed (but a near one's gang
+	# mate), far and armed, near with bare paws
+	var spots := [Vector3(40, 0.1, -60), Vector3(-30, 0.1, -50), Vector3(-220, 0.1, 0), Vector3(0, 0.1, 210), Vector3(25, 0.1, -10)]
+	var bots: Array[Critter] = []
+	for i in spots.size():
+		var c := spawn_critter(TEST_DEF, spots[i], 0.0)
+		c.display_name = Cast.names()[i]
+		if i < 4:
+			c.give_weapon(WeaponInstance.new(WeaponDB.get_weapon(&"carrot_rifle")))
+		var b := AIBrain.new()
+		b.name = "AIBrain"
+		b.match_manager = mm
+		b.skill = 0.8
+		c.add_child(b)
+		b.set_physics_process(false)   # (only the ones that come move: this arena has no map to roam)
+		mm.critters.append(c)
+		bots.append(c)
+	mm.make_gang([bots[0], bots[2]])
+	await wait_physics(3)
+	var coming := mm.flare_lit(at)
+	check(bots[0] in coming and bots[1] in coming, "the two nearby come for it")
+	check(bots[2] in coming, "and the gang mate of one of them, from across the map")
+	check(not bots[3] in coming and not bots[4] in coming, "too far off to see it, or nothing to fight with: they stay out of it")
+	check(coming.all(func(c): return (c.get_node("AIBrain") as AIBrain).contesting()), "each is on its way")
+	for c in coming:
+		c.get_node("AIBrain").set_physics_process(true)
+	await wait_physics(int(Engine.physics_ticks_per_second * 9.0))
+	for c in [bots[0], bots[1]]:
+		var d := Vector2(c.global_position.x - at.x, c.global_position.z - at.z).length()
+		check(d < AIBrain.CONTEST_FAR + 3.0, "%s holds by the crate (%.1f m off)" % [c.display_name, d])
+
+
 ## A pad button pressed (and let go `hold` seconds later).
 func _press(button: JoyButton, hold := 0.05) -> void:
 	var e := InputEventJoypadButton.new()

@@ -97,7 +97,10 @@ and the final shot replayed from three angles. There's a
   along its arc like a carrot grenade and let go to throw it: it lands
   burning under a tall column of red smoke (everyone can see where), and a
   moment later a crate with that gun in it comes down right on it, for you
-  alone.
+  alone. The bots that see the smoke (the nearest three, and the gangs they
+  run with) come for it, one of them calling it out ("Red smoke! Free
+  stuff!"), and hold low round the crate on their side of it: they can never
+  take what's in it, but they'll be waiting for you.
 
   Carrots fly fast enough that you barely lead a running critter at the
   range each gun is made for: 260 m/s for shotgun pellets up to 480 for the
