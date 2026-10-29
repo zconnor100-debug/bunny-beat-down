@@ -147,6 +147,8 @@ func setup(player_: Critter, rig_: CameraRig, mm: MatchManager) -> void:
 	br.offset_top = -280
 	br.offset_right = -28
 	br.offset_bottom = -24
+	br.grow_horizontal = Control.GROW_DIRECTION_BEGIN   # (wider than its box: it grows left, not off the screen)
+	br.grow_vertical = Control.GROW_DIRECTION_BEGIN
 	br.alignment = BoxContainer.ALIGNMENT_END
 	_root.add_child(br)
 	_weapon_name = UITheme.label("", 24, UITheme.CREAM)
@@ -707,10 +709,10 @@ class HUDOverlay:
 				draw_colored_polygon(PackedVector2Array([tip, c + dir * 160.0 + dir.orthogonal() * 16.0, c + dir * 160.0 - dir.orthogonal() * 16.0]), col)
 		# vitals (in the HUD's column on a wide screen: hud_width)
 		var bx := 30.0 + hud._root.offset_left
-		var by := size.y - 110.0
-		var w := 360.0
-		_bar(Vector2(bx, by), w, 22.0, p.armor / p.max_armor, UITheme.ACORN, "SHIELD %d" % roundi(p.armor), font)
-		_bar(Vector2(bx, by + 34.0), w, 30.0, p.health / p.max_health, Color("5fc23a") if p.health > 35 else UITheme.BERRY, "HP %d" % roundi(p.health), font)
+		var by := size.y - 132.0
+		var w := 480.0
+		_bar(Vector2(bx, by), w, 30.0, p.armor / p.max_armor, UITheme.ACORN, "SHIELD %d" % roundi(p.armor), font)
+		_bar(Vector2(bx, by + 40.0), w, 42.0, p.health / p.max_health, Color("5fc23a") if p.health > 35 else UITheme.BERRY, "HP %d" % roundi(p.health), font)
 		# damage numbers
 		if hud.rig:
 			var cam := hud.rig.camera
@@ -763,5 +765,7 @@ class HUDOverlay:
 		draw_style_box(_box(Color(UITheme.INK, 0.7), int(h * 0.5)), Rect2(pos, Vector2(w, h)))
 		if frac > 0.001:
 			draw_style_box(_box(col, int(h * 0.5)), Rect2(pos + Vector2(3, 3), Vector2(maxf((w - 6) * clampf(frac, 0.0, 1.0), h - 6), h - 6)))
-		draw_string_outline(font, pos + Vector2(14, h * 0.5 + 7), text, HORIZONTAL_ALIGNMENT_LEFT, -1, 18, 5, Color(0, 0, 0, 0.8))
-		draw_string(font, pos + Vector2(14, h * 0.5 + 7), text, HORIZONTAL_ALIGNMENT_LEFT, -1, 18, UITheme.CREAM)
+		var fs := int(clampf(h * 0.6, 18.0, 26.0))   # (the text grows with the bar)
+		var at := pos + Vector2(16, h * 0.5 + fs * 0.38)
+		draw_string_outline(font, at, text, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, 5, Color(0, 0, 0, 0.8))
+		draw_string(font, at, text, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, UITheme.CREAM)
