@@ -105,6 +105,44 @@ func test_loot_is_drawn_big_to_spot_it() -> void:
 	check(not spilled.is_empty() and spilled.all(func(p): return p.global_position.y > chest.height), "the loot comes out over the top, not inside it")
 
 
+## Acorn Shields: you carry up to three (walk over them) and put one on with J
+## or a tap of D-pad →; held, D-pad → swaps the camera's shoulder instead.
+## With three in hand, the next one goes straight on.
+func test_carry_and_put_on_acorn_shields() -> void:
+	player.armor = 0.0
+	for i in 4:
+		Pickup.spawn(self, Pickup.armor_spec(50.0), player.global_position + Vector3(0.25 * i, 0.3, 0))
+	await wait_physics(40)
+	check(player.inventory.shields == Inventory.MAX_SHIELDS, "three carried (%d)" % player.inventory.shields)
+	check_near(player.armor, Inventory.SHIELD_ARMOR, 0.01, "the fourth went straight on")
+	player.armor = 0.0
+	await _press(&"shield")
+	check(player.inventory.shields == 2 and is_equal_approx(player.armor, Inventory.SHIELD_ARMOR), "J puts one on")
+	player.armor = 0.0
+	await _pad(JOY_BUTTON_DPAD_RIGHT, 0.05)
+	check(player.inventory.shields == 1 and is_equal_approx(player.armor, Inventory.SHIELD_ARMOR), "a tap of D-pad → puts one on")
+	var shoulder := rig.shoulder
+	player.armor = 0.0
+	await _pad(JOY_BUTTON_DPAD_RIGHT, PlayerController.SHOULDER_HOLD + 0.2)
+	check(rig.shoulder == -shoulder and player.inventory.shields == 1 and player.armor == 0.0, "held, it swaps the shoulder (and keeps the shield)")
+	player.armor = player.max_armor
+	await _press(&"shield")
+	check(player.inventory.shields == 1, "not wasted on full armor")
+
+
+func _pad(button: JoyButton, hold: float) -> void:
+	var e := InputEventJoypadButton.new()
+	e.button_index = button
+	e.pressed = true
+	Input.parse_input_event(e)
+	await wait_physics(maxi(1, roundi(hold * 60.0)))
+	var r := InputEventJoypadButton.new()
+	r.button_index = button
+	r.pressed = false
+	Input.parse_input_event(r)
+	await wait_frames(2)
+
+
 func test_treasure_chest_needs_a_held_unlock() -> void:
 	var chest := TreasureChest.new(false)
 	add_child(chest)

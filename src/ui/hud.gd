@@ -24,7 +24,8 @@ var _hint: Label
 var _ammo_label: Label
 var _weapon_name: Label
 var _slots: Array[PanelContainer] = []
-var _clover_label: Label
+var _clovers: ItemBadge
+var _shields: ItemBadge
 var _grenade_label: Label
 var _arsenal_label: Label          ## your arsenal: beat-downs to go, or ready to call in (Arsenal)
 var _rewind_label: Label
@@ -143,7 +144,7 @@ func setup(player_: Critter, rig_: CameraRig, mm: MatchManager) -> void:
 	var br := VBoxContainer.new()
 	br.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT)
 	br.offset_left = -470
-	br.offset_top = -190
+	br.offset_top = -280
 	br.offset_right = -28
 	br.offset_bottom = -24
 	br.alignment = BoxContainer.ALIGNMENT_END
@@ -154,6 +155,15 @@ func setup(player_: Critter, rig_: CameraRig, mm: MatchManager) -> void:
 	_ammo_label = UITheme.label("", 46, UITheme.CREAM, true)
 	_ammo_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	br.add_child(_ammo_label)
+	# what you carry to use, above the gun slots: Acorn Shields and lucky clovers
+	var items := HBoxContainer.new()
+	items.alignment = BoxContainer.ALIGNMENT_END
+	items.add_theme_constant_override("separation", 10)
+	br.add_child(items)
+	_shields = ItemBadge.new("shield")
+	items.add_child(_shields)
+	_clovers = ItemBadge.new("clover")
+	items.add_child(_clovers)
 	var slots := HBoxContainer.new()
 	slots.alignment = BoxContainer.ALIGNMENT_END
 	slots.add_theme_constant_override("separation", 10)
@@ -169,12 +179,7 @@ func setup(player_: Critter, rig_: CameraRig, mm: MatchManager) -> void:
 		slots.add_child(pc)
 		_slots.append(pc)
 
-	# bottom-left: clovers (bars are drawn by the overlay)
-	_clover_label = UITheme.label("", 22, UITheme.LEAF)
-	_clover_label.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT)
-	_clover_label.offset_left = 30
-	_clover_label.offset_top = -150
-	_root.add_child(_clover_label)
+	# bottom-left: grenades and your arsenal (bars are drawn by the overlay)
 	_grenade_label = UITheme.label("", 22, UITheme.CARROT_LIGHT)
 	_grenade_label.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT)
 	_grenade_label.offset_left = 30
@@ -410,7 +415,8 @@ func _process(delta: float) -> void:
 		l.text = "%d  %s" % [i + 1, sw.data.display_name.replace("Carrot ", "") if sw else "—"]
 		var sb := _slot_style(sw.rarity if sw else -1, i == player.current_slot)
 		_slots[i].add_theme_stylebox_override("panel", sb)
-	_clover_label.text = "Lucky clovers: %d   [%s] to heal" % [player.inventory.clovers, GameInput.prompt(&"heal")] if player.inventory.clovers > 0 else ""
+	_clovers.show_count(player.inventory.clovers, Inventory.MAX_CLOVERS, GameInput.prompt(&"heal"))
+	_shields.show_count(player.inventory.shields, Inventory.MAX_SHIELDS, GameInput.prompt(&"shield"))
 	_grenade_label.text = "Carrot grenades: %d   hold [%s] to aim, let go to throw" % [player.inventory.grenades, GameInput.prompt(&"grenade")] \
 		if player.inventory.grenades > 0 else ""
 	_arsenal_label.text = ""

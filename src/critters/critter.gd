@@ -838,6 +838,17 @@ func use_clover() -> bool:
 	return true
 
 
+## Put on an Acorn Shield you carry (yours alone: Inventory.shields).
+func use_shield() -> bool:
+	if inventory.shields <= 0 or armor >= max_armor or not alive:
+		return false
+	inventory.shields -= 1
+	inventory.changed.emit()
+	armor = minf(max_armor, armor + Inventory.SHIELD_ARMOR)
+	Audio.play_at(&"pickup_armor", global_position)
+	return true
+
+
 func _on_inventory_changed() -> void:
 	if current_weapon() == null:
 		visual.set_weapon(null)

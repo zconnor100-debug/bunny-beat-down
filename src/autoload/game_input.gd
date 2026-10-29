@@ -28,6 +28,9 @@ const BINDINGS := {
 	&"reload": [[KEY, KEY_R], [PAD_BUTTON, JOY_BUTTON_X]],
 	&"interact": [[KEY, KEY_E], [PAD_BUTTON, JOY_BUTTON_X]],
 	&"heal": [[KEY, KEY_H], [PAD_BUTTON, JOY_BUTTON_DPAD_DOWN]],
+	# put on an Acorn Shield you carry: J (beside H), or tap D-pad → (held, it
+	# swaps the camera's shoulder: PlayerController.SHOULDER_HOLD)
+	&"shield": [[KEY, KEY_J], [PAD_BUTTON, JOY_BUTTON_DPAD_RIGHT]],
 	# carrot grenade: hold to aim along its arc, let go to throw
 	&"grenade": [[KEY, KEY_X], [MOUSE, MOUSE_BUTTON_MIDDLE], [PAD_BUTTON, JOY_BUTTON_Y]],
 	&"weapon_1": [[KEY, KEY_1]],
@@ -41,7 +44,7 @@ const BINDINGS := {
 	&"melee": [[KEY, KEY_F], [PAD_BUTTON, JOY_BUTTON_RIGHT_STICK]],
 	# first person: V / Back, or both stick clicks (or back paddles) together
 	&"toggle_camera": [[KEY, KEY_V], [PAD_BUTTON, JOY_BUTTON_BACK]],
-	&"swap_shoulder": [[KEY, KEY_Q], [PAD_BUTTON, JOY_BUTTON_DPAD_RIGHT]],
+	&"swap_shoulder": [[KEY, KEY_Q]],   # (on a pad: hold D-pad →)
 	&"map": [[KEY, KEY_M], [PAD_BUTTON, JOY_BUTTON_DPAD_UP]],
 	# call your arsenal in (Arsenal): B, or LB + RB together on a pad (CALL_IN_CHORD)
 	&"call_in": [[KEY, KEY_B]],

@@ -216,6 +216,14 @@ func try_collect(critter: Critter) -> bool:
 			queue_free()
 			return true
 		"armor":
+			# yours to carry (up to three) and put on when you like; with your
+			# hands full it goes straight on, as it always does for the bots
+			if critter.is_player and critter.inventory.add_shields(1) == 0:
+				_note_taken(critter, spec)
+				Audio.play_at(&"pickup_armor", global_position, -3.0)
+				Events.item_picked_up.emit(critter, label())
+				queue_free()
+				return true
 			if critter.armor >= critter.max_armor:
 				return false
 			_note_taken(critter, spec)

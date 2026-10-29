@@ -142,7 +142,9 @@ and the final shot replayed from three angles. There's a
     shrines are all drawn big, so you spot them across a clearing (a chest
     about a Bun's waist high, the golden one bigger still);
   - big glowing pickups: green **lucky clover** bottles to heal and orange
-    **acorn shields** for armor;
+    **acorn shields** for armor; you carry them (up to five clovers and three
+    shields, pictured above your gun slots with how many you hold) and use
+    them when you like;
   - critter cottages, stumps, log piles and stone walls for cover;
   - the shrinking **Briar**, in a different mood every match (see below),
     and supply drops;
@@ -751,9 +753,10 @@ python3 tools/compress_textures.py && godot --headless --import
 | Club swing (any time) | F, or LMB with empty paws | R3, or B / RT with empty paws |
 | Switch weapon / drop it | 1-3, mouse wheel / G | LB / RB / D-pad ← |
 | Heal (lucky clover) | H | D-pad ↓ |
+| Put on an Acorn Shield you carry | J | D-pad → (tap) |
 | Carrot grenade: hold to aim its arc, let go to throw | X or middle mouse (hold) | Y (hold) |
 | First / third person | V | Back, or L3 + R3 together |
-| Swap shoulder | Q | D-pad → |
+| Swap shoulder | Q | D-pad → (hold) |
 | Map | M (hold) | D-pad ↑ |
 | Pause | Esc | Start |
 | Rewind 10 seconds (3 a match) | T | Start, then *Rewind* |

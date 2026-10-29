@@ -86,6 +86,8 @@ func _run() -> void:
 		Input.action_release(&"interact")
 		# stage a fight: give Bun a shotgun and bring the nearest bot close
 		p.give_weapon(WeaponInstance.new(WeaponDB.get_weapon(&"carrot_shotgun"), 2))
+		p.inventory.add_clovers(2)   # (something in the HUD's item badges)
+		p.inventory.add_shields(1)
 		var rig = game.rig
 		rig.yaw = p.rotation.y
 		await _wait(1.0)

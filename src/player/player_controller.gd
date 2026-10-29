@@ -23,6 +23,9 @@ const ASSIST_RADIUS := 2.0
 const ASSIST_RANGE := 140.0
 const ASSIST_SLOWDOWN := 0.35     ## look speed lost right on target
 const ASSIST_PULL := 2.2          ## 1/s: how fast the aim drifts onto the body
+## D-pad →: tapped, it puts on an Acorn Shield; held this long, it swaps the
+## camera's shoulder instead.
+const SHOULDER_HOLD := 0.4
 
 var critter: Critter
 var rig: CameraRig
@@ -40,6 +43,7 @@ var _slot_before := -1             # the gun before a pad LB / RB (put back if i
 var assist_target: Critter = null  ## who the aim assist is helping with (HUD / tests)
 var readying_grenade := false      ## the grenade button's held: the arc shows, letting go throws
 var _arc: ThrowArc
+var _shield_held := -1.0           # seconds D-pad → has been held (-1: it isn't)
 
 
 func _ready() -> void:
@@ -63,6 +67,15 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	elif event.is_action_pressed(&"swap_shoulder"):
 		rig.shoulder = -rig.shoulder
+	elif event is InputEventJoypadButton and event.is_action(&"shield"):
+		# a tap puts on a shield; held, the shoulder swaps (in _physics_process)
+		if event.is_pressed():
+			_shield_held = 0.0
+		elif _shield_held >= 0.0:
+			_shield_held = -1.0
+			if critter.alive:
+				critter.use_shield()
+		return
 	if event is InputEventJoypadButton and event.pressed and _chord(event.button_index):
 		rig.toggle_first_person()
 		return
@@ -87,6 +100,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		critter.cycle_weapon(-1)
 	elif event.is_action_pressed(&"heal"):
 		critter.use_clover()
+	elif event.is_action_pressed(&"shield"):
+		critter.use_shield()
 	elif event.is_action_pressed(&"call_in"):
 		_call_in()
 	elif event.is_action_pressed(&"grenade"):
@@ -119,6 +134,11 @@ func _unhandled_input(event: InputEvent) -> void:
 func _physics_process(delta: float) -> void:
 	if rig == null:
 		return
+	if _shield_held >= 0.0:
+		_shield_held += delta
+		if _shield_held >= SHOULDER_HOLD:
+			_shield_held = -1.0   # (held: the shoulder, not a shield)
+			rig.shoulder = -rig.shoulder
 	if not enabled or not critter.alive:
 		critter.move_input = Vector2.ZERO
 		critter.want_fire = false

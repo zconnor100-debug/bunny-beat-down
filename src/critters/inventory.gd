@@ -1,6 +1,7 @@
 class_name Inventory
 extends RefCounted
-## Three weapon slots, carrot reserves per ammo type, clover heals and carrot grenades.
+## Three weapon slots, carrot reserves per ammo type, clover heals, carrot
+## grenades and (yours alone) Acorn Shields to put on when you like.
 
 signal changed
 
@@ -20,6 +21,9 @@ const AMMO_PICKUP := {
 }
 const MAX_CLOVERS := 5
 const MAX_GRENADES := 4
+const MAX_SHIELDS := 3
+## Armor in one Acorn Shield.
+const SHIELD_ARMOR := 50.0
 
 var weapons: Array = [null, null, null]   # Array[WeaponInstance or null]
 var ammo := {
@@ -30,6 +34,7 @@ var ammo := {
 }
 var clovers := 0
 var grenades := 0
+var shields := 0
 ## Spare carrots carried, times this (Deep Pockets).
 var ammo_cap_scale := 1.0
 
@@ -96,6 +101,15 @@ func take_ammo(type: int, wanted: int) -> int:
 func add_clovers(n: int) -> int:
 	var fit := mini(n, MAX_CLOVERS - clovers)
 	clovers += fit
+	if fit > 0:
+		changed.emit()
+	return n - fit
+
+
+## Adds Acorn Shields to carry; returns how many did not fit.
+func add_shields(n: int) -> int:
+	var fit := mini(n, MAX_SHIELDS - shields)
+	shields += fit
 	if fit > 0:
 		changed.emit()
 	return n - fit

@@ -219,7 +219,7 @@ func _snapshot() -> Dictionary:
 			guns.append(null if w == null else w.pack())
 		critters[c] = {"xf": c.global_transform, "vel": c.velocity, "yaw": c.look_yaw, "pitch": c.look_pitch,
 			"hp": c.health, "armor": c.armor, "state": c.state, "slot": c.current_slot, "guns": guns,
-			"ammo": c.inventory.ammo.duplicate(), "clovers": c.inventory.clovers, "grenades": c.inventory.grenades,
+			"ammo": c.inventory.ammo.duplicate(), "clovers": c.inventory.clovers, "grenades": c.inventory.grenades, "shields": c.inventory.shields,
 			"second_wind": c.second_wind}
 	var loot := {}
 	for n in get_tree().get_nodes_in_group(&"pickups"):
@@ -294,6 +294,7 @@ func _restore_critter(c: Critter, r: Dictionary) -> void:
 	c.inventory.ammo = (r.ammo as Dictionary).duplicate()
 	c.inventory.clovers = r.clovers
 	c.inventory.grenades = r.get("grenades", 0)
+	c.inventory.shields = r.get("shields", 0)
 	c.reset_actions()
 	c.current_slot = -1
 	if r.slot >= 0 and c.inventory.weapons[r.slot] != null:
