@@ -39,7 +39,7 @@ func _ready() -> void:
 	h.add_child(list)
 	for a in KernelHunt.ACTS:
 		var id := String(a.id)
-		var mark := "✓  " if KernelHunt.done(id) else ("" if a.get("open", false) else "🔒  ")
+		var mark := "✓  " if KernelHunt.done(id) else ("" if KernelHunt.unlocked(id) else "🔒  ")
 		var b := UITheme.button("%s%s: %s" % [mark, a.name, a.title], func(): show_act(id))
 		b.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		b.set_meta(&"act", id)
@@ -55,8 +55,16 @@ func _ready() -> void:
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	v.add_child(row)
 	row.add_child(UITheme.button("Back", func(): closed.emit()))
+	# (on the act to play next: the first one open and not done yet)
+	for i in KernelHunt.ACTS.size():
+		var id := String(KernelHunt.ACTS[i].id)
+		if KernelHunt.unlocked(id) and not KernelHunt.done(id):
+			_picked = id
+			break
 	show_act(_picked)
-	_acts[0].grab_focus.call_deferred()
+	for b in _acts:
+		if b.get_meta(&"act") == _picked:
+			b.grab_focus.call_deferred()
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -83,8 +91,16 @@ func show_act(id: String) -> void:
 		_detail.add_child(_text("Ends with: %s." % a.get("ends", "?"), 22, Color(UITheme.CREAM, 0.75)))
 		_detail.add_child(_text("Sealed. This part of the hunt comes in a later update.", 22, UITheme.BERRY))
 		return
+	if not KernelHunt.unlocked(id):
+		var before := KernelHunt.act(String(a.get("after", "")))
+		_detail.add_child(_text("Ends with: %s." % a.get("ends", "?"), 22, Color(UITheme.CREAM, 0.75)))
+		_detail.add_child(_text("Locked. Finish %s: %s first." % [before.get("name", ""), before.get("title", "")], 22, UITheme.BERRY))
+		return
 	_detail.add_child(_text("Goal: %s" % a.get("goal", ""), 22, UITheme.LEAF))
-	_detail.add_child(_text("With you: the Barn Rangers (%s)." % ", ".join(KernelHunt.RANGERS), 19, Color(UITheme.CREAM, 0.8)))
+	var with_ := "With you: the Barn Rangers (%s)." % ", ".join(KernelHunt.RANGERS)
+	if a.has("ends"):
+		with_ += " Ends with: %s." % a.ends
+	_detail.add_child(_text(with_, 19, Color(UITheme.CREAM, 0.8)))
 	_detail.add_child(_text(KernelHunt.record_line(id), 20, Color(UITheme.CREAM, 0.8)))
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 18)

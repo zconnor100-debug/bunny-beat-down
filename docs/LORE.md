@@ -122,7 +122,7 @@ rogues against the **Touched**, critters the Acorn's light has got into (any
 species, gold-green light running through their fur in veins, silent, run by
 the bots' brain as an enemy team), through acts of missions that end in the
 boss fights already in the game. Its page is on the main menu. The prologue
-is playable; the acts after it are listed there, sealed.
+and Act I are playable; the acts after them are listed there, sealed.
 
 ### The prologue: *Days Since Brutus* (playable)
 
@@ -144,13 +144,51 @@ Brutus: 0** and the **Touched coat** (the Touched's own glowing veins, to
 wear); holding it with all seven rangers standing, **Every Ranger Home**. The
 Gazette prints a special edition: THE BARN HOLDS.
 
-In the code: `src/quest/` (KernelHunt, MissionDirector, MissionOutro,
-TallySign), the rangers' lines in `Cast.KERNEL_LINES`.
+### Act I: *The Carrot Patch* (playable)
+
+The tally says nought, and the Barn Rangers want to know what the Touched
+came out of the Patch for. Something there is glowing. Opens once the Barn's
+been held.
+
+1. **The glowing carrots.** Five of them, on a trail from the Barn out into
+   the Carrot Patch, the Acorn's gold-green shining out of them in veins. Only
+   one glows bright at a time, its light going up over the grass; pull it up
+   and the next lights. The Touched come up out of the dirt round each one.
+   They're warm, and they hum.
+2. **Burn the Patch.** Three rings in the Patch, its two rows and the bed
+   beside them. Stand in a ring, with none of the Touched in it, until it goes
+   up, while they rush you from the Boulder Bluff side. The rangers hold the
+   rings with you. When all three are alight the whole Patch burns, and the
+   ground starts to drum.
+3. **Wake him at Boulder Bluff.** Get close and Brutus comes down off the
+   Bluff for you. The Warren answers: eight rogues who saw the smoke come
+   gliding down to fight him with you (Cottontail Kate, Hops McGee, Acorn Al,
+   Ember, Rocco, Bog Boss, Timber and Cheeks McGee).
+
+When he falls, a gold-green light swells in his chest and he shrinks, smaller
+and smaller in his own dust, until what's lying there is a little grey bunny:
+**Little Bru**, the runt of the Carrot Patch warren, who ate the glowing
+carrots and the Kernel they'd grown round. Over him hangs what was inside
+him: **the first Starfall Kernel**, gold-green, humming, the first anyone in
+the Warren has seen. "It's... it's just a bunny." "Little Bru? Is that you?"
+He looks up at it, the way he used to look at the stars. "Look at it glow.
+That's a Kernel. The FIRST Kernel." "It's humming. Like it's calling
+something. Across the lake." (To be continued in Act II: *The Clockwork
+Decree*.)
+
+Beating him earns **The First Kernel** and the **Patch fire** beat-down burst
+(embers and a puff of smoke); doing it with every ranger standing, **Nobody
+Singed**. The Gazette's special edition: BRUTUS IS LITTLE BRU AGAIN.
+
+In the code: `src/quest/` (KernelHunt, MissionDirector and PatchMission,
+MissionCinematic, MissionOutro and PatchOutro, TallySign, GlowCarrot,
+BurnSpot, StarfallKernel), `src/fx/fire.gd`, the rangers' lines in
+`Cast.KERNEL_LINES`.
 
 | Act | Where | Missions (sketch) | Ends with |
 |---|---|---|---|
 | Prologue: *Days Since Brutus* (playable) | Wildwood Island | The tally on the Big Red Barn goes back to zero. Hold the Barn with the Barn Rangers while the Touched come out of the Carrot Patch. | (Brutus is heard, not seen) |
-| I: *The Carrot Patch* | Wildwood Island | Track the glowing carrots; burn the Patch; wake him at Boulder Bluff. | Brutus |
+| I: *The Carrot Patch* (playable) | Wildwood Island | Track the glowing carrots; burn the Patch; wake him at Boulder Bluff. | Brutus, who shrinks back into Little Bru: the first Kernel |
 | II: *The Clockwork Decree* | Toy Box Bash | Free the toys he's wound; break his winding stations; storm Block Castle. | The Tin Tyrant |
 | III: *Foam at the Falls* | the Hamster Cage | Down the tunnels under the bedding; dam Water Bottle Falls. | Nibbles |
 | Finale: *The Starfall* | all three, then somewhere new | The Kernels together. The Briar comes for them. | The Briar Heart (a fourth boss, not yet built) |

@@ -2,11 +2,13 @@ extends Node
 ## Stage for tests/capture_kernel.gd (loaded at runtime, so the autoloads
 ## exist): screenshots of the Kernel Hunt's prologue in the real game, the
 ## Warren Gazette's special edition it prints and the Kernel Hunt's page;
-## with "boss", a Boss Battle won on the island and its special edition.
+## with "boss", a Boss Battle won on the island and its special edition;
+## with "act1", Act I (The Carrot Patch) from the first carrot to the ending.
 
 var out_dir := "user://kernel"
 var boss := false
-var movie := false   ## (recorded with Movie Maker: straight to the ending, its frames marked: OUTRO_AT, END_AT)
+var act1 := false
+var movie := false   ## (recorded with Movie Maker: straight to the ending, its frames marked: OUTRO_AT, END_AT; with "act1", Act I's, and KILL_AT)
 
 
 func _ready() -> void:
@@ -15,6 +17,7 @@ func _ready() -> void:
 	if a.size() > 0:
 		out_dir = a[0]
 	boss = a.has("boss")
+	act1 = a.has("act1")
 	movie = a.has("movie")
 	DirAccess.make_dir_recursive_absolute(out_dir)
 	DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_DISABLED)
@@ -66,11 +69,16 @@ func _run() -> void:
 	settings.set_value(&"quality", 2, false)
 	settings.set_value(&"difficulty", Settings.Difficulty.NORMAL, false)
 	if movie:
-		await _ending_movie()
+		if act1:
+			await _act_one_movie()
+		else:
+			await _ending_movie()
 		get_tree().quit()
 		return
 	if boss:
 		await _boss_news()
+	elif act1:
+		await _act_one()
 	else:
 		await _prologue()
 	await _menu()
@@ -95,6 +103,59 @@ func _ending_movie() -> void:
 		if n < 2:
 			await _wait(0.6)
 			d._t = MissionDirector.BREATHER
+	while d._outro == null:
+		await get_tree().process_frame
+	print("OUTRO_AT %d" % Engine.get_frames_drawn())
+	while mm.phase != MatchManager.Phase.ENDED:
+		await get_tree().process_frame
+	await _wait(3.5)
+	print("END_AT %d" % Engine.get_frames_drawn())
+	KernelHunt.playing = ""
+
+
+## Act I hurried through (time sped up) to Brutus, a few seconds of the
+## fight, then him beaten and the ending as it plays, the end screen after.
+func _act_one_movie() -> void:
+	KernelHunt.playing = "carrot_patch"
+	var g: Node = await _game()
+	var mm: MatchManager = g.match_manager
+	while mm.phase != MatchManager.Phase.PLAYING:
+		await get_tree().process_frame
+	var d := mm.mission as PatchMission
+	var p := mm.player
+	p.max_health = 100000.0
+	p.health = p.max_health
+	Engine.time_scale = 6.0
+	await _wait(PatchMission.FIRST_LIT + 0.5)
+	for i in PatchMission.CARROTS:
+		var c: GlowCarrot = d.carrots[i]
+		_beat(mm)
+		var to := MissionDirector._flat(c.global_position - p.global_position).normalized()
+		p.place_at(d._ground_at(c.global_position - to * 1.4), atan2(-to.x, -to.z))
+		await _wait(0.2)
+		while not c.opened:
+			c.channel(p, 1.0 / 60.0)
+			await get_tree().physics_frame
+	for spot in d.spots:
+		p.place_at(spot.global_position + Vector3(1.5, 0.0, 0.0))
+		while not spot.lit:
+			_beat(mm)
+			await _wait(0.3)
+	_beat(mm)
+	var to_bluff := MissionDirector._flat(d.bluff_pos - d.patch_pos).normalized()
+	p.place_at(d._ground_at(d.bluff_pos - to_bluff * (PatchMission.WAKE_AT - 10.0)))
+	while d.step != PatchMission.Step.BOSS:
+		await get_tree().process_frame
+	Engine.time_scale = 1.0
+	while d.answered.is_empty():
+		await get_tree().process_frame
+	await _wait(6.0)
+	var to := mm.boss.get_chest_position() - p.get_eye_position()
+	_look_at(g, mm.boss.get_chest_position(), atan2(to.y, Vector2(to.x, to.z).length()) * 0.8)
+	print("FIGHT_AT %d" % Engine.get_frames_drawn())
+	await _wait(5.0)
+	print("KILL_AT %d" % Engine.get_frames_drawn())
+	mm.boss.take_damage(DamageInfo.make(1e9, DamageInfo.Kind.BULLET, p, &"carrot_sniper"))
 	while d._outro == null:
 		await get_tree().process_frame
 	print("OUTRO_AT %d" % Engine.get_frames_drawn())
@@ -269,6 +330,157 @@ func _boss_news() -> void:
 	settings.set_value(&"boss_intro", true, false)
 
 
+## Act I: the trail of glowing carrots, the Patch burning, Brutus woken at
+## Boulder Bluff, and the ending (Little Bru, and the first Kernel).
+func _act_one() -> void:
+	KernelHunt.playing = "carrot_patch"
+	var g: Node = await _game()
+	var mm: MatchManager = g.match_manager
+	while mm.phase != MatchManager.Phase.PLAYING:
+		await get_tree().process_frame
+	var d := mm.mission as PatchMission
+	var p := mm.player
+	p.max_health = 100000.0
+	p.health = p.max_health
+	await _wait(PatchMission.FIRST_LIT + 0.8)
+	_look_at(g, d.carrots[0].global_position + Vector3.UP * 8.0, 0.02)
+	await _wait(1.0)
+	await _snap("a01_start")
+	# the first carrot, lit, the Touched come up round it
+	var c0: GlowCarrot = d.carrots[0]
+	var cam := Camera3D.new()
+	get_tree().root.add_child(cam)
+	cam.fov = 50.0
+	var back := MissionDirector._flat(p.global_position - c0.global_position).normalized()
+	cam.global_position = c0.global_position + back * 6.5 + back.cross(Vector3.UP) * 2.0 + Vector3.UP * 2.4
+	cam.look_at(c0.global_position + Vector3.UP * 1.4, Vector3.UP)
+	cam.make_current()
+	g.hud.visible = false
+	await _wait(0.8)
+	await _snap("a02_carrot")
+	cam.clear_current(false)
+	g.rig.camera.make_current()
+	g.hud.visible = true
+	# pulling it up
+	_beat(mm)
+	p.place_at(c0.global_position + back * 1.4, atan2(back.x, back.z))
+	await _wait(0.4)
+	_look_at(g, c0.global_position + Vector3.UP * 0.6, -0.35)
+	for k in 40:
+		c0.channel(p, 1.0 / 60.0)
+		await get_tree().physics_frame
+	await _snap("a03_pulling")
+	while not c0.opened:
+		c0.channel(p, 1.0 / 60.0)
+		await get_tree().physics_frame
+	await _wait(0.5)
+	await _snap("a04_pulled")
+	# on down the trail: the next ones lit in turn
+	for i in range(1, PatchMission.CARROTS):
+		var c: GlowCarrot = d.carrots[i]
+		_beat(mm)
+		var to := MissionDirector._flat(c.global_position - p.global_position).normalized()
+		p.place_at(d._ground_at(c.global_position - to * 1.4), atan2(-to.x, -to.z))
+		await _wait(0.3)
+		if i == 2:
+			_look_at(g, d.carrots[3].global_position + Vector3.UP * 12.0, 0.05)
+			await _wait(0.5)
+			await _snap("a05_trail")
+		while not c.opened:
+			c.channel(p, 1.0 / 60.0)
+			await get_tree().physics_frame
+		await _wait(0.4)
+	# the rings: one catching, with you in it
+	_beat(mm)
+	var s0: BurnSpot = d.spots[0]
+	p.place_at(s0.global_position + Vector3(1.5, 0.0, 0.0))
+	await _wait(5.0)
+	_beat(mm)
+	cam.global_position = s0.global_position + Vector3(9.0, 7.0, 9.0)
+	cam.look_at(s0.global_position, Vector3.UP)
+	cam.make_current()
+	await _wait(0.3)
+	await _snap("a06_ring_catching")
+	g.rig.camera.make_current()
+	for s in d.spots:
+		p.place_at(s.global_position + Vector3(1.5, 0.0, 0.0))
+		while not s.lit:
+			_beat(mm)
+			await _wait(0.5)
+		if s == d.spots[0]:
+			await _wait(1.8)
+			cam.global_position = s.global_position + MissionDirector._flat(d.barn_pos - s.global_position).normalized() * 16.0 + Vector3.UP * 6.5
+			cam.look_at(s.global_position + Vector3.UP * 2.5, Vector3.UP)
+			cam.make_current()
+			g.hud.visible = false
+			await _wait(0.4)
+			await _snap("a07_fire")
+			g.rig.camera.make_current()
+			g.hud.visible = true
+	# the whole Patch going up: off to the Bluff
+	await _wait(9.0)
+	var away := MissionDirector._flat(d.barn_pos - d.patch_pos).normalized()
+	cam.global_position = d.patch_pos + away * 70.0 + Vector3.UP * 22.0
+	cam.look_at(d.patch_pos + Vector3.UP * 12.0, Vector3.UP)
+	cam.make_current()
+	g.hud.visible = false
+	await _wait(0.5)
+	await _snap("a08_patch_burns")
+	g.rig.camera.make_current()
+	g.hud.visible = true
+	_beat(mm)
+	var to_bluff := MissionDirector._flat(d.bluff_pos - d.patch_pos).normalized()
+	var off := MissionDirector._flat(d.bluff_pos - d.patch_pos).length() - PatchMission.WAKE_AT
+	p.place_at(d._ground_at(d.patch_pos + to_bluff * clampf(off * 0.6, 26.0, maxf(off - 5.0, 26.0))))
+	_look_at(g, d.bluff_pos + Vector3.UP * 10.0, 0.03)
+	await _wait(1.0)
+	await _snap("a09_to_the_bluff")
+	# he comes
+	p.place_at(d._ground_at(d.bluff_pos - to_bluff * (PatchMission.WAKE_AT - 10.0)))
+	while d.step != PatchMission.Step.BOSS:
+		await get_tree().process_frame
+	await _wait(3.4)
+	await _snap("a10_brutus")
+	while d.answered.is_empty():
+		await get_tree().process_frame
+	await _wait(2.5)
+	var r: Critter = d.answered[0]
+	if is_instance_valid(r):
+		_look_at(g, r.global_position, 0.35)
+	await _wait(0.3)
+	await _snap("a11_warren_answers")
+	await _wait(6.0)
+	_look_at(g, mm.boss.get_chest_position(), 0.1)
+	await _wait(0.5)
+	await _snap("a12_fight")
+	mm.boss.take_damage(DamageInfo.make(1e9, DamageInfo.Kind.BULLET, p, &"carrot_sniper"))
+	# the ending
+	while d._outro == null:
+		await get_tree().process_frame
+	var o := d._outro as PatchOutro
+	while o.t < PatchOutro.SHRINK_AT + 1.4:
+		await get_tree().process_frame
+	await _snap("a13_shrinking")
+	while o.t < PatchOutro.FACES_AT - 0.6:
+		await get_tree().process_frame
+	await _snap("a14_bru")
+	while o.t < PatchOutro.FACES_AT + 2.0:
+		await get_tree().process_frame
+	await _snap("a15_faces")
+	while o.t < PatchOutro.BRU_AT + 3.0:
+		await get_tree().process_frame
+	await _snap("a16_kernel")
+	while o.t < PatchOutro.CARD_AT + 1.4:
+		await get_tree().process_frame
+	await _snap("a17_card")
+	while mm.phase != MatchManager.Phase.ENDED:
+		await get_tree().process_frame
+	await _wait(1.5)
+	await _snap("a18_end")
+	cam.queue_free()
+	KernelHunt.playing = ""
+
+
 ## The menu: the Gazette's special edition, then the Kernel Hunt's page.
 func _menu() -> void:
 	get_tree().change_scene_to_file("res://scenes/main.tscn")
@@ -276,12 +488,12 @@ func _menu() -> void:
 	var menu: Node = get_tree().current_scene
 	menu._open_gazette()
 	await _wait(1.2)
-	await _snap(("b" if boss else "k") + "11_gazette")
+	await _snap(("b" if boss else ("a" if act1 else "k")) + "11_gazette")
 	menu._close_overlay()
 	if not boss:
 		menu._open_quest()
 		await _wait(1.0)
-		await _snap("k12_quest")
+		await _snap(("a" if act1 else "k") + "12_quest")
 
 
 func _beat(mm: MatchManager) -> void:

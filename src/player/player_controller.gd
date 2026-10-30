@@ -443,15 +443,17 @@ func _update_focus() -> void:
 	var best_score := -1.0
 	var eye := critter.get_eye_position()
 	var fwd := -rig.camera.global_basis.z
-	for group in [&"pickups", &"crates", &"shrines"]:
+	for group in [&"pickups", &"crates", &"shrines", &"glow_carrots"]:
 		for n in get_tree().get_nodes_in_group(group):
 			var n3 := n as Node3D
 			if n3 == null:
 				continue
 			if group == &"pickups" and not (n as Pickup).is_weapon():
 				continue
-			if (group == &"crates" or group == &"shrines") and (n as LootCrate).opened:
+			if group in [&"crates", &"shrines", &"glow_carrots"] and (n as LootCrate).opened:
 				continue
+			if n is GlowCarrot and not (n as GlowCarrot).lit:
+				continue   # (only the lit one: the rest wait their turn)
 			var to := n3.global_position + Vector3.UP * 0.3 - eye
 			var d := to.length()
 			if d > INTERACT_RANGE * critter.visual.rig.world_scale + 0.8 + ((n as LootCrate).reach if n is LootCrate else 0.0):
@@ -467,6 +469,8 @@ func _update_focus() -> void:
 		text = "[%s] Pick up %s" % [_interact_key(), (best as Pickup).label()]
 	elif best is AcornShrine:
 		text = "[Hold %s] Pray at the acorn shrine for a boon" % _interact_key()
+	elif best is GlowCarrot:
+		text = "[Hold %s] Pull up the glowing carrot" % _interact_key()
 	elif best is LootCrate:
 		var crate := best as LootCrate
 		var key := _interact_key()

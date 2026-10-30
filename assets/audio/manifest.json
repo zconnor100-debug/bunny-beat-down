@@ -243,6 +243,16 @@
   "defeat_sting": [
     "sfx/defeat_sting.ogg"
   ],
+  "fire_loop": [
+    "sfx/fire_loop.ogg"
+  ],
+  "fire_ignite": [
+    "sfx/fire_ignite_1.ogg",
+    "sfx/fire_ignite_2.ogg"
+  ],
+  "kernel_hum": [
+    "sfx/kernel_hum.ogg"
+  ],
   "music": {
     "menu": "music/menu_monkeys_spinning_monkeys.mp3",
     "match": [

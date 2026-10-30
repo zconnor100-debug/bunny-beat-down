@@ -113,14 +113,15 @@ func setup(player_: Critter, rig_: CameraRig, mm: MatchManager) -> void:
 	_storm_label.size.x = 600
 	_storm_label.position.x = -300
 	_root.add_child(_storm_label)
-	if mm and mm.mode == "boss" and mm.boss:
+	if mm and mm.mode in ["boss", "kernel"] and mm.boss:
 		_boss_bar = BossBar.new(mm.boss, mm)
+		_boss_bar.hide_waiting = mm.mode == "kernel"   # (a mission's boss: the mission's bar is up till it's here)
 		_boss_bar.set_anchors_and_offsets_preset(Control.PRESET_CENTER_TOP)
 		_boss_bar.offset_left = -BossBar.WIDTH * 0.5
 		_boss_bar.offset_right = BossBar.WIDTH * 0.5
 		_boss_bar.offset_top = 12
 		_root.add_child(_boss_bar)
-	elif mm and mm.mode == "kernel" and mm.mission:
+	if mm and mm.mode == "kernel" and mm.mission:
 		_mission_bar = MissionBar.new(mm.mission)
 		_mission_bar.set_anchors_and_offsets_preset(Control.PRESET_CENTER_TOP)
 		_mission_bar.offset_left = -MissionBar.WIDTH * 0.5
@@ -716,7 +717,7 @@ class HUDOverlay:
 			var bp := c + Vector2(-bw * 0.5, 70.0)
 			draw_style_box(_box(Color(UITheme.INK, 0.75), 9), Rect2(bp, Vector2(bw, 18)))
 			draw_style_box(_box(Rarity.COLORS[Rarity.Tier.GOLDEN], 7), Rect2(bp + Vector2(3, 3), Vector2((bw - 6) * crate.progress, 12)))
-			var label := "Unlocking %s… %.1f s" % [crate.display_name, (1.0 - crate.progress) * crate.open_time]
+			var label := "%s %s… %.1f s" % [crate.channel_verb, crate.display_name, (1.0 - crate.progress) * crate.open_time]
 			draw_string_outline(font, bp + Vector2(0, -8), label, HORIZONTAL_ALIGNMENT_CENTER, bw, 18, 5, Color(0, 0, 0, 0.8))
 			draw_string(font, bp + Vector2(0, -8), label, HORIZONTAL_ALIGNMENT_CENTER, bw, 18, UITheme.CREAM)
 		# hit marker
@@ -740,6 +741,9 @@ class HUDOverlay:
 				var dir := Vector2.from_angle(ang - PI / 2)
 				var tip := c + dir * 184.0
 				draw_colored_polygon(PackedVector2Array([tip, c + dir * 160.0 + dir.orthogonal() * 16.0, c + dir * 160.0 - dir.orthogonal() * 16.0]), col)
+		# where to go next (a Kernel Hunt mission's: the lit carrot, a ring still to catch, Boulder Bluff)
+		if hud.rig:
+			_draw_objectives(hud.rig.camera, p, font)
 		# vitals (in the HUD's column on a wide screen: hud_width)
 		var bx := 30.0 + hud._root.offset_left
 		var by := size.y - 132.0
@@ -793,6 +797,36 @@ class HUDOverlay:
 			for dpos in [Vector2(o, 0), Vector2(-o, 0), Vector2(0, o), Vector2(0, -o)]:
 				draw_circle(c + dpos, 2.2, ink)
 		draw_circle(c, 2.0, Color(1, 0.3, 0.1, 0.95))
+
+	## A gold-green diamond over each of the mission's objectives (group
+	## "objectives"), with how far it is; one that's off screen sits on the
+	## edge, toward it.
+	func _draw_objectives(cam: Camera3D, p: Critter, font: Font) -> void:
+		var c := size * 0.5
+		for n in hud.get_tree().get_nodes_in_group(&"objectives"):
+			var o := n as Node3D
+			if o == null or not o.is_inside_tree():
+				continue
+			var at := o.global_position + Vector3.UP * 2.4
+			var sp := Vector2.INF
+			if not cam.is_position_behind(at):
+				sp = cam.unproject_position(at)
+			if sp == Vector2.INF or not Rect2(Vector2.ZERO, size).grow(-60.0).has_point(sp):
+				var local := cam.global_basis.inverse() * (at - cam.global_position)
+				var dir := Vector2(local.x, -local.y)
+				if local.z > 0.0:
+					dir.y = absf(dir.y)   # (behind you: along the bottom edge, to the side it's on)
+				dir = dir.normalized() if dir.length() > 0.001 else Vector2.DOWN
+				var half := size * 0.5 - Vector2(70.0, 70.0)
+				sp = c + dir * minf(half.x / maxf(absf(dir.x), 0.001), half.y / maxf(absf(dir.y), 0.001))
+			var r := 13.0 + sin(Time.get_ticks_msec() * 0.006) * 2.0
+			var pts := PackedVector2Array([sp + Vector2(0, -r), sp + Vector2(r * 0.75, 0), sp + Vector2(0, r), sp + Vector2(-r * 0.75, 0)])
+			draw_colored_polygon(pts, Color(GlowCarrot.GLOW, 0.9))
+			pts.append(pts[0])
+			draw_polyline(pts, Color(0, 0, 0, 0.85), 2.5)
+			var m := "%d m" % roundi(p.global_position.distance_to(o.global_position))
+			draw_string_outline(font, sp + Vector2(-60, r + 22), m, HORIZONTAL_ALIGNMENT_CENTER, 120, 18, 5, Color(0, 0, 0, 0.8))
+			draw_string(font, sp + Vector2(-60, r + 22), m, HORIZONTAL_ALIGNMENT_CENTER, 120, 18, UITheme.CREAM)
 
 	func _bar(pos: Vector2, w: float, h: float, frac: float, col: Color, text: String, font: Font) -> void:
 		draw_style_box(_box(Color(UITheme.INK, 0.7), int(h * 0.5)), Rect2(pos, Vector2(w, h)))

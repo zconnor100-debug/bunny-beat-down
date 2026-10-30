@@ -629,7 +629,22 @@
     "p.zen.lose.2": "Well struck, {you}.",
     "p.zen.spot.0": "Hello, {you}. Let's begin.",
     "p.zen.spot.1": "The carrot finds its mark, {you}.",
-    "p.zen.spot.2": "Be still, {you}."
+    "p.zen.spot.2": "Be still, {you}.",
+    "pb.0": "It's... it's just a bunny.",
+    "pb.1": "Little Bru? Is that you?",
+    "pc.0": "There! Another one, glowing!",
+    "pc.1": "They're leading us into the Patch.",
+    "pd.0": "The ground's... drumming.",
+    "pd.1": "Something under Boulder Bluff is WAKING UP.",
+    "pf.0": "Burn it! Burn the whole Patch!",
+    "pk.0": "Look at it glow. That's a Kernel. The FIRST Kernel.",
+    "pk.1": "It's humming. Like it's calling something. Across the lake.",
+    "pl.0": "That row's going up!",
+    "pl.1": "Keep them off the fire!",
+    "pp.0": "It's warm... and it's HUMMING.",
+    "pp.1": "Pull them all. Every last one.",
+    "pt.0": "The tally says nought. Let's go and see what's growing in that Patch.",
+    "pw.0": "We saw the smoke! We're with you!"
   },
   "you": [
     "Bandit Bunny",

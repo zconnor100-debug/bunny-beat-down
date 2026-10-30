@@ -589,8 +589,65 @@ prologue's island seed, its rangers and waves; `note_result`, `done`,
   deferred after it (the skeletons), the physics engine and the rendering, and
   the frames over 50 ms noted with when they came.
 - **The rangers' lines** are `Cast.KERNEL_LINES` (`kt`, `kw`, `ks`, `ky`, `kb`,
-  `kg`, `kc`, `kd`, `kr`), voiced for every rogue like every other line
-  (`<rogue>_8.ogg`), said by the ranger nearest you and kept apart per kind.
+  `kg`, `kc`, `kd`, `kr`; Act I's `pt`, `pc`, `pp`, `pf`, `pl`, `pd`, `pw`,
+  `pb`, `pk`), voiced for every rogue like every other line, said by the
+  ranger nearest you and kept apart per kind.
+
+### Act I, The Carrot Patch
+
+`MissionDirector.make(id)` gives an act its own director: `PatchMission`
+extends the prologue's, keeping the rangers, the Touched, the tally (at 0
+now: `tally_days`) and the talk, and overriding `begin`, `_process`, the bar
+on the HUD (`bar_title`, `bar_fill`, `bar_status`, `bar_warn`, `bar_good`,
+`bar_shown`: `MissionBar` only draws what the director says) and the ending.
+It runs three parts (`step`), the rangers sticking by you (`AIBrain.escort`,
+as your squad does in a Team Battle; `AIBrain.release` ends a hold):
+
+- **TRACK**: five `GlowCarrot`s on a wandering trail from the Barn to the
+  Patch (`TRAIL`, on clear ground: `Island.clear_loot_spot`). A GlowCarrot is
+  a `LootCrate` like the acorn shrine: held interact pulls it (only yours,
+  only the lit one; `channel_verb` names it on the HUD), with
+  `kernel_glow.gdshader` over the carrot (an additive rim, veins crawling in
+  world space, a pulse) and a beam while it's lit. Each lights in turn, and
+  the Touched come up out of the dirt round it (`_spawn_touched` now takes a
+  post of their own to hold).
+- **BURN**: three `BurnSpot`s, on the Patch's two rows (`Island` keeps the
+  carrot_patch POI's `rows` now) and the bed square to them. A spot fills
+  while any of your side stands in its ring and none of the Touched does
+  (faster with more of you), stops with one of theirs in it, dies back with
+  nobody; full, it lights a `Fire`. The rangers `hold` posts inside the rings
+  still to go; the Touched rush them from the Bluff side every `RUSH_EVERY`.
+  All three alight, the whole Patch burns (a bigger `Fire`) and the ground
+  drums (`Events.explosion` shakes the camera).
+- **WAKE**: Boulder Bluff (a marker). Within `WAKE_AT` (or after
+  `WAKE_ANYWAY`), `MatchManager.release_boss` brings Brutus down onto open
+  ground between it and you, made at setup and parked like a Boss Battle's
+  (`_make_boss`, at `BOSS_HEALTH` of his health: there are fewer of you),
+  and the game plays `BossIntro` for him (`wants_boss`). The HUD's `BossBar`
+  (`hide_waiting`) takes over from the mission's; the rogues shout about him
+  (`_boss_banter` runs in a mission too). The Warren answers
+  (`KernelHunt.ANSWER`): eight rogues spawned in the air round you, gliding
+  down (`begin_freefall`, `AIBrain.drop_spot`).
+- **His end**: `MatchManager._on_boss_died` routes a mission's boss to
+  `MissionDirector.boss_down` (StatBook still counts him beaten) instead of
+  ending the match; after his fall, `PatchOutro`. Both endings are
+  `MissionCinematic`s (the camera, the HUD and name tags put away, the
+  letterbox, the beats on a clock, skipping, putting it all back): PatchOutro
+  shrinks him (his scale, around his feet) in his own dust while a light
+  swells in his chest (`get_chest_position` follows the bones as he lies and
+  shrinks), then puts Little Bru there (a `bun`, the runt: `body_scale` x0.8,
+  no helmet, his gaze steered with `aim_point`) under the `StarfallKernel`
+  (the acorn model, emissive, haloed, humming: `kernel_hum`), with the shots
+  framed by the way he fell (`forward`).
+
+Objectives (the lit carrot, rings still to go, the Bluff) are nodes in the
+group `objectives`: the minimap draws a gold-green diamond for each, and the
+HUD one on screen with its distance (pinned to the edge, pointing, when it's
+off screen). `Fire` is GPU particles on a disc of evenly spread emission
+points (a sunflower spiral), with procedural textures (`FXTextures.flame`,
+`smoke_puff`): flames all over and a taller core, an additive glow, smoke
+that climbs, embers, a flickering light and `fire_loop`. Its layers fade out
+within 3.5 m of the camera, so standing in it doesn't fill the screen.
 
 ## Tests
 
@@ -606,7 +663,10 @@ prologue's island seed, its rangers and waves; `note_result`, `done`,
   Briar's geometry, armor soak, gore-off, and swimming;
 * **credits test**: every shipped asset file must have a license-checked
   credit, and every credited file must exist;
-* a **full headless match** with 8 bots that must loot, fight and finish.
+* a **full headless match** with 8 bots that must loot, fight and finish;
+* **Kernel Hunt tests**: the quest line and its records, and the prologue and
+  Act I played through headless (waves held; carrots pulled, rings lit,
+  Brutus woken and beaten, the ending), and the ways each is lost.
 
 `tests/check_scripts.gd` compiles every script. CI
 (`.github/workflows/tests.yml`) runs all of it on each push.

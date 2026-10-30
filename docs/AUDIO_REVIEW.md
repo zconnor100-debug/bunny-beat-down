@@ -114,6 +114,9 @@ from `tools/audio/review_checklist.json` — edit that, not this.
 | `wind_loop` | Gusty high-altitude wind with a faint whistle; seamless loop. | Riding the picnic balloon. | [1](../assets/audio/sfx/wind_loop.ogg) |
 | `storm_loop` | Low rumble and swirling wind with a dense, dry thorny crackle and an ominous hum; no clinks or plops; seamless loop. | Comes from the nearest edge of the Briar storm wall. | [1](../assets/audio/sfx/storm_loop.ogg) |
 | `storm_damage_tick` | Dry, woody clock tick (tick-TOCK within ~25 ms) with a prickle of thorns; no tone, drone or ring (both takes are the same clock). | Each second you take Briar damage. | [1](../assets/audio/sfx/storm_damage_tick_1.ogg) [2](../assets/audio/sfx/storm_damage_tick_2.ogg) |
+| `fire_loop` | A fire burning in the open: a low breathing roar, dense fine crackle, woody pops and the odd sharp split, a soft hiss; seamless 8 s loop. | The Kernel Hunt's Act I: a ring of the Carrot Patch alight, and the whole Patch burning. | [1](../assets/audio/sfx/fire_loop.ogg) |
+| `fire_ignite` | Something catching all at once: a rising whoomph of air over a soft low thump, then a burst of crackle settling (~2 s). | A ring of the Carrot Patch going up (Act I). | [1](../assets/audio/sfx/fire_ignite_1.ogg) [2](../assets/audio/sfx/fire_ignite_2.ogg) |
+| `kernel_hum` | A warm, faintly unearthly chord that beats slowly and breathes, with a glassy shimmer coming and going on top; quiet; seamless 6 s loop. | The Starfall Kernel hanging over Little Bru at the end of Act I. | [1](../assets/audio/sfx/kernel_hum.ogg) |
 
 ## UI & match flow
 

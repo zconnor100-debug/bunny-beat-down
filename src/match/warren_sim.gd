@@ -218,6 +218,31 @@ static func mission_news(r: Dictionary) -> Array:
 	return out
 
 
+## Act I won (PatchMission): the Patch burned, Brutus is Little Bru again,
+## and the first Kernel is out.
+static func patch_news(r: Dictionary) -> Array:
+	var home: Array = r.get("rangers_home", [])
+	var all := KernelHunt.RANGERS.size()
+	var came := "Every ranger came home." if home.size() >= all else ("%d of the %d rangers came home." % [home.size(), all] if not home.is_empty() \
+		else "None of the rangers came home on their feet.")
+	var out := [
+		{"title": "BRUTUS IS LITTLE BRU AGAIN", "text": "The Barn Rangers tracked the glowing carrots into the Carrot Patch, burned it, and woke what slept under Boulder Bluff. You fought him with them. When the giant fell he shrank, and kept shrinking, and what was left in the dust was Little Bru, the runt of the Patch warren, who used to lie in the long grass counting stars. %s" % came},
+		{"title": "THE FIRST KERNEL", "text": "Out of him came a piece of the Starfall Acorn, gold-green and humming. Nobody in the Warren had ever seen one. Old Mother Clover won't say where it's kept now. \"It's listening,\" she says. \"Across the lake.\""},
+		{"title": "THE CARROT PATCH BURNS", "text": "Smoke over Wildwood all afternoon, and %d of the Touched beaten down. The Patch will grow back. The Warren hopes it grows back orange." % int(r.get("touched", 0))},
+	]
+	var answered: Array = r.get("answered", [])
+	if not answered.is_empty():
+		out.append({"title": "THE WARREN ANSWERED", "text": "%s saw the smoke and came running." % _names(answered)})
+	return out
+
+
+## "A, B and C".
+static func _names(names: Array) -> String:
+	if names.size() <= 1:
+		return "".join(names)
+	return ", ".join(names.slice(0, names.size() - 1)) + " and " + String(names[-1])
+
+
 static func _clock_text(seconds: float) -> String:
 	var s := roundi(seconds)
 	return "%d:%02d" % [s / 60, s % 60]

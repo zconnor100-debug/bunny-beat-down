@@ -24,8 +24,12 @@ func after_each() -> void:
 
 func test_the_quest_line() -> void:
 	check(KernelHunt.ACTS.size() == 5 and KernelHunt.ACTS[0].id == "prologue" and KernelHunt.ACTS[0].open, "five acts, the prologue open")
-	check(KernelHunt.ACTS.slice(1).all(func(a): return not a.get("open", false) and String(a.get("ends", "")) != ""),
-		"the rest sealed, each ending in a boss")
+	check(KernelHunt.ACTS.slice(1).all(func(a): return String(a.get("ends", "")) != ""), "the acts each end in a boss")
+	check(KernelHunt.ACTS[1].id == "carrot_patch" and KernelHunt.ACTS[1].open and KernelHunt.ACTS[1].get("after") == "prologue",
+		"Act I, The Carrot Patch, open after the prologue")
+	check(KernelHunt.ACTS.slice(2).all(func(a): return not a.get("open", false)), "the rest sealed")
+	check(KernelHunt.unlocked("prologue") and not KernelHunt.unlocked("carrot_patch") and not KernelHunt.unlocked("starfall"),
+		"Act I locked till the Barn's held")
 	check(KernelHunt.RANGERS.size() == 7 and KernelHunt.RANGERS.all(func(n): return Cast.names().has(n)), "seven rangers, all of the cast")
 	var counts := KernelHunt.WAVES.map(func(w): return int(w.count))
 	check(counts[0] < counts[1] and counts[1] < counts[2] and KernelHunt.WAVES.back().get("giant", false), "the waves grow; the last brings a giant")
@@ -37,6 +41,7 @@ func test_the_quest_line() -> void:
 	KernelHunt.note_result("prologue", {"won": true, "time": 372.0, "barn": 64, "rangers": 5, "touched": 27})
 	check(KernelHunt.done("prologue") and KernelHunt.record_line("prologue") == "Held  ·  fastest 6:12  ·  5 of 7 rangers home, at best",
 		KernelHunt.record_line("prologue"))
+	check(KernelHunt.unlocked("carrot_patch") and KernelHunt.record_line("carrot_patch") == "Not played yet.", "the Barn held: Act I open")
 	var fresh := Mastery.check()
 	check(fresh.any(func(m): return m.id == "days_since_brutus") and Workshop.owns("coat:touched") and Workshop.earned_only("coat:touched"),
 		"held: Days Since Brutus: 0, and the Touched coat")
@@ -48,7 +53,12 @@ func test_the_quest_line() -> void:
 	add_child(page)
 	await wait_frames(2)
 	var labels: Array = page.find_children("*", "Label", true, false).map(func(l): return l.text)
-	check(labels.has("Days Since Brutus") and page.find_child("Begin", true, false) != null, "its page: the prologue, to play")
+	check(labels.has("The Carrot Patch") and page.find_child("Begin", true, false) != null, "its page: Act I, to play next")
+	page.show_act("prologue")
+	await wait_frames(1)
+	labels = page.find_children("*", "Label", true, false).filter(func(l): return not l.is_queued_for_deletion()).map(func(l): return l.text)
+	var again := page.find_child("Begin", true, false) as Button
+	check(labels.has("Days Since Brutus") and again != null and again.text == "Play it again", "the prologue, to play again")
 	page.show_act("starfall")
 	await wait_frames(1)
 	labels = page.find_children("*", "Label", true, false).filter(func(l): return not l.is_queued_for_deletion()).map(func(l): return l.text)
@@ -181,11 +191,142 @@ func test_the_barn_can_fall() -> void:
 	await wait_frames(5)
 
 
-## The prologue, loaded and started (everyone at the Barn).
-func _start() -> Node:
+## Act I, "The Carrot Patch", played through: the glowing carrots pulled one
+## by one, the Patch's rings set alight, Brutus woken at Boulder Bluff (and
+## the Warren answering), Brutus beaten, and the ending: Little Bru, and the
+## first Kernel.
+func test_act_one_the_carrot_patch() -> void:
+	var said := []
+	var hear := func(_c, text): said.append(text)
+	Events.taunt.connect(hear)
+	var game: Node = await _start("carrot_patch")
+	var mm: MatchManager = game.match_manager
+	var d := mm.mission as PatchMission if mm else null
+	check(d != null and d.mission == "carrot_patch" and mm.island.seed_value == KernelHunt.SEED, "Act I, on the prologue's island")
+	if d == null:
+		Events.taunt.disconnect(hear)
+		game.queue_free()
+		return
+	mm.player.max_health = 1e6
+	mm.player.health = 1e6
+	check(d.tally != null and d.tally.count == 0, "the tally on the Barn's door: nought")
+	check(d.rangers.size() == 7 and d.rangers.all(func(r): return r.alive and r.team == 1 and (r.get_node("AIBrain") as AIBrain).escort == mm.player),
+		"the seven rangers, sticking by you")
+	check(mm.boss != null and mm.boss.state == Boss.State.WAITING and mm.boss.max_health < 30000.0, "Brutus, waiting (%.0f)" % (mm.boss.max_health if mm.boss else 0.0))
+	check(d.carrots.size() == PatchMission.CARROTS and not d.carrots[0].lit, "five glowing carrots, none lit while the act's card is up")
+	await _sim(func(): return d.carrots[0].lit, PatchMission.FIRST_LIT + 1.0)
+	check(d.carrots[0].lit and not d.carrots[1].lit, "then the first lit")
+	check(d.carrots[0].is_in_group(&"objectives") and not d.carrots[1].is_in_group(&"objectives"), "the lit one is where to go")
+	var guards := mm.alive_critters().filter(func(c): return c.team == 2)
+	check(guards.size() >= 2 and guards.all(func(c): return c.global_position.distance_to(d.carrots[0].global_position) < 20.0),
+		"the Touched come up round it (%d)" % guards.size())
+	var bars: Array = game.hud.find_children("*", "", true, false).filter(func(n): return n is MissionBar)
+	check(bars.size() == 1 and bars[0].visible and bars[0]._name.text == "THE GLOWING CARROTS" and String(bars[0].status()).begins_with("Carrot 1 of 5"),
+		"the carrots on the HUD: %s" % (bars[0].status() if bars.size() > 0 else ""))
+	Engine.time_scale = 4.0
+	# pull each in turn (only you, only the lit one)
+	for i in PatchMission.CARROTS:
+		var c: GlowCarrot = d.carrots[i]
+		_beat_wave(mm)
+		mm.player.place_at(c.global_position + Vector3(1.0, 0.0, 0.6))
+		await _sim(func(): return false, 0.3)
+		if i + 1 < PatchMission.CARROTS:
+			check(not d.carrots[i + 1].channel(mm.player, 0.5) and not c.channel(d.rangers[0], 0.5), "only you, and only the lit one")
+		var tries := 0
+		while not c.opened and tries < 400:
+			c.channel(mm.player, 1.0 / 60.0)
+			await get_tree().physics_frame
+			tries += 1
+		check(c.opened and d.pulled == i + 1, "carrot %d pulled (%d)" % [i + 1, d.pulled])
+		if i + 1 < PatchMission.CARROTS:
+			check(d.carrots[i + 1].lit, "the next lit")
+	check(d.step == PatchMission.Step.BURN and d.spots.size() == 3 and d.spots.all(func(s): return not s.lit), "then: burn the Patch, three rings")
+	# a ring with one of the Touched in it doesn't catch; with only you, it does
+	_beat_wave(mm)
+	var first: BurnSpot = d.spots[0]
+	mm.player.place_at(first.global_position + Vector3(1.0, 0.0, 0.0))
+	await _sim(func(): return first.progress > 0.2, 8.0)
+	var touched := d._spawn_touched(first.global_position + Vector3(-1.0, 0.0, 0.5), &"carrot_pistol", false, first.global_position, first.global_position)
+	touched.max_health = 1e9   # (the rangers would have it down before it's seen to hold the ring)
+	touched.health = 1e9
+	await _sim(func(): return false, 0.3)
+	var held := first.progress
+	var stopped := true
+	var seen := 0
+	for k in 12:
+		await _sim(func(): return false, 0.1)
+		if first.theirs >= 1:
+			seen += 1
+			stopped = stopped and absf(first.progress - held) < 0.001
+		held = first.progress
+	check(seen >= 3 and stopped, "one of the Touched in the ring: it stops (%d ticks seen)" % seen)
+	touched.take_damage(DamageInfo.make(1e10, DamageInfo.Kind.BULLET, mm.player, &"carrot_rifle"))
+	for s in d.spots:
+		mm.player.place_at(s.global_position + Vector3(1.0, 0.0, 0.0))
+		await _sim(func():
+			_beat_wave(mm)
+			return s.lit, 30.0)
+		check(s.lit and s.fire != null, "a ring alight")
+	check(d.step == PatchMission.Step.WAKE and d.patch_fire != null and bars[0]._name.text == "BOULDER BLUFF", "the whole Patch burns: off to the Bluff")
+	# get close to the Bluff and he comes
+	var from_bluff := MissionDirector._flat(d.patch_pos - d.bluff_pos).normalized()
+	mm.player.place_at(d._ground_at(d.bluff_pos + from_bluff * (PatchMission.WAKE_AT - 15.0)))
+	await _sim(func(): return d.step == PatchMission.Step.BOSS, 6.0)
+	check(d.step == PatchMission.Step.BOSS and mm.boss.state != Boss.State.WAITING and AIBrain.boss == mm.boss, "Brutus comes for you")
+	await _sim(func(): return not d.answered.is_empty(), 25.0)
+	check(d.answered.size() == KernelHunt.ANSWER.size() and d.answered.all(func(c): return c.team == 1), "the Warren answers (%d)" % d.answered.size())
+	await wait_frames(2)
+	var boss_bars: Array = game.hud.find_children("*", "", true, false).filter(func(n): return n is BossBar)
+	check(boss_bars.size() == 1 and boss_bars[0].visible and not bars[0].visible, "his bar, up instead of the mission's")
+	mm.boss.take_damage(DamageInfo.make(1e9, DamageInfo.Kind.BULLET, mm.player, &"carrot_sniper"))
+	check(not mm.boss.alive and mm.phase == MatchManager.Phase.PLAYING, "he's down, and it isn't over")
+	await _sim(func(): return d._outro != null, 10.0)
+	var o := d._outro as PatchOutro
+	check(o != null and o.playing and get_viewport().get_camera_3d() == o._cam and not game.hud.visible, "the ending plays, with its own camera")
+	await _sim(func(): return o != null and o.bru != null, 20.0)
+	check(o != null and o.bru != null and o.kernel != null and not mm.boss.visible, "he's Little Bru, with the Kernel over him")
+	await _sim(func(): return mm.phase == MatchManager.Phase.ENDED, 40.0)
+	check(mm.phase == MatchManager.Phase.ENDED and mm.winning_team == 1, "done")
+	check(KernelHunt.done("carrot_patch") and Mastery.has("the_first_kernel") and Workshop.owns("kill_fx:embers"), "on your record: The First Kernel, and the Patch fire")
+	var ed := WarrenSim.edition()
+	check(ed.get("extra", "") == "kernel" and String(ed.stories[0].title) == "BRUTUS IS LITTLE BRU AGAIN", "the Gazette's special edition")
+	await wait_frames(3)
+	var end_labels: Array = game._end.find_children("*", "Label", true, false).map(func(l): return l.text) if game._end else []
+	check(end_labels.has("ACT I COMPLETE!"), "the end screen: %s" % [end_labels.slice(0, 3)])
+	var heard := said.filter(func(t): return ["pt", "pc", "pp", "pf", "pl", "pd", "pw", "pb", "pk"].any(func(k): return (Cast.KERNEL_LINES[k] as Array).has(t)))
+	print("    they said: %s" % [heard])
+	check(heard.has(Cast.KERNEL_LINES.pt[0]) and heard.has(Cast.KERNEL_LINES.pb[1]) and heard.has(Cast.KERNEL_LINES.pk[0]),
+		"the rangers talk it through, from the tally to the Kernel")
+	Events.taunt.disconnect(hear)
+	game.queue_free()
+	await wait_frames(5)
+
+
+## In Act I, going down yourself ends it (nobody else can pull the carrots).
+func test_act_one_ends_when_you_go_down() -> void:
+	var game: Node = await _start("carrot_patch")
+	var mm: MatchManager = game.match_manager
+	var d := mm.mission as PatchMission if mm else null
+	if not check(d != null, "Act I"):
+		game.queue_free()
+		return
+	Engine.time_scale = 4.0
+	await _sim(func(): return d.carrots[0].lit, PatchMission.FIRST_LIT + 1.0)
+	var guard: Critter = mm.alive_critters().filter(func(c): return c.team == 2)[0]
+	mm.player.take_damage(DamageInfo.make(1e9, DamageInfo.Kind.BULLET, guard, &"carrot_rifle"))
+	await _sim(func(): return mm.phase == MatchManager.Phase.ENDED, 5.0)
+	check(mm.phase == MatchManager.Phase.ENDED and mm.winning_team == 2, "you down: it's over")
+	check(not KernelHunt.done("carrot_patch") and KernelHunt.played("carrot_patch") == 1, "played, not done")
+	check(String(d.result(false, d.report())[0]) == "THE TRAIL WENT COLD", "on the trail: %s" % d.result(false, d.report())[0])
+	game.queue_free()
+	await wait_frames(5)
+
+
+## A mission (the prologue, unless it's `id`), loaded and started (everyone at the Barn).
+func _start(id := "prologue") -> Node:
 	Settings.set_value(&"difficulty", Settings.Difficulty.NORMAL, false)
 	Settings.set_value(&"quality", 0, false)
-	KernelHunt.playing = "prologue"
+	KernelHunt.playing = id
 	var game: Node = load(GAME).instantiate()
 	get_tree().root.add_child(game)
 	var t := 0.0

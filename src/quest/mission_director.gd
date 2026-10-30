@@ -15,6 +15,11 @@ extends Node
 ## The Touched are critters the Starfall Acorn's light has got into: any
 ## species, gold-green veins glowing through their fur (the Touched coat),
 ## silent. They aren't the cast, so nobody keeps score of them (RivalBook).
+##
+## The acts after the prologue build on it (`make`: PatchMission, Act I): the
+## rangers, the Touched and the talk are here, and what an act does its own
+## way it overrides (`begin`, `_process`, the bar on the HUD: `bar_*`, its
+## ending: `play_outro`, its news: `news`).
 
 enum Stage { BRIEFING, WAVE, BREATHER, OUTRO, OVER }
 
@@ -55,12 +60,20 @@ var _said := {}                # prefix -> clock it was last said
 var _sighted := false
 var _giant_called := false
 var _lost_said := false
-var _outro: MissionOutro
+var tally_days := TALLY_DAYS  ## what the tally on the Barn's door says when it starts
+var _outro: MissionCinematic
 var _report := {}
 
 
 func _init() -> void:
 	name = "MissionDirector"
+
+
+## The director for mission `id` (KernelHunt.ACTS).
+static func make(id: String) -> MissionDirector:
+	var d: MissionDirector = PatchMission.new() if id == "carrot_patch" else MissionDirector.new()
+	d.mission = id if id != "" else "prologue"
+	return d
 
 
 ## Find the Barn, the Carrot Patch and Boulder Bluff on the island, and bring
@@ -95,19 +108,25 @@ func begin() -> void:
 		var brain := r.get_node_or_null("AIBrain") as AIBrain
 		if brain:
 			brain.hold(post, _posts[i % _posts.size()][1])
-	var p := match_manager.player
-	if p:
-		p.place_at(_ground_at(barn_pos + fwd * 26.0), atan2(-fwd.x, -fwd.z))   # (out in front of the rangers' line)
-		p.give_weapon(WeaponInstance.new(WeaponDB.get_weapon(&"carrot_rifle"), Rarity.Tier.PRIZE))
-		p.give_weapon(WeaponInstance.new(WeaponDB.get_weapon(&"carrot_shotgun"), Rarity.Tier.GARDEN))
-		for w in p.inventory.weapons:
-			if w:
-				p.inventory.add_ammo(w.data.ammo_type, Inventory.AMMO_PICKUP[w.data.ammo_type] * 3)
-		p.inventory.clovers = maxi(p.inventory.clovers, 2)
+	_arm_player(_ground_at(barn_pos + fwd * 26.0), atan2(-fwd.x, -fwd.z))   # (out in front of the rangers' line)
 	stage = Stage.BRIEFING
 	_t = 0.0
 	match_manager._set_phase(MatchManager.Phase.PLAYING)
 	get_tree().create_timer(6.0, false).timeout.connect(func(): _shout("kt", 0))
+
+
+## You, on your feet at `at`, with a rifle and a shotgun, ammo for both, and clovers.
+func _arm_player(at: Vector3, yaw: float) -> void:
+	var p := match_manager.player
+	if p == null:
+		return
+	p.place_at(at, yaw)
+	p.give_weapon(WeaponInstance.new(WeaponDB.get_weapon(&"carrot_rifle"), Rarity.Tier.PRIZE))
+	p.give_weapon(WeaponInstance.new(WeaponDB.get_weapon(&"carrot_shotgun"), Rarity.Tier.GARDEN))
+	for w in p.inventory.weapons:
+		if w:
+			p.inventory.add_ammo(w.data.ammo_type, Inventory.AMMO_PICKUP[w.data.ammo_type] * 3)
+	p.inventory.clovers = maxi(p.inventory.clovers, 2)
 
 
 func _process(delta: float) -> void:
@@ -246,6 +265,55 @@ func _drop_crate() -> void:
 	Events.supply_drop_incoming.emit(spot)
 
 
+# ---- the bar on the HUD (MissionBar) ------------------------------------------------------------------
+
+func bar_title() -> String:
+	return "THE BIG RED BARN"
+
+
+## How full the bar is (0..1): how much of the Barn is left.
+func bar_fill() -> float:
+	return barn / 100.0
+
+
+func bar_color() -> Color:
+	return MissionBar.FILL
+
+
+## What's going on: the first wave coming, a wave on (how many Touched are
+## left, and a warning while they're in the yard), the next one coming, held.
+func bar_status() -> String:
+	match stage:
+		Stage.BRIEFING:
+			return "The Touched come in %s" % MissionBar._mmss(next_wave_in())
+		Stage.WAVE:
+			var left := touched_left()
+			var line := "WAVE %d OF %d  ·  %d Touched left" % [wave, waves(), left]
+			if in_yard() > 0:
+				line = "THEY'RE IN THE YARD!  ·  %d Touched left" % left
+			return line
+		Stage.BREATHER:
+			return "Wave %d held  ·  the next in %s" % [wave, MissionBar._mmss(next_wave_in())]
+		Stage.OUTRO:
+			return "HELD!"
+	return "HELD!" if barn > 0.0 and match_manager.winning_team == 1 else "FALLEN"
+
+
+## The status flashes (the Touched in the yard).
+func bar_warn() -> bool:
+	return stage == Stage.WAVE and in_yard() > 0
+
+
+## The status is good news (a wave held).
+func bar_good() -> bool:
+	return stage in [Stage.OUTRO, Stage.BREATHER]
+
+
+## The bar's up (it gives way to a boss's).
+func bar_shown() -> bool:
+	return true
+
+
 # ---- the end -------------------------------------------------------------------------------------
 
 ## The game plays the ending with your camera, HUD and controls (game.gd:
@@ -260,11 +328,23 @@ func _play_outro() -> void:
 
 
 ## The ending (MissionOutro), then the mission's over: held.
-func play_outro(rig: CameraRig = null, hud: CanvasLayer = null, pc: PlayerController = null) -> MissionOutro:
+func play_outro(rig: CameraRig = null, hud: CanvasLayer = null, pc: PlayerController = null) -> MissionCinematic:
 	_outro = MissionOutro.new(self, rig, hud, pc)
 	_outro.finished.connect(func(): end(true))
 	add_child(_outro)
 	return _outro
+
+
+## A boss is part of it (PatchMission: Brutus, at the end): the game plays
+## its arrival (BossIntro) and the HUD shows its bar once it's here.
+func wants_boss() -> bool:
+	return false
+
+
+## The mission's boss is down (MatchManager routes it here, not to a Boss
+## Battle's ending).
+func boss_down(_by: Node) -> void:
+	pass
 
 
 ## How it went, for the profile (KernelHunt.note_result), the end screen and
@@ -287,8 +367,38 @@ func end(won: bool) -> void:
 	_report["won"] = won
 	KernelHunt.note_result(mission, _report)
 	if won:
-		WarrenSim.print_extra("kernel", WarrenSim.mission_news(_report))   # (the Gazette holds the front page)
+		WarrenSim.print_extra("kernel", news(_report))   # (the Gazette holds the front page)
 	match_manager.end_mission(won)
+
+
+## The Gazette's special edition, when it's won.
+func news(r: Dictionary) -> Array:
+	return WarrenSim.mission_news(r)
+
+
+## Why it's lost when everyone on your side is down.
+func lost_text() -> String:
+	return "There's nobody left to hold the Barn."
+
+
+## What the HUD says as it starts (after the act's card): [title, line].
+func opening() -> Array:
+	return ["THE TOUCHED ARE COMING", "Gold-green, out of the Carrot Patch. Every one in the Barn's yard wears it down."]
+
+
+## The end screen's line when you go down and the rest fight on.
+func you_down_text(who: String, left: int) -> String:
+	return "Taken out by a %s. The rangers hold the Barn without you: %d of them left." % [who, left]
+
+
+## The end screen: [title, line], from how it went (`report`).
+func result(won: bool, r: Dictionary) -> Array:
+	var act := KernelHunt.act(mission)
+	if won:
+		return ["THE BARN HOLDS!", "%s: complete. %d Touched beaten down, %d of %d rangers home, the Barn %d%% whole." % [act.get("title", ""),
+			int(r.get("touched", 0)), int(r.get("rangers", 0)), KernelHunt.RANGERS.size(), int(r.get("barn", 0))]]
+	return ["THE BARN HAS FALLEN", "The Touched took it on wave %d of %d. %d of them beaten down." % [int(r.get("wave", 1)),
+		KernelHunt.WAVES.size(), int(r.get("touched", 0))]]
 
 
 ## Everyone on your side is down: the Touched have the Barn.
@@ -296,7 +406,7 @@ func check_sides() -> void:
 	if stage == Stage.OVER or stage == Stage.OUTRO:
 		return
 	if match_manager.team_counts()[1] == 0:
-		Events.announce.emit("EVERYONE'S DOWN", "There's nobody left to hold the Barn.")
+		Events.announce.emit("EVERYONE'S DOWN", lost_text())
 		end(false)
 
 
@@ -347,8 +457,9 @@ func _restock(c: Critter) -> void:
 
 
 ## One of the Touched, at `at`, carrying `gun`, marching on the Barn (and
-## fighting anyone it sees on the way): a giant one, with `giant`.
-func _spawn_touched(at: Vector3, gun: StringName, is_giant := false) -> Critter:
+## fighting anyone it sees on the way): a giant one, with `giant`. With a
+## `post`, it holds that instead, watching `watch`.
+func _spawn_touched(at: Vector3, gun: StringName, is_giant := false, post := Vector3.INF, watch := Vector3.INF) -> Critter:
 	var species: String = "beaver" if is_giant else SPECIES[_rng.randi() % SPECIES.size()]
 	var def: CritterDef = load("res://data/critters/%s.tres" % species)
 	if is_giant:
@@ -382,7 +493,10 @@ func _spawn_touched(at: Vector3, gun: StringName, is_giant := false) -> Critter:
 	brain.hold_low = false
 	brain.hold_run = false   # (they march: the open ground is where to stop them)
 	c.add_child(brain)
-	brain.hold(_yard_spot(at), barn_pos)
+	if post != Vector3.INF:
+		brain.hold(post, watch if watch != Vector3.INF else post)
+	else:
+		brain.hold(_yard_spot(at), barn_pos)
 	spawned += 1
 	return c
 
@@ -410,7 +524,7 @@ func _plan_posts() -> void:
 
 ## The tally, on the Barn's open door at the Carrot Patch end.
 func _hang_tally() -> void:
-	tally = TallySign.new(TALLY_DAYS)
+	tally = TallySign.new(tally_days)
 	if barn_building == null:
 		match_manager.world_root.add_child(tally)
 		tally.global_position = barn_pos + Vector3.UP * 2.8

@@ -91,7 +91,10 @@
         "ambient_forest_loop": {"expect": "Gentle breeze and leaves, crickets, occasional birds; seamless 10 s loop.", "when": "Background bed for the whole match."},
         "wind_loop": {"expect": "Gusty high-altitude wind with a faint whistle; seamless loop.", "when": "Riding the picnic balloon."},
         "storm_loop": {"expect": "Low rumble and swirling wind with a dense, dry thorny crackle and an ominous hum; no clinks or plops; seamless loop.", "when": "Comes from the nearest edge of the Briar storm wall."},
-        "storm_damage_tick": {"expect": "Dry, woody clock tick (tick-TOCK within ~25 ms) with a prickle of thorns; no tone, drone or ring (both takes are the same clock).", "when": "Each second you take Briar damage."}
+        "storm_damage_tick": {"expect": "Dry, woody clock tick (tick-TOCK within ~25 ms) with a prickle of thorns; no tone, drone or ring (both takes are the same clock).", "when": "Each second you take Briar damage."},
+        "fire_loop": {"expect": "A fire burning in the open: a low breathing roar, dense fine crackle, woody pops and the odd sharp split, a soft hiss; seamless 8 s loop.", "when": "The Kernel Hunt's Act I: a ring of the Carrot Patch alight, and the whole Patch burning."},
+        "fire_ignite": {"expect": "Something catching all at once: a rising whoomph of air over a soft low thump, then a burst of crackle settling (~2 s).", "when": "A ring of the Carrot Patch going up (Act I)."},
+        "kernel_hum": {"expect": "A warm, faintly unearthly chord that beats slowly and breathes, with a glassy shimmer coming and going on top; quiet; seamless 6 s loop.", "when": "The Starfall Kernel hanging over Little Bru at the end of Act I."}
       }
     },
     {

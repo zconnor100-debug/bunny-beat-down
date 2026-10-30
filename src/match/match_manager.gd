@@ -250,8 +250,7 @@ func setup(world_root_: Node3D, island_: Island, opponents: int, difficulty: int
 		if Burrow.modifier_on("stampede"):
 			c.speed_scale = 1.2
 	if mode == "kernel":
-		mission = MissionDirector.new()
-		mission.mission = KernelHunt.playing if KernelHunt.playing != "" else "prologue"
+		mission = MissionDirector.make(KernelHunt.playing)
 		add_child(mission)
 		mission.setup(self)
 	elif mode != "royale":
@@ -1022,7 +1021,9 @@ func _process(delta: float) -> void:
 	AIBrain.kills_held = not bots_may_kill()
 	if storm and storm.shrinking != _was_shrinking:
 		_on_briar_moves(storm.shrinking)
-	if phase == Phase.PLAYING and mode != "kernel":   # (a mission runs itself: MissionDirector)
+	if phase == Phase.PLAYING and mode == "kernel":
+		_boss_banter()   # (a mission runs itself, MissionDirector; its boss, if it has one, gets the rogues talking)
+	if phase == Phase.PLAYING and mode != "kernel":
 		if mode == "royale":
 			_direct(delta)
 			_tend_gangs(delta)
@@ -1900,23 +1901,24 @@ func _check_boss_battle() -> void:
 	finished.emit(null, total)
 
 
-## The boss is down: everyone still standing wins.
+## The boss is down: everyone still standing wins. (A Kernel Hunt mission's
+## boss: the mission goes on to its ending, MissionDirector.boss_down.)
 func _on_boss_died(by: Node) -> void:
 	if phase == Phase.ENDED:
 		return
-	winning_team = 1
 	var who := "You" if by == player else (String(by.get("display_name")) if by and "display_name" in by else "Somebody")
 	Events.announce.emit("%s IS DOWN!" % boss.display_name.to_upper(),
 		"You landed the last blow!" if by == player else "%s landed the last blow." % who)
+	_boss_cheer()
+	if mode == "kernel":
+		if player:
+			StatBook.note_boss_beaten(boss.id, boss.fight_time(), player.alive, by == player, _difficulty == Settings.Difficulty.HARD)
+		if mission:
+			mission.boss_down(by)
+		return
+	winning_team = 1
 	for x in alive_critters():
 		x.placement = 1
-	# the rogues near you cheer (two at once: a crowd)
-	var first := _shouter(null, INF) if banter else null
-	var i := rng.randi() % 2
-	if first and _boss_shout("bd.%d" % i, first, true):
-		var second := _shouter(first, INF)
-		if second:
-			_boss_shout("bd.%d" % (1 - i), second, true)
 	if player:
 		var was_open := BossLore.chapters_open(boss.id)
 		StatBook.note_boss_beaten(boss.id, boss.fight_time(), player.alive, by == player, _difficulty == Settings.Difficulty.HARD)
@@ -1927,6 +1929,16 @@ func _on_boss_died(by: Node) -> void:
 		_check_mastery()   # (your side beat it, standing or not)
 	_set_phase(Phase.ENDED)
 	finished.emit(player if player and player.alive else null, 1)
+
+
+## The rogues near you cheer the boss going down (two at once: a crowd).
+func _boss_cheer() -> void:
+	var first := _shouter(null, INF) if banter else null
+	var i := rng.randi() % 2
+	if first and _boss_shout("bd.%d" % i, first, true):
+		var second := _shouter(first, INF)
+		if second:
+			_boss_shout("bd.%d" % (1 - i), second, true)
 
 
 ## The Warren Gazette holds the front page: a special edition about it

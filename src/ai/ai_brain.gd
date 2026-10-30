@@ -656,7 +656,7 @@ func contest(pos: Vector3, seconds := 45.0) -> void:
 	var dir := away.normalized() if away.length() > 1.0 else Vector3.FORWARD.rotated(Vector3.UP, randf() * TAU)
 	var hold := pos + dir.rotated(Vector3.UP, randf_range(-1.0, 1.0)) * randf_range(CONTEST_NEAR, CONTEST_FAR)
 	if me.is_inside_tree():
-		var on_mesh := NavigationServer3D.map_get_closest_point(me.get_world_3d().navigation_map, hold)
+		var on_mesh := _on_navmesh(hold)
 		if on_mesh.distance_to(hold) < 6.0:
 			hold = on_mesh
 	_contest_pos = pos
@@ -670,13 +670,27 @@ func contest(pos: Vector3, seconds := 45.0) -> void:
 ## Like a flare's crate (`contest`): it fights whoever it sees, then goes back.
 func hold(post: Vector3, watch: Vector3, seconds := 3600.0) -> void:
 	if me and me.is_inside_tree():
-		var on_mesh := NavigationServer3D.map_get_closest_point(me.get_world_3d().navigation_map, post)
+		var on_mesh := _on_navmesh(post)
 		if on_mesh.distance_to(post) < 6.0:
 			post = on_mesh
 	_contest_pos = watch
 	_hold_pos = post
 	_contest_until = _clock + seconds
 	_think_t = minf(_think_t, 0.05)
+
+
+## Done holding (or contesting): free to roam, or stick by its escort.
+func release() -> void:
+	_contest_pos = Vector3.INF
+	_contest_until = 0.0
+
+
+## The navmesh nearest `p` (the island's own lookup, from the tiles round it:
+## the map-wide one checks every polygon on the map).
+func _on_navmesh(p: Vector3) -> Vector3:
+	if Island.current and is_instance_valid(Island.current) and Island.current.is_inside_tree():
+		return Island.current.closest_nav_point(p)
+	return NavigationServer3D.map_get_closest_point(me.get_world_3d().navigation_map, p)
 
 
 ## Coming for (or holding by) a flare's crate (see `contest`).

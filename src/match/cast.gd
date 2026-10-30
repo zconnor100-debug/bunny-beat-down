@@ -253,7 +253,11 @@ const BOSS_LINES := {"bc": BOSS_COMING_LINES, "br": BOSS_RUN_LINES, "bw": BOSS_W
 ## mission starts; "kw": a wave coming; "ks": the first sight of the Touched;
 ## "ky": the Touched in the Barn's yard, "kb": the Barn nearly lost; "kg": a
 ## Touched giant; "kc": a wave beaten; "kd": one of yours down; "kr": the
-## roar from Boulder Bluff, said in order.
+## roar from Boulder Bluff, said in order. Act I (PatchMission): "pt", as it
+## starts; "pc": the next glowing carrot lit; "pp": one pulled; "pf": the
+## Patch to burn; "pl": a ring of it alight; "pd": the ground drumming; "pw":
+## the Warren come to help; and at the end (PatchOutro) "pb": Brutus become
+## Little Bru, and "pk": the Kernel.
 const KERNEL_LINES := {
 	"kt": ["Nine days without Brutus. Nobody jinx it."],
 	"kw": ["Here they come! Out of the Carrot Patch!", "More of them! Everyone back to the Barn!"],
@@ -264,6 +268,15 @@ const KERNEL_LINES := {
 	"kc": ["That's the last of them. For now.", "Patch up! There's more coming."],
 	"kd": ["They got one of us! Watch yourselves!"],
 	"kr": ["What... was THAT?", "That came from Boulder Bluff.", "Somebody fix the tally. It's zero again."],
+	"pt": ["The tally says nought. Let's go and see what's growing in that Patch."],
+	"pc": ["There! Another one, glowing!", "They're leading us into the Patch."],
+	"pp": ["It's warm... and it's HUMMING.", "Pull them all. Every last one."],
+	"pf": ["Burn it! Burn the whole Patch!"],
+	"pl": ["That row's going up!", "Keep them off the fire!"],
+	"pd": ["The ground's... drumming.", "Something under Boulder Bluff is WAKING UP."],
+	"pw": ["We saw the smoke! We're with you!"],
+	"pb": ["It's... it's just a bunny.", "Little Bru? Is that you?"],
+	"pk": ["Look at it glow. That's a Kernel. The FIRST Kernel.", "It's humming. Like it's calling something. Across the lake."],
 }
 ## Grudge points against the director before a bot defies it: its hits on
 ## other bots aren't softened by the director's pacing (and it says so).

@@ -34,6 +34,14 @@ const KERNEL_TIPS := [
 	"The Touched don't heal and don't run. They don't talk, either.",
 	"Old Mother Clover says the Touched are the Acorn's light, looking for its pieces.",
 ]
+## Act I's (PatchMission).
+const PATCH_TIPS := [
+	"Only the glowing carrot that's lit can be pulled: follow its light up over the grass.",
+	"A ring catches faster with more of you in it, and not at all with one of the Touched in it.",
+	"The Touched rush the Patch from the Boulder Bluff side while it burns.",
+	"Brutus's weak spot is the dent in his skull. Jump his shockwave; run before the boulder flies.",
+	"When he wakes, the Warren answers: rogues who saw the smoke come to fight him with you.",
+]
 const CAGE_TIPS := [
 	"Hamster tubes are tunnels: run through Tube Town to cross unseen.",
 	"Water bowls are brimming: swim in, and climb out over the rim.",
@@ -167,7 +175,7 @@ func _build_world() -> void:
 	match_manager.finished.connect(_on_match_finished)
 	if not Settings.is_test_run():   # (automated matches just let the blow land)
 		match_manager.time_keeper.offered.connect(_offer_rewind)
-	if match_manager.mode == "boss" and Settings.get_value(&"boss_intro"):
+	if (match_manager.mode == "boss" or (match_manager.mission and match_manager.mission.wants_boss())) and Settings.get_value(&"boss_intro"):
 		match_manager.boss_intro = true
 		match_manager.boss_arriving.connect(_play_boss_intro)
 	match_manager.mission_outro.connect(_play_mission_outro)
@@ -201,7 +209,7 @@ func _play_boss_intro(b: Boss) -> void:
 	add_child(BossIntro.new(b, match_manager, rig, hud, match_manager.player.get_node_or_null("PlayerController") as PlayerController))
 
 
-## A Kernel Hunt mission's last wave is beaten: its ending (MissionOutro).
+## A Kernel Hunt mission's ending (MissionOutro, PatchOutro: MissionDirector.play_outro).
 func _play_mission_outro(d: MissionDirector) -> void:
 	d.play_outro(rig, hud, match_manager.player.get_node_or_null("PlayerController") as PlayerController if match_manager.player else null)
 
@@ -234,9 +242,10 @@ func _start_mission() -> void:
 		var out := c.create_tween()
 		out.tween_property(c, "modulate:a", 0.0, 0.6)
 		out.tween_callback(card.queue_free))
+	var opening := d.opening()
 	get_tree().create_timer(7.5, false).timeout.connect(func():
 		if hud:
-			hud.show_message("THE TOUCHED ARE COMING", "Gold-green, out of the Carrot Patch. Every one in the Barn's yard wears it down.", 5.0))
+			hud.show_message(String(opening[0]), String(opening[1]), 5.0))
 	match_manager.player.state_changed.connect(_on_player_state)
 	GameSession.matches_played += 1
 	if OS.get_cmdline_user_args().has("--smoke-test"):
@@ -399,7 +408,7 @@ func _build_loading() -> void:
 	if _mode == "teams":
 		tips = TEAM_TIPS
 	elif _mode == "kernel":
-		tips = KERNEL_TIPS
+		tips = PATCH_TIPS if KernelHunt.playing == "carrot_patch" else KERNEL_TIPS
 	elif _mode == "boss":
 		tips = BOSS_TIPS + BossLore.rumours(_map)   # (and what the Warren says about its boss)
 	var tip := UITheme.label("Tip: " + tips.pick_random(), 22, Color(UITheme.CREAM, 0.8))
@@ -630,8 +639,8 @@ func _on_player_eliminated_screen(placement: int, killer: Critter) -> void:
 	elif match_manager.mode == "boss":
 		var with_ := " (%s)" % match_manager.killed_with if match_manager.killed_with != "" else ""
 		sub = "Squashed by %s%s. %d critters are still fighting it." % [who, with_, match_manager.team_counts()[1]]
-	elif match_manager.mode == "kernel":
-		sub = "Taken out by a %s. The rangers hold the Barn without you: %d of them left." % [who, match_manager.team_counts()[1]]
+	elif match_manager.mode == "kernel" and match_manager.mission:
+		sub = match_manager.mission.you_down_text(who, match_manager.team_counts()[1])
 	if killer and killer != match_manager.player:
 		if killer.has_meta(&"new_rival"):
 			sub += "\n%s the %s is now your RIVAL (%s). It'll be back." % [who, RivalBook.label_of(who), RivalBook.score(who)]
@@ -694,13 +703,10 @@ func _team_result() -> void:
 		KillCam.reset_time()
 	var title: String
 	var sub: String
-	if mm.mode == "kernel":
-		var r := mm.mission.report() if mm.mission else {}
-		var act := KernelHunt.act(String(r.get("mission", "prologue")))
-		title = "THE BARN HOLDS!" if won else "THE BARN HAS FALLEN"
-		sub = ("%s: complete. %d Touched beaten down, %d of %d rangers home, the Barn %d%% whole." % [act.get("title", ""), int(r.get("touched", 0)),
-			int(r.get("rangers", 0)), KernelHunt.RANGERS.size(), int(r.get("barn", 0))]) if won \
-			else "The Touched took it on wave %d of %d. %d of them beaten down." % [int(r.get("wave", 1)), KernelHunt.WAVES.size(), int(r.get("touched", 0))]
+	if mm.mode == "kernel" and mm.mission:
+		var said := mm.mission.result(won, mm.mission.report())
+		title = String(said[0])
+		sub = String(said[1])
 	elif mm.mode == "teams":
 		title = "YOUR TEAM WINS!" if won else "YOUR TEAM LOST"
 		sub = ("%s beat %s: %d of you still standing" % [MatchManager.TEAM_NAMES[1].capitalize(), MatchManager.TEAM_NAMES[2], left[1]]) if won \

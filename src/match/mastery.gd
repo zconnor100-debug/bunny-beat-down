@@ -14,7 +14,7 @@ extends RefCounted
 ## "wins", "map_wins:<map id>", "matches", "critters_played", "cast_beaten",
 ## "max_heat", "signatures", "nemeses_beaten", "runs_done", "run_stops",
 ## "boons_at_once", "gang_beaten", "doppels_beaten", "kernel_done:<mission id>",
-## "kernel_all_home"), `need` how many, and
+## "kernel_all_home" (the prologue), "kernel_all_home:<mission id>"), `need` how many, and
 ## `reward` what it gives:
 ##   {"acorns": n}                      once, when it's reached
 ##   {"look": "category:id"}            a Workshop look, free
@@ -103,6 +103,11 @@ const MILESTONES := [
 		"stat": "kernel_done:prologue", "need": 1, "reward": {"look": "coat:touched"}, "gives": "the Touched coat"},
 	{"id": "every_ranger_home", "name": "Every Ranger Home", "text": "Hold the Barn with all seven Barn Rangers still standing.",
 		"stat": "kernel_all_home", "need": 1, "reward": {"acorns": 250}, "gives": "250 acorns"},
+	# its Act I (PatchMission): Brutus back to Little Bru, and nobody lost doing it
+	{"id": "the_first_kernel", "name": "The First Kernel", "text": "Beat Brutus in the Kernel Hunt's Act I, The Carrot Patch.",
+		"stat": "kernel_done:carrot_patch", "need": 1, "reward": {"look": "kill_fx:embers"}, "gives": "the Patch fire beat-down burst"},
+	{"id": "nobody_singed", "name": "Nobody Singed", "text": "Finish Act I with all seven Barn Rangers still standing.",
+		"stat": "kernel_all_home:carrot_patch", "need": 1, "reward": {"acorns": 300}, "gives": "300 acorns"},
 ]
 
 ## The ladders: `text` has a %d for a tier's need, and each tier is [need,
@@ -216,6 +221,8 @@ static func progress(stat: String) -> int:
 		return int(StatBook.boss(stat.get_slice(":", 1)).beaten)
 	if stat.begins_with("kernel_done:"):
 		return 1 if KernelHunt.done(stat.get_slice(":", 1)) else 0
+	if stat.begins_with("kernel_all_home:"):
+		return 1 if int(KernelHunt.best(stat.get_slice(":", 1)).get("rangers", 0)) >= KernelHunt.RANGERS.size() else 0
 	match stat:
 		"boss_wins":
 			return int(StatBook.boss_total("beaten"))

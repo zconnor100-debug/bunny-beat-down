@@ -206,8 +206,10 @@ func _build_pois() -> void:
 			"carrot_patch":
 				var yaw := rng.randf() * TAU
 				var across := Vector2(cos(yaw), -sin(yaw))
+				p["rows"] = []   # (where its two rows are: the Kernel Hunt's Act I burns them)
 				for k in [-1.0, 1.0]:
 					_put("carrot_patch", p.center + across * 7.0 * k, yaw, 1.0)
+					p.rows.append(p.center + across * 7.0 * k)
 				for i in 6:
 					var a := TAU * i / 6.0
 					_put("fence_picket", p.center + Vector2(cos(a), sin(a)) * 22.0, -a, 1.0)

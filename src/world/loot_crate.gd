@@ -26,6 +26,7 @@ var extra_weapons := 0      ## additional guns beyond the first
 var contents: Array = []    ## exactly these (Pickup specs) instead of a roll: your call-in (Arsenal)
 var player_only := false    ## only you open it (your call-in); bots leave it be
 var display_name := "garden crate"
+var channel_verb := "Unlocking"   ## what holding interact on it is doing (the HUD: "Unlocking golden chest… 2.1 s")
 var rng := RandomNumberGenerator.new()
 var progress := 0.0         ## 0..1 while being unlocked
 var _lid: Node3D

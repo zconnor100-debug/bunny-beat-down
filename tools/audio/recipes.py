@@ -2657,3 +2657,86 @@ def _fanfare(r, stems=None):
 @recipe("defeat_sting", loud=-14.0, src="kenney")
 def defeat_sting(c, v):
     return c.k("music-jingles", "jingles_SAX07")  # descending "wah-wah-wah-waaah"
+
+
+# ==========================================================================
+# THE KERNEL HUNT -- the Carrot Patch burning, the Starfall Kernel's hum
+# ==========================================================================
+@recipe("fire_loop", loud=-17.0, src="synth", loop=True)
+def fire_loop(c, v):
+    """A fire burning in the open (the Kernel Hunt's Act I sets the Carrot
+    Patch alight), 8 s seamless loop: a low, breathing roar of flame, the
+    flames' ragged flutter, dense fine crackle, woody pops and now and then
+    the sharp snap of something splitting, a soft hiss over it. Every layer
+    is exactly periodic, so the loop point is sample-continuous."""
+    r = c.rng
+    L = 8.0
+    N = n_of(L)
+    swell = 0.55 + 0.45 * smooth_rand(N, r, 0.6, period=L)
+    roar = circ_filter(colored(N, r, -6), lambda f: lp_mag(380, 2)(f) * hp_mag(45, 2)(f))
+    roar = B.unit(roar) * swell
+    flick = 0.5 + 0.5 * np.clip(smooth_rand(N, r, 2.5, period=L), -1, 1)
+    flutter = B.unit(circ_filter(colored(N, r, -3), lambda f: bp_gain(f, 520.0, 0.9))) * flick
+    waves = 0.4 + 0.6 * np.clip(0.5 + smooth_rand(N, r, 1.2, period=L), 0, 1)
+    fine = B.unit(B.crackle(r, L, 140, 2200, 8000, period=L)) * waves
+    pops = B.unit(B.crackle(r, L, 22, 700, 2600, glen=(0.004, 0.018), period=L))
+    ev = np.zeros(N + n_of(0.6))
+    for k in range(9):   # wood splitting, spread over the loop (no gap at the seam)
+        s = B.twig_snap(r)
+        i0 = n_of((k + r.uniform(0.1, 0.9)) * L / 9)
+        ev[i0:i0 + len(s)] += s * r.uniform(0.4, 1.0)
+    snaps = fold_circular(ev, L)
+    hiss = B.unit(circ_filter(colored(N, r, 0), lambda f: hp_mag(3500, 2)(f) * lp_mag(9000, 2)(f))) * (0.6 + 0.4 * swell)
+    ref = _k_rms(fine)
+    rel = dict(fine=0.0, pops=-2.0, snaps=-1.0, roar=-3.0, flutter=-8.0, hiss=-16.0)
+    raw = dict(fine=fine, pops=pops, snaps=snaps, roar=roar, flutter=flutter, hiss=hiss)
+    x = sum(raw[k] * (ref * 10 ** (g / 20) / _k_rms(raw[k])) for k, g in rel.items())
+    x = circ_reverb(x, r, decay=0.4, mix_db=-14.0, predelay=0.008, bright=6000.0)
+    x = circ_compress(B.unit(x), -18.0, 3.0, win=0.005, smooth=0.008)
+    return B.unit(circ_filter(x, hp_mag(30, 2)))
+
+
+@recipe("fire_ignite", variants=2, loud=-12.0, src="synth")
+def fire_ignite(c, v):
+    """Something catching all at once (a ring of the Carrot Patch going up):
+    a rising 'whoomph' of air, a soft low thump under it, the flames' body
+    swelling, then a burst of crackle settling into the burn (~2 s)."""
+    r = c.rng
+    k = [1.0, 0.9][v]
+    whoomph = B.whoosh(r, 1.0, 180 * k, 1400 * k, q=0.7, peak=0.55)
+    thump = B.thump(90 * k, 45 * k, 0.08, 0.25, 0.7)
+    body = B.lp_burst(r, 1.6, 420, 0.5, attack=0.12)
+    crackle = B.crackle(r, 1.8, 90, 1500, 7000)
+    crackle = B.unit(crackle) * env_pts(len(crackle), [(0, 0), (0.25, 1), (1.8, 0)])
+    x = mix(2.0, (whoomph, 0, 0), (thump, 0.05, -4), (body, 0.0, -3), (crackle, 0.2, -6))
+    return reverb(x, r, decay=0.6, mix_db=-14, predelay=0.01, bright=4000.0, tail=0.3)[: n_of(2.2)]
+
+
+@recipe("kernel_hum", loud=-20.0, src="synth", loop=True)
+def kernel_hum(c, v):
+    """A piece of the Starfall Acorn humming (the Kernel Hunt: the first
+    Kernel, out of Brutus), 6 s seamless loop: a warm, faintly unearthly
+    chord (A2 E3 A3 C#4, each doubled a hair sharp so it beats slowly), a
+    soft breathing swell, and a glassy shimmer on top that comes and goes.
+    Every partial makes a whole number of cycles in the loop."""
+    r = c.rng
+    L = 6.0
+    N = n_of(L)
+    t = times(N)
+
+    def q(f):   # the nearest frequency with a whole number of cycles in L
+        return round(f * L) / L
+
+    chord = np.zeros(N)
+    for i, (f, g) in enumerate(((110.0, 1.0), (164.8, 0.7), (220.0, 0.55), (277.2, 0.35))):
+        chord += g * (np.sin(B.TAU * q(f) * t + r.uniform(0, B.TAU))
+                      + 0.8 * np.sin(B.TAU * (q(f) + (2 + i % 2) / L) * t + r.uniform(0, B.TAU)))
+    breath = 0.75 + 0.25 * np.sin(B.TAU * (2 / L) * t)   # two swells a loop
+    chord = B.unit(chord) * breath
+    shimmer = (np.sin(B.TAU * q(1760.0) * t) + 0.6 * np.sin(B.TAU * q(2217.5) * t + 1.0)
+               + 0.4 * np.sin(B.TAU * q(2637.0) * t + 2.0))
+    shimmer = B.unit(shimmer) * np.clip(smooth_rand(N, r, 0.5, period=L), 0, 1) ** 2
+    air = B.unit(circ_filter(colored(N, r, -3), lambda f: bp_gain(f, 900.0, 1.5)))
+    x = chord + db(-14) * shimmer + db(-30) * air
+    x = circ_filter(x, lambda f: hp_mag(60, 2)(f) * lp_mag(5000, 2)(f))
+    return B.unit(x)

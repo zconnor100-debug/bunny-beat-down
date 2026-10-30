@@ -1,6 +1,7 @@
 class_name FXTextures
 ## Procedurally generated textures for effects (no image assets needed):
-## a soft radial blob for billboarded particles, blood splats and scorch marks.
+## a soft radial blob for billboarded particles, blood splats and scorch
+## marks, tongues of flame and puffs of smoke (Fire).
 
 static var _cache: Dictionary = {}
 
@@ -100,6 +101,63 @@ static func splat(variant: int, color: Color) -> Texture2D:
 	img.generate_mipmaps()
 	var tex := ImageTexture.create_from_image(img)
 	_cache[key] = tex
+	return tex
+
+
+## A tongue of flame, white (the particle's colour tints it): a soft round
+## root, narrowing to a ragged point at the top, brightest down its middle.
+static func flame() -> Texture2D:
+	if _cache.has("flame"):
+		return _cache["flame"]
+	var w := 64
+	var h := 128
+	var img := Image.create_empty(w, h, false, Image.FORMAT_RGBA8)
+	var noise := FastNoiseLite.new()
+	noise.seed = 11
+	noise.frequency = 0.07
+	for y in h:
+		var v := (y + 0.5) / h   # 0 at the top .. 1 at the bottom
+		for x in w:
+			var u := (x + 0.5) / w - 0.5
+			u += noise.get_noise_2d(x * 0.8, y * 0.6) * 0.09 * (1.0 - v)   # (raggeder toward the tip)
+			var a := 0.0
+			if v > 0.68:   # the root: round
+				a = 1.0 - Vector2(u, (v - 0.68) * 1.15).length() / 0.3
+			else:          # up to the tip
+				var half := 0.3 * pow(clampf((v - 0.03) / 0.65, 0.0, 1.0), 0.75)
+				a = 1.0 - absf(u) / maxf(half, 0.001)
+			a = smoothstep(0.0, 0.55, a)
+			var core := clampf(1.0 - absf(u) / 0.12, 0.0, 1.0) * smoothstep(0.25, 0.8, v)   # (a hot middle)
+			var c := lerpf(0.82, 1.0, core)
+			img.set_pixel(x, y, Color(c, c, c, a))
+	img.generate_mipmaps()
+	var tex := ImageTexture.create_from_image(img)
+	_cache["flame"] = tex
+	return tex
+
+
+## A puff of smoke, white (tinted by the particle): a billowing clump of
+## rounded lumps, lit from above (darker underneath).
+static func smoke_puff() -> Texture2D:
+	if _cache.has("smoke"):
+		return _cache["smoke"]
+	var n := 128
+	var img := Image.create_empty(n, n, false, Image.FORMAT_RGBA8)
+	var noise := FastNoiseLite.new()
+	noise.seed = 5
+	noise.fractal_octaves = 4
+	noise.frequency = 0.045
+	for y in n:
+		for x in n:
+			var p := Vector2((x + 0.5) / n - 0.5, (y + 0.5) / n - 0.5) * 2.0   # -1..1, y down
+			var lump := noise.get_noise_2d(x, y)
+			var d := p.length() + lump * 0.35
+			var a := clampf(1.0 - smoothstep(0.45, 0.95, d), 0.0, 1.0) * (0.75 + 0.25 * clampf(lump + 0.5, 0.0, 1.0))
+			var shade := clampf(0.78 - p.y * 0.22 + lump * 0.25, 0.45, 1.0)   # (lit from above)
+			img.set_pixel(x, y, Color(shade, shade, shade, a))
+	img.generate_mipmaps()
+	var tex := ImageTexture.create_from_image(img)
+	_cache["smoke"] = tex
 	return tex
 
 

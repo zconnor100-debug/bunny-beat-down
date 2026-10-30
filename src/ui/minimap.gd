@@ -95,6 +95,7 @@ func _draw() -> void:
 	_draw_allies()
 	_draw_bosses()
 	_draw_enemy_blips()
+	_draw_objectives()
 	if player and is_instance_valid(player):
 		var pp := world_to_map(Vector2(player.global_position.x, player.global_position.z))
 		var yaw := player.look_yaw
@@ -152,6 +153,20 @@ func _draw_bosses() -> void:
 		draw_circle(mp, r + 2.5, Color(0, 0, 0, 0.8))
 		draw_circle(mp, r, Color(0.9, 0.1, 0.06) if b.alive else Color(0.4, 0.35, 0.3))
 		draw_circle(mp, r * 0.38, Color(1.0, 0.85, 0.3) if b.alive else Color(0.25, 0.22, 0.2))
+
+
+## A Kernel Hunt mission's objectives (group "objectives"): gold-green diamonds.
+func _draw_objectives() -> void:
+	var r := (9.0 if full else 7.0) + sin(Time.get_ticks_msec() * 0.006) * 1.2
+	for n in get_tree().get_nodes_in_group(&"objectives"):
+		var o := n as Node3D
+		if o == null or not o.is_inside_tree():
+			continue
+		var mp := world_to_map(Vector2(o.global_position.x, o.global_position.z))
+		var pts := PackedVector2Array([mp + Vector2(0, -r), mp + Vector2(r * 0.75, 0), mp + Vector2(0, r), mp + Vector2(-r * 0.75, 0)])
+		draw_colored_polygon(pts, GlowCarrot.GLOW)
+		pts.append(pts[0])
+		draw_polyline(pts, UITheme.INK, 2.0)
 
 
 func _draw_enemy_blips() -> void:

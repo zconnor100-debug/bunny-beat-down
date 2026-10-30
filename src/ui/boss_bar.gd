@@ -10,6 +10,7 @@ const FILL_ANGRY := Color(1.0, 0.36, 0.05)
 
 var boss: Boss
 var match_manager: MatchManager
+var hide_waiting := false  ## not up till it's here (a Kernel Hunt mission's boss: the mission's bar is, till then)
 var _name: Label
 var _status: Label
 var _bar: Control
@@ -43,6 +44,9 @@ func _process(delta: float) -> void:
 		visible = false
 		return
 	var waiting := boss.state == Boss.State.WAITING
+	visible = not (waiting and hide_waiting)
+	if not visible:
+		return
 	_name.text = "%s, %s" % [boss.display_name.to_upper(), boss.title]
 	var frac := boss.health / maxf(boss.max_health, 1.0)
 	_shown = move_toward(_shown, frac, delta * 0.35) if _shown > frac else frac

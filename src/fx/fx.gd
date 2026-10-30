@@ -160,6 +160,10 @@ const BEAT_DOWN_BURSTS := {
 	"froth": [["blob", [Color(0.94, 0.99, 0.88), Color(0.8, 0.96, 0.62)], -0.7, 0.16,
 		{"amount": 20, "speed": Vector2(1.2, 3.8), "spread": 85.0, "damping": 2.4, "lifetime": 1.8}],
 		["chip", [Color(0.96, 1.0, 0.92)], 8.0, 0.05, {"amount": 10, "speed": Vector2(3.0, 6.0)}]],
+	# (earned in the Kernel Hunt's Act I, burning the Carrot Patch: embers and a puff of smoke)
+	"embers": [["blob", [Color(1.0, 0.62, 0.15), Color(1.0, 0.85, 0.4)], -1.6, 0.07,
+		{"amount": 16, "speed": Vector2(1.0, 4.5), "spread": 75.0, "additive": true, "damping": 1.2, "lifetime": 2.0}],
+		["blob", [Color(0.22, 0.2, 0.18, 0.6)], -0.6, 0.55, {"amount": 6, "speed": Vector2(0.6, 1.6), "spread": 50.0, "lifetime": 2.4}]],
 }
 
 

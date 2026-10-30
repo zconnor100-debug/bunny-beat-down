@@ -19,7 +19,8 @@ Battle** (you and 24 bots against 25, two balloons, no friendly fire), or a
 hulking monster bunny) on the island, the Tin Tyrant (a wind-up robot) in the
 Toy Box, Nibbles the Rabid in the Hamster Cage. Or play the story: **the
 Kernel Hunt**, player against environment, where you and the Barn Rangers
-hold the Big Red Barn against the Touched. Ragdolls, real limb-popping gore,
+hold the Big Red Barn against the Touched, then track the glowing carrots,
+burn the Carrot Patch and wake Brutus. Ragdolls, real limb-popping gore,
 and floppy physics ears are included.
 
 Built in **Godot 4.6** (GDScript, Jolt physics, Forward+).
@@ -158,9 +159,9 @@ and the final shot replayed from three angles. There's a
 - **The Kernel Hunt: the story, player against environment** (main menu).
   The Starfall Acorn's light is getting into the Warren's critters: the
   **Touched**, any species, gold-green veins glowing through their fur,
-  silent, coming in waves. Its acts lead to the boss fights; the first, the
-  prologue **Days Since Brutus**, is playable (the rest are on its page,
-  sealed). You start on the ground at the Big Red Barn with the **Barn
+  silent, coming in waves. Its acts lead to the boss fights; the prologue and
+  Act I are playable (the rest are on its page, sealed). In the prologue,
+  **Days Since Brutus**, you start on the ground at the Big Red Barn with the **Barn
   Rangers**, seven rogues of the cast at their posts round it, and the
   Touched come out of the Carrot Patch in three waves, then round the sides
   too, the last with a Touched giant. Every Touched standing in the Barn's
@@ -174,6 +175,20 @@ and the final shot replayed from three angles. There's a
   for another milestone. The story's in [docs/LORE.md](docs/LORE.md).
 
   ![The Kernel Hunt's prologue: the Big Red Barn and its rangers, the Touched in the yard, dust going up off Boulder Bluff, and the tally back at zero](docs/screenshots/kernel_hunt.jpg)
+
+  **Act I, The Carrot Patch**, opens once the Barn's held. Track five
+  **glowing carrots** on a trail out to the Carrot Patch (one lit at a time,
+  its light going up over the grass; hold interact to pull it up, and the
+  Touched come up out of the dirt round each). Then **burn the Patch**: stand
+  in each of three rings, with none of the Touched in it, until it catches,
+  while they rush you; the fires are real particle fires, flames and smoke
+  and embers. With the whole Patch burning, the ground drums: go to Boulder
+  Bluff and **Brutus** comes for you, and the Warren answers, eight rogues
+  gliding in who saw the smoke. Beat him and he shrinks back into **Little
+  Bru**, the runt of the Patch warren, with the **first Starfall Kernel**
+  humming over him. Earns the **Patch fire** beat-down burst.
+
+  ![Act I: a glowing carrot, a ring of the Carrot Patch alight, Brutus coming down off Boulder Bluff, and Little Bru under the first Kernel](docs/screenshots/kernel_act1.jpg)
 
 - **Third person with a first-person option** (press **V**): over-the-shoulder
   camera with a shoulder swap, aim-down-sights zoom, recoil kick and trauma
