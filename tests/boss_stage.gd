@@ -13,6 +13,7 @@ const MOVES := {
 
 var out_dir := "user://bosses"
 var ids: Array = ["brute", "robot", "hamster"]
+var faces := false   ## a close-up on its face after each move too
 var cam: Camera3D
 
 
@@ -92,6 +93,15 @@ func _run() -> void:
 			_shoot(Vector3(-30, 12, -34), Vector3(0, 10, 0), "")
 			await _settle(3)
 			_save("boss_%s_move%d_%s" % [id, k, String(m[0]).trim_prefix("_")])
+			if faces:   # (up close on its face: its eyes where they should be, in the pose)
+				var eyes := boss.eye_positions()
+				var f: Vector3 = (eyes[0] + eyes[1]) * 0.5
+				cam.fov = 30.0
+				cam.global_position = f + boss.forward() * 22.0 + boss.global_basis.x * 6.0 + Vector3.UP * 2.0
+				cam.look_at(f, Vector3.UP)
+				await _settle(3)
+				_save("boss_%s_move%d_face" % [id, k])
+				cam.fov = 60.0
 			Engine.time_scale = was
 			k += 1
 			boss.global_position = Vector3.ZERO

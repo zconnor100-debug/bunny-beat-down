@@ -439,6 +439,9 @@ def clean_own_rig(body, arm):
     log("own rig: %d bones" % len(arm.data.bones))
 
 
+EYES_FOUND = []   # (paint_texture: the eyes' real middles, glTF axes)
+
+
 def paint_texture(body):
     """Paint onto the base-colour texture by where each texel sits on the
     model (recipe "paint", glTF axes: x its left, y up, z its front): an
@@ -455,6 +458,7 @@ def paint_texture(body):
     px = np.empty(w * h * 4, dtype=np.float32)
     img.pixels.foreach_get(px)
     rgb = px.reshape(h, w, 4)[::-1, :, :3].copy()            # row 0 = top, as glTF's v
+    orig = rgb.copy()
     # one corner per loop-triangle corner (UV seams stay seams)
     me = body.data
     me.calc_loop_triangles()
@@ -497,6 +501,35 @@ def paint_texture(body):
         n = noise(pos, m.get("freq", 14.0)) * 0.7 + noise(pos, m.get("freq", 14.0) * 2.7) * 0.3
         cover = np.clip((n - (1.0 - m.get("cover", 0.3))) * 6.0, 0.0, 1.0) * valid
         rgb = rgb * (1.0 - cover[..., None]) + rgb * np.array(m["color"]) * cover[..., None]
+    eyes = cfg.get("eyes")
+    if eyes:
+        # its eyes, gone red: the download's dark texels round each of the
+        # recipe's eyes (their shine isn't dark, so it stays), painted the
+        # eyes' colour, and a mask of them saved beside the model for the game
+        # to make glow, in the skin (so they're where its eyes are, however it
+        # moves). Their real middles go in the boss.json.
+        lum = orig @ np.array([0.299, 0.587, 0.114])
+        mask = np.zeros((h, w), dtype=np.float32)
+        for e in CFG.get("eyes", []):
+            g = np.array([e[0], e[2], -e[1]])
+            dark = valid & (np.linalg.norm(pos - g, axis=2) < eyes.get("search", 0.08)) & (lum < eyes.get("dark", 0.12))
+            if dark.sum() < 30:
+                log("eyes: nothing dark near", g.round(3).tolist())
+                continue
+            EYES_FOUND.append([round(float(x), 4) for x in pos[dark].mean(axis=0)])
+            mask = np.maximum(mask, dark.astype(np.float32))
+        grown = np.maximum.reduce([mask, np.roll(mask, 1, 0), np.roll(mask, -1, 0), np.roll(mask, 1, 1), np.roll(mask, -1, 1)])
+        mask = (mask + grown) * 0.5   # (a texel's soft rim)
+        col = np.array(eyes.get("color", [0.7, 0.03, 0.02]))
+        rgb = rgb * (1.0 - mask[..., None]) + col * mask[..., None]
+        mi = bpy.data.images.new(BID + "_eyes", width=w, height=h, alpha=False)
+        pix = np.ones((h, w, 4), dtype=np.float32)
+        pix[..., :3] = mask[::-1, :, None]
+        mi.pixels.foreach_set(pix.ravel())
+        mi.filepath_raw = os.path.join(OUT_DIR, "eyes.png")   # (not <id>_*.png: that's Godot's, extracting a glb's images, and git-ignored)
+        mi.file_format = "PNG"
+        mi.save()
+        log("eyes: found", EYES_FOUND, "mask", mi.filepath_raw)
     for kind in ("blood", "foam"):
         col = np.array(cfg.get(kind + "_color", [0.4, 0.015, 0.015] if kind == "blood" else [0.93, 0.95, 0.88]))
         for seg in cfg.get(kind, []):
@@ -508,7 +541,7 @@ def paint_texture(body):
     out[..., :3] = np.clip(rgb[::-1], 0.0, 1.0)
     img.pixels.foreach_set(out.ravel())
     img.update()
-    log("painted", img.name, "(%s)" % ", ".join(k for k in ("tint", "matted", "blood", "foam") if cfg.get(k)))
+    log("painted", img.name, "(%s)" % ", ".join(k for k in ("tint", "matted", "blood", "foam", "eyes") if cfg.get(k)))
 
 
 def reencode_textures(body, max_tex=2048):
@@ -606,9 +639,10 @@ def build():
         "bones": roles,
         "radii": radii,
         "tails": {r: gl(arm.data.bones[bn].tail_local) for r, bn in roles.items() if bn in arm.data.bones},
-        "eyes": [gl(e) for e in CFG.get("eyes", [])],
+        "eyes": EYES_FOUND or [gl(e) for e in CFG.get("eyes", [])],
         "eye_r": CFG.get("eye_r", 0.02),
         "mouth": gl(CFG["mouth"]) if CFG.get("mouth") else None,
+        "eye_mask": "eyes.png" if EYES_FOUND else None,
         "tris": tri_count(body),
         "notes": "Facing +Z (glTF/Godot), +Y up, 1 unit tall to the top of its bounds (the game scales it); "
                  "feet on y = 0, centred. eyes/mouth are in those units, before any posing.",

@@ -86,6 +86,7 @@ var _look := Vector3.INF
 var _step := 0
 var _eyes: Array[MeshInstance3D] = []
 var _eye_mat: StandardMaterial3D
+var _eye_skin: Array[StandardMaterial3D] = []   # (eyes that glow in its skin: their mask)
 var _built := false
 
 
@@ -143,10 +144,17 @@ func _dress() -> void:
 	pass
 
 
-## Glowing eyes (red when it's enraged), from the boss.json's eye positions.
+## Glowing eyes (red when it's enraged), from the boss.json's eye positions:
+## a glowing ball on the head bone at each, or, when the boss.json has an
+## "eye_mask" (tools/characters/boss_build.py found its eyes in its texture),
+## its own eyes glowing in its skin, so they stay where its eyes are however
+## the skin moves.
 func _build_eyes() -> void:
 	var eyes: Array = data.get("eyes", [])
 	if eyes.is_empty() or skeleton == null:
+		return
+	if data.get("eye_mask") is String:
+		_glow_eyes_in_skin("res://assets/bosses/%s/%s" % [id, data.eye_mask])
 		return
 	_eye_mat = StandardMaterial3D.new()
 	_eye_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
@@ -173,6 +181,26 @@ func _build_eyes() -> void:
 		# (the attachment sits on the head bone: the eye where the model has it)
 		mi.position = (skeleton.get_bone_global_rest(head).affine_inverse() * p) if head >= 0 else p
 		_eyes.append(mi)
+
+
+func _glow_eyes_in_skin(mask_path: String) -> void:
+	var mask := load(mask_path) as Texture2D
+	if mask == null or model == null:
+		return
+	for mi in ModelUtil.find_all(model, "MeshInstance3D"):
+		var m3 := mi as MeshInstance3D
+		for s in m3.mesh.get_surface_count():
+			var base := m3.get_active_material(s) as StandardMaterial3D
+			if base == null:
+				continue
+			var m := base.duplicate() as StandardMaterial3D
+			m.emission_enabled = true
+			m.emission_texture = mask
+			m.emission_operator = BaseMaterial3D.EMISSION_OP_MULTIPLY   # (the mask times the glow: only the eyes; adding lit the whole skin)
+			m.emission = eye_color(false)
+			m.emission_energy_multiplier = 2.5
+			m3.set_surface_override_material(s, m)
+			_eye_skin.append(m)
 
 
 ## Its eyes' glow: calm, and enraged.
@@ -519,11 +547,16 @@ func _animate(delta: float) -> void:
 	if action:
 		poser.add_pose(action.pose(), action.weight())
 	poser.apply()
-	if _eye_mat:
+	if _eye_mat or not _eye_skin.is_empty():
 		var c := eye_color(enraged)
-		_eye_mat.albedo_color = c
-		_eye_mat.emission = c
-		_eye_mat.emission_energy_multiplier = (4.0 if enraged else 2.5) * (0.8 + 0.2 * sin(_clock * 6.0))
+		var glow := (4.0 if enraged else 2.5) * (0.8 + 0.2 * sin(_clock * 6.0))
+		if _eye_mat:
+			_eye_mat.albedo_color = c
+			_eye_mat.emission = c
+			_eye_mat.emission_energy_multiplier = glow
+		for m in _eye_skin:
+			m.emission = c
+			m.emission_energy_multiplier = glow
 
 
 ## How far a step takes it (model units).

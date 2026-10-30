@@ -555,6 +555,12 @@ prologue's island seed, its rangers and waves; `note_result`, `done`,
   flat under `chalk_smudge.gdshader`'s streaks and chalks the new count). Then
   `MissionDirector.end`: `KernelHunt.note_result`, the Gazette's special
   edition, `MatchManager.end_mission`.
+- **A boss's glowing eyes** are balls on its head bone at the boss.json's
+  `eyes`, unless it has an `eye_mask`: then its own eyes glow, in its skin
+  (`Boss._glow_eyes_in_skin`: the mask as the material's emission texture,
+  multiplied, so they deform with the face). `boss_build.py` makes the mask
+  (recipe paint `eyes`): the download's dark texels round each eye it's
+  given, painted red, their real middles written back as the `eyes`.
 - **Path queries are budgeted** (`AIBrain._set_dest`): a moving destination is
   re-pathed early only once it's moved 15% of the way off (at least 2 m), the
   re-path timers are jittered, a bot chasing a boss asks every 2 to 3 seconds,

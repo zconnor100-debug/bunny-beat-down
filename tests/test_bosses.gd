@@ -51,6 +51,10 @@ func test_every_boss_is_ten_critters_tall_and_hittable_all_over() -> void:
 		check(head.global_position.distance_to(b.get_eye_position()) < 6.0, "%s: the head hitbox sits on its head (%.1f m off)" % [id,
 			head.global_position.distance_to(b.get_eye_position())])
 		check(b.eye_positions().size() == 2, "%s has two eyes" % id)
+		if b.data.get("eye_mask") is String:   # (its own eyes glow, in its skin: they go where its eyes go)
+			check(b._eyes.is_empty() and not b._eye_skin.is_empty() and b._eye_skin.all(func(m): return (m.emission_texture != null
+				and m.emission_operator == BaseMaterial3D.EMISSION_OP_MULTIPLY)),
+				"%s: its own eyes glow (%d materials)" % [id, b._eye_skin.size()])
 		b.queue_free()
 		await wait_physics(2)
 
