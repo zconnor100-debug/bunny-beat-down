@@ -147,6 +147,11 @@ var blast_guard := 1.0
 ## The gang it drops in with this match (MatchManager: a few bots you've made
 ## radical, out for you together); gang mates don't fight each other.
 var gang := ""
+## Its side in a Team Battle or a Boss Battle (MatchManager.mode); 0 in a
+## battle royale, everyone for themselves. Team mates never hurt each other.
+var team := 0
+## In a boss's paw (Boss: a grab): it can't move by itself meanwhile.
+var held_by: Node = null
 ## The guns it was carrying when it went down (a run's keepsake comes from these).
 var last_weapons: Array = []
 var _water_level := -INF
@@ -277,6 +282,10 @@ func current_spread_deg() -> float:
 func _physics_process(delta: float) -> void:
 	if state == State.DEAD or state == State.IN_DROPSHIP:
 		return
+	if held_by != null:
+		if is_instance_valid(held_by):
+			return   # (the boss moves it)
+		held_by = null
 	_hurt_sound_cd = maxf(0.0, _hurt_sound_cd - delta)
 	_unhurt_t += delta
 	frenzy_t = maxf(0.0, frenzy_t - delta)
@@ -1024,9 +1033,16 @@ func _melee_strike() -> void:
 	q.collide_with_bodies = false
 	q.exclude = visual.hitbox_rids
 	var victims := {}   # critter -> [role, distance, position]
+	var boss_hit: Array = []   # [boss, role, position, distance]: a boss's leg in reach
 	for hit in get_world_3d().direct_space_state.intersect_shape(q, 64):
 		var area := hit.collider as Node3D
 		if area == null or not area.has_meta(&"critter"):
+			continue
+		var b := area.get_meta(&"critter") as Boss
+		if b:
+			var bd := area.global_position.distance_to(centre)
+			if b.alive and b.team != team and (boss_hit.is_empty() or bd < float(boss_hit[3])):
+				boss_hit = [b, area.get_meta(&"role", &"chest"), area.global_position, bd]
 			continue
 		var c := area.get_meta(&"critter") as Critter
 		if c == null or c == self or not c.alive:
@@ -1048,7 +1064,9 @@ func _melee_strike() -> void:
 			info.amount *= 1.5
 		(c as Critter).take_damage(info)
 		(c as Critter).velocity += Vector3(fwd.x, 0.0, fwd.z).normalized() * 5.0 + Vector3.UP * 2.5
-	if not victims.is_empty():
+	if not boss_hit.is_empty():
+		(boss_hit[0] as Boss).receive_melee(self, MELEE_DAMAGE * (Mastery.club_scale() if is_player else 1.0), centre, fwd, boss_hit[1])
+	if not victims.is_empty() or not boss_hit.is_empty():
 		Audio.play_at(&"melee_hit", centre, 0.0, 0.1)
 
 
@@ -1072,6 +1090,8 @@ func receive_shot(shooter: Node, data: WeaponData, dmg: float, pos: Vector3, dir
 func take_damage(info: DamageInfo) -> void:
 	if not alive or state == State.IN_DROPSHIP:
 		return
+	if team != 0 and info.attacker is Critter and info.attacker != self and (info.attacker as Critter).team == team:
+		return   # (a team mate's stray carrot, blast or club)
 	if is_player and info.attacker is Critter and info.attacker != self and not (info.attacker as Critter).is_player:
 		info.amount *= AIBrain.damage_to_player   # bots hit softer than they look (per difficulty)
 	elif not is_player and info.attacker is Critter and info.attacker != self and not (info.attacker as Critter).is_player:

@@ -28,6 +28,7 @@ const NAME_TAG_FULL_SIZE := 10.0
 const NAME_TAG_MIN_SCALE := 0.35
 
 static var _enemy_rim: ShaderMaterial
+static var _ally_rim: ShaderMaterial
 static var _xray: ShaderMaterial       # (Pack Sense: reveal)
 var _reveal_until := 0
 
@@ -356,6 +357,36 @@ func set_enemy_highlight(display_name: String, rival := false, heat := 0) -> voi
 		name_tag.font_size = 34
 	if rival:
 		name_tag.modulate = Color(0.85, 0.45, 1.0)
+	name_tag.position = Vector3(0, (rig.world_head_top if rig else 1.2) + 0.35, 0)
+
+
+## On your side (a Team Battle or a Boss Battle): a cool blue rim and a blue
+## name tag you see through walls, so you know who not to shoot.
+func set_ally_tag(display_name: String) -> void:
+	if _ally_rim == null:
+		_ally_rim = ShaderMaterial.new()
+		_ally_rim.shader = ENEMY_RIM_SHADER
+		_ally_rim.set_shader_parameter(&"rim_color", Color(0.25, 0.62, 1.0))
+		_ally_rim.set_shader_parameter(&"strength", 0.7)
+	for m in meshes:
+		if m.material_overlay == null or m.material_overlay == _enemy_rim:
+			m.material_overlay = _ally_rim
+	if name_tag == null:
+		name_tag = Label3D.new()
+		name_tag.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+		name_tag.fixed_size = true
+		name_tag.pixel_size = 0.0014
+		name_tag.font_size = 26
+		name_tag.outline_size = 10
+		name_tag.outline_modulate = Color(0.02, 0.06, 0.14, 0.9)
+		name_tag.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
+		name_tag.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		add_child(name_tag)
+	name_tag.no_depth_test = true   # (a team mate shows through walls)
+	name_tag.visibility_range_end = NAME_TAG_RANGE * 3.0 * name_tag_range_scale
+	name_tag.text = "◆ %s" % display_name
+	name_tag.modulate = Color(0.45, 0.78, 1.0)
+	_tag_color = name_tag.modulate
 	name_tag.position = Vector3(0, (rig.world_head_top if rig else 1.2) + 0.35, 0)
 
 

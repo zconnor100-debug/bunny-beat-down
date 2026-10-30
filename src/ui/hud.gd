@@ -54,6 +54,7 @@ var _run_label: Label        ## a run's stop: its goal (and once you've made it)
 var _hunt_label: Label       ## the nemesis hunting you: how far, which way
 var _boons_label: Label
 var _boons_key := ""
+var _boss_bar: BossBar             ## a Boss Battle's boss (top centre)
 const ARROWS := ["↑", "↖", "←", "↙", "↓", "↘", "→", "↗"]
 
 
@@ -111,6 +112,13 @@ func setup(player_: Critter, rig_: CameraRig, mm: MatchManager) -> void:
 	_storm_label.size.x = 600
 	_storm_label.position.x = -300
 	_root.add_child(_storm_label)
+	if mm and mm.mode == "boss" and mm.boss:
+		_boss_bar = BossBar.new(mm.boss, mm)
+		_boss_bar.set_anchors_and_offsets_preset(Control.PRESET_CENTER_TOP)
+		_boss_bar.offset_left = -BossBar.WIDTH * 0.5
+		_boss_bar.offset_right = BossBar.WIDTH * 0.5
+		_boss_bar.offset_top = 12
+		_root.add_child(_boss_bar)
 	_hunt_label = UITheme.label("", 24, Color(1.0, 0.4, 0.38), true)
 	_hunt_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_hunt_label.set_anchors_and_offsets_preset(Control.PRESET_CENTER_TOP)
@@ -280,6 +288,10 @@ func attach_island(island: Island, storm: Storm) -> void:
 
 
 func _show_alive(a: int, _total: int) -> void:
+	if match_manager and match_manager.mode == "teams":
+		var left := match_manager.team_counts()
+		_alive_label.text = "YOUR TEAM %d  •  THEIRS %d" % [left[1], left[2]]
+		return
 	_alive_label.text = "%d CRITTER%s LEFT" % [a, "" if a == 1 else "S"]
 
 
@@ -430,8 +442,16 @@ func _process(delta: float) -> void:
 	elif match_manager and match_manager.phase == MatchManager.Phase.PLAYING and player.alive and not match_manager.called_in \
 			and not Arsenal.unlocked().is_empty():
 		var to_go := Arsenal.CALL_AT - match_manager.player_beat_downs
-		_arsenal_label.text = "Your arsenal is ready: [%s] to call it in" % GameInput.prompt(&"call_in") if to_go <= 0 \
-			else "Your arsenal: %d more beat-down%s to call it in" % [to_go, "" if to_go == 1 else "s"]
+		var b := match_manager.boss
+		if match_manager.mode == "boss" and b and b.state == Boss.State.WAITING and to_go > 0:
+			to_go = 1   # (not yet: cream, not carrot)
+			_arsenal_label.text = "Your arsenal: ready when %s turns up" % b.display_name
+		elif match_manager.mode == "boss" and b:
+			to_go = 0
+			_arsenal_label.text = "Your arsenal is ready: [%s] to call it in" % GameInput.prompt(&"call_in")
+		else:
+			_arsenal_label.text = "Your arsenal is ready: [%s] to call it in" % GameInput.prompt(&"call_in") if to_go <= 0 \
+				else "Your arsenal: %d more beat-down%s to call it in" % [to_go, "" if to_go == 1 else "s"]
 		_arsenal_label.add_theme_color_override("font_color", UITheme.CARROT_LIGHT if to_go <= 0 else UITheme.CREAM)
 	var tk := match_manager.time_keeper if match_manager else null
 	if tk and match_manager.phase == MatchManager.Phase.PLAYING and player.alive:
@@ -492,7 +512,10 @@ func _on_critter_died(victim: Node, info: DamageInfo) -> void:
 	if info.kind == DamageInfo.Kind.BLEED:
 		how = "thorns"
 	var line: String
-	if killer and killer != v:
+	if info.attacker is Boss:
+		var b := info.attacker as Boss
+		line = "☠ %s  ▸ %s ▸  %s" % [b.display_name, b.attack_name(info.weapon_id), v.display_name]
+	elif killer and killer != v:
 		line = "%s  ▸ %s ▸  %s%s" % [killer.display_name, how, v.display_name, "  ✦" if info.headshot else ""]
 	elif info.kind == DamageInfo.Kind.STORM:
 		line = "%s got lost in the Briar" % v.display_name
@@ -500,7 +523,12 @@ func _on_critter_died(victim: Node, info: DamageInfo) -> void:
 		line = "%s got bonked by the toy train" % v.display_name
 	else:
 		line = "%s had a little accident" % v.display_name
-	var l := UITheme.label(line, 19, UITheme.CARROT_LIGHT if (killer == player or v == player) else UITheme.CREAM)
+	var col := UITheme.CARROT_LIGHT if (killer == player or v == player) else UITheme.CREAM
+	if v.team != 0 and player and v.team == player.team and v != player:
+		col = Color(0.55, 0.8, 1.0)   # (one of your team down)
+	elif info.attacker is Boss:
+		col = Color(1.0, 0.5, 0.42)
+	var l := UITheme.label(line, 19, col)
 	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	_feed.add_child(l)
 	while _feed.get_child_count() > 6:
@@ -627,7 +655,8 @@ class HUDOverlay:
 		_hit_t = 0.22
 		_hit_kill = killed
 		_hit_head = headshot
-		var pos := (victim as Critter).get_eye_position() + Vector3(randf_range(-0.3, 0.3), 0.3, randf_range(-0.3, 0.3))
+		var pos := (victim as Boss).last_hit_pos if victim is Boss \
+			else (victim as Critter).get_eye_position() + Vector3(randf_range(-0.3, 0.3), 0.3, randf_range(-0.3, 0.3))
 		_numbers.append([pos, "%d" % roundi(damage), 0.9, Color("ffd34d") if headshot else UITheme.CREAM])
 		Audio.play(&"headshot" if headshot else &"carrot_impact_flesh", -6.0 if headshot else -10.0)
 

@@ -13,7 +13,11 @@ your worst ten seconds. Drop from a picnic-basket hot-air
 balloon onto a procedurally generated forest island (or from a wind-up toy
 plane into a giant hamster cage, or a paper airplane over a kid's bedroom
 floor) and loot carrot guns. Then outlast the
-closing Briar and be the last critter standing. Ragdolls, real limb-popping
+closing Briar and be the last critter standing. Or play it as a **Team
+Battle** (you and 24 bots against 25, two balloons, no friendly fire), or a
+**Boss Battle**: you and 24 bots against a boss ten critters tall, Brutus (a
+hulking monster bunny) on the island, the Tin Tyrant (a wind-up robot) in the
+Toy Box, Nibbles the Rabid in the Hamster Cage. Ragdolls, real limb-popping
 gore, and floppy physics ears are included.
 
 Built in **Godot 4.6** (GDScript, Jolt physics, Forward+).
@@ -59,6 +63,50 @@ and the final shot replayed from three angles. There's a
 | ![The picnic-basket balloon over the island](docs/screenshots/drop.jpg) | ![The roster, posed by the procedural animator](docs/screenshots/roster.jpg) |
 
 ## Features
+
+- **Three ways to play** (New match → Mode):
+
+  | Mode | Who | How it ends |
+  |---|---|---|
+  | Battle Royale | you against up to 49 bots, everyone for themselves | the last critter standing |
+  | Team Battle (25 v 25) | you and 24 bots (the Carrot Crew) against 25 (the Bramble Mob) | the last team standing |
+  | Boss Battle (25 v 1) | you and 24 bots against the map's boss | the boss down, or all 25 of you |
+
+  **Team Battle.** Each team rides its own balloon (or plane) down its own
+  side of the map and lands there. Your team wears blue name tags you see
+  through walls and a blue rim, and shows as blue dots on the map; nobody can
+  hurt their own side (carrots, blasts and clubs alike). The bots you've
+  made radical, and your rivals, end up on the other side; the bots that
+  jump with you are your squad and stick by you. Bots fight the other team
+  on sight and go looking for it, and the Briar still closes in.
+
+  **Boss Battle.** No Briar: 35 seconds after everyone lands, the map's boss
+  turns up (its bar along the top of the screen counts it down), ten
+  critters tall, and goes for whoever's nearest (you a bit sooner, and
+  whoever's hurting it most). Every blow comes with a warning: a red ring
+  on the ground fills up where it's about to land, or a red strip where it's
+  about to charge. The bots fight it from range, circling it, aim for its
+  head if they're any good, and get out from under its blows (the sharp
+  ones jump as a shockwave lands, which is how you dodge one too). Their
+  carrots count for a fifth of yours, so you matter. Below half health it's
+  enraged: faster, harder, its eyes red. Your arsenal can be called in as
+  soon as it turns up.
+
+  | Boss | Where | What it does |
+  |---|---|---|
+  | **Brutus**, the Meadow's Nightmare | Wildwood Island | A bunny the size of a house, all muscle and teeth. **Ground Pound** (both fists down: a shockwave; jump it), **Boulder Toss** (rips a rock out of the ground and lobs it at you), **Leap** (too far away? it jumps the whole way and lands on you), **Grab** (in reach of its paw it picks you up and bites: bots lose their heads), **Roar** (crowded, it roars everyone back off it). Its head and jaw are its weak spots. |
+  | **The Tin Tyrant**, the Wind-Up Warlord | Toy Box Bash | A wind-up tin robot gone wrong. Tin plate takes the sting out of carrots. **Eye Lasers** swept across the floor (anything solid between you and its eyes keeps them off you), **Toy Missiles** (a volley of little rockets, each on its own red ring), **Clamp Smash**, and every so often a **Wind-Down**: its key runs out and it stands there taking double (its key, nearly triple) until it winds itself up with a blast of steam. Enraged, it goes into OVERDRIVE. |
+  | **Nibbles the Rabid** | Hamster Cage | The cage's own hamster, grown huge and rabid: matted fur, blood round its mouth and paws, foam at the jaw, red eyes. **Frenzied Charge** (head down, flat out, trampling everyone in its path; if it runs into a wall it knocks itself silly and takes double), **Rabid Bite**, **Foam Spit** (puddles that burn and slow you), and enraged, **Burrow** (it dives into the bedding and comes up under you). |
+
+  The bosses are real models (CC-BY, see Credits) given skeletons and
+  animated by code: `tools/characters/boss_build.py` decimates each
+  download, builds a skeleton from joints measured off grid renders, skins
+  it by bone heat on a voxel-remeshed watertight copy (a decimated sculpt
+  is anything but watertight) and copies the weights across, and for
+  Nibbles paints the rabid look straight into its texture by where each
+  texel sits on the body. In the game `BossPoser` poses them bone by bone
+  from a few rotations per role, so every move (a keyframed `BossAction`
+  with events: the warning, the blow) works on any of the three rigs.
 
 - **Third person with a first-person option** (press **V**): over-the-shoulder
   camera with a shoulder swap, aim-down-sights zoom, recoil kick and trauma

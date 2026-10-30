@@ -1,7 +1,10 @@
 class_name MatchManager
 extends Node
-## Runs one battle royale: spawns the field, flies the balloon, starts the
-## Briar, tracks eliminations and declares the last critter standing.
+## Runs one match: spawns the field, flies the balloon, starts the Briar,
+## tracks eliminations and declares the winner. A battle royale (the last
+## critter standing), a Team Battle (two teams of 25, two balloons, the last
+## team standing) or a Boss Battle (you and 24 bots against the map's boss:
+## BOSSES).
 
 signal phase_changed(phase: Phase)
 signal finished(winner: Critter, player_placement: int)
@@ -104,6 +107,33 @@ var doppel_beaten := false
 var _difficulty := 1
 ## Your arsenal (Arsenal): from your CALL_AT-th beat-down you can call it in, once a match.
 var called_in := false
+## What kind of match (Settings "mode", from game.gd before setup): "royale",
+## everyone for themselves; "teams", a Team Battle (you and TEAM_SIZE - 1 bots,
+## the Carrot Crew, against TEAM_SIZE, the Bramble Mob: no friendly fire, the
+## last team standing wins); "boss", a Boss Battle (you and TEAM_SIZE - 1 bots
+## against the map's boss, no Briar).
+var mode := "royale"
+const MODES := ["royale", "teams", "boss"]
+const TEAM_SIZE := 25
+const TEAM_NAMES := ["", "the Carrot Crew", "the Bramble Mob"]
+## Each map's boss (Boss).
+const BOSSES := {"island": "res://src/bosses/brute_boss.gd", "cage": "res://src/bosses/hamster_boss.gd",
+	"toybox": "res://src/bosses/robot_boss.gd"}
+## A Team Battle's second balloon (theirs: yours is `dropship`).
+var enemy_ship: Dropship
+## A Boss Battle's boss, and how long after everyone's down it turns up.
+var boss: Boss
+const BOSS_AFTER := 35.0
+const BOSS_SUPPLY_INTERVAL := 50.0
+var _boss_t := -1.0
+## The side that won a Team Battle or a Boss Battle (1: yours; 2: theirs, or the boss).
+var winning_team := 0
+## What beat the player down, by name (a critter, a boss), for the end
+## screen, and a boss's name for the blow.
+var killed_by := ""
+var killed_with := ""
+## Your squad in a Team Battle: the bots that jumped with you, sticking by you.
+var squad: Array[Critter] = []
 
 
 func setup(world_root_: Node3D, island_: Island, opponents: int, difficulty: int, seed_: int, pace_ := 1.0) -> void:
@@ -147,6 +177,12 @@ func setup(world_root_: Node3D, island_: Island, opponents: int, difficulty: int
 	var defs := {}
 	for cd in _available_defs():
 		defs[String(cd.id)] = cd
+	if mode == "teams":
+		opponents = TEAM_SIZE * 2 - 1
+	elif mode == "boss":
+		opponents = TEAM_SIZE - 1
+	AIBrain.teams_on = mode == "teams"
+	AIBrain.boss = null
 	# the cast (Cast): your rivals and the bots you've made radical always
 	# come back for more, then the ones with grudges, then anyone
 	for n in Cast.lineup(opponents, rng):
@@ -187,9 +223,15 @@ func setup(world_root_: Node3D, island_: Island, opponents: int, difficulty: int
 		_remembers_you(c, n)
 		if Burrow.modifier_on("stampede"):
 			c.speed_scale = 1.2
-	_form_gang()
-	_choose_nemesis()
-	_choose_bounty()
+	if mode != "royale":
+		_pick_teams()
+	if mode == "royale":
+		_form_gang()
+	if mode != "boss":
+		_choose_nemesis()
+		_choose_bounty()
+	else:
+		_make_boss()
 	RivalBook.save()
 	total = critters.size() + 1   # + the player, who joins after picking a critter
 	_alive_cache = total
@@ -200,6 +242,8 @@ func setup(world_root_: Node3D, island_: Island, opponents: int, difficulty: int
 func spawn_player(def: CritterDef, skin_id: String) -> Critter:
 	var display := "Bun" if def.id == &"bun" else "You (%s)" % def.display_name
 	player = _spawn_critter(def, display)
+	if mode != "royale":
+		player.team = 1
 	player.visual.apply_skin(skin_id)
 	player.inventory.grenades = 2   # (more in crates and lying about)
 	Outfits.dress_player(player)   # (your wardrobe, from the Workshop)
@@ -609,8 +653,8 @@ func _choose_nemesis() -> void:
 	var best: Critter = null
 	var best_heat := -1.0
 	for c in critters:
-		if c == player:
-			continue
+		if c == player or c.team == 1:
+			continue   # (in a Team Battle, only the other side hunts you)
 		var h := Cast.heat(c.display_name) + (0.5 if RivalBook.is_rival(c.display_name) else 0.0) + RivalBook.your_kills(c.display_name) * 0.01
 		if h > best_heat:
 			best_heat = h
@@ -696,6 +740,8 @@ func _check_mastery() -> void:
 func _choose_bounty() -> void:
 	var best := -1.0
 	for c in critters:
+		if c.team == 1:
+			continue   # (no price on your own team's heads)
 		var n := c.display_name
 		var worth := Cast.heat(n) * 10.0 + (8.0 if RivalBook.is_rival(n) else 0.0) + RivalBook.kills_on_you(n)
 		if (Cast.heat(n) >= 2 or RivalBook.is_rival(n)) and worth > best:
@@ -739,6 +785,11 @@ func headlines() -> Array:
 		out.append("%s is furious with the director, and won't play by its rules." % angry[0])
 	if bounty_name != "":
 		out.append("BOUNTY: %s. Beat them down for %d acorns." % [Cast.title(bounty_name), bounty])
+	if mode == "teams":
+		out.push_front("TEAM BATTLE: you and %d bots, %s, against %d of %s. Last team standing wins." % [TEAM_SIZE - 1,
+			TEAM_NAMES[1], TEAM_SIZE, TEAM_NAMES[2]])
+	elif mode == "boss" and boss:
+		out.push_front("BOSS BATTLE: %s turns up %d seconds after the drop. Find a gun, and stick together." % [boss.display_name, int(BOSS_AFTER)])
 	return out
 
 
@@ -844,12 +895,18 @@ func begin_drop() -> void:
 	dropship = Dropship.new()
 	dropship.name = "Dropship"
 	world_root.add_child(dropship)
-	dropship.setup(island.terrain.island_radius, rng, island.drop_vehicle, island.play_bounds())
+	dropship.setup(island.terrain.island_radius, rng, island.drop_vehicle, island.play_bounds(), -1.0 if mode == "teams" else 0.0)
+	if mode == "teams":
+		# theirs flies the same way down the other side of the map
+		enemy_ship = Dropship.new()
+		enemy_ship.name = "EnemyDropship"
+		world_root.add_child(enemy_ship)
+		enemy_ship.setup(island.terrain.island_radius, rng, island.drop_vehicle, island.play_bounds(), 1.0, dropship.dir_angle)
 	# the bots know where you like to land
 	var fav := PlayerProfile.favourite_landing(island.pois.map(func(p): return p.name))
 	var fav_poi: Dictionary = {}
 	for p in island.pois:
-		if p.name == fav:
+		if p.name == fav and mode == "royale":
 			fav_poi = p
 	if not fav_poi.is_empty():
 		get_tree().create_timer(12.0).timeout.connect(func():
@@ -859,9 +916,14 @@ func begin_drop() -> void:
 	var per_poi := {}
 	var poi_cap := maxi(2, ceili(critters.size() / maxf(island.pois.size() * 1.5, 1.0)))
 	for c in critters:
-		dropship.board(c)
+		var ship := ship_of(c)
+		ship.board(c)
 		var brain := c.get_node_or_null("AIBrain") as AIBrain
-		if brain:
+		if brain and mode == "teams":
+			# a team lands on its own side of the map, along its balloon's route
+			brain.drop_spot = _team_spot(ship)
+			brain.drop_progress = clampf(ship.progress_nearest(brain.drop_spot) + rng.randf_range(-0.05, 0.03), 0.02, 0.98)
+		elif brain:
 			# pick a landing spot (POIs are popular) and jump when the balloon is closest
 			var spot := island.random_land_point(2.5)
 			if rng.randf() < 0.65 and not island.pois.is_empty():
@@ -889,6 +951,8 @@ func begin_drop() -> void:
 		db.drop_spot = Vector3(at.x, island.terrain.height_at(at.x, at.y), at.y)
 		db.drop_progress = clampf(dropship.progress_nearest(db.drop_spot), 0.02, 0.98)
 	dropship.launch()
+	if enemy_ship:
+		enemy_ship.launch()
 	_set_phase(Phase.DROPPING)
 	# the lobby's news, a line at a time once everyone's aboard
 	var news := headlines()
@@ -898,6 +962,8 @@ func begin_drop() -> void:
 
 func _exit_tree() -> void:
 	AIBrain.kills_held = false   # (statics: none of this match's rules outside it)
+	AIBrain.teams_on = false
+	AIBrain.boss = null
 	AIBrain.player_muffled = false
 	AIBrain.vision_scale = 1.0
 	WeaponDB.only = &""
@@ -922,30 +988,44 @@ func _process(delta: float) -> void:
 	if storm and storm.shrinking != _was_shrinking:
 		_on_briar_moves(storm.shrinking)
 	if phase == Phase.PLAYING:
-		_direct(delta)
-		_tend_gangs(delta)
+		if mode == "royale":
+			_direct(delta)
+			_tend_gangs(delta)
+		elif mode == "teams":
+			if player and is_instance_valid(player) and player.alive:
+				_hunt_you(delta)   # (a nemesis on the other team still comes for you)
+		else:
+			_tend_boss(delta)
 		_supply_t += delta
-		if _supply_t >= SUPPLY_INTERVAL * pace:
+		if _supply_t >= (BOSS_SUPPLY_INTERVAL if mode == "boss" else SUPPLY_INTERVAL) * pace:
 			_supply_t = 0.0
 			_spawn_supply_drop()
 	if phase == Phase.DROPPING:
-		if dropship and is_instance_valid(dropship):
-			for c in critters:
-				if c.state == Critter.State.IN_DROPSHIP:
-					c.global_position = dropship.global_position + Vector3.UP * 1.0
-					var brain := c.get_node_or_null("AIBrain") as AIBrain
-					if brain and dropship.progress >= brain.drop_progress:
-						dropship.eject(c)
+		for c in critters:
+			if c.state == Critter.State.IN_DROPSHIP:
+				var ship := ship_of(c)
+				if ship == null or not is_instance_valid(ship):
+					continue
+				c.global_position = ship.global_position + Vector3.UP * 1.0
+				var brain := c.get_node_or_null("AIBrain") as AIBrain
+				if brain and ship.progress >= brain.drop_progress:
+					ship.eject(c)
 		var anyone_aboard := false
 		for c in critters:
 			if c.state == Critter.State.IN_DROPSHIP:
 				anyone_aboard = true
 		if not anyone_aboard:
-			storm.player = player
-			storm.rush = Burrow.modifier_on("briar_rush")
-			storm.start(island, island.terrain.island_radius + 50.0, pace, briar_variant)
-			var v: Dictionary = Storm.VARIANTS[storm.variant]
-			Events.announce.emit(String(v.title).to_upper(), v.rule)
+			if mode == "boss":
+				# no Briar: the boss turns up instead, once everyone's had time to find a gun
+				_boss_t = BOSS_AFTER
+				Events.announce.emit("%s IS COMING" % boss.display_name.to_upper(),
+					"Find a carrot gun: it turns up in %d seconds." % int(BOSS_AFTER))
+			else:
+				storm.player = player
+				storm.rush = Burrow.modifier_on("briar_rush")
+				storm.start(island, island.terrain.island_radius + 50.0, pace, briar_variant)
+				var v: Dictionary = Storm.VARIANTS[storm.variant]
+				Events.announce.emit(String(v.title).to_upper(), v.rule)
 			_set_phase(Phase.PLAYING)
 
 
@@ -993,7 +1073,7 @@ func _direct(delta: float) -> void:
 ## Send the nearest armed bots to where the player is hiding (and say so).
 func flush_out_player() -> Array[Critter]:
 	var hunters: Array[Critter] = []
-	var bots := alive_critters().filter(func(c): return c != player and c.inventory.has_any_weapon())
+	var bots := alive_critters().filter(func(c): return c != player and c.inventory.has_any_weapon() and (c.team == 0 or c.team != player.team))
 	bots.sort_custom(func(a, b): return a.global_position.distance_to(player.global_position) < b.global_position.distance_to(player.global_position))
 	for c in bots.slice(0, 3):
 		var brain := c.get_node_or_null("AIBrain") as AIBrain
@@ -1031,8 +1111,9 @@ func _set_adapted(on: bool) -> void:
 ## You can call your arsenal in: you've won a gun of it on the Trail, beaten
 ## down Arsenal.CALL_AT critters this match, and not called it in yet.
 func can_call_in() -> bool:
+	var earned := player_beat_downs >= Arsenal.CALL_AT or (mode == "boss" and boss != null and boss.state != Boss.State.WAITING)
 	return not called_in and player != null and player.alive and player.state == Critter.State.GROUND \
-		and player_beat_downs >= Arsenal.CALL_AT and phase == Phase.PLAYING and not Arsenal.unlocked().is_empty()
+		and earned and phase == Phase.PLAYING and not Arsenal.unlocked().is_empty()
 
 
 ## Call your arsenal in at once: a crate drops at `at` (or beside you) with
@@ -1084,8 +1165,8 @@ func send_call_in(gun: StringName = &"", at := Vector3.INF) -> void:
 func flare_lit(at: Vector3) -> Array[Critter]:
 	var seen := []
 	for c in alive_critters():
-		if c == player or (doppel and c == doppel):
-			continue
+		if c == player or (doppel and c == doppel) or (c.team != 0 and player and c.team == player.team):
+			continue   # (your own team leaves your crate be)
 		var brain := c.get_node_or_null("AIBrain") as AIBrain
 		var d := c.global_position.distance_to(at)
 		if brain == null or brain.process_mode == Node.PROCESS_MODE_DISABLED or d > FLARE_SEEN or not c.inventory.has_any_weapon():
@@ -1161,7 +1242,8 @@ func player_jump() -> void:
 const JUMP_BUDDIES := Vector2i(2, 4)
 
 func _jump_buddies() -> void:
-	var aboard := critters.filter(func(c): return c != player and c.state == Critter.State.IN_DROPSHIP and c.has_node("AIBrain"))
+	var aboard := critters.filter(func(c): return c != player and c.state == Critter.State.IN_DROPSHIP and c.has_node("AIBrain") \
+		and ship_of(c) == dropship)   # (a Team Battle: only your balloon's)
 	if aboard.is_empty():
 		return
 	# bots you've made radical jump after you; then the ones who meant to
@@ -1173,6 +1255,9 @@ func _jump_buddies() -> void:
 	var fwd := (dropship.finish - dropship.start).normalized()
 	for i in mini(rng.randi_range(JUMP_BUDDIES.x, JUMP_BUDDIES.y), aboard.size()):
 		var brain := (aboard[i] as Critter).get_node("AIBrain") as AIBrain
+		if mode == "teams" and (aboard[i] as Critter).team == player.team:
+			brain.escort = player   # (your squad: they stick by you)
+			squad.append(aboard[i])
 		brain.drop_progress = dropship.progress + (0.4 + i * 0.7) / dropship.duration
 		var near := Vector2(under.x, under.z) + Vector2(fwd.x, fwd.z) * rng.randf_range(10.0, 40.0)
 		var land := island.random_land_point(2.5, near, 60.0)
@@ -1258,13 +1343,19 @@ func _on_critter_died(victim: Node, info: DamageInfo) -> void:
 	if c != player and c != doppel and info.kind == DamageInfo.Kind.STORM:
 		RivalBook.note_director(c.display_name, 2)   # (the Briar took it: the director's fault)
 
-	if alive.size() <= 1 and phase != Phase.ENDED and kill_cam:
+	if mode == "royale" and alive.size() <= 1 and phase != Phase.ENDED and kill_cam:
 		kill_cam.note_final(c, info)   # (before anyone hears the match is over)
 	if c == player:
+		killed_by = name_of(info)
+		killed_with = (info.attacker as Boss).attack_name(info.weapon_id) if info.attacker is Boss else ""
 		StatBook.end_match(c.placement, total, true)
 		_check_mastery()
 		player_eliminated.emit(c.placement, info.attacker as Critter)
-	if alive.size() <= 1 and phase != Phase.ENDED:
+	if mode == "teams":
+		_check_teams(c, info)
+	elif mode == "boss":
+		_check_boss_battle()
+	elif alive.size() <= 1 and phase != Phase.ENDED:
 		var winner: Critter = alive[0] if alive.size() == 1 else null
 		if winner:
 			winner.placement = 1
@@ -1466,8 +1557,8 @@ const BRAWL_SECONDS := 420.0
 var _play_start := -1.0
 
 func bots_may_kill() -> bool:
-	if phase == Phase.LOADING or phase == Phase.ENDED:
-		return true
+	if phase == Phase.LOADING or phase == Phase.ENDED or mode != "royale":
+		return true   # (a team match's fights are the point)
 	# (the curve starts once everyone's down; until then, early landers
 	# scrapping on the ground get the starting share)
 	var played := _clock - _play_start if _play_start >= 0.0 else 0.0
@@ -1481,6 +1572,154 @@ func _set_phase(p: Phase) -> void:
 	phase = p
 	phase_changed.emit(p)
 	Events.match_phase_changed.emit(p)
+
+
+# ---- Team Battles and Boss Battles ------------------------------------------------------------
+
+## Who's on whose side. A Boss Battle: everyone on yours. A Team Battle: the
+## bots you've made radical, and your rivals, on the other side (they'd
+## rather beat you down); the rest dealt out at random.
+func _pick_teams() -> void:
+	var bots := critters.duplicate()
+	if mode == "teams":
+		var keys := {}
+		for c in bots:
+			keys[c] = Cast.heat(c.display_name) * 10.0 + (15.0 if RivalBook.is_rival(c.display_name) else 0.0) + extra_rng.randf()
+		bots.sort_custom(func(a, b): return keys[a] > keys[b])
+	for i in bots.size():
+		var c: Critter = bots[i]
+		c.team = 2 if mode == "teams" and i < TEAM_SIZE else 1
+		if c.team == 1:
+			c.visual.clear_enemy_highlight()
+			c.visual.set_ally_tag(c.display_name)
+
+
+## How many of each side are still standing: [nobody's, yours, theirs].
+func team_counts() -> Array[int]:
+	var out: Array[int] = [0, 0, 0]
+	for c in alive_critters():
+		out[clampi(c.team, 0, 2)] += 1
+	return out
+
+
+## The balloon `c` rides in (a Team Battle's other side rides the other one).
+func ship_of(c: Critter) -> Dropship:
+	if enemy_ship and is_instance_valid(enemy_ship) and (c.team == 2 or enemy_ship.passengers.has(c)):
+		return enemy_ship
+	return dropship
+
+
+## Somewhere to land on a team's own side: near its balloon's route, often
+## at a landmark there.
+func _team_spot(ship: Dropship) -> Vector3:
+	var r := island.terrain.island_radius
+	var along := ship.start.lerp(ship.finish, rng.randf_range(0.12, 0.88))
+	var near := Vector2(along.x, along.z)
+	var pois := island.pois.filter(func(p): return (p.center as Vector2).distance_to(near) < r * 0.45)
+	if not pois.is_empty() and rng.randf() < 0.6:
+		var poi: Dictionary = pois[rng.randi() % pois.size()]
+		var cc: Vector2 = poi.center + Vector2(rng.randf_range(-14, 14), rng.randf_range(-14, 14))
+		return Vector3(cc.x, island.terrain.height_at(cc.x, cc.y), cc.y)
+	return island.random_land_point(2.5, near, r * 0.3)
+
+
+## A Team Battle is over when one side is gone.
+func _check_teams(c: Critter, info: DamageInfo) -> void:
+	if phase == Phase.ENDED or player == null:
+		return
+	var left := team_counts()
+	if left[1] > 0 and left[2] > 0:
+		return
+	winning_team = 1 if left[1] > 0 else 2
+	if kill_cam:
+		kill_cam.note_final(c, info)
+	var won := winning_team == 1
+	for x in alive_critters():
+		x.placement = 1
+	if player.alive:
+		StatBook.end_match(1 if won else 2, total, false)
+		_check_mastery()
+	_set_phase(Phase.ENDED)
+	storm.active = false
+	finished.emit(player if won and player.alive else null, 1 if won else 2)
+
+
+## The map's boss, built and parked out of sight until it's time (BOSSES).
+func _make_boss() -> void:
+	var path: String = BOSSES.get(island.map_id if island else "island", BOSSES["island"])
+	boss = (load(path) as GDScript).new() as Boss
+	boss.setup(self, _difficulty)
+	world_root.add_child(boss)
+	boss.global_position = Critter.PARKED
+	boss.died.connect(_on_boss_died)
+
+
+## Time it turns up (BOSS_AFTER seconds after the drop).
+func _tend_boss(delta: float) -> void:
+	if boss == null or not is_instance_valid(boss) or boss.state != Boss.State.WAITING or _boss_t < 0.0:
+		return
+	_boss_t -= delta
+	if _boss_t <= 0.0:
+		release_boss()
+
+
+## Seconds until the boss turns up (-1: it isn't counting down: still dropping, or here).
+func boss_countdown() -> float:
+	return _boss_t
+
+
+## It turns up, somewhere out in the open near the middle of the map.
+func release_boss() -> void:
+	if boss == null or boss.state != Boss.State.WAITING:
+		return
+	_boss_t = -1.0
+	var r := island.terrain.island_radius
+	var spot := island.random_land_point(2.0, Vector2.ZERO, r * 0.25)
+	for i in 12:   # (not on top of you: it lands where you can see it coming)
+		if player == null or not player.alive or Vector2(spot.x - player.global_position.x, spot.z - player.global_position.z).length() > 45.0:
+			break
+		spot = island.random_land_point(2.0, Vector2.ZERO, r * 0.35)
+	boss.arrive(spot)
+	AIBrain.boss = boss
+	Audio.play_music("match_boss", 2.5)
+	Events.announce.emit("%s HAS ARRIVED!" % boss.display_name.to_upper(), "%s %s. Beat it down, together." % [boss.display_name, boss.title])
+	if can_call_in():
+		Events.headline.emit("Your arsenal is ready: %s to call it in." % GameInput.prompt(&"call_in"))
+
+
+## A Boss Battle is lost when nobody's left standing against it.
+func _check_boss_battle() -> void:
+	if phase == Phase.ENDED or player == null or not alive_critters().is_empty():
+		return
+	winning_team = 2
+	_set_phase(Phase.ENDED)
+	finished.emit(null, total)
+
+
+## The boss is down: everyone still standing wins.
+func _on_boss_died(by: Node) -> void:
+	if phase == Phase.ENDED:
+		return
+	winning_team = 1
+	var who := "You" if by == player else (String(by.get("display_name")) if by and "display_name" in by else "Somebody")
+	Events.announce.emit("%s IS DOWN!" % boss.display_name.to_upper(),
+		"You landed the last blow!" if by == player else "%s landed the last blow." % who)
+	for x in alive_critters():
+		x.placement = 1
+	if player and player.alive:
+		StatBook.end_match(1, total, false)
+		_check_mastery()
+	_set_phase(Phase.ENDED)
+	finished.emit(player if player and player.alive else null, 1)
+
+
+## What did that, by name (the kill feed and the end screen).
+func name_of(info: DamageInfo) -> String:
+	if info.attacker is Critter or info.attacker is Boss:
+		return String(info.attacker.display_name)
+	if info.kind == DamageInfo.Kind.STORM:
+		return "the Briar"
+	return ""
 
 
 # ---- storm queries used by the AI ----------------------------------------------------------

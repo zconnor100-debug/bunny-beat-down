@@ -5,6 +5,9 @@ extends Node3D
 const GAME_SCENE := "res://scenes/game.tscn"
 ## [settings value, name in the menu]
 const MAPS := [["island", "Wildwood Island"], ["cage", "Hamster Cage"], ["toybox", "Toy Box Bash"]]
+const MODES := [["royale", "Battle Royale"], ["teams", "Team Battle (25 v 25)"], ["boss", "Boss Battle (25 v 1)"]]
+const MODE_BOSSES := {"island": "Brutus, a bunny the size of a house", "cage": "Nibbles the Rabid, the cage's own hamster gone huge and mad",
+	"toybox": "the Tin Tyrant, a wind-up robot ten critters tall"}
 
 var _ui: Control
 var _menu: VBoxContainer
@@ -301,12 +304,17 @@ func _open_play() -> void:
 	grid.add_theme_constant_override("h_separation", 30)
 	grid.add_theme_constant_override("v_separation", 12)
 	v.add_child(grid)
+	grid.add_child(UITheme.label("Mode", 22))
+	var mode := OptionButton.new()
+	for m in MODES:
+		mode.add_item(m[1])
+	mode.selected = maxi(0, MODES.map(func(m): return m[0]).find(String(Settings.get_value(&"mode"))))
+	grid.add_child(mode)
 	grid.add_child(UITheme.label("Map", 22))
 	var map := OptionButton.new()
 	for m in MAPS:
 		map.add_item(m[1])
 	map.selected = maxi(0, MAPS.map(func(m): return m[0]).find(String(Settings.get_value(&"map"))))
-	map.item_selected.connect(func(i): Settings.set_value(&"map", MAPS[i][0]))
 	grid.add_child(map)
 	grid.add_child(UITheme.label("Opponents", 22))
 	var opp := UITheme.pad_spin_box(SpinBox.new())
@@ -315,6 +323,25 @@ func _open_play() -> void:
 	opp.value = Settings.get_value(&"opponents")
 	opp.value_changed.connect(func(x): Settings.set_value(&"opponents", int(x)))
 	grid.add_child(opp)
+	# what the mode is, in a line (a Boss Battle: which boss is on the map)
+	var about := UITheme.label("", 20, Color(UITheme.CREAM, 0.85))
+	about.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	about.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	about.custom_minimum_size.x = 640.0
+	var explain := func():
+		var m := String(Settings.get_value(&"mode"))
+		var map_id := String(Settings.get_value(&"map"))
+		opp.editable = m == "royale"
+		about.text = {"teams": "You and 24 bots against 25. Blue tags are your team; no friendly fire. Last team standing wins.",
+			"boss": "You and 24 bots against %s. Find a gun before it turns up." % MODE_BOSSES.get(map_id, "the boss")}.get(m,
+			"Everyone for themselves. Last critter standing wins.")
+	mode.item_selected.connect(func(i):
+		Settings.set_value(&"mode", MODES[i][0])
+		explain.call())
+	map.item_selected.connect(func(i):
+		Settings.set_value(&"map", MAPS[i][0])
+		explain.call())
+	explain.call()
 	grid.add_child(UITheme.label("Difficulty", 22))
 	var diff := OptionButton.new()
 	for d in ["Sleepy", "Scrappy", "Savage"]:
@@ -334,6 +361,7 @@ func _open_play() -> void:
 	quick.button_pressed = GameSession.quick
 	quick.toggled.connect(func(on): GameSession.quick = on)
 	grid.add_child(quick)
+	v.add_child(about)
 	var row := HBoxContainer.new()
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	row.add_theme_constant_override("separation", 20)

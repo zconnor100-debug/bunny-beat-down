@@ -187,6 +187,27 @@
     "sfx/death_squeak_2.ogg",
     "sfx/death_squeak_3.ogg"
   ],
+  "boss_roar": [
+    "sfx/boss_roar_1.ogg",
+    "sfx/boss_roar_2.ogg"
+  ],
+  "boss_screech": [
+    "sfx/boss_screech_1.ogg",
+    "sfx/boss_screech_2.ogg"
+  ],
+  "boss_stomp": [
+    "sfx/boss_stomp_1.ogg",
+    "sfx/boss_stomp_2.ogg",
+    "sfx/boss_stomp_3.ogg"
+  ],
+  "boss_clank": [
+    "sfx/boss_clank_1.ogg",
+    "sfx/boss_clank_2.ogg",
+    "sfx/boss_clank_3.ogg"
+  ],
+  "boss_laser": [
+    "sfx/boss_laser.ogg"
+  ],
   "wind_loop": [
     "sfx/wind_loop.ogg"
   ],
@@ -239,6 +260,10 @@
       "music/toybox_vivacity.mp3",
       "music/toybox_march_of_the_spoons.mp3",
       "music/toybox_divertimento_k131.mp3"
+    ],
+    "match_boss": [
+      "music/boss_volatile_reaction.mp3",
+      "music/boss_killers.mp3"
     ]
   }
 }

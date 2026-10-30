@@ -354,6 +354,8 @@ func _aim_assist_target() -> Dictionary:
 		var c := n as Critter
 		if c == null or c == critter or not c.alive or c.state != Critter.State.GROUND:
 			continue
+		if c.team != 0 and c.team == critter.team:
+			continue   # (no help aiming at your own team)
 		var feet := c.global_position
 		var head := feet + Vector3.UP * c.chest_height() / 0.6
 		var along := (c.get_chest_position() - origin).dot(fwd)

@@ -39,6 +39,7 @@ const DEFAULTS := {
 	"difficulty": Difficulty.NORMAL,
 	"seed": 0,                      # 0 = random island every match
 	"map": "island",                # "island" (Wildwood Island), "cage" (Hamster Cage) or "toybox" (Toy Box Bash)
+	"mode": "royale",               # "royale", "teams" (25 v 25) or "boss" (25 v the map's boss): MatchManager.mode
 	"player_character": "bun",
 	"player_skin": "default",
 	"check_updates": true,          # ask GitHub for a newer release on the main menu (UpdateCheck)

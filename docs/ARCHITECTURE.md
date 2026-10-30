@@ -429,6 +429,49 @@ The **Briar** (`Storm`) runs staged wait/shrink cycles. Each new safe circle
 is placed inside the old one and nudged onto land. The bots' `FLEE_STORM` mode
 queries the same API the HUD uses. The last critter standing wins.
 
+## Team Battles and Boss Battles
+
+`MatchManager.mode` (Settings "mode", or `-- --mode teams|boss`) picks the
+kind of match; a run's stops are always battle royales.
+
+- **Teams** are `Critter.team` (0 in a battle royale). `take_damage` drops a
+  team mate's carrot, blast or club before anything else happens;
+  `AIBrain._perceive` skips team mates, fights the other team as far as it
+  can see (`AIBrain.teams_on`) and roams toward it; the aim assist, the
+  minimap's red blips and a flare's crate leave your team alone.
+  `MatchManager._pick_teams` puts the bots you've made radical (and your
+  rivals) on the other side, and `CritterVisual.set_ally_tag` gives yours a
+  blue rim and a see-through-walls tag. A Team Battle flies two
+  `Dropship`s (`setup(lane, heading)`: the same way, either side of the
+  middle) and lands each team along its own route (`_team_spot`); the
+  match ends in `_check_teams` when one side is gone.
+- **Bosses** (`src/bosses/`) are not critters: a `Boss` is a Node3D with
+  the model (`assets/bosses/<id>/`, scaled so its skull is `Boss.HEIGHT`
+  up), Area3D hitboxes on anchors that follow its bones (they carry the
+  `critter` meta, so `Projectiles` calls its `receive_shot` like a
+  critter's; `Explosion.detonate` calls `receive_blast`; a club lands via
+  `receive_melee`), and AnimatableBody3D capsules on the CRITTERS layer
+  that push critters out of its body. It walks the critters' navmesh
+  (cutting the corners: it stomps through props), its feet on
+  `terrain.height_at`. `BossPoser` poses its skeleton from per-role
+  rotations in model space (parents first, so one pose works on any of the
+  three rigs); a move is a `BossAction` (keyframed poses eased between,
+  events at set times, a per-frame `tick`). Every blow is announced by
+  `Boss.warn` (a `BossFX` decal ring filling up, and a `danger` zone that
+  `AIBrain._dodge` gets out of after a reaction time that depends on the
+  bot's skill) and lands through `hurt_ring` / `hurt`, which spare anyone in
+  the air. `BruteBoss`, `RobotBoss` and `HamsterBoss` choose between their
+  moves in `_choose`; `Boss.snapshot`/`restore` let the TimeKeeper rewind it.
+  Bots' carrots count for `Boss.BOT_DAMAGE` of yours.
+- The models come from `tools/characters/boss_build.py` (recipes in
+  `bosses.json`): decimate, orient and scale a download; build a skeleton
+  from joints read off `grid` renders, or keep the download's own (rested in
+  its bind pose); skin by bone heat on a voxel-remeshed copy with its stray
+  islands removed (bone heat finds no solution on a decimated sculpt) and
+  copy the weights across; paint into the texture by where each texel sits
+  on the body (`paint`: Nibbles's blood and foam); export the GLB and a
+  `<id>.boss.json` (bones per role, tips, hitbox radii, eyes, mouth).
+
 ## Tests
 
 `godot --headless --path . -s tests/run_tests.gd` runs:

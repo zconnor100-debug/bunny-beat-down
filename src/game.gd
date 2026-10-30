@@ -12,6 +12,19 @@ const TOYBOX_TIPS := [
 	"Mind the tiny bricks. Ow.",
 ]
 const MAP_NAMES := {"island": "Island", "cage": "Hamster Cage", "toybox": "Toy Box Bash"}
+const MODE_NAMES := {"royale": "Battle Royale", "teams": "Team Battle (25 v 25)", "boss": "Boss Battle (25 v 1)"}
+const BOSS_NAMES := {"island": "Brutus", "cage": "Nibbles the Rabid", "toybox": "the Tin Tyrant"}
+const TEAM_TIPS := [
+	"Team Battle: blue tags are your team. Friendly fire is off, so let rip.",
+	"The bots that jump with you are your squad: they stick by you.",
+	"Your team mates show through walls. The other team doesn't.",
+]
+const BOSS_TIPS := [
+	"Boss Battle: a red ring on the ground is where its next blow lands. Get out!",
+	"Jump just as a shockwave lands and it rolls right under you.",
+	"Headshots count double on a boss. The Tin Tyrant's wind-up key counts most of all.",
+	"Your arsenal can be called in as soon as the boss turns up.",
+]
 const CAGE_TIPS := [
 	"Hamster tubes are tunnels: run through Tube Town to cross unseen.",
 	"Water bowls are brimming: swim in, and climb out over the rim.",
@@ -49,6 +62,7 @@ var _spectating := false
 var _seed := 0
 var _picker: CharacterSelect
 var _map := "island"
+var _mode := "royale"       ## MatchManager.mode
 var _paid := false          # acorns for this match already added
 var _earned := 0
 var _after_replay: Callable  # the end screen held back for the final-shot replay
@@ -64,12 +78,18 @@ func _ready() -> void:
 		_map = args[args.find("--map") + 1]   # `-- --smoke-test --map cage`
 	if not MAP_NAMES.has(_map):
 		_map = "island"
+	_mode = String(Settings.get_value(&"mode"))
+	if args.has("--mode") and args.find("--mode") + 1 < args.size():
+		_mode = args[args.find("--mode") + 1]   # `-- --mode boss`
+	if not MODE_NAMES.has(_mode):
+		_mode = "royale"
 	if GameSession.replay_seed > 0:
 		_seed = GameSession.replay_seed   # "Rematch (same seed)"
 		GameSession.replay_seed = 0
-	if Run.in_match:   # a run's stop: its map, and a seed of its own
+	if Run.in_match:   # a run's stop: its map, and a seed of its own (and a battle royale, always)
 		var rs := Run.state()
 		_map = String(Run.current().get("map", "island"))
+		_mode = "royale"
 		_seed = int(rs.seed) * 31 + int(rs.row) * 7 + int(rs.playing) * 3 + int(rs.stats.matches) * 101 + 1
 	if _seed == 0:
 		_seed = randi_range(1, 999999)
@@ -123,6 +143,7 @@ func _build_world() -> void:
 	await get_tree().physics_frame
 	match_manager = MatchManager.new()
 	match_manager.name = "Match"
+	match_manager.mode = _mode
 	world.add_child(match_manager)
 	var opponents := int(Settings.get_value(&"opponents"))
 	if Run.in_match:
@@ -305,10 +326,15 @@ func _build_loading() -> void:
 	_load_bar.add_theme_stylebox_override("background", back)
 	v.add_child(_load_bar)
 	var tips: Array = {"cage": CAGE_TIPS + TIPS.slice(0, 3), "toybox": TOYBOX_TIPS + TIPS.slice(0, 3)}.get(_map, TIPS)
+	if _mode == "teams":
+		tips = TEAM_TIPS
+	elif _mode == "boss":
+		tips = BOSS_TIPS
 	var tip := UITheme.label("Tip: " + tips.pick_random(), 22, Color(UITheme.CREAM, 0.8))
 	tip.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(tip)
-	var s := UITheme.label("%s #%d" % [MAP_NAMES[_map], _seed], 18, Color(UITheme.CREAM, 0.5))
+	var what := "" if _mode == "royale" else ("  •  Team Battle" if _mode == "teams" else "  •  Boss Battle against %s" % BOSS_NAMES[_map])
+	var s := UITheme.label("%s #%d%s" % [MAP_NAMES[_map], _seed, what], 18, Color(UITheme.CREAM, 0.5))
 	s.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(s)
 	# pick a critter while the island grows
@@ -520,8 +546,14 @@ func _on_player_eliminated(placement: int, killer: Critter) -> void:
 
 func _on_player_eliminated_screen(placement: int, killer: Critter) -> void:
 	Audio.play(&"defeat_sting", -2.0)
-	var who := killer.display_name if killer and killer != match_manager.player else "the Briar"
+	var who := killer.display_name if killer and killer != match_manager.player else (match_manager.killed_by if match_manager.killed_by != "" else "the Briar")
 	var sub := "You placed #%d of %d — taken out by %s" % [placement, match_manager.total, who]
+	if match_manager.mode == "teams":
+		var left := match_manager.team_counts()
+		sub = "Taken out by %s. Your team fights on: %d of you left, %d of them." % [who, left[1], left[2]]
+	elif match_manager.mode == "boss":
+		var with_ := " (%s)" % match_manager.killed_with if match_manager.killed_with != "" else ""
+		sub = "Squashed by %s%s. %d critters are still fighting it." % [who, with_, match_manager.team_counts()[1]]
 	if killer and killer != match_manager.player:
 		if killer.has_meta(&"new_rival"):
 			sub += "\n%s the %s is now your RIVAL (%s). It'll be back." % [who, RivalBook.label_of(who), RivalBook.score(who)]
@@ -554,6 +586,9 @@ func _on_match_finished(winner: Critter, _placement: int) -> void:
 	if _after_replay.is_valid():
 		_after_replay.call()
 		_after_replay = Callable()
+	if match_manager.mode != "royale":
+		_team_result()
+		return
 	if winner == match_manager.player:
 		GameSession.wins += 1
 		Audio.play_music("victory")
@@ -563,6 +598,43 @@ func _on_match_finished(winner: Critter, _placement: int) -> void:
 		var sub := _end.get_meta(&"sub") as Label
 		if sub:
 			sub.text += "\n%s won the match." % winner.display_name
+
+
+## A Team Battle or a Boss Battle is over: your side won (whether you're
+## still standing or not) or lost. A boss's fall plays out in slow motion
+## first.
+func _team_result() -> void:
+	var mm := match_manager
+	var won := mm.winning_team == 1
+	var p := mm.player
+	var left := mm.team_counts()
+	if mm.mode == "boss" and won and mm.boss and not Settings.is_test_run():
+		Engine.time_scale = 0.35
+		AudioServer.playback_speed_scale = 0.7
+		await get_tree().create_timer(2.6, true, false, true).timeout
+		KillCam.reset_time()
+	var title: String
+	var sub: String
+	if mm.mode == "teams":
+		title = "YOUR TEAM WINS!" if won else "YOUR TEAM LOST"
+		sub = ("%s beat %s: %d of you still standing" % [MatchManager.TEAM_NAMES[1].capitalize(), MatchManager.TEAM_NAMES[2], left[1]]) if won \
+			else ("%s win, with %d still standing" % [MatchManager.TEAM_NAMES[2].capitalize(), left[2]])
+	else:
+		var bn := mm.boss.display_name if mm.boss else "The boss"
+		title = ("%s IS BEATEN!" % bn.to_upper()) if won else ("%s WINS" % bn.to_upper())
+		sub = ("%d critters still standing • you hit it for %d" % [left[1], roundi(p.damage_dealt)]) if won \
+			else "It beat down all %d of you." % mm.total
+	sub += "\n%d beat downs • %d damage dealt" % [p.kills, roundi(p.damage_dealt)] if mm.mode == "teams" else ""
+	if won:
+		GameSession.wins += 1
+		Audio.play_music("victory")
+		Audio.play(&"victory_fanfare", 0.0, 0.0)
+	_team_bonus = TEAM_WIN_BONUS.get(mm.mode, 0) if won else 0
+	_show_end(title, sub, won, null)
+
+
+const TEAM_WIN_BONUS := {"teams": 40, "boss": 80}   ## acorns for your side winning (on top of where you placed)
+var _team_bonus := 0
 
 
 func _show_end(title: String, sub: String, won: bool, killer: Critter) -> void:
@@ -604,6 +676,11 @@ func _show_end(title: String, sub: String, won: bool, killer: Critter) -> void:
 			_earned *= 2
 		_finish_run_stop()
 		Burrow.add_acorns(_earned)
+	if _team_bonus > 0:
+		# your side won (even if you were beaten down along the way)
+		_earned += _team_bonus
+		Burrow.add_acorns(_team_bonus)
+		_team_bonus = 0
 	var stats := UITheme.label("Beat downs: %d   •   Damage: %d   •   %s #%d   •   +%d 🌰 (%d in the Burrow)" % [p.kills, roundi(p.damage_dealt), island.map_title, _seed, _earned, Burrow.acorns()], 20, Color(UITheme.CREAM, 0.8))
 	stats.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	stats.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -681,4 +758,6 @@ func _spectate_next() -> void:
 	if alive.is_empty():
 		_spectating = false
 		return
-	rig.spectate_target = alive.pick_random()
+	var p := match_manager.player
+	var mates := alive.filter(func(c): return p and c.team != 0 and c.team == p.team)
+	rig.spectate_target = (mates if not mates.is_empty() else alive).pick_random()   # (your team, if any are left)

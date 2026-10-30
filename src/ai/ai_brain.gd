@@ -14,7 +14,7 @@ extends Node
 ## makes it a target. Getting shot turns the bot toward the noise; it still
 ## has to spot the shooter.
 
-enum Mode { DROP, LOOT, ROAM, FIGHT, HEAL, FLEE_STORM }
+enum Mode { DROP, LOOT, ROAM, FIGHT, HEAL, FLEE_STORM, BOSS }
 
 const THINK_INTERVAL := 0.2
 const VISION_RANGE := 75.0
@@ -104,6 +104,20 @@ var _hold_pos := Vector3.INF
 var _contest_until := 0.0
 const CONTEST_NEAR := 7.0
 const CONTEST_FAR := 14.0
+## The match's boss while it's out (MatchManager: a Boss Battle). Armed bots
+## fight it from range, circling it, and get out of where its blows are
+## about to land (Boss.danger), jumping as they land.
+static var boss: Boss
+const BOSS_RANGE := Vector2(28.0, 70.0)   ## how far from a boss bots fight it from
+var _orbit := 1.0                 # (which way round the boss it circles)
+var _orbit_t := 0.0
+var _noticed: Dictionary = {}     # a boss's danger zone -> whether this bot saw it coming
+## A Team Battle (MatchManager): bots fight the other team on sight, as far
+## as they can see them, and go looking for it when there's nobody about.
+static var teams_on := false
+## In a Team Battle, the critter this bot sticks by (your squad: MatchManager).
+var escort: Critter
+var _escort_spot := Vector3.INF
 
 var _think_t := randf() * THINK_INTERVAL
 var _last_seen_pos := Vector3.ZERO
@@ -196,6 +210,8 @@ func _perceive() -> void:
 			continue
 		if other.gang != "" and other.gang == me.gang:
 			continue   # (a gang mate: they're out for you together)
+		if other.team != 0 and other.team == me.team:
+			continue   # (on our side)
 		if other.is_player and _clock < _shy_until:
 			continue   # (it ran from you: not looking for another go yet)
 		var to := other.get_chest_position() - eye
@@ -224,7 +240,9 @@ func _perceive() -> void:
 		# leave it be, unless it started it (or we've a score to settle)
 		var grudge := not other.is_player and grudges.has(other.display_name)
 		var reach := _t("fight_range", BOT_FIGHT_RANGE) * (GRUDGE_FIGHT_RANGE if grudge else 1.0)
-		if not other.is_player and (d > reach or (settling() and d > SETTLE_FIGHT_RANGE and not grudge)) \
+		if teams_on:
+			reach = range_   # (the other team: on sight)
+		if not other.is_player and (d > reach or (settling() and d > SETTLE_FIGHT_RANGE and not grudge and not teams_on)) \
 				and _clock - float(_provoked.get(other, -100.0)) > 8.0:
 			continue
 		if not other.is_player and _clock < float(_avoid.get(other, -1.0)):
@@ -410,6 +428,18 @@ func _choose_mode() -> void:
 		if target == null or not armed or me.health < 40.0:
 			mode = Mode.FLEE_STORM
 			return
+	if boss_out():
+		# a Boss Battle: patch up, find a gun, then go and fight it
+		if me.health < _t("heal_at", 60.0) and me.inventory.clovers > 0:
+			mode = Mode.HEAL
+			return
+		var near := me.global_position.distance_to(boss.global_position) < 80.0
+		if (not armed or (me.inventory.weapon_count() < 2 and not near)) and _wants_loot():
+			mode = Mode.LOOT   # (a second gun first, unless it's right here)
+			return
+		if armed:
+			mode = Mode.BOSS
+			return
 	if target and not target.is_player and me.health < _t("break_off", BREAK_OFF_HEALTH) and me.health < target.health:
 		# losing to another bot: break off, run, patch up (two beaten-up bots
 		# still have it out: running from everyone, they'd wander about together)
@@ -561,6 +591,9 @@ func _act(delta: float) -> void:
 	me.want_aim = false
 	me.want_sprint = false
 	me.want_crouch = false
+	if _dodge():
+		_unstick(delta)
+		return
 	match mode:
 		Mode.FIGHT:
 			_fight(delta)
@@ -575,6 +608,8 @@ func _act(delta: float) -> void:
 				_set_dest(match_manager.safe_point_for(me.global_position))
 			me.want_sprint = true
 			_follow_path(true)
+		Mode.BOSS:
+			_fight_boss(delta)
 		_:
 			_roam()
 	if panicking():
@@ -650,6 +685,8 @@ func _roam() -> void:
 	_contest_pos = Vector3.INF
 	if _hunt_pos != Vector3.INF and (_clock >= _hunt_until or me.global_position.distance_to(_hunt_pos) < 6.0):
 		_hunt_pos = Vector3.INF
+	if _keep_by_escort():
+		return
 	if _dest == Vector3.INF or me.global_position.distance_to(_dest) < 4.0:
 		var center := Vector2.ZERO
 		var radius := 1e9
@@ -663,6 +700,12 @@ func _roam() -> void:
 			var c: Vector2 = poi.center
 			if c.distance_to(center) < radius:
 				p = Vector3(c.x, island.terrain.height_at(c.x, c.y), c.y)
+		# a Team Battle: go looking for the other team (roughly where one of them is)
+		var foe := _enemy_to_find() if teams_on and not settling() and me.inventory.has_any_weapon() else null
+		if foe and randf() < 0.7:
+			var fp := foe.global_position + Vector3(randf_range(-25, 25), 0, randf_range(-25, 25))
+			if fp.distance_to(Vector3(center.x, fp.y, center.y)) < radius:
+				p = fp
 		_set_dest(p)
 	_follow_path(false)
 
@@ -893,7 +936,13 @@ func _may_shoot_player() -> bool:
 func _pick_weapon_for_range() -> void:
 	if me.is_reloading() or target == null:
 		return
-	var dist := me.global_position.distance_to(target.global_position)
+	_pick_weapon_for(me.global_position.distance_to(target.global_position))
+
+
+## The gun that suits a fight `dist` metres off.
+func _pick_weapon_for(dist: float) -> void:
+	if me.is_reloading():
+		return
 	var best := -1
 	var best_fit := INF
 	for i in Inventory.SLOTS:
@@ -909,6 +958,154 @@ func _pick_weapon_for_range() -> void:
 			best = i
 	if best >= 0 and best != me.current_slot:
 		me.switch_to(best)
+
+
+# ---- teams and bosses --------------------------------------------------------------------------------------
+
+## A boss is out, and it's not on our side.
+static func boss_out_for(c: Critter) -> bool:
+	return boss != null and is_instance_valid(boss) and boss.alive and boss.state != Boss.State.WAITING \
+		and (c == null or c.team != boss.team)
+
+
+func boss_out() -> bool:
+	return boss_out_for(me)
+
+
+## One of the other team still standing, the nearest of a few (a Team Battle).
+func _enemy_to_find() -> Critter:
+	var best: Critter = null
+	var best_d := INF
+	for n in me.get_tree().get_nodes_in_group(&"critters"):
+		var c := n as Critter
+		if c == null or not c.alive or c.team == 0 or c.team == me.team or c.state != Critter.State.GROUND:
+			continue
+		var d := c.global_position.distance_to(me.global_position) * randf_range(0.7, 1.3)
+		if d < best_d:
+			best_d = d
+			best = c
+	return best
+
+
+## Your squad (a Team Battle) stays by you: a spot a few metres off you,
+## a new one when you've moved on. True while it's doing that.
+func _keep_by_escort() -> bool:
+	if escort == null or not is_instance_valid(escort) or not escort.alive or escort.state != Critter.State.GROUND \
+			or not me.inventory.has_any_weapon():
+		escort = null if escort != null and (not is_instance_valid(escort) or not escort.alive) else escort
+		return false
+	var at := escort.global_position
+	if _escort_spot == Vector3.INF or _escort_spot.distance_to(at) > 14.0:
+		var a := randf() * TAU
+		_escort_spot = at + Vector3(cos(a), 0.0, sin(a)) * randf_range(5.0, 10.0)
+	var d := me.global_position.distance_to(_escort_spot)
+	if d < 2.5:
+		me.move_input = Vector2.ZERO
+		me.look_yaw = lerp_angle(me.look_yaw, escort.look_yaw, 0.05)   # (watching where you're looking)
+		return true
+	_set_dest(_escort_spot)
+	_follow_path(false)
+	me.want_sprint = d > 15.0
+	return true
+
+
+## A boss's blow is about to land where we stand: get out from under it
+## (and jump as it lands). The sharper the bot, the likelier it saw it coming.
+func _dodge() -> bool:
+	if boss == null or not is_instance_valid(boss) or boss.danger.is_empty() or me.state != Critter.State.GROUND:
+		return false
+	var p := me.global_position
+	for d in boss.danger:
+		var c: Vector3 = d[0]
+		var r: float = d[1]
+		var off := Vector2(p.x - c.x, p.z - c.z)
+		if off.length() > r + 3.0:
+			continue
+		var key := "%d|%d|%d" % [roundi(c.x), roundi(c.z), roundi(float(d[2]) * 10.0)]
+		if not _noticed.has(key):
+			_noticed[key] = randf() < lerpf(0.3, 0.88, skill)
+			if _noticed.size() > 40:
+				_noticed.clear()
+		if not _noticed[key] or boss.seen_for(d) < lerpf(0.75, 0.25, skill):
+			continue   # (it hasn't sunk in yet: the slow ones get caught)
+		var away := Vector3(off.x, 0.0, off.y).normalized() if off.length() > 0.5 else -me.look_direction()
+		me.move_input = _stick_toward(p + away * 10.0)
+		me.want_sprint = true
+		if boss.lands_in(d) < 0.25 and me.is_on_floor() and randf() < skill * 0.6:
+			me.want_jump = true   # (a shockwave rolls under you if you're in the air)
+		return true
+	return false
+
+
+## Fight the boss: from range (its blows are short), circling it, aiming at
+## its head if we're any good (or its chest with a rocket), firing in bursts.
+func _fight_boss(delta: float) -> void:
+	var b := boss
+	if b == null or not is_instance_valid(b) or not b.alive:
+		mode = Mode.ROAM
+		return
+	var dist := Vector2(b.global_position.x - me.global_position.x, b.global_position.z - me.global_position.z).length()
+	_pick_weapon_for(dist)
+	var w := me.current_weapon()
+	if w == null:
+		mode = Mode.LOOT
+		return
+	var rocket := w.data.projectile == WeaponData.ProjectileKind.ROCKET
+	var aim_at := b.get_eye_position() if skill > 0.55 and not rocket else b.get_chest_position()
+	var eye := me.get_eye_position()
+	var space := me.get_world_3d().direct_space_state
+	var clear := not space.intersect_ray(PhysicsRayQueryParameters3D.create(eye, aim_at, Layers.WORLD))
+	# --- where to stand: at range, going round it (closer in if we can't see it)
+	var want := clampf(w.data.ai_preferred_range * 2.2, BOSS_RANGE.x, BOSS_RANGE.y)
+	_orbit_t -= delta
+	if _orbit_t <= 0.0:
+		_orbit_t = randf_range(3.0, 7.0)
+		_orbit = -_orbit if randf() < 0.4 else _orbit
+	if dist > want * 1.6 or not clear:
+		_set_dest(b.global_position)
+		_follow_path(true)
+		me.want_sprint = dist > want * 2.0
+	else:
+		var out := me.global_position - b.global_position
+		out.y = 0.0
+		out = out.normalized()
+		var radial := 1.0 if dist < want * 0.8 else (-1.0 if dist > want * 1.25 else 0.0)
+		var move := (out * radial + out.cross(Vector3.UP) * _orbit * 0.8).normalized()
+		me.move_input = _stick_toward(me.global_position + move * 10.0)
+		me.want_sprint = dist < BOSS_RANGE.x * 0.7
+	# --- aim (turn-rate limited, a little off, by skill)
+	if _aim_err == Vector3.ZERO or randf() < 0.02:
+		_aim_err = _random_aim_error(eye.distance_to(aim_at)) * 0.6
+	_aim_err = _aim_err.lerp(Vector3.ZERO, IKMath.damp(lerpf(0.4, 1.6, skill), delta))
+	var aim := aim_at + _aim_err
+	var want_dir := (aim - eye).normalized()
+	var turn := deg_to_rad(lerpf(180.0, 540.0, skill)) * delta
+	me.look_yaw += clampf(wrapf(atan2(-want_dir.x, -want_dir.z) - me.look_yaw, -PI, PI), -turn, turn)
+	me.look_pitch += clampf(asin(clampf(want_dir.y, -1.0, 1.0)) - me.look_pitch, -turn, turn)
+	me.aim_point = eye + me.look_direction() * eye.distance_to(aim)
+	# --- a carrot grenade at its feet, now and then
+	_grenade_cd -= delta
+	if _grenade_cd <= 0.0 and dist < 26.0 and me.can_throw():
+		_grenade_cd = randf_range(6.0, 12.0)
+		var lob := _lob(me.throw_origin(), b.global_position)
+		if lob != Vector3.ZERO and me.throw_grenade(lob):
+			return
+	# --- shoot
+	if w.ammo_in_mag <= 0:
+		me.start_reload()
+		return
+	var on_target := me.look_direction().angle_to(want_dir) < deg_to_rad(6.0 if w.data.pellets == 1 else 10.0)
+	if clear and on_target and dist <= w.data.ai_max_range * 1.3 + 10.0:
+		me.want_aim = (dist > 18.0 and skill > 0.5) or w.data.scoped
+		if w.data.fire_mode == WeaponData.FireMode.AUTO:
+			_burst_t -= delta
+			if _burst_t <= 0.0:
+				_bursting = not _bursting
+				_burst_t = randf_range(0.4, 0.9) if _bursting else randf_range(0.2, 0.5)
+			me.want_fire = _bursting
+		else:
+			_fire_toggle = not _fire_toggle
+			me.want_fire = _fire_toggle and randf() < lerpf(0.15, 0.4, skill)
 
 
 # ---- movement ----------------------------------------------------------------------------------------------

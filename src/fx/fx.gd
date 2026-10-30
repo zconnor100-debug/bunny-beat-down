@@ -189,6 +189,13 @@ static func explosion(pos: Vector3, radius: float) -> void:
 	instance._decal(pos, Vector3.UP, radius * 0.9, FXTextures.scorch())
 
 
+## A one-shot burst of particles (the bosses' dust, chips and sparks: BossFX),
+## cfg as the bursts here take it ("aabb": how far it spreads, if far).
+static func burst(pos: Vector3, dir: Vector3, cfg: Dictionary) -> void:
+	if instance:
+		instance._burst(pos, dir, cfg)
+
+
 ## Fluffy smoke trail that follows a rocket (world-space particles).
 static func smoke_trail(parent: Node3D) -> GPUParticles3D:
 	if instance == null:
@@ -261,7 +268,8 @@ func _make_particles(cfg: Dictionary, one_shot: bool) -> GPUParticles3D:
 	p.explosiveness = 0.92 if one_shot else 0.0
 	p.fixed_fps = 0
 	p.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	p.visibility_aabb = AABB(Vector3(-6, -6, -6), Vector3(12, 12, 12))
+	var reach: float = cfg.get("aabb", 6.0)   # (a boss's dust spreads tens of metres)
+	p.visibility_aabb = AABB(Vector3.ONE * -reach, Vector3.ONE * reach * 2.0)
 	p.process_material = _process_material(cfg)
 	p.draw_pass_1 = _draw_mesh(cfg)
 	return p

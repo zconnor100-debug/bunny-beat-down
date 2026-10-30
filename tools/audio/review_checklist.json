@@ -74,6 +74,17 @@
       }
     },
     {
+      "id": "bosses",
+      "title": "Bosses",
+      "keys": {
+        "boss_roar": {"expect": "A monster's roar from a throat the size of a barn: deep, ragged and gargling, rising then falling over ~2.4 s, a sub growl shaking under it and a long outdoor echo. Frightening, not cartoony.", "when": "Brutus (the island's boss) roaring: when it turns up near a crowd, when it's enraged, and when too many critters crowd it."},
+        "boss_screech": {"expect": "A huge, maddened rodent screech: real rat squeals slowed right down and driven hard, with a rasp, ~1.7 s, echoing off glass.", "when": "Nibbles the Rabid (the Hamster Cage's boss) charging, bursting out of the bedding, and screeching when enraged."},
+        "boss_stomp": {"expect": "Something ten critters tall landing: a deep falling boom you feel more than hear, a ground thud, dirt and stones raining back, a rumble rolling away.", "when": "A boss's footfall, Ground Pound, leap or landing."},
+        "boss_clank": {"expect": "A giant hollow tin toy booming as a foot comes down: inharmonic biscuit-tin modes, loose parts rattling inside, a spring twang, a thud under it.", "when": "The Tin Tyrant (the Toy Box's boss) stomping, smashing its clamps down and landing."},
+        "boss_laser": {"expect": "A rising charge-up whine (~0.7 s), then a buzzing, wobbling beam drone with sizzle and crackle on top, cutting off with a falling zap (~3 s in all).", "when": "The Tin Tyrant's eye lasers sweeping the floor."}
+      }
+    },
+    {
       "id": "ambience",
       "title": "Ambience & the Briar",
       "keys": {
@@ -108,6 +119,8 @@
     "music/cage_voxel_revolution.mp3": {"title": "Voxel Revolution", "expect": "Grooving synth-pop chiptune with a driving beat.", "when": "Hamster Cage match (random pick)."},
     "music/toybox_vivacity.mp3": {"title": "Vivacity", "expect": "Happy, peppy vibraphone, bass and organ; no brass.", "when": "Toy Box Bash match (random pick)."},
     "music/toybox_march_of_the_spoons.mp3": {"title": "March of the Spoons", "expect": "Silly tin-soldier woodwind-and-strings march.", "when": "Toy Box Bash match (random pick)."},
-    "music/toybox_divertimento_k131.mp3": {"title": "Divertimento K131", "expect": "Music-box bells, chimes, harp and celesta (Mozart); no brass.", "when": "Toy Box Bash match (random pick)."}
+    "music/toybox_divertimento_k131.mp3": {"title": "Divertimento K131", "expect": "Music-box bells, chimes, harp and celesta (Mozart); no brass.", "when": "Toy Box Bash match (random pick)."},
+    "music/boss_volatile_reaction.mp3": {"title": "Volatile Reaction", "expect": "Blasting brass and pounding percussion in 7/4: fight music with a grin.", "when": "A Boss Battle, from the moment the boss turns up (random pick)."},
+    "music/boss_killers.mp3": {"title": "Killers", "expect": "Guitar, choir and strings, big from the first bar.", "when": "A Boss Battle, from the moment the boss turns up (random pick)."}
   }
 }

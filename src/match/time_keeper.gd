@@ -145,6 +145,11 @@ func _process(delta: float) -> void:
 		# back along the loop (the shorter way round), riders and all
 		var back := fposmod(float(b.train) - float(a.train) + train.total * 0.5, train.total) - train.total * 0.5
 		train.set_distance(float(a.train) + back * k)
+	var boss := _boss()
+	var ba: Dictionary = a.get("boss", {})
+	var bb: Dictionary = b.get("boss", {})
+	if boss and not ba.is_empty() and not bb.is_empty():
+		boss.global_transform = (ba.xf as Transform3D).interpolate_with(bb.xf, k)
 	var s := match_manager.storm
 	if s and s.active and not (a.storm as Dictionary).is_empty() and not (b.storm as Dictionary).is_empty():
 		s.center = (a.storm.center as Vector2).lerp(b.storm.center, k)
@@ -231,7 +236,15 @@ func _snapshot() -> Dictionary:
 			"next_radius": s.next_radius, "time_left": s.time_left, "shrinking": s.shrinking, "dps": s.dps,
 			"nap_left": s.nap_left, "from_center": s._from_center, "from_radius": s._from_radius}
 	var train := _train()
-	return {"critters": critters, "loot": loot, "storm": storm, "train": train.distance if train else -1.0}
+	var b := _boss()
+	return {"critters": critters, "loot": loot, "storm": storm, "train": train.distance if train else -1.0,
+		"boss": b.snapshot() if b else {}}
+
+
+## A Boss Battle's boss, once it's out and still standing (it goes back too).
+func _boss() -> Boss:
+	var b: Boss = match_manager.boss if match_manager else null
+	return b if b and is_instance_valid(b) and b.alive and b.state != Boss.State.WAITING else null
 
 
 func _train() -> ToyTrain:
@@ -276,6 +289,9 @@ func _restore(snap: Dictionary, at: float) -> void:
 	var train := _train()
 	if train and float(snap.get("train", -1.0)) >= 0.0:
 		train.set_distance(snap.train)
+	var b := _boss()
+	if b and not (snap.get("boss", {}) as Dictionary).is_empty():
+		b.restore(snap.boss)
 
 
 func _restore_critter(c: Critter, r: Dictionary) -> void:

@@ -41,6 +41,10 @@ from `tools/audio/review_checklist.json` — edit that, not this.
 | `sniper_fire` | .30-06 bolt rifle: huge crack over a deep, heavy thud, then a long rolling echo fading over ~2.6 s, with no dip in between. | Every shot from The Long Carrot (sniper) (40 rpm). | [1](../assets/audio/sfx/sniper_fire_1.ogg) [2](../assets/audio/sfx/sniper_fire_2.ogg) |
 | `rocket_fire` | Deep whoosh-thump back-blast, the rocket motor roaring away, crackly sizzle (~2 s). | Launching a rocket carrot (50 rpm). | [1](../assets/audio/sfx/rocket_fire_1.ogg) [2](../assets/audio/sfx/rocket_fire_2.ogg) |
 | `rocket_whoosh_loop` | Steady sputtery rocket roar with a slight spiralling wobble; the loop seam must be inaudible. | Loops on every rocket carrot in flight. | [1](../assets/audio/sfx/rocket_whoosh_loop.ogg) |
+| `rumbler_fire` | A buzz-saw rattle at 1,200 a minute: short, tight AK cracks with a low thump and a tick of the belt; a stream of them must stay a rattle, not a smear. | Every Root Rumbler shot (your arsenal), once its barrels are spinning. | [1](../assets/audio/sfx/rumbler_fire_1.ogg) [2](../assets/audio/sfx/rumbler_fire_2.ogg) [3](../assets/audio/sfx/rumbler_fire_3.ogg) [4](../assets/audio/sfx/rumbler_fire_4.ogg) |
+| `rumbler_spin` | Looping electric-motor whine with the barrels whirring past and a light rattle; the game pitches it up as the barrels wind up, so it rises into a whine. No click at the loop seam. | While the Root Rumbler's barrels spin (winding up, firing, running down). | [1](../assets/audio/sfx/rumbler_spin.ogg) |
+| `lobber_fire` | A hollow THOONK: a launcher's pop, not a gunshot; round and low, with the drum clicking round just after. | Every Carrot Lobber shot (your arsenal). | [1](../assets/audio/sfx/lobber_fire_1.ogg) [2](../assets/audio/sfx/lobber_fire_2.ogg) |
+| `big50_fire` | A cannon: deeper and heavier than the sniper, a huge sub thump, slap-back echoes and a long rolling tail. | Every Big Root .50 shot (your arsenal). | [1](../assets/audio/sfx/big50_fire_1.ogg) [2](../assets/audio/sfx/big50_fire_2.ogg) |
 | `explosion` | Heavy, real-sounding blast: low boom, crunchy body, debris pattering down (~2 s). | Rocket carrot detonations. | [1](../assets/audio/sfx/explosion_1.ogg) [2](../assets/audio/sfx/explosion_2.ogg) [3](../assets/audio/sfx/explosion_3.ogg) |
 | `shotgun_pump` | Real pump rack, "chk ... CHK": the forend slides back to the rear stop, then slams forward and locks (the louder stroke); crisp, no thuddy undertone. | Shotgun: racked 0.45 s after every shot (the burst preview plays it). | [1](../assets/audio/sfx/shotgun_pump_1.ogg) [2](../assets/audio/sfx/shotgun_pump_2.ogg) |
 | `sniper_bolt` | Bolt cycle ending in a firm chk-CLACK as it snaps into place: dull lift tick, bolt pulled back onto its stop and shoved forward, then the handle slams down (the loudest hit); dead steel, no ringing clinks or tinkles. | ~0.45 s after every sniper shot. | [1](../assets/audio/sfx/sniper_bolt.ogg) |
@@ -92,6 +96,16 @@ from `tools/audio/review_checklist.json` — edit that, not this.
 | `hurt_squeak` | Short, deep, rough critter pain cries (no high squeals): a yelp, "uk-uk" chatter, a growly "grrah", a grunt into a yawp, a raspy whimper-growl, a low "eh-oww". | Critters taking damage. | [1](../assets/audio/sfx/hurt_squeak_1.ogg) [2](../assets/audio/sfx/hurt_squeak_2.ogg) [3](../assets/audio/sfx/hurt_squeak_3.ogg) [4](../assets/audio/sfx/hurt_squeak_4.ogg) [5](../assets/audio/sfx/hurt_squeak_5.ogg) [6](../assets/audio/sfx/hurt_squeak_6.ogg) |
 | `death_squeak` | Real small-animal death squeals (rat recordings slowed to critter size, not synth): a long sinking squeal, an "eek!" then a lower dying squeal, a squeal with one last weak gasp; each ends in a breath. | Critters being knocked out. | [1](../assets/audio/sfx/death_squeak_1.ogg) [2](../assets/audio/sfx/death_squeak_2.ogg) [3](../assets/audio/sfx/death_squeak_3.ogg) |
 
+## Bosses
+
+| sound | should sound like | when it plays | listen |
+|---|---|---|---|
+| `boss_roar` | A monster's roar from a throat the size of a barn: deep, ragged and gargling, rising then falling over ~2.4 s, a sub growl shaking under it and a long outdoor echo. Frightening, not cartoony. | Brutus (the island's boss) roaring: when it turns up near a crowd, when it's enraged, and when too many critters crowd it. | [1](../assets/audio/sfx/boss_roar_1.ogg) [2](../assets/audio/sfx/boss_roar_2.ogg) |
+| `boss_screech` | A huge, maddened rodent screech: real rat squeals slowed right down and driven hard, with a rasp, ~1.7 s, echoing off glass. | Nibbles the Rabid (the Hamster Cage's boss) charging, bursting out of the bedding, and screeching when enraged. | [1](../assets/audio/sfx/boss_screech_1.ogg) [2](../assets/audio/sfx/boss_screech_2.ogg) |
+| `boss_stomp` | Something ten critters tall landing: a deep falling boom you feel more than hear, a ground thud, dirt and stones raining back, a rumble rolling away. | A boss's footfall, Ground Pound, leap or landing. | [1](../assets/audio/sfx/boss_stomp_1.ogg) [2](../assets/audio/sfx/boss_stomp_2.ogg) [3](../assets/audio/sfx/boss_stomp_3.ogg) |
+| `boss_clank` | A giant hollow tin toy booming as a foot comes down: inharmonic biscuit-tin modes, loose parts rattling inside, a spring twang, a thud under it. | The Tin Tyrant (the Toy Box's boss) stomping, smashing its clamps down and landing. | [1](../assets/audio/sfx/boss_clank_1.ogg) [2](../assets/audio/sfx/boss_clank_2.ogg) [3](../assets/audio/sfx/boss_clank_3.ogg) |
+| `boss_laser` | A rising charge-up whine (~0.7 s), then a buzzing, wobbling beam drone with sizzle and crackle on top, cutting off with a falling zap (~3 s in all). | The Tin Tyrant's eye lasers sweeping the floor. | [1](../assets/audio/sfx/boss_laser.ogg) |
+
 ## Ambience & the Briar
 
 | sound | should sound like | when it plays | listen |
@@ -122,3 +136,11 @@ from `tools/audio/review_checklist.json` — edit that, not this.
 | Scheming Weasel (faster version) | Sneaky, bouncy woodwinds and glockenspiel. | In-match (random pick). | [▶](../assets/audio/music/match_scheming_weasel.mp3) |
 | Bushwick Tarantella | Frantic accordion and clarinet — final-circle panic. | In-match (random pick). | [▶](../assets/audio/music/match_bushwick_tarantella.mp3) |
 | Fiddles McGinty | Driving Celtic folk-rock reel: pipes, recorder, guitar, rock backbeat. | Victory screen (fades in under the victory_fanfare sting). | [▶](../assets/audio/music/victory_fiddles_mcginty.mp3) |
+| Pixel Peeker Polka (faster) | Bouncy chiptune polka: an 8-bit toy box that never sits still. | Hamster Cage match (random pick). | [▶](../assets/audio/music/cage_pixel_peeker_polka.mp3) |
+| Itty Bitty 8 Bit | Bright little square-wave tune, wind-up-toy cheerful. | Hamster Cage match (random pick). | [▶](../assets/audio/music/cage_itty_bitty_8_bit.mp3) |
+| Voxel Revolution | Grooving synth-pop chiptune with a driving beat. | Hamster Cage match (random pick). | [▶](../assets/audio/music/cage_voxel_revolution.mp3) |
+| Vivacity | Happy, peppy vibraphone, bass and organ; no brass. | Toy Box Bash match (random pick). | [▶](../assets/audio/music/toybox_vivacity.mp3) |
+| March of the Spoons | Silly tin-soldier woodwind-and-strings march. | Toy Box Bash match (random pick). | [▶](../assets/audio/music/toybox_march_of_the_spoons.mp3) |
+| Divertimento K131 | Music-box bells, chimes, harp and celesta (Mozart); no brass. | Toy Box Bash match (random pick). | [▶](../assets/audio/music/toybox_divertimento_k131.mp3) |
+| Volatile Reaction | Blasting brass and pounding percussion in 7/4: fight music with a grin. | A Boss Battle, from the moment the boss turns up (random pick). | [▶](../assets/audio/music/boss_volatile_reaction.mp3) |
+| Killers | Guitar, choir and strings, big from the first bar. | A Boss Battle, from the moment the boss turns up (random pick). | [▶](../assets/audio/music/boss_killers.mp3) |

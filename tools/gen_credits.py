@@ -16,6 +16,7 @@ CREDITS_DIR = ROOT / "assets" / "credits"
 OUT = ROOT / "CREDITS.md"
 SECTIONS = {
     "characters": "Critters",
+    "bosses": "Bosses",
     "environment": "Scenery: the island, the cage and the fridge",
     "maps": "Map models (made in Blender)",
     "outfits": "Rogue outfits: hats, glasses, capes and the rest",

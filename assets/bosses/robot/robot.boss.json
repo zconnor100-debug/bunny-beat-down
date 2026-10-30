@@ -1,0 +1,114 @@
+{
+  "id": "robot",
+  "display_name": "Tin Tyrant",
+  "head_top": 0.853,
+  "bones": {
+    "hips": "_rootJoint",
+    "chest": "Body_00",
+    "head": "Head_01",
+    "l_upper_arm": "Arm_L_02",
+    "r_upper_arm": "Arm_R_05",
+    "l_upper_leg": "Leg_L_09",
+    "r_upper_leg": "Leg_R_010",
+    "key": "Handle_08",
+    "l_claw_a": "HandTop_L_03",
+    "l_claw_b": "HandBottom_L_04",
+    "r_claw_a": "HandTop_R_06",
+    "r_claw_b": "HandBottom_R_07"
+  },
+  "radii": {
+    "chest": 0.1907,
+    "head": 0.1053,
+    "l_upper_arm": 0.0434,
+    "r_upper_arm": 0.0415,
+    "l_upper_leg": 0.1142,
+    "r_upper_leg": 0.1151,
+    "key": 0.0436,
+    "l_claw_a": 0.0277,
+    "l_claw_b": 0.0299,
+    "r_claw_a": 0.0282,
+    "r_claw_b": 0.0304
+  },
+  "tails": {
+    "hips": [
+      0.0115,
+      0.3495,
+      -0.045
+    ],
+    "chest": [
+      0.0115,
+      0.501,
+      0.0099
+    ],
+    "head": [
+      0.0115,
+      0.8545,
+      0.0099
+    ],
+    "l_upper_arm": [
+      0.1645,
+      0.5745,
+      0.2506
+    ],
+    "r_upper_arm": [
+      -0.1461,
+      0.5745,
+      0.2506
+    ],
+    "l_upper_leg": [
+      0.0644,
+      0.0162,
+      0.0099
+    ],
+    "r_upper_leg": [
+      -0.0666,
+      0.0162,
+      0.0099
+    ],
+    "key": [
+      0.2375,
+      0.4461,
+      0.0381
+    ],
+    "l_claw_a": [
+      0.1645,
+      0.5946,
+      0.3251
+    ],
+    "l_claw_b": [
+      0.1645,
+      0.5548,
+      0.3254
+    ],
+    "r_claw_a": [
+      -0.1434,
+      0.5946,
+      0.3251
+    ],
+    "r_claw_b": [
+      -0.1434,
+      0.5548,
+      0.3254
+    ]
+  },
+  "eyes": [
+    [
+      0.052,
+      0.789,
+      0.105
+    ],
+    [
+      -0.047,
+      0.789,
+      0.105
+    ]
+  ],
+  "eye_r": 0.025,
+  "mouth": [
+    0.003,
+    0.703,
+    0.105
+  ],
+  "tris": 9876,
+  "notes": "Facing +Z (glTF/Godot), +Y up, 1 unit tall to the top of its bounds (the game scales it); feet on y = 0, centred. eyes/mouth are in those units, before any posing."
+}

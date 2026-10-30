@@ -106,6 +106,15 @@ MUSIC = [
            "music/toybox_divertimento_k131.mp3", "match_toybox",
            "Mozart's Divertimento arranged for bells, chimes, harp and celesta, 138 bpm: "
            "the bright tinkle of a music box in the toy chest."),
+    # a Boss Battle, once the boss is out: big, loud and a little evil
+    _track("Volatile Reaction", "USUAN1400039", "Volatile Reaction.mp3",
+           "music/boss_volatile_reaction.mp3", "match_boss",
+           "Blasting brass and pounding percussion in 7/4 at 155 bpm (\"suitable for fights, evil, or a "
+           "calm day at the park... in hell\"): something ten critters tall is coming for you."),
+    _track("Killers", "USUAN1600024", "Killers.mp3",
+           "music/boss_killers.mp3", "match_boss",
+           "Guitar, choir and strings, 105 bpm, big from the first bar: the boss fight with the gore "
+           "turned up."),
     _track("Fiddles McGinty", "USUAN1400051", "Fiddles McGinty.mp3",
            "music/victory_fiddles_mcginty.mp3", "victory",
            "Driving Celtic folk-rock reel (174 bpm, D major; uilleann pipes, recorder, guitar, "

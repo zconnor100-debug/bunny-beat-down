@@ -22,6 +22,10 @@ assets/characters/*/*_*.png
 assets/characters/*/*_*.jpg
 assets/characters/*/*_*.png.import
 assets/characters/*/*_*.jpg.import
+assets/bosses/*/*_*.png
+assets/bosses/*/*_*.jpg
+assets/bosses/*/*_*.png.import
+assets/bosses/*/*_*.jpg.import
 assets/weapons/carrot_*_*.png
 assets/weapons/carrot_*_*.jpg
 assets/weapons/carrot_*_*.png.import

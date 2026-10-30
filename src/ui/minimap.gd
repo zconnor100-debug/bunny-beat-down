@@ -92,6 +92,8 @@ func _draw() -> void:
 			var mp := world_to_map(p.center)
 			draw_string_outline(font, mp + Vector2(-60, 4), p.name, HORIZONTAL_ALIGNMENT_CENTER, 120, 15, 5, Color(UITheme.INK, 0.9))
 			draw_string(font, mp + Vector2(-60, 4), p.name, HORIZONTAL_ALIGNMENT_CENTER, 120, 15, UITheme.CREAM)
+	_draw_allies()
+	_draw_bosses()
 	_draw_enemy_blips()
 	if player and is_instance_valid(player):
 		var pp := world_to_map(Vector2(player.global_position.x, player.global_position.z))
@@ -114,6 +116,8 @@ func enemy_blips() -> Array:
 		var c := n as Critter
 		if c == null or c == player or not c.alive or c.state != Critter.State.GROUND:
 			continue
+		if c.team != 0 and c.team == player.team:
+			continue   # (your team: blue dots, always: _draw_allies)
 		var since_shot := (now - int(_last_shot.get(c, -1000000))) / 1000.0
 		var firing := since_shot < SHOT_BLIP_TIME
 		var flat := Vector2(c.global_position.x - pp.x, c.global_position.z - pp.z)
@@ -121,6 +125,33 @@ func enemy_blips() -> Array:
 		if firing or near:
 			out.append({"critter": c, "firing": firing, "near": near, "age": since_shot})
 	return out
+
+
+## Your team (a Team Battle or a Boss Battle): blue dots, always.
+func _draw_allies() -> void:
+	if player == null or not is_instance_valid(player) or player.team == 0:
+		return
+	var r := 4.5 if full else 3.2
+	for n in get_tree().get_nodes_in_group(&"critters"):
+		var c := n as Critter
+		if c == null or c == player or not c.alive or c.team != player.team or c.state == Critter.State.IN_DROPSHIP:
+			continue
+		var mp := world_to_map(Vector2(c.global_position.x, c.global_position.z))
+		draw_circle(mp, r + 1.5, Color(0, 0, 0, 0.65))
+		draw_circle(mp, r, Color(0.45, 0.75, 1.0))
+
+
+## A boss (once it's turned up): a big pulsing red mark.
+func _draw_bosses() -> void:
+	for n in get_tree().get_nodes_in_group(&"bosses"):
+		var b := n as Boss
+		if b == null or b.state == Boss.State.WAITING:
+			continue
+		var mp := world_to_map(Vector2(b.global_position.x, b.global_position.z))
+		var r := (11.0 if full else 8.0) + (sin(Time.get_ticks_msec() * 0.01) * 1.5 if b.alive else 0.0)
+		draw_circle(mp, r + 2.5, Color(0, 0, 0, 0.8))
+		draw_circle(mp, r, Color(0.9, 0.1, 0.06) if b.alive else Color(0.4, 0.35, 0.3))
+		draw_circle(mp, r * 0.38, Color(1.0, 0.85, 0.3) if b.alive else Color(0.25, 0.22, 0.2))
 
 
 func _draw_enemy_blips() -> void:

@@ -1,0 +1,199 @@
+{
+  "id": "brute",
+  "display_name": "Brutus",
+  "head_top": 0.73,
+  "bones": {
+    "hips": "hips",
+    "spine": "spine",
+    "chest": "chest",
+    "neck": "neck",
+    "head": "head",
+    "jaw": "jaw",
+    "l_shoulder": "l_shoulder",
+    "l_upper_arm": "l_upper_arm",
+    "l_lower_arm": "l_lower_arm",
+    "l_hand": "l_hand",
+    "r_shoulder": "r_shoulder",
+    "r_upper_arm": "r_upper_arm",
+    "r_lower_arm": "r_lower_arm",
+    "r_hand": "r_hand",
+    "l_upper_leg": "l_upper_leg",
+    "l_lower_leg": "l_lower_leg",
+    "l_foot": "l_foot",
+    "r_upper_leg": "r_upper_leg",
+    "r_lower_leg": "r_lower_leg",
+    "r_foot": "r_foot",
+    "l_ear": "l_ear",
+    "l_ear_tip": "l_ear_tip",
+    "r_ear": "r_ear",
+    "r_ear_tip": "r_ear_tip"
+  },
+  "radii": {
+    "hips": 0.0813,
+    "spine": 0.1159,
+    "chest": 0.1327,
+    "neck": 0.1007,
+    "head": 0.0701,
+    "jaw": 0.0952,
+    "l_shoulder": 0.1634,
+    "l_upper_arm": 0.115,
+    "l_lower_arm": 0.0488,
+    "l_hand": 0.0703,
+    "r_shoulder": 0.1015,
+    "r_upper_arm": 0.0685,
+    "r_lower_arm": 0.0563,
+    "r_hand": 0.05,
+    "l_upper_leg": 0.1282,
+    "l_lower_leg": 0.1344,
+    "l_foot": 0.0662,
+    "r_upper_leg": 0.0762,
+    "r_lower_leg": 0.0971,
+    "r_foot": 0.0584,
+    "l_ear": 0.0719,
+    "l_ear_tip": 0.0371,
+    "r_ear": 0.0639,
+    "r_ear_tip": 0.0339
+  },
+  "tails": {
+    "hips": [
+      0.0,
+      0.4,
+      -0.12
+    ],
+    "spine": [
+      0.0,
+      0.5,
+      -0.09
+    ],
+    "chest": [
+      -0.01,
+      0.6,
+      -0.03
+    ],
+    "neck": [
+      -0.03,
+      0.64,
+      0.04
+    ],
+    "head": [
+      -0.03,
+      0.74,
+      0.06
+    ],
+    "jaw": [
+      -0.04,
+      0.53,
+      0.17
+    ],
+    "l_shoulder": [
+      0.17,
+      0.57,
+      -0.05
+    ],
+    "l_upper_arm": [
+      0.25,
+      0.44,
+      0.1
+    ],
+    "l_lower_arm": [
+      0.17,
+      0.26,
+      0.21
+    ],
+    "l_hand": [
+      0.14,
+      0.12,
+      0.23
+    ],
+    "r_shoulder": [
+      -0.17,
+      0.56,
+      -0.06
+    ],
+    "r_upper_arm": [
+      -0.23,
+      0.43,
+      -0.16
+    ],
+    "r_lower_arm": [
+      -0.24,
+      0.25,
+      -0.01
+    ],
+    "r_hand": [
+      -0.25,
+      0.11,
+      -0.0
+    ],
+    "l_upper_leg": [
+      0.21,
+      0.21,
+      0.12
+    ],
+    "l_lower_leg": [
+      0.21,
+      0.06,
+      0.03
+    ],
+    "l_foot": [
+      0.21,
+      0.02,
+      0.14
+    ],
+    "r_upper_leg": [
+      -0.17,
+      0.19,
+      -0.03
+    ],
+    "r_lower_leg": [
+      -0.08,
+      0.07,
+      -0.18
+    ],
+    "r_foot": [
+      -0.2,
+      0.02,
+      -0.08
+    ],
+    "l_ear": [
+      0.07,
+      0.86,
+      0.11
+    ],
+    "l_ear_tip": [
+      0.11,
+      0.99,
+      0.135
+    ],
+    "r_ear": [
+      -0.125,
+      0.86,
+      -0.01
+    ],
+    "r_ear_tip": [
+      -0.155,
+      0.99,
+      -0.035
+    ]
+  },
+  "eyes": [
+    [
+      -0.051,
+      0.66,
+      0.15
+    ],
+    [
+      -0.111,
+      0.66,
+      0.117
+    ]
+  ],
+  "eye_r": 0.014,
+  "mouth": [
+    -0.12,
+    0.575,
+    0.2
+  ],
+  "tris": 58791,
+  "notes": "Facing +Z (glTF/Godot), +Y up, 1 unit tall to the top of its bounds (the game scales it); feet on y = 0, centred. eyes/mouth are in those units, before any posing."
+}

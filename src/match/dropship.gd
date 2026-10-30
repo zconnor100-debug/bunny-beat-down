@@ -18,12 +18,18 @@ var finish := Vector3.ZERO
 var progress := 0.0
 var flying := false
 var passengers: Array[Critter] = []
+var dir_angle := 0.0                 ## which way it flies (radians, across the map)
 var _wind: Node
 
 
-func setup(island_radius: float, rng: RandomNumberGenerator, vehicle_ := &"balloon", bounds := Rect2()) -> void:
+## `lane` (a Team Battle's two balloons): -1 or 1 flies down one side of the
+## map or the other, the same way; 0, anywhere across the middle. `heading`
+## (radians) fixes which way it flies (the second balloon flies the first's).
+func setup(island_radius: float, rng: RandomNumberGenerator, vehicle_ := &"balloon", bounds := Rect2(), lane := 0.0,
+		heading := INF) -> void:
 	vehicle = vehicle_
-	var a := rng.randf() * TAU
+	var a := rng.randf() * TAU if heading == INF else heading
+	dir_angle = a
 	var dir := Vector2(cos(a), sin(a))
 	var s: Vector2
 	var f: Vector2
@@ -31,7 +37,8 @@ func setup(island_radius: float, rng: RandomNumberGenerator, vehicle_ := &"ballo
 	if vehicle in [&"plane", &"paper_plane"]:
 		# straight across the tank (or the bedroom), wall to wall
 		var inner := bounds.grow(-30.0)
-		var mid := inner.get_center() + dir.orthogonal() * rng.randf_range(-0.25, 0.25) * minf(inner.size.x, inner.size.y)
+		var across := rng.randf_range(-0.25, 0.25) if lane == 0.0 else lane * 0.3
+		var mid := inner.get_center() + dir.orthogonal() * across * minf(inner.size.x, inner.size.y)
 		s = mid - dir * _to_edge(mid, -dir, inner)
 		f = mid + dir * _to_edge(mid, dir, inner)
 		duration = s.distance_to(f) / PLANE_SPEED
@@ -40,9 +47,12 @@ func setup(island_radius: float, rng: RandomNumberGenerator, vehicle_ := &"ballo
 		duration = DURATION * sqrt(island_radius / 215.0)
 		# the route stays inside the boundary wall (island_radius + 45) so anyone
 		# who jumps at the very start or end still lands in reach of the shore
-		var offset := dir.orthogonal() * rng.randf_range(-0.25, 0.25) * island_radius
-		s = -dir * (island_radius + 10.0) + offset
-		f = dir * (island_radius + 10.0) + offset
+		var offset := dir.orthogonal() * (rng.randf_range(-0.25, 0.25) if lane == 0.0 else lane * 0.42) * island_radius
+		var half := island_radius + 10.0
+		if lane != 0.0:   # (a lane well off the middle: a shorter chord, still over the island)
+			half = sqrt(maxf(half * half - offset.length_squared(), 100.0))
+		s = -dir * half + offset
+		f = dir * half + offset
 	start = Vector3(s.x, altitude, s.y)
 	finish = Vector3(f.x, altitude, f.y)
 	global_position = start

@@ -1816,6 +1816,113 @@ def death_squeak(c, v):
 
 
 # ==========================================================================
+# BOSSES -- Brutus's roar, Nibbles's screech, the Tin Tyrant's clank and eye
+#           lasers, and the thud of something ten critters tall landing
+# ==========================================================================
+@recipe("boss_roar", variants=2, loud=-11.0, src="synth")
+def boss_roar(c, v):
+    """Brutus, roaring: a ragged, gargling roar from a throat the size of a
+    barn (B.critter_voice two octaves under a critter's, a second voice a
+    fifth below it), wet hoarse air through it, a sub growl shaking under
+    it, and the meadow throwing it back."""
+    r = c.rng
+    dur = 2.4
+    f = [(0, 62), (0.18, 118), (0.8, 104), (1.7, 82), (dur, 50)] if v == 0 else [(0, 70), (0.25, 128), (0.6, 96), (1.2, 112), (dur, 52)]
+    vow = [(0, "uh"), (0.25, "a"), (1.2, "aw"), (dur, "o")]
+    throat = B.critter_voice(r, dur, f, vow, scale=0.6, tilt=1.45, sub_pts=[(0, 0.7), (1.0, 0.85), (dur, 1.0)],
+                             fry_pts=[(0, 0.55), (0.35, 0.2), (1.6, 0.35), (dur, 0.8)], breath=0.45, hoarse=1.0,
+                             shimmer=0.4, drive=3.2, fmax=3800.0, trill=(21.0, [(0, 0.25), (1.2, 0.55), (dur, 0.65)]),
+                             amp_pts=[(0, 0), (0.09, 1), (1.6, 0.9), (dur, 0)])
+    low = B.critter_voice(r, dur, [(t, hz * 0.66) for t, hz in f], vow, scale=0.5, tilt=1.6,
+                          sub_pts=[(0, 0.9), (dur, 1.0)], breath=0.2, hoarse=0.7, shimmer=0.3, drive=2.6, fmax=2600.0,
+                          amp_pts=[(0, 0), (0.12, 1), (1.7, 0.85), (dur, 0)])
+    n = n_of(dur)
+    air = B.unit(bandpass(colored(n, r, -2.0), 650.0, 0.7)) * env_pts(n, [(0, 0), (0.1, 1), (1.6, 0.8), (dur, 0)])
+    growl = sine(glide(n, 58.0, 38.0, 1.4), n) * (0.6 + 0.4 * np.sin(2 * np.pi * 21.0 * times(n))) \
+        * env_pts(n, [(0, 0), (0.15, 1), (1.8, 0.8), (dur, 0)])
+    x = mix(dur, (throat, 0, 0), (low, 0.02, -3), (air, 0, -11), (growl, 0, -8))
+    x = saturate(highpass(x, 30, 2), 1.8)
+    return reverb(x, r, decay=1.5, mix_db=-10, predelay=0.03, bright=3500.0, tail=0.5)[: n_of(3.0)]
+
+
+@recipe("boss_screech", variants=2, loud=-11.5, src="mixed")
+def boss_screech(c, v):
+    """Nibbles, screeching: qubodup's real rat squeals slowed right down into
+    something the size of a house, thickened with a rasping synth screech
+    and driven hard, then thrown back off the glass."""
+    r = c.rng
+    cry = _rat(c, "Death" if v == 0 else "Pain", [0.4, 0.45][v], lp=5000.0)
+    cry2 = _rat(c, "Pain" if v == 0 else "Death", [0.33, 0.36][v], lp=4200.0)
+    dur = max(len(cry), len(cry2)) / SR + 0.1
+    rasp = B.critter_voice(r, min(dur, 1.6), [(0, 420), (0.12, 760), (0.6, 640), (min(dur, 1.6), 300)],
+                           [(0, "ae"), (0.2, "i"), (min(dur, 1.6), "a")], scale=0.9, tilt=1.1,
+                           sub_pts=[(0, 0.6), (min(dur, 1.6), 0.9)], hoarse=0.9, shimmer=0.4, drive=3.0, fmax=5200.0,
+                           amp_pts=[(0, 0), (0.05, 1), (min(dur, 1.6) * 0.7, 0.8), (min(dur, 1.6), 0)])
+    x = mix(dur + 0.2, (cry, 0, 0), (cry2, 0.05, -4), (rasp, 0.02, -7))
+    x = saturate(highpass(x, 60, 2), 2.2)
+    return reverb(x, r, decay=1.1, mix_db=-11, predelay=0.02, bright=4500.0, tail=0.4)[: n_of(2.8)]
+
+
+@recipe("boss_stomp", variants=3, loud=-10.0, src="synth")
+def boss_stomp(c, v):
+    """Something ten critters tall landing (a footfall, a Ground Pound, a
+    leap coming down): a deep falling boom you feel, the ground thudding,
+    dirt and stones raining back, a rumble rolling away."""
+    r = c.rng
+    k = [1.0, 0.92, 1.08][v]
+    boom = B.kick(64 * k, 26 * k, 0.12, 0.55, 1.8, attack=0.002, drive=1.6)
+    thud = B.lowbody(r, 1.2, 45, 260, 0.22, attack=0.003, slope=-4.0)
+    crunch = B.lowbody(r, 0.5, 300, 1800, 0.06, attack=0.001)
+    debris = B.grains(r, 1.8, 46, 250, 2600, glen=(0.008, 0.03), t_tau=0.35, start=0.08)
+    rumble = B.lp_burst(r, 2.2, 140, 0.9, attack=0.05)
+    x = mix(2.2, (boom, 0, 0), (thud, 0, -3), (crunch, 0, -5), (debris, 0, -7), (rumble, 0.03, -9))
+    x = saturate(highpass(x, 25, 2), 1.5)
+    return reverb(x, r, decay=1.2, mix_db=-14, predelay=0.02, bright=2500.0, tail=0.3)[: n_of(2.6)]
+
+
+@recipe("boss_clank", variants=3, loud=-12.0, src="synth")
+def boss_clank(c, v):
+    """The Tin Tyrant's tread: a huge hollow tin body booming as a foot comes
+    down (inharmonic modes like a giant biscuit tin), a rattle of loose
+    parts inside, a spring twanging, and the thud under it all."""
+    r = c.rng
+    base = [176.0, 198.0, 158.0][v]
+    tin = B.struck(r, [(base, 0.5, 1.0), (base * 2.31, 0.35, 0.7), (base * 3.9, 0.22, 0.55), (base * 5.4, 0.16, 0.4),
+                       (base * 8.1, 0.1, 0.25), (base * 11.7, 0.07, 0.18)], 1.6, exc_ms=2.0, exc_lp=7000.0)
+    rattle = B.grains(r, 0.8, 34, 1800, 6500, glen=(0.002, 0.006), t_tau=0.12, start=0.02)
+    n = n_of(0.9)
+    spring = sine(glide(n, 420.0, 300.0, 0.4) * (1 + 0.03 * np.sin(2 * np.pi * 9.0 * times(n))), n) * env_exp(n, 0.002, 0.25)
+    thud = B.kick(70, 34, 0.08, 0.3, 1.0, drive=1.3)
+    x = mix(1.8, (tin, 0, 0), (rattle, 0.01, -9), (spring, 0.03, -15), (thud, 0, -11))
+    return reverb(x, r, decay=1.0, mix_db=-13, predelay=0.015, bright=5000.0, tail=0.3)[: n_of(2.2)]
+
+
+@recipe("boss_laser", variants=1, loud=-13.0, src="synth")
+def boss_laser(c, v):
+    """The Tin Tyrant's eye lasers: a rising charge-up whine, then two beams
+    burning: a buzzing, wobbling drone with a sizzle and crackle on top,
+    cutting off with a falling zap."""
+    r = c.rng
+    dur = 2.9
+    n = n_of(dur)
+    t = times(n)
+    charge = n_of(0.7)
+    whine = np.zeros(n)
+    fw = 260.0 * np.exp(np.linspace(0, np.log(1500.0 / 260.0), charge))
+    whine[:charge] = additive(fw, charge, [(1, 1.0), (2, 0.4), (3, 0.2)]) * np.linspace(0.2, 1.0, charge)
+    beam_f = 96.0 * (1 + 0.04 * np.sin(2 * np.pi * 6.5 * t) + 0.02 * np.sin(2 * np.pi * 17.0 * t))
+    buzz = saturate(saw_bl(beam_f, n, max_h=60) + 0.6 * saw_bl(beam_f * 1.503, n, max_h=40), 2.5)
+    on = env_pts(n, [(0, 0), (0.68, 0), (0.72, 1), (2.6, 0.95), (2.75, 0), (dur, 0)])
+    sizzle = B.unit(highpass(white(n, r), 4500, 2)) * (0.5 + 0.5 * smooth_rand(n, r, 40.0))
+    crack = B.crackle(r, dur, 90.0, fmin=2000, fmax=8000)
+    nz = n_of(0.35)
+    zap = sine(glide(nz, 900.0, 120.0, 0.08), nz) * env_exp(nz, 0.001, 0.08)
+    x = mix(dur + 0.4, (whine, 0, -6), (buzz * on, 0, 0), (sizzle * on, 0, -15), (crack * on, 0, -12), (zap, 2.62, -8))
+    x = lowpass(highpass(x, 45, 2), 9000, 2)
+    return reverb(x, r, decay=0.8, mix_db=-15, tail=0.3)[: n_of(3.0)]
+
+
+# ==========================================================================
 # STORM / WIND / AMBIENCE (loops are seamless)
 # ==========================================================================
 @recipe("wind_loop", loud=-22.0, src="synth", loop=True)
