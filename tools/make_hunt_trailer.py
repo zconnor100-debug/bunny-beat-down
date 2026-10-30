@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Cut "The Hunt", the phone trailer, from tests/trailer_hunt_stage.gd's recordings
-(or, with --cut arsenal, "Your Arsenal" from tests/trailer_arsenal_stage.gd's).
+(or, with --cut arsenal, "Your Arsenal" from tests/trailer_arsenal_stage.gd's,
+and with --cut boss, "Boss Battles" from tests/trailer_boss_stage.gd's).
 
 Like tools/make_reel.py (each map recorded on its own, the stage printing
 SHOT name first_frame end_frame), plus the hunting party's lines: the stage
@@ -26,6 +27,14 @@ Recorded at 1080x1920 instead (the tall override.cfg, as for The Hunt) the
 stage frames every shot for a phone, and the same cut makes the phone one:
 
     python3 tools/make_hunt_trailer.py --cut arsenal /tmp/arsenal_tall /tmp/arsenal/lines docs/trailer_arsenal_phone
+
+"Boss Battles" is 16:9 like "Your Arsenal", a recording a map at a time
+("boss island", "boss toybox", "boss cage"); the stage prints SHOUT
+<rogue>|<line id>|<game line key> for each line, and those are cut from the
+rogues' voice banks:
+
+    grep -h SHOUT /tmp/boss/*/log.txt | sed 's/^SHOUT //' | xargs -d '\n' python3 tools/voices/say.py --from-bank /tmp/boss/lines
+    python3 tools/make_hunt_trailer.py --cut boss /tmp/boss /tmp/boss/lines docs/trailer_bosses
 
 Needs ffmpeg.
 """
@@ -68,7 +77,26 @@ ARSENAL_EDIT = [
     ("island", "fifty", 0.0, 3.4),
     ("island", "card", 0.0, 4.0),
 ]
-CUTS = {"hunt": (EDIT, MUSIC), "arsenal": (ARSENAL_EDIT, ARSENAL_MUSIC)}
+BOSS_MUSIC = "assets/audio/music/boss_volatile_reaction.mp3"   # Volatile Reaction, Kevin MacLeod (incompetech.com, CC BY 4.0)
+BOSS_EDIT = [
+    ("island", "meadow", 0.0, 3.6),
+    ("island", "arrival", 0.5, 6.9),
+    ("island", "pound", 0.0, 3.6),
+    ("toybox", "toy_wide", 0.0, 1.5),
+    ("toybox", "tyrant", 0.4, 5.9),
+    ("toybox", "lasers", 0.0, 3.8),
+    ("toybox", "key", 0.0, 3.4),
+    ("cage", "nibbles", 0.3, 5.6),
+    ("cage", "charge", 0.0, 4.6),
+    ("cage", "down", 0.0, 3.8),
+    ("cage", "reward", 0.0, 3.5),
+    ("cage", "card", 0.0, 4.2),
+]
+CUTS = {"hunt": (EDIT, MUSIC), "arsenal": (ARSENAL_EDIT, ARSENAL_MUSIC), "boss": (BOSS_EDIT, BOSS_MUSIC)}
+# The cuts whose game sound and music duck under each line (a boss's landing
+# and blows are loud enough to bury a shout).
+DUCKED = {"boss"}
+DUCK = "threshold=0.03:ratio=4:attack=15:release=350"
 
 
 def lines_of(folder: pathlib.Path) -> list:
@@ -125,8 +153,17 @@ def main() -> None:
             ms = int(at * 1000)
             mix += f"[{3 + k}:a]aresample=48000,aformat=channel_layouts=stereo,adelay={ms}|{ms},volume=2.2[v{k}];"
             parts += f"[v{k}]"
-        mix += (f"{parts}amix=inputs={2 + len(voices)}:duration=first:normalize=0,afade=t=in:d=0.2,"
-                f"loudnorm=I=-14:TP=-1.5:LRA=11,aresample=48000,alimiter=limit=0.7:level=false[a]")
+        if args.cut in DUCKED and voices:
+            # the lines on a bus of their own, the game's sound and the music ducked under them
+            mix += "[s][m]amix=inputs=2:duration=first:normalize=0[bed0];"
+            mix += "".join(f"[v{k}]" for k in range(len(voices))) + f"amix=inputs={len(voices)}:duration=longest:normalize=0,asplit=2[vox][key];"
+            mix += f"[bed0][key]sidechaincompress={DUCK}[bed];"
+            parts = "[bed][vox]"
+            mix += (f"{parts}amix=inputs=2:duration=first:normalize=0,afade=t=in:d=0.2,"
+                    f"loudnorm=I=-14:TP=-1.5:LRA=11,aresample=48000,alimiter=limit=0.7:level=false[a]")
+        else:
+            mix += (f"{parts}amix=inputs={2 + len(voices)}:duration=first:normalize=0,afade=t=in:d=0.2,"
+                    f"loudnorm=I=-14:TP=-1.5:LRA=11,aresample=48000,alimiter=limit=0.7:level=false[a]")
         size = R.png_size(tmp / "c000000.png")
         master = args.out.parent / f"{args.out.name}_master.mp4"
         subprocess.run(["ffmpeg", "-y", "-loglevel", "error", *inputs, "-filter_complex", mix,

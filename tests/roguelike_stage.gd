@@ -1,7 +1,8 @@
 extends "res://tests/workshop_stage.gd"
 ## Stage for tests/capture_roguelike.gd: every species wearing scars (an eye
 ## patch, a bandaged arm, a splinted leg), close-ups, an acorn shrine, a boon
-## draft, the Trail and the Trophy Room's milestones and ladders (the test profile).
+## draft, the Trail and the Trophy Room's milestones, ladders and bosses (the
+## test profile).
 
 
 func _run() -> void:
@@ -95,4 +96,24 @@ func _run() -> void:
 			b.pressed.emit()
 	await _wait(0.4)
 	await _snap("96_ladders")
+	# and the bosses: Brutus faced twice and beaten once, the Tin Tyrant faced
+	StatBook.note_boss_fought("brute")
+	StatBook.note_boss_fought("brute")
+	StatBook.note_boss_damage("brute", 8240.0)
+	StatBook.note_boss_beaten("brute", 312.0, true, false, false)
+	StatBook.note_boss_fought("robot")
+	Mastery.check()
+	for b in room.find_children("*", "Button", true, false):
+		if b.text == "Bosses":
+			b.pressed.emit()
+	for b in room.find_children("*", "Button", true, false):
+		if b.text.begins_with("Brutus"):
+			b.pressed.emit()   # (his page again, with the record just set)
+	await _wait(0.4)
+	await _snap("97_bosses")
+	for b in room.find_children("*", "Button", true, false):
+		if b.text.begins_with("Tin Tyrant"):
+			b.pressed.emit()
+	await _wait(0.4)
+	await _snap("98_bosses_tyrant")
 	get_tree().quit()

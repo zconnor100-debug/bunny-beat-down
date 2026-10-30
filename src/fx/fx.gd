@@ -156,6 +156,10 @@ const BEAT_DOWN_BURSTS := {
 		{"amount": 14, "speed": Vector2(6.0, 10.0), "spread": 180.0, "additive": true, "damping": 2.6, "lifetime": 1.4}]],
 	"gold_rush": [["chip", [Color(1.0, 0.82, 0.25), Color(0.95, 0.65, 0.15)], 11.0, 0.1, {"amount": 12, "speed": Vector2(3.0, 7.0)}],
 		["blob", [Color(1.0, 0.95, 0.6)], -0.5, 0.05, {"amount": 8, "additive": true, "lifetime": 1.0}]],
+	# (earned by beating Nibbles: foam bubbling up off them, and flecks)
+	"froth": [["blob", [Color(0.94, 0.99, 0.88), Color(0.8, 0.96, 0.62)], -0.7, 0.16,
+		{"amount": 20, "speed": Vector2(1.2, 3.8), "spread": 85.0, "damping": 2.4, "lifetime": 1.8}],
+		["chip", [Color(0.96, 1.0, 0.92)], 8.0, 0.05, {"amount": 10, "speed": Vector2(3.0, 6.0)}]],
 }
 
 

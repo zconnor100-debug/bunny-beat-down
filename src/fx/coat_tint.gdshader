@@ -10,6 +10,8 @@
 //     (plain, plaid or dotted), sewn together with big stitches (colour a:
 //     the thread, b: the seams), lit up by its glow so the colours show on
 //     any fur
+//   6 brutus: matted, grizzled grey (hanging, like his), torn by claw rakes
+//     healed pale
 shader_type spatial;
 render_mode blend_mul, unshaded, cull_back, depth_draw_never, shadows_disabled, fog_disabled;
 
@@ -22,10 +24,12 @@ uniform float scale = 7.0;
 
 varying vec3 model_pos;   // (metres)
 varying float height;     // (metres up from the model's origin)
+varying vec3 up_dir;      // (the world's up, in the model's frame)
 
 void vertex() {
 	model_pos = coat_place(VERTEX, MODEL_MATRIX);
-	height = dot(model_pos, coat_up(MODEL_MATRIX));
+	up_dir = coat_up(MODEL_MATRIX);
+	height = dot(model_pos, up_dir);
 }
 
 void fragment() {
@@ -57,6 +61,11 @@ void fragment() {
 		float stitch = step(0.5, fract(dot(p, vec3(0.8, 1.0, 0.9)) * scale * 9.0));   // (a running stitch: on, off)
 		c = mix(c, color_a, stitch * (smoothstep(0.05, 0.065, cell.w) - smoothstep(0.1, 0.115, cell.w)));
 		c = mix(c, color_b, 1.0 - smoothstep(0.02, 0.035, cell.w));
+	} else if (pattern == 6) {
+		vec3 hang = p - up_dir * height * 0.75;   // (squashed up and down: the mats hang)
+		float mat = coat_noise(hang * scale * 2.5) * 0.65 + coat_noise(hang * scale * 9.0) * 0.35;
+		c = mix(color_a, color_b, smoothstep(0.32, 0.72, mat));
+		c = mix(c, vec3(1.0, 0.86, 0.84), coat_rakes(p, scale));
 	}
 	ALBEDO = c;
 }

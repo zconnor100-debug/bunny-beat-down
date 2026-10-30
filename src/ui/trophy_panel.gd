@@ -5,10 +5,12 @@ extends PanelContainer
 ## for every critter you can play (matches, wins, best placing, beat-downs,
 ## beat-downs per time beaten, accuracy), with totals, your runs and the
 ## signature guns you've won; on its second page, the milestones (Mastery):
-## what each takes, how far along you are, what it gives; and on its third,
-## the ladders (Mastery.LADDERS), one row each at the tier you're climbing,
-## with a star for every tier climbed. Fits without scrolling; B or Back
-## closes it.
+## what each takes, how far along you are, what it gives; on its third, the
+## ladders (Mastery.LADDERS), one row each at the tier you're climbing, with
+## a star for every tier climbed; and on its fourth, the bosses: how they came
+## (BossLore), then one boss at a time, your record against it, its story's
+## chapters (each opened by facing it) and the milestones for beating it.
+## Fits without scrolling; B or Back closes it.
 
 signal closed
 
@@ -37,9 +39,12 @@ func _ready() -> void:
 	var ladders := VBoxContainer.new()
 	ladders.visible = false
 	v.add_child(ladders)
-	for page in [["Trackers", trackers], ["Milestones", milestones], ["Ladders", ladders]]:
+	var bosses := _bosses_page()
+	bosses.visible = false
+	v.add_child(bosses)
+	for page in [["Trackers", trackers], ["Milestones", milestones], ["Ladders", ladders], ["Bosses", bosses]]:
 		pages.add_child(UITheme.button(page[0], func():
-			for p in [trackers, milestones, ladders]:
+			for p in [trackers, milestones, ladders, bosses]:
 				p.visible = p == page[1]))
 	trackers.add_child(UITheme.label("Guns", 28, UITheme.CARROT_LIGHT, true))
 	trackers.add_child(_table(["", "Beat-downs", "Accuracy", "Headshots", "Damage", "Longest"], gun_rows()))
@@ -111,6 +116,69 @@ func _milestones(rows := Mastery.rows(), what := "Milestone", takes := "What it 
 		if top:
 			grid.add_child(UITheme.label(r[5], 18, UITheme.LEAF if r[4] else Color(UITheme.CARROT_LIGHT, 0.85)))
 	return grid
+
+
+# ---- the bosses ---------------------------------------------------------------------------------
+
+## The Bosses page: the Warren's story of how the giants came, a button for
+## each boss, and the boss picked.
+func _bosses_page() -> VBoxContainer:
+	var page := VBoxContainer.new()
+	page.add_theme_constant_override("separation", 8)
+	page.add_child(UITheme.label(BossLore.MYTH_TITLE, 26, UITheme.CARROT_LIGHT, true))
+	var myth := UITheme.label(BossLore.MYTH, 17, Color(UITheme.CREAM, 0.85))
+	myth.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	myth.custom_minimum_size = Vector2(1140, 0)
+	page.add_child(myth)
+	var pick := HBoxContainer.new()
+	pick.add_theme_constant_override("separation", 14)
+	page.add_child(pick)
+	var body := VBoxContainer.new()
+	body.add_theme_constant_override("separation", 6)
+	page.add_child(body)
+	for id in BossLore.IDS:
+		var b: Dictionary = BossLore.of(id)
+		pick.add_child(UITheme.button("%s (%s)" % [b.name, b.where], func(): _show_boss(body, id)))
+	_show_boss(body, BossLore.IDS[0])
+	return page
+
+
+## [what it's counted, how many] for your record against a boss, as shown.
+static func boss_record(id: String) -> Array:
+	var r := StatBook.boss(id)
+	var best := "—" if r.best <= 0.0 else "%d:%02d" % [int(r.best) / 60, int(r.best) % 60]
+	return [["Faced", "%d" % int(r.fought)], ["Beaten", "%d" % int(r.beaten)], ["Still standing", "%d" % int(r.standing)],
+		["Last blows", "%d" % int(r.last_blows)], ["On Hard", "%d" % int(r.hard)], ["Fastest", best],
+		["Your damage", Mastery.grouped(int(r.damage))]]
+
+
+## One boss on the Bosses page: its name, your record, the chapters of its
+## story (the latest one you've opened shown; a closed one says what opens
+## it), its milestone and the ones for every boss, and the bosses' ladders.
+func _show_boss(body: VBoxContainer, id: String) -> void:
+	for c in body.get_children():
+		c.queue_free()
+	var b: Dictionary = BossLore.of(id)
+	body.add_child(UITheme.label("%s, %s" % [String(b.name).to_upper(), b.title], 30, UITheme.CREAM, true))
+	body.add_child(UITheme.label("   •   ".join(boss_record(id).map(func(r): return "%s %s" % r)), 19, UITheme.CARROT_LIGHT))
+	var chapters := HBoxContainer.new()
+	chapters.add_theme_constant_override("separation", 10)
+	body.add_child(chapters)
+	var text := UITheme.label("", 18, UITheme.CREAM)
+	text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	text.custom_minimum_size = Vector2(1140, 112)
+	body.add_child(text)
+	var read := func(i: int):
+		var ch: Array = b.chapters[i]
+		text.text = ch[1] if BossLore.is_open(id, i) else BossLore.opens_when(id, i)
+		text.add_theme_color_override("font_color", UITheme.CREAM if BossLore.is_open(id, i) else Color(UITheme.CREAM, 0.6))
+	for i in b.chapters.size():
+		var open := BossLore.is_open(id, i)
+		var btn := UITheme.button("%s. %s" % [Mastery.TIER_NAMES[i], b.chapters[i][0] if open else "? ? ?"], read.bind(i))
+		chapters.add_child(btn)
+	read.call(BossLore.chapters_open(id) - 1)
+	body.add_child(_milestones(Mastery.rows(id) + Mastery.rows("*")))
+	body.add_child(_milestones(Mastery.ladder_rows(true), "Ladder", "The next tier", true))
 
 
 func _table(headers: Array, rows: Array) -> GridContainer:

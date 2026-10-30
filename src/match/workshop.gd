@@ -25,21 +25,23 @@ const LOOKS := {
 	"reticle": {"label": "Reticle", "options": [["cross", "Cross", 0], ["dot", "Dot", 20], ["circle", "Circle", 30],
 		["chevron", "Chevron", 30], ["carrot", "Carrot", 50], ["acorn", "Acorn", 50], ["paw", "Paw print", 60]]},
 	"reticle_color": {"label": "Reticle colour", "options": [["white", "White", 0], ["carrot", "Carrot", 15], ["leaf", "Leaf", 15],
-		["berry", "Berry", 15], ["sky", "Sky", 15], ["gold", "Gold", 40], ["ruby", "Ruby", -1]]},
+		["berry", "Berry", 15], ["sky", "Sky", 15], ["gold", "Gold", 40], ["ruby", "Ruby", -1], ["kernel", "Starfall", -1]]},
 	"skin": {"label": "Gun skin", "options": [["stock", "Stock", 0], ["fern_camo", "Fern camo", 60], ["candy", "Candy stripe", 60],
 		["midnight", "Midnight", 60], ["bubblegum", "Bubblegum", 60], ["frost", "Frost", 80], ["gilded", "Gilded", 150],
 		["ruby", "Ruby", -1], ["toxic", "Toxic stripe", -1], ["ember", "Ember", -1], ["jade", "Jade", -1], ["obsidian", "Obsidian", -1],
 		["pearl", "Pearl", -1], ["royal", "Royal", -1], ["zebra", "Zebra stripe", -1], ["carrot_king", "Carrot King", -1],
-		["sapphire", "Sapphire", -1], ["diamond", "Diamond", -1], ["looking_glass", "Looking Glass", -1], ["nemesis", "Nemesis", -1]]},
+		["sapphire", "Sapphire", -1], ["diamond", "Diamond", -1], ["looking_glass", "Looking Glass", -1], ["nemesis", "Nemesis", -1],
+		["tin_tyrant", "Tin Tyrant", -1]]},
 	"flash": {"label": "Muzzle flash", "options": [["carrot", "Carrot", 0], ["lime", "Lime", 30], ["blueberry", "Blueberry", 30],
-		["plum", "Plum", 30], ["bubblegum", "Bubblegum", 30], ["rainbow", "Rainbow", 80], ["gold", "Gold", -1]]},
+		["plum", "Plum", 30], ["bubblegum", "Bubblegum", 30], ["rainbow", "Rainbow", 80], ["gold", "Gold", -1], ["kernel", "Starfall", -1]]},
 	"smoke": {"label": "Muzzle smoke", "options": [["none", "None", 0], ["puff", "White puff", 25], ["matching", "Matching colour", 40],
 		["spores", "Spore cloud", 60]]},
 	"tracer": {"label": "Your tracers", "options": [["cream", "Cream", 0], ["carrot", "Carrot", 25], ["leaf", "Leaf", 25],
-		["sky", "Sky", 25], ["plum", "Plum", 25], ["gold", "Gold", 60], ["ruby", "Ruby", -1], ["jade", "Jade", -1]]},
+		["sky", "Sky", 25], ["plum", "Plum", 25], ["gold", "Gold", 60], ["ruby", "Ruby", -1], ["jade", "Jade", -1],
+		["kernel", "Starfall", -1]]},
 	"kill_fx": {"label": "Beat-down burst", "options": [["none", "None", 0], ["confetti", "Confetti", 40],
 		["leaves", "Autumn leaves", 40], ["carrots", "Carrot shower", 50], ["hearts", "Hearts", 50],
-		["fireworks", "Fireworks", -1], ["gold_rush", "Gold rush", -1]]},
+		["fireworks", "Fireworks", -1], ["gold_rush", "Gold rush", -1], ["froth", "Rabid froth", -1]]},
 	"wear_hat": {"label": "Hat", "options": [["none", "None", 0], ["flap_beanie", "Ear-flap beanie", 50],
 		["flower_crown", "Flower crown", 60], ["santa_hat", "Santa hat", 70], ["fedora", "Fedora", 80],
 		["witch_hat", "Witch's hat", 90], ["wizard_hat", "Wizard's hat", 110], ["grad_cap", "Mortarboard", -1],
@@ -54,7 +56,7 @@ const LOOKS := {
 		["windup_key", "Wind-up key", -1]]},
 	"coat": {"label": "Coat", "options": [["natural", "Your own fur", 0], ["mended_mirror", "Mended mirror", -1],
 		["golden_acorn", "Golden acorn", -1], ["starry_night", "Starry night", -1], ["tiger_stripe", "Tiger stripe", -1],
-		["smouldering", "Smouldering", -1], ["patchwork", "Patchwork", -1]]},
+		["smouldering", "Smouldering", -1], ["patchwork", "Patchwork", -1], ["brutus", "Brutus", -1]]},
 }
 
 ## Your wardrobe's slots, in the order they're shown.
@@ -71,6 +73,7 @@ const COATS := {
 	"tiger_stripe": [3, Color(1.0, 0.66, 0.26), Color(0.05, 0.04, 0.04), 3.2, 3, Color(1.0, 0.55, 0.14)],
 	"smouldering": [4, Color(0.2, 0.18, 0.18), Color(0.34, 0.28, 0.25), 2.6, 4, Color(1.0, 0.24, 0.05)],
 	"patchwork": [5, Color(1.0, 0.96, 0.86), Color(0.36, 0.3, 0.26), 2.4, 5, Color(0.4, 0.4, 0.4)],
+	"brutus": [6, Color(0.6, 0.55, 0.52), Color(0.3, 0.26, 0.25), 2.2, 6, Color(1.0, 0.16, 0.06)],
 }
 
 ## The palette the looks pick from.
@@ -79,6 +82,7 @@ const COLORS := {
 	"berry": Color(1.0, 0.3, 0.35), "sky": Color(0.45, 0.8, 1.0), "gold": Color(1.0, 0.82, 0.25), "lime": Color(0.7, 1.0, 0.25),
 	"blueberry": Color(0.35, 0.5, 1.0), "plum": Color(0.75, 0.4, 1.0), "bubblegum": Color(1.0, 0.5, 0.8),
 	"ruby": Color(0.95, 0.1, 0.25), "jade": Color(0.2, 0.88, 0.6),
+	"kernel": Color(0.8, 1.0, 0.34),   # (the Starfall Acorn's glow: BossLore)
 }
 
 

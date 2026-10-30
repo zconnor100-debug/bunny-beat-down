@@ -24,6 +24,7 @@ const BOSS_TIPS := [
 	"Jump just as a shockwave lands and it rolls right under you.",
 	"Headshots count double on a boss. The Tin Tyrant's wind-up key counts most of all.",
 	"Your arsenal can be called in as soon as the boss turns up.",
+	"Every boss you face opens more of its story: the Trophy Room's Bosses page.",
 ]
 const CAGE_TIPS := [
 	"Hamster tubes are tunnels: run through Tube Town to cross unseen.",
@@ -154,6 +155,9 @@ func _build_world() -> void:
 	match_manager.finished.connect(_on_match_finished)
 	if not Settings.is_test_run():   # (automated matches just let the blow land)
 		match_manager.time_keeper.offered.connect(_offer_rewind)
+	if match_manager.mode == "boss" and Settings.get_value(&"boss_intro"):
+		match_manager.boss_intro = true
+		match_manager.boss_arriving.connect(_play_boss_intro)
 
 
 func _spawn_player() -> void:
@@ -174,6 +178,14 @@ func _spawn_player() -> void:
 	world.add_child(hud)
 	hud.setup(match_manager.player, rig, match_manager)
 	hud.attach_island(island, match_manager.storm)
+
+
+## The boss arrives: its cinematic (BossIntro), then the camera's yours again.
+func _play_boss_intro(b: Boss) -> void:
+	if rig == null or match_manager.player == null:
+		match_manager.boss_intro_done()
+		return
+	add_child(BossIntro.new(b, match_manager, rig, hud, match_manager.player.get_node_or_null("PlayerController") as PlayerController))
 
 
 func _start() -> void:
@@ -329,7 +341,7 @@ func _build_loading() -> void:
 	if _mode == "teams":
 		tips = TEAM_TIPS
 	elif _mode == "boss":
-		tips = BOSS_TIPS
+		tips = BOSS_TIPS + BossLore.rumours(_map)   # (and what the Warren says about its boss)
 	var tip := UITheme.label("Tip: " + tips.pick_random(), 22, Color(UITheme.CREAM, 0.8))
 	tip.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(tip)

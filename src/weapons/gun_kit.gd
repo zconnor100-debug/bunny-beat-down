@@ -30,6 +30,8 @@ const SKINS := {
 	"diamond": [3, Color(0.93, 0.98, 1.0), Color(0.75, 0.92, 1.0), Color.WHITE, 0.9, 0.2, 0.04, 40.0],
 	"looking_glass": [3, Color(0.42, 0.46, 0.52), Color(0.7, 0.74, 0.8), Color.WHITE, 0.9, 1.0, 0.03, 30.0],
 	"nemesis": [5, Color(1.0, 0.78, 0.3), Color(0.8, 0.55, 0.16), Color(1.0, 0.1, 0.03), 0.94, 1.0, 0.25, 16.0],
+	# earned by beating a boss (Mastery: Unwound)
+	"tin_tyrant": [6, Color(0.7, 0.74, 0.8), Color(0.14, 0.15, 0.18), Color(0.82, 0.1, 0.06), 0.95, 0.85, 0.3, 9.0],
 }
 const DOT_RED := Color(1.0, 0.12, 0.08)
 const TUBE_R := 0.03              ## the sight's tube (model units, round the gun's own sight)

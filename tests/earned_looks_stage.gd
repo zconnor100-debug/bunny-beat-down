@@ -1,9 +1,10 @@
 extends "res://tests/workshop_stage.gd"
-## Stage for tests/capture_workshop.gd with "earned": the looks only the
-## Mastery ladders give. Each earned gun skin (from any tier) on the gun whose ladder gives
-## it (held by a Bun, in two rows), close-ups, then the two earned beat-down
-## bursts and the earned flash and tracer colours, then the coats (on a Bun
-## each, then on other critters beside a Doppelbunny's silver mirror).
+## Stage for tests/capture_workshop.gd with "earned": the looks only Mastery
+## gives. Each earned gun skin (from any ladder tier, on the gun whose ladder
+## gives it; or a milestone's, on a rifle) held by a Bun, in rows, close-ups,
+## then the three earned beat-down bursts and the earned flash colours (gold,
+## Starfall), then the coats (on a Bun each, then on other critters beside a
+## Doppelbunny's silver mirror).
 
 
 func _run() -> void:
@@ -23,6 +24,10 @@ func _run() -> void:
 			if look.begins_with("skin:"):
 				var gun := String(l.stat).get_slice(":", 1)
 				pairs.append([look.get_slice(":", 1), gun if WeaponDB.get_weapon(StringName(gun)) and gun != "melee" else "carrot_rifle"])
+	for m in Mastery.MILESTONES:   # (and the ones a milestone gives: the Tin Tyrant's, for beating it)
+		var look: String = m.reward.get("look", "")
+		if look.begins_with("skin:") and Workshop.earned_only(look):
+			pairs.append([look.get_slice(":", 1), "carrot_rifle"])
 	for i in pairs.size():
 		var c := Critter.new()
 		c.def = load("res://data/critters/bun.tres")
@@ -54,14 +59,19 @@ func _run() -> void:
 	cam.fov = 40
 	cam.global_position = Vector3(0, 2.0, -9.0)
 	cam.look_at(Vector3(0, 1.5, 0), Vector3.UP)
-	FX.beat_down(Vector3(-1.6, 1.6, 0), "fireworks")
-	FX.beat_down(Vector3(1.6, 1.6, 0), "gold_rush")
+	FX.beat_down(Vector3(-3.0, 1.6, 0), "fireworks")
+	FX.beat_down(Vector3(0.0, 1.6, 0), "gold_rush")
+	FX.beat_down(Vector3(3.0, 1.6, 0), "froth")
 	await _wait(0.35)
 	await _snap("88_earned_bursts")
 	for j in 3:
 		FX.muzzle(Vector3(0, 1.5, 0), Vector3(0, 0.2, -1), true, Color(Workshop.color("gold"), 0.9), "none")
 	await _wait(0.09)
 	await _snap("89_gold_flash")
+	for j in 3:
+		FX.muzzle(Vector3(0, 1.5, 0), Vector3(0, 0.2, -1), true, Color(Workshop.color("kernel"), 0.9), "none")
+	await _wait(0.09)
+	await _snap("89_starfall_flash")
 	# the coats: a plain Bun and a Bun in each, then other critters in them (one
 	# with a hat and a jetpack on) beside a Doppelbunny's silver mirror
 	var coat_ids: Array = Workshop.LOOKS[Workshop.COAT].options.map(func(o): return o[0])

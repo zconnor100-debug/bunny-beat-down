@@ -33,6 +33,13 @@ func _ready() -> void:
 		var lines: Array = Cast.GANG_LINES[prefix]
 		for i in lines.size():
 			templates["%s.%d" % [prefix, i]] = lines[i]
+	for prefix in Cast.BOSS_LINES:
+		var lines: Array = Cast.BOSS_LINES[prefix]
+		for i in lines.size():
+			templates["%s.%d" % [prefix, i]] = lines[i]
+	for id in Cast.BOSS_NAME_LINES:
+		templates["bn.%s" % id] = Cast.BOSS_NAME_LINES[id]
+	templates["bk"] = Cast.BOSS_KEY_LINE
 	var rogues := []
 	for n in Cast.names():
 		var m := Cast.member(n)

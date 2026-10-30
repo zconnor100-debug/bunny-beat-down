@@ -83,6 +83,20 @@ const MILESTONES := [
 		"reward": {"look": "wear_hat:laurel_wreath"}, "gives": "the laurel wreath"},
 	{"id": "full_house", "name": "Full House", "text": "Beat down every one of the 49 rogues in the cast.", "stat": "cast_beaten", "need": 49,
 		"reward": {"acorns": 500}, "gives": "500 acorns"},
+	# the bosses (Boss Battles: on the Trophy Room's Bosses page, `boss`): a piece
+	# of each one to keep, and harder ways to beat them
+	{"id": "giant_slayer", "name": "Giant Slayer", "text": "Beat Brutus, the Meadow's Nightmare.", "stat": "boss_wins:brute", "need": 1,
+		"reward": {"look": "coat:brutus"}, "gives": "the Brutus coat", "boss": "brute"},
+	{"id": "unwound", "name": "Unwound", "text": "Beat the Tin Tyrant, the Wind-Up Warlord.", "stat": "boss_wins:robot", "need": 1,
+		"reward": {"look": "skin:tin_tyrant"}, "gives": "the Tin Tyrant gun skin", "boss": "robot"},
+	{"id": "pest_control", "name": "Pest Control", "text": "Beat Nibbles the Rabid.", "stat": "boss_wins:hamster", "need": 1,
+		"reward": {"look": "kill_fx:froth"}, "gives": "the Rabid froth beat-down burst", "boss": "hamster"},
+	{"id": "big_three", "name": "The Big Three", "text": "Beat all three bosses.", "stat": "bosses_beaten", "need": 3,
+		"reward": {"acorns": 300}, "gives": "300 acorns", "boss": "*"},
+	{"id": "still_standing", "name": "Still Standing", "text": "Beat a boss without being beaten down yourself.", "stat": "boss_standing",
+		"need": 1, "reward": {"acorns": 150}, "gives": "150 acorns", "boss": "*"},
+	{"id": "hard_nut", "name": "A Hard Nut", "text": "Beat a boss on Hard.", "stat": "boss_hard", "need": 1,
+		"reward": {"acorns": 250}, "gives": "250 acorns", "boss": "*"},
 ]
 
 ## The ladders: `text` has a %d for a tier's need, and each tier is [need,
@@ -138,6 +152,16 @@ const LADDERS := [
 	{"id": "mirror_mirror", "name": "Mirror, Mirror", "text": "Beat your Doppelbunny in %d Mirror Matches.", "stat": "doppels_beaten",
 		"tiers": [[3, {"acorns": 150}, "150 acorns"], [5, {"look": "skin:looking_glass"}, "the Looking Glass gun skin"],
 			[10, {"look": "coat:mended_mirror"}, "the Mended Mirror coat"]]},
+	# the bosses' (the Bosses page): the top of each in the Starfall Acorn's glow
+	{"id": "giant_killer", "name": "Giant Killer", "text": "Beat %d bosses.", "stat": "boss_wins", "boss": "*",
+		"tiers": [[5, {"acorns": 250}, "250 acorns"], [10, {"acorns": 500}, "500 acorns"],
+			[25, {"acorns": 1000, "look": "tracer:kernel"}, "1,000 acorns and Starfall tracers"]]},
+	{"id": "last_blow", "name": "The Last Blow", "text": "Land the last blow on a boss %d times.", "stat": "boss_last_blows", "boss": "*",
+		"tiers": [[2, {"acorns": 100}, "100 acorns"], [5, {"acorns": 250}, "250 acorns"],
+			[10, {"acorns": 500, "look": "flash:kernel"}, "500 acorns and the Starfall muzzle flash"]]},
+	{"id": "titan_tenderizer", "name": "Titan Tenderizer", "text": "Deal %d damage to bosses.", "stat": "boss_damage", "boss": "*",
+		"tiers": [[25000, {"acorns": 150}, "150 acorns"], [50000, {"acorns": 300}, "300 acorns"],
+			[100000, {"acorns": 600, "look": "reticle_color:kernel"}, "600 acorns and the Starfall reticle"]]},
 ]
 const TIER_NAMES := ["I", "II", "III", "IV", "V"]
 
@@ -151,8 +175,11 @@ static func all() -> Array:
 		for l in LADDERS:
 			for i in l.tiers.size():
 				var t: Array = l.tiers[i]
-				_all.append({"id": "%s_%d" % [l.id, int(t[0])], "name": "%s %s" % [l.name, TIER_NAMES[i]], "text": String(l.text) % int(t[0]),
-					"stat": l.stat, "need": int(t[0]), "reward": t[1], "gives": t[2], "ladder": l.id, "tier": i})
+				var m := {"id": "%s_%d" % [l.id, int(t[0])], "name": "%s %s" % [l.name, TIER_NAMES[i]], "text": String(l.text).replace("%d", grouped(int(t[0]))),
+					"stat": l.stat, "need": int(t[0]), "reward": t[1], "gives": t[2], "ladder": l.id, "tier": i}
+				if l.has("boss"):
+					m["boss"] = l.boss
+				_all.append(m)
 	return _all
 
 
@@ -179,7 +206,21 @@ static func progress(stat: String) -> int:
 		return int(StatBook.gun(StringName(stat.get_slice(":", 1))).heads)
 	if stat.begins_with("map_wins:"):
 		return StatBook.map_wins(stat.get_slice(":", 1))
+	if stat.begins_with("boss_wins:"):
+		return int(StatBook.boss(stat.get_slice(":", 1)).beaten)
 	match stat:
+		"boss_wins":
+			return int(StatBook.boss_total("beaten"))
+		"bosses_beaten":
+			return BossLore.IDS.filter(func(id): return StatBook.boss(id).beaten > 0.0).size()
+		"boss_standing":
+			return int(StatBook.boss_total("standing"))
+		"boss_hard":
+			return int(StatBook.boss_total("hard"))
+		"boss_last_blows":
+			return int(StatBook.boss_total("last_blows"))
+		"boss_damage":
+			return int(StatBook.boss_total("damage"))
 		"kills", "heads":
 			var n := 0.0
 			for g in StatBook.GUNS:
@@ -305,9 +346,22 @@ static func draft_size() -> int:
 	return int(_reward("draft", 3.0))
 
 
-## [name, what it takes, progress "12 / 20", what it gives, reached] for each milestone (not the ladders').
-static func rows() -> Array:
-	return MILESTONES.map(func(m): return [m.name, m.text, "%d / %d" % [mini(progress(m.stat), int(m.need)), int(m.need)], m.gives, has(m.id)])
+## [name, what it takes, progress "12 / 20", what it gives, reached] for each
+## milestone (not the ladders'; the bosses' with `bosses`: a boss's id, or
+## "*" for the ones about every boss).
+static func rows(bosses := "") -> Array:
+	return MILESTONES.filter(func(m): return String(m.get("boss", "")) == bosses).map(func(m):
+		return [m.name, m.text, "%s / %s" % [grouped(mini(progress(m.stat), int(m.need))), grouped(int(m.need))], m.gives, has(m.id)])
+
+
+## A count with its thousands set apart ("25,000").
+static func grouped(n: int) -> String:
+	var digits := str(absi(n))
+	var out := ""
+	while digits.length() > 3:
+		out = "," + digits.substr(digits.length() - 3) + out
+		digits = digits.substr(0, digits.length() - 3)
+	return ("-" if n < 0 else "") + digits + out
 
 
 ## A ladder's tiers (milestones), in order.
@@ -317,13 +371,15 @@ static func tiers(ladder: String) -> Array:
 
 ## [name and stars ("Pistolero ★★☆"), what the tier you're on takes, progress
 ## toward it, what it gives, every tier climbed, what the top tier gives] for
-## each ladder.
-static func ladder_rows() -> Array:
+## each ladder (the bosses', on their own page, with `bosses`).
+static func ladder_rows(bosses := false) -> Array:
 	var out := []
 	for l in LADDERS:
+		if l.has("boss") != bosses:
+			continue
 		var t := tiers(l.id)
 		var done := t.filter(func(m): return has(m.id)).size()
 		var on: Dictionary = t[mini(done, t.size() - 1)]
 		out.append(["%s %s" % [l.name, "★".repeat(done) + "☆".repeat(t.size() - done)], on.text,
-			"%d / %d" % [mini(progress(l.stat), int(on.need)), int(on.need)], on.gives, done == t.size(), t[-1].gives])
+			"%s / %s" % [grouped(mini(progress(l.stat), int(on.need))), grouped(int(on.need))], on.gives, done == t.size(), t[-1].gives])
 	return out

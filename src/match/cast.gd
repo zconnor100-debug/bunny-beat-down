@@ -199,6 +199,8 @@ const OUTFIT_LINES := {
 		"kill": ["Put out, {you}."], "lose": ["Burned. Properly burned."]},
 	"patchwork": {"spot": ["Nice quilt, {you}. Did your granny make it?", "Patches, {you}? I'll give you a few more holes!"],
 		"kill": ["Sew THAT back together, {you}."], "lose": ["Beaten by a blanket..."]},
+	"brutus": {"spot": ["Is that BRUTUS you're wearing, {you}?!", "You beat Brutus? Let's see you beat me, {you}!"],
+		"kill": ["Brutus wants his coat back, {you}."], "lose": ["Beaten by Brutus. Again."]},
 }
 ## How often a bot talks about your outfit instead of its usual line.
 const OUTFIT_TAUNT_CHANCE := 0.35
@@ -228,6 +230,22 @@ const DONE_LINES := ["Pleasure doing business.", "That's that. Don't follow me."
 ## The gang lines by the key prefix MatchManager picks them with (Cast.pick_say).
 const GANG_LINES := {"gspot": GANG_SPOT_LINES, "grush": GANG_RUSH_LINES, "gr": TRUCE_LINES, "gy": TRUCE_YOU_LINES,
 	"gb": BETRAY_LINES, "gt": BETRAYED_LINES, "gs": SPLIT_LINES, "gd": DONE_LINES}
+## A Boss Battle (MatchManager._boss_banter): the rogues on your side shout
+## as it lands, name it (by Boss.id: the Warren knows its legends, BossLore),
+## yell to run from a blow coming down, call out a stunned boss (the Tin
+## Tyrant's key when it winds down), and cheer it going down.
+const BOSS_COMING_LINES := ["Here it comes! Spread out!", "That's... that is BIG."]
+const BOSS_NAME_LINES := {"brute": "It's Brutus! Somebody reset the tally!", "robot": "The Tin Tyrant! Who opened the lid?!",
+	"hamster": "It's Nibbles! Don't touch the foam!"}
+const BOSS_RUN_LINES := ["RUN!", "Out of the red! MOVE!"]
+const BOSS_WEAK_LINES := ["It's stunned! Hit it NOW!", "Aim for the head!"]
+const BOSS_KEY_LINE := "It's winding down! Shoot the key!"
+const BOSS_RAGE_LINES := ["Uh oh. Now it's ANGRY."]
+const BOSS_DOWN_LINES := ["It's down! We DID it!", "Who's the big one NOW?!"]
+## The boss lines picked at random, by the key prefix they're picked with
+## (the name lines are "bn.<boss id>", the key line "bk").
+const BOSS_LINES := {"bc": BOSS_COMING_LINES, "br": BOSS_RUN_LINES, "bw": BOSS_WEAK_LINES, "be": BOSS_RAGE_LINES,
+	"bd": BOSS_DOWN_LINES}
 ## Grudge points against the director before a bot defies it: its hits on
 ## other bots aren't softened by the director's pacing (and it says so).
 const DEFIANT_AT := 3

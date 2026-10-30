@@ -3,7 +3,10 @@ shader_type spatial;
 // a tint or a pattern in the model's own space, so it sits still on the gun.
 //   pattern 0 tint, 1 camo blotches, 2 candy stripes, 3 frost (with
 //   sparkles), 4 gilded metal, 5 nemesis: gold, an N on it every few
-//   centimetres, glowing red (color_c) and breathing like embers.
+//   centimetres, glowing red (color_c) and breathing like embers,
+//   6 tin tyrant: tin plate (a), panelled and riveted, its seams dark (b),
+//   some panels painted toy red (c) with a gold pinstripe, and a red light
+//   sweeping along the seams, back and forth (the eyes under the lid).
 render_mode blend_mix, depth_draw_never, cull_back;
 
 uniform int pattern = 0;
@@ -80,6 +83,24 @@ void fragment() {
 		float breath = 0.7 + 0.3 * sin(TIME * 1.6 + noise(vec3(floor(uv), 0.0)) * 6.0);
 		col = mix(mix(color_a.rgb, color_b.rgb, noise(p * 0.5) * 0.6), color_c.rgb * 0.4, n);
 		EMISSION = color_c.rgb * (n * 2.6 + halo * 0.5) * breath;
+	} else if (pattern == 6) {
+		vec3 a = abs(obj_n);
+		vec2 uv = (a.x > a.y && a.x > a.z ? obj.zy : (a.y > a.z ? obj.xz : obj.xy)) * pattern_scale;
+		vec2 f = fract(uv);
+		vec2 e = min(f, 1.0 - f);   // (how far in from the panel's edges)
+		float seam = 1.0 - smoothstep(0.025, 0.06, min(e.x, e.y));
+		float rivet = max(1.0 - smoothstep(0.035, 0.055, length(vec2((fract(uv.x * 4.0) - 0.5) * 0.25, e.y - 0.11))),
+			1.0 - smoothstep(0.035, 0.055, length(vec2(e.x - 0.11, (fract(uv.y * 4.0) - 0.5) * 0.25))));
+		float brushed = noise(vec3(uv.x * 40.0, uv.y * 2.0, 0.0)) * 0.12;
+		vec3 tin = color_a.rgb * (0.94 + brushed);
+		float painted = step(hash(vec3(floor(uv), 3.0)), 0.4);
+		float pin = 1.0 - smoothstep(0.012, 0.022, abs(f.y - 0.5));
+		col = mix(tin, color_c.rgb, painted);
+		col = mix(col, vec3(1.0, 0.8, 0.25), pin * painted);
+		col = mix(col, color_b.rgb, seam);
+		col = mix(col, color_a.rgb * 1.25, rivet * (1.0 - seam));
+		float sweep = 1.0 - smoothstep(0.0, 0.07, abs(fract(uv.x / 7.0) - (0.5 + 0.45 * sin(TIME * 1.3))));
+		EMISSION = color_c.rgb * seam * sweep * 3.2;
 	}
 	ALBEDO = col;
 	METALLIC = metallic_v;

@@ -25,6 +25,7 @@ func _init() -> void:
 	id = "brute"
 	display_name = "Brutus"
 	title = "the Meadow's Nightmare"
+	land_time = 2.4
 	base_health = 36000.0
 	walk_speed = 10.0
 	turn_speed = 1.5
@@ -367,7 +368,7 @@ func _roar_action() -> BossAction:
 ## It drops out of the sky and lands in a crouch.
 func _entrance() -> BossAction:
 	var at := global_position
-	var drop := 2.4
+	var drop := land_time
 	var a := BossAction.new(&"entrance", drop + 2.6)
 	a.interruptible = false
 	var landed := {&"spine": Vector3(40, 0, 0), &"l_upper_leg": Vector3(-55, 0, 0), &"r_upper_leg": Vector3(-55, 0, 0),

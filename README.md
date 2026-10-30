@@ -22,6 +22,14 @@ gore, and floppy physics ears are included.
 
 Built in **Godot 4.6** (GDScript, Jolt physics, Forward+).
 
+▶ **[Boss Battles](docs/trailer_bosses.mp4)**, 49 seconds in 1080p (with
+sound): one night a star fell on Wildwood, and it wasn't a star. Each boss
+arrives the way the game plays it, dropping out of the sky (or bursting out
+of the bedding) under its name card: Brutus's ground pound, the Tin Tyrant's
+eye lasers and wind-down, Nibbles's charge into a wall and its fall, the
+rogues on your side shouting their in-game lines in their own voices, and Bun
+in the pieces you keep.
+
 ▶ **[The Hunt](docs/trailer_hunt_phone.mp4)**, a 33-second phone trailer (with
 sound): Bun is the quarry of a hunting party across all three maps, every
 hunter in their own voice (Buck Toothington sounds the "Tally-ho!", Bandit
@@ -88,7 +96,7 @@ and the final shot replayed from three angles. There's a
   about to charge. The bots fight it from range, circling it, aim for its
   head if they're any good, and get out from under its blows (the sharp
   ones jump as a shockwave lands, which is how you dodge one too). Their
-  carrots count for a fifth of yours, so you matter. Below half health it's
+  carrots count for an eighth of yours, so you matter. Below half health it's
   enraged: faster, harder, its eyes red. Your arsenal can be called in as
   soon as it turns up.
 
@@ -107,6 +115,36 @@ and the final shot replayed from three angles. There's a
   texel sits on the body. In the game `BossPoser` poses them bone by bone
   from a few rotations per role, so every move (a keyframed `BossAction`
   with events: the warning, the blow) works on any of the three rigs.
+
+  **Their arrival is a cinematic** (`BossIntro`, on by default in Settings):
+  the camera leaves you to look up from the ground as Brutus or the Tin Tyrant
+  drops out of the sky (or at the bedding heaving where Nibbles is about to
+  burst out), a jolt and a beat of slow motion as it lands, then up close on
+  its face as its name comes up with the line the Warren knows it by, and its
+  roar. Then the camera's yours again, turned to face it. Any button skips it.
+
+  **The rogues on your side shout about it** in their own voices (the same
+  Maya1 voices as their taunts): its name as it lands ("It's Brutus! Somebody
+  reset the tally!"), RUN! when a blow's coming down on them or you, "It's
+  stunned! Hit it NOW!", "It's winding down! Shoot the key!", "Aim for the
+  head!", and the cheer when it goes down.
+
+  **They have a story.** One midsummer night the Starfall Acorn fell on
+  Wildwood and split three ways; whatever ate, wound or drank a piece grew,
+  and went wrong. Each boss's story is told in four chapters in the Trophy
+  Room's **Bosses** page, opened by facing it and beating it (the legend, then
+  how it happened, then how to beat it, then where it's going). The whole
+  story, and the quest line it's building toward, is in [docs/LORE.md](docs/LORE.md).
+
+  **Beat each one for a piece of it**: Brutus's coat (matted grey, torn by
+  claw rakes that glow red and beat like a heart), the Tin Tyrant gun skin
+  (riveted tin painted like an old toy, a red light sweeping its seams) and
+  Nibbles's Rabid froth beat-down burst. Then harder milestones (all three; a
+  boss beaten without going down; one on Hard) and the bosses' ladders
+  (5/10/25 bosses beaten, 2/5/10 last blows, 25,000/50,000/100,000 damage),
+  topped by the Starfall Acorn's gold-green tracers, muzzle flash and reticle.
+  The Trophy Room keeps your record against each: faced, beaten, still
+  standing, last blows, on Hard, fastest, your damage.
 
 - **Third person with a first-person option** (press **V**): over-the-shoulder
   camera with a shoulder swap, aim-down-sights zoom, recoil kick and trauma
@@ -905,6 +943,15 @@ clip). Recorded tall, the Arsenal's stage
 frames every shot for a phone (the pack closer together, the cameras
 further back and in behind Bun, one speech bubble at a time). Their music: "Bushwick Tarantella" and
 "Voxel Revolution", by Kevin MacLeod.
+
+"Boss Battles" (`tests/trailer_boss_stage.gd`, `--cut boss`) is the real
+game on each map with the bots' own brains fighting the boss: the stage
+lands it in a clearing in front of a crowd, the game's own `BossIntro` films
+its arrival, and the stage cues its moves (the pound, the boulder, the
+lasers, the wind-down, the charge) and the shots. The rogues' shouts are the
+game's boss lines, cut from their voice banks (`say.py --from-bank`, each
+rogue the stage printed on a SHOUT line). Its music: "Volatile Reaction" by
+Kevin MacLeod, the Boss Battles' own.
 
 The other trailers are directed: the shots and the two critters' inputs are scripted
 (`tests/trailer_stage.gd`, `tests/trailer_cage_stage.gd` for the Hamster

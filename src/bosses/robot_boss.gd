@@ -347,7 +347,7 @@ func _roar_action() -> BossAction:
 ## Dropped into the room like any toy, it lands with a clang and winds itself up.
 func _entrance() -> BossAction:
 	var at := global_position
-	var drop := 2.2
+	var drop := land_time
 	var a := BossAction.new(&"entrance", drop + 3.0)
 	a.interruptible = false
 	_key_speed = 0.0

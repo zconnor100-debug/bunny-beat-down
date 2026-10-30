@@ -471,6 +471,38 @@ kind of match; a run's stops are always battle royales.
   copy the weights across; paint into the texture by where each texel sits
   on the body (`paint`: Nibbles's blood and foam); export the GLB and a
   `<id>.boss.json` (bones per role, tips, hitbox radii, eyes, mouth).
+- **Its arrival** is `MatchManager.release_boss` (landing it facing you,
+  then `boss_arriving`), which the game answers with a `BossIntro` when
+  Settings "boss_intro" is on: a Camera3D of its own driven off the boss's
+  clock (`Boss.fight_time` against `land_time`: a low shot up at it falling,
+  or at the ground where `from_below` Nibbles is coming up; then its face),
+  a moment of slow motion as it lands, letterbox bars and its name card on a
+  CanvasLayer, and `Boss.show_off` (its roar for the camera: `hurt_ring`
+  does nothing while `_quiet_until` lasts). It holds the boss still
+  (`thinking` off), the HUD hidden and your controls off until it's over or
+  skipped, then gives the camera back turned to face it and calls
+  `boss_intro_done` (which says your arsenal's ready).
+- **The rogues' shouts** are `MatchManager._boss_banter`, every frame of a
+  Boss Battle: it watches the boss for new `danger` zones (RUN!, from the
+  rogue nearest you if it's on you, or one in it near you), stun and
+  wind-down (`vulnerable()`), enrage, and the arrival and the fall (queued
+  against its landing); `_boss_shout` picks the rogue (`_shouter`: the
+  nearest within `BANTER_NEAR` for warnings, anyone for its name and the
+  cheer) and keeps them apart (`BANTER_GAP`, `BANTER_EVERY` per kind). The
+  lines are `Cast.BOSS_LINES`, spoken by `RogueVoice` from each rogue's bank
+  (`<rogue>_6.ogg`, added with `build_voices_maya.py --new-lines`).
+- **Lore and records.** `BossLore` holds the story (the myth, each boss's
+  four chapters, its arrival line, the loading screen's rumours) and opens a
+  chapter by your record: `StatBook.boss(id)` (fought, beaten, standing,
+  last blows, hard, damage, best time), kept by `release_boss`,
+  `Boss.take_damage` and `_on_boss_died`. `Mastery` reads it (stats
+  `boss_wins[:<id>]`, `bosses_beaten`, `boss_standing`, `boss_hard`,
+  `boss_last_blows`, `boss_damage`); milestones and ladders marked `boss`
+  show on the Trophy Room's Bosses page instead of the Milestones and
+  Ladders pages. The rewards: coat pattern 6 (`coat_rakes` in
+  `coat_lib.gdshaderinc`), gun skin pattern 6, the "froth" beat-down burst
+  and the "kernel" colour. The full story, and the quest line it leads to,
+  is `docs/LORE.md`.
 
 ## Tests
 

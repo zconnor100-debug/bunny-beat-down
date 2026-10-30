@@ -80,3 +80,25 @@ float coat_tiger(vec3 p, float height, float scale) {
 	float width = 0.5 + 0.2 * coat_noise(p * 3.0);
 	return smoothstep(width, width + 0.06, band);
 }
+
+// The Brutus coat's claw rakes: now and then three parallel gouges across a
+// cell, each cell's its own way, tapering to points at their ends. 1 in a
+// gouge. (Each is a thin slab: where the fur passes through it, a stroke.)
+float coat_rakes(vec3 p, float scale) {
+	vec3 id;
+	vec4 cell = coat_cells(p * scale, id);
+	if (coat_hash3(id + vec3(7.0, 3.0, 1.0)).x > 0.4) {
+		return 0.0;
+	}
+	vec3 q = -cell.xyz;   // (from the cell's centre)
+	vec3 d = normalize(coat_hash3(id + vec3(1.0, 9.0, 4.0)) - 0.5);   // (along the strokes)
+	vec3 s = normalize(cross(d, normalize(coat_hash3(id + vec3(5.0, 2.0, 8.0)) - 0.5)));   // (across them)
+	float along = dot(q, d);
+	float across = dot(q, s);
+	float w = 0.05 * clamp(1.0 - abs(along) * 2.0, 0.0, 1.0);
+	float g = 0.0;
+	for (int k = -1; k <= 1; k++) {
+		g = max(g, 1.0 - smoothstep(w * 0.45, w, abs(across - float(k) * 0.15)));
+	}
+	return g;
+}

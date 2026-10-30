@@ -31,6 +31,14 @@ func test_every_rogue_can_say_every_line() -> void:
 		for prefix in Cast.GANG_LINES:
 			for i in Cast.GANG_LINES[prefix].size():
 				keys.append("%s.%d" % [prefix, i])
+		for i in Cast.FLARE_LINES.size():
+			keys.append("fl.%d" % i)
+		for prefix in Cast.BOSS_LINES:
+			for i in Cast.BOSS_LINES[prefix].size():
+				keys.append("%s.%d" % [prefix, i])
+		for id in Cast.BOSS_NAME_LINES:
+			keys.append("bn.%s" % id)
+		keys.append("bk")
 		for key in keys:
 			var fields := {"you": yous[key.hash() % yous.size()], "k": key.length() % 7, "w": 61,
 				"them": Cast.names()[(Cast.names().find(n) + 1) % Cast.names().size()]}

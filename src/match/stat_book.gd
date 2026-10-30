@@ -96,6 +96,63 @@ static func map_wins(map_id: String) -> int:
 	return int(_book().get_value("maps", map_id, 0))
 
 
+# ---- the bosses (Boss Battles) ------------------------------------------------------------------
+
+## Your record against each boss (Boss.id): fought (it turned up in your
+## match), beaten (your side beat it, whether you were still standing or
+## not), standing (beaten with you still standing), last_blows (yours was the
+## blow that downed it), hard (beaten on Hard), damage (all you've dealt it)
+## and best (the fastest it's gone down, seconds from landing; 0: never).
+const BOSS_KEYS := ["fought", "beaten", "standing", "last_blows", "hard", "damage", "best"]
+
+
+static func boss(id: String) -> Dictionary:
+	var out := {}
+	for key in BOSS_KEYS:
+		out[key] = float(_book().get_value("boss:" + id, key, 0.0))
+	return out
+
+
+static func _boss_bump(id: String, key: String, by: float) -> void:
+	_book().set_value("boss:" + id, key, float(_book().get_value("boss:" + id, key, 0.0)) + by)
+
+
+## A boss turned up in your match.
+static func note_boss_fought(id: String) -> void:
+	_boss_bump(id, "fought", 1.0)
+	PlayerProfile.save()
+
+
+## You hurt a boss (saved with the rest at the end of the match).
+static func note_boss_damage(id: String, damage: float) -> void:
+	_boss_bump(id, "damage", damage)
+	if not this_match.is_empty():
+		this_match["boss_damage"] = float(this_match.get("boss_damage", 0.0)) + damage
+
+
+## Your side beat a boss, `seconds` after it landed. Saved.
+static func note_boss_beaten(id: String, seconds: float, standing: bool, last_blow: bool, hard: bool) -> void:
+	_boss_bump(id, "beaten", 1.0)
+	if standing:
+		_boss_bump(id, "standing", 1.0)
+	if last_blow:
+		_boss_bump(id, "last_blows", 1.0)
+	if hard:
+		_boss_bump(id, "hard", 1.0)
+	var best := float(_book().get_value("boss:" + id, "best", 0.0))
+	if seconds > 0.0 and (best <= 0.0 or seconds < best):
+		_book().set_value("boss:" + id, "best", seconds)
+	PlayerProfile.save()
+
+
+## `key` (BOSS_KEYS) added up over every boss.
+static func boss_total(key: String) -> float:
+	var n := 0.0
+	for id in BossLore.IDS:
+		n += float(boss(id)[key])
+	return n
+
+
 ## A gun's lifetime numbers ({kills, shots, hits, heads, damage, longest}).
 static func gun(gun_id: StringName) -> Dictionary:
 	var out := {}

@@ -27,6 +27,7 @@ var _burn_t := 0.0
 func _init() -> void:
 	super()
 	id = "hamster"
+	from_below = true
 	display_name = "Nibbles"
 	title = "the Rabid"
 	base_health = 32000.0
@@ -340,17 +341,17 @@ func _roar_action() -> BossAction:
 
 ## It bursts up out of the bedding.
 func _entrance() -> BossAction:
-	var a := BossAction.new(&"entrance", 3.6)
+	var a := BossAction.new(&"entrance", land_time + 1.4)
 	a.interruptible = false
 	var under := {&"spine": Vector3(60, 0, 0), &"head": Vector3(30, 0, 0), &"root": Vector3(0, -1.1, 0.1)}
 	var up := {&"spine": Vector3(-20, 0, 0), &"head": Vector3(-35, 0, 0), &"jaw": Vector3(45, 0, 0),
 		&"l_upper_arm": Vector3(-130, 0, 35), &"r_upper_arm": Vector3(-130, 0, -35), &"root": Vector3(0, 0.05, 0)}
-	a.key(0.0, under).key(1.6, under).key(2.2, up).key(3.0, up).key(3.6, {})
-	a.on(0.0, func(): warn(global_position, 26.0, 2.2))
+	a.key(0.0, under).key(land_time - 0.6, under).key(land_time, up).key(land_time + 0.8, up).key(land_time + 1.4, {})
+	a.on(0.0, func(): warn(global_position, 26.0, land_time))
 	a.tick = func(time: float, _delta: float):
-		if time < 2.0 and randf() < 0.3:
+		if time < land_time - 0.2 and randf() < 0.3:
 			BossFX.dust(global_position + Vector3(randf_range(-8, 8), 0, randf_range(-8, 8)), 10.0, Color(0.85, 0.8, 0.68, 0.7))
-	a.on(2.2, func():
+	a.on(land_time, func():
 		hurt_ring(global_position, 26.0, 55.0, 10.0, 15.0, 12.0, &"landing")
 		BossFX.shockwave(global_position, 26.0)
 		BossFX.chips(global_position, 3.0, Color(0.88, 0.82, 0.68))

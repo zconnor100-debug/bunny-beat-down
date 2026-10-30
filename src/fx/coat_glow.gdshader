@@ -9,6 +9,8 @@
 //     hearts, breathing
 //   5 patchwork: each patch's own colour, lifted (so it shows on dark fur
 //     as well as white), the seams left dark
+//   6 brutus: his claw rakes glowing red, beating like a heart, and a dull
+//     red rim
 shader_type spatial;
 render_mode blend_add, unshaded, cull_back, depth_draw_never, shadows_disabled, fog_disabled;
 
@@ -90,6 +92,9 @@ void fragment() {
 		vec3 id;
 		vec4 cell = coat_cells(p * scale, id);
 		c = glow_color * coat_patch(coat_hash3(id)) * smoothstep(0.02, 0.05, cell.w) * (1.0 + rim * 0.6);
+	} else if (pattern == 6) {
+		float beat = pow(0.5 + 0.5 * sin(TIME * 2.4), 6.0);
+		c = glow_color * coat_rakes(p, scale) * (1.5 + 1.6 * beat) + glow_color * rim * 0.22;
 	}
 	ALBEDO = c * strength;
 }

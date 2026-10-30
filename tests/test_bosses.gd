@@ -310,8 +310,13 @@ func _boss_battle(map: String) -> void:
 	check(mm.phase == MatchManager.Phase.PLAYING, "%s: everyone's down" % map)
 	check(mm.storm == null or not mm.storm.active, "%s: no Briar in a Boss Battle" % map)
 	check(mm.boss_countdown() > 0.0, "%s: the boss is on its way (%.0f s)" % [map, mm.boss_countdown()])
+	var said := []
+	Events.taunt.connect(func(_c, text): said.append(text))
+	var fought: float = StatBook.boss(mm.boss.id).fought
 	mm.release_boss()
 	check(mm.boss.state != Boss.State.WAITING and AIBrain.boss == mm.boss, "%s: it turned up" % map)
+	check(game.get_node_or_null("BossIntro") is BossIntro, "%s: its arrival plays as a cinematic" % map)
+	check(StatBook.boss(mm.boss.id).fought == fought + 1.0, "%s: you faced it" % map)
 	var deaths := [0]
 	Events.critter_died.connect(func(_v, _i): deaths[0] += 1)
 	var hp := mm.boss.health
@@ -327,8 +332,16 @@ func _boss_battle(map: String) -> void:
 	if mm.phase == MatchManager.Phase.PLAYING:
 		var won := [false]
 		mm.finished.connect(func(_w, _p): won[0] = true)
+		var beaten: float = StatBook.boss(mm.boss.id).beaten
 		mm.boss.take_damage(DamageInfo.make(1e9, DamageInfo.Kind.BULLET, mm.player, &"carrot_sniper"))
 		check(won[0] and mm.winning_team == 1 and mm.phase == MatchManager.Phase.ENDED, "%s: it fell, and your side won" % map)
+		check(StatBook.boss(mm.boss.id).beaten == beaten + 1.0, "%s: beaten, on your record" % map)
+	var boss_lines := []
+	for lines in Cast.BOSS_LINES.values() + [Cast.BOSS_NAME_LINES.values(), [Cast.BOSS_KEY_LINE]]:
+		boss_lines.append_array(lines)
+	var shouted := said.filter(func(t): return boss_lines.has(t))
+	print("    %s: the rogues shouted %s" % [map, shouted])
+	check(shouted.size() >= 2, "%s: the rogues shouted about it (%d)" % [map, shouted.size()])
 	Engine.time_scale = 1.0
 	Settings.set_value(&"mode", "royale", false)
 	Settings.set_value(&"map", "island", false)

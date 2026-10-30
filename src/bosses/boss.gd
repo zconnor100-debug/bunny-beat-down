@@ -33,6 +33,8 @@ const LIMBS := [&"l_upper_arm", &"l_lower_arm", &"l_hand", &"r_upper_arm", &"r_l
 var id := ""
 var display_name := ""
 var title := ""                     ## its billing on the health bar
+var land_time := 2.2                ## seconds into its entrance it lands (or bursts out): BossIntro
+var from_below := false             ## it bursts up out of the ground instead of dropping in (BossIntro)
 var base_health := 30000.0
 var max_health := 30000.0
 var health := 30000.0
@@ -71,6 +73,8 @@ var _anchors: Dictionary = {}       # role -> Node3D on its bone (hitboxes and s
 var _solids: Array = []             # [AnimatableBody3D, role]
 var _ready_at: Dictionary = {}      # ability -> clock when it can be used again
 var _clock := 0.0
+var arrived_at := -1.0              ## (its clock when it turned up: fight_time())
+var _quiet_until := -1.0            # (its roar for the camera hurts nobody: show_off)
 var _retarget_t := 0.0
 var _gait := 0.0
 var _speed := 0.0
@@ -301,9 +305,13 @@ func forward() -> Vector3:
 
 # ---- the match -----------------------------------------------------------------------------
 
-## It turns up at `at` (MatchManager, once everyone's had time to find a gun).
-func arrive(at: Vector3) -> void:
+## It turns up at `at` (MatchManager, once everyone's had time to find a gun),
+## facing `look` if there's one to face (you: you get a good look at it).
+func arrive(at: Vector3, look := Vector3.INF) -> void:
 	global_position = at
+	if look != Vector3.INF and Vector2(look.x - at.x, look.z - at.z).length() > 0.5:
+		rotation.y = atan2(-(look.x - at.x), -(look.z - at.z))
+	arrived_at = _clock
 	state = State.ARRIVING
 	visible = true
 	_set_hittable(true)
@@ -639,6 +647,7 @@ func take_damage(info: DamageInfo) -> void:
 	if by and not by.is_player:
 		amount *= BOT_DAMAGE
 	info.amount = amount
+	var before := health
 	health = maxf(0.0, health - amount)
 	last_hit_pos = info.position if info.position != Vector3.ZERO else get_chest_position()
 	if by:
@@ -648,6 +657,7 @@ func take_damage(info: DamageInfo) -> void:
 	if by and by.is_player:
 		Events.player_hit_confirmed.emit(self, amount, info.headshot, health <= 0.0)
 		StatBook.note_hit(info.weapon_id, amount, info.headshot, info.kind == DamageInfo.Kind.EXPLOSION)
+		StatBook.note_boss_damage(id, before - health)
 	health_changed.emit(health, max_health)
 	if not enraged and health <= max_health * ENRAGE_AT and health > 0.0:
 		_enrage()
@@ -711,6 +721,24 @@ func lands_in(d: Array) -> float:
 	return float(d[2]) - 0.2 - _clock
 
 
+## Seconds since it turned up (0 before it has).
+func fight_time() -> float:
+	return _clock - arrived_at if arrived_at >= 0.0 else 0.0
+
+
+## Its roar for the camera as it arrives (BossIntro): the pose and the noise,
+## hurting nobody. False if it's busy (Brutus roaring at a crowd for real).
+func show_off() -> bool:
+	if not alive or action:
+		return false
+	var a := _roar_action()
+	if a == null:
+		return false
+	_quiet_until = _clock + a.length
+	start(a)
+	return true
+
+
 func _die(info: DamageInfo) -> void:
 	alive = false
 	state = State.DEAD
@@ -760,6 +788,8 @@ func warn_strip(from: Vector3, to: Vector3, width: float, seconds: float) -> voi
 func hurt_ring(centre: Vector3, radius: float, inner: float, outer: float, push: float, lift: float, what: StringName,
 		jump_clear := true) -> Array[Critter]:
 	var hit: Array[Critter] = []
+	if _clock < _quiet_until:
+		return hit
 	for c in foes_near(centre, radius):
 		if jump_clear and not c.is_on_floor() and c.global_position.y > ground_y(c.global_position) + 1.2:
 			continue

@@ -57,6 +57,7 @@ func _ready() -> void:
 	_check("Show FPS", &"show_fps")
 	_section("Game")
 	_option("Gore", &"gore", ["Full (blood & limbs)", "Plushie (stuffing)", "Off"])
+	_check("Boss arrival cinematics", &"boss_intro")
 	_check("Check for updates", &"check_updates")
 	_section("Audio")
 	_slider("Master volume", &"master_volume", 0.0, 1.0, 0.05)

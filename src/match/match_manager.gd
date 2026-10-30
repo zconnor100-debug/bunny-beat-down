@@ -11,6 +11,8 @@ signal finished(winner: Critter, player_placement: int)
 signal player_eliminated(placement: int, killer: Critter)
 ## A boon draft for the player (an acorn shrine): game.gd shows it (DraftPanel).
 signal boons_offered(choices: Array, title: String)
+## A Boss Battle's boss is arriving (the game plays its intro: BossIntro).
+signal boss_arriving(boss: Boss)
 
 enum Phase { LOADING, DROPPING, PLAYING, ENDED }
 
@@ -124,8 +126,23 @@ var enemy_ship: Dropship
 ## A Boss Battle's boss, and how long after everyone's down it turns up.
 var boss: Boss
 const BOSS_AFTER := 35.0
+const BOSS_CLEARING := 30.0      ## metres of open ground (no tree, rock or prop) it would rather land in
 const BOSS_SUPPLY_INTERVAL := 50.0
 var _boss_t := -1.0
+## Its arrival plays as a cinematic (BossIntro, the game's): then the intro
+## shows its name, not the usual announcement.
+var boss_intro := false
+## Off, the rogues keep quiet about the boss (the trailer scripts their lines).
+var banter := true
+## The rogues on your side shouting in a Boss Battle (_boss_banter): what was
+## shouted when (by the key prefix, Cast.BOSS_LINES), and what the boss was
+## doing last we looked.
+const BANTER_GAP := 2.5          ## seconds between any two shouts
+const BANTER_EVERY := {"br": 7.0, "bw": 12.0, "tip": 45.0}   ## and between two of a kind
+const BANTER_NEAR := 70.0        ## metres from you a rogue shouts from (so you hear it)
+var _banter_t := {}
+var _banter_queue: Array = []    # [clock to say it at, key prefix or key]
+var _boss_was := {}
 ## The side that won a Team Battle or a Boss Battle (1: yours; 2: theirs, or the boss).
 var winning_team := 0
 ## What beat the player down, by name (a critter, a boss), for the end
@@ -996,6 +1013,7 @@ func _process(delta: float) -> void:
 				_hunt_you(delta)   # (a nemesis on the other team still comes for you)
 		else:
 			_tend_boss(delta)
+			_boss_banter()
 		_supply_t += delta
 		if _supply_t >= (BOSS_SUPPLY_INTERVAL if mode == "boss" else SUPPLY_INTERVAL) * pace:
 			_supply_t = 0.0
@@ -1668,23 +1686,144 @@ func boss_countdown() -> float:
 	return _boss_t
 
 
-## It turns up, somewhere out in the open near the middle of the map.
-func release_boss() -> void:
+## It turns up, somewhere out in the open near the middle of the map (or
+## `at`: the trailer's).
+func release_boss(at := Vector3.INF) -> void:
 	if boss == null or boss.state != Boss.State.WAITING:
 		return
 	_boss_t = -1.0
 	var r := island.terrain.island_radius
-	var spot := island.random_land_point(2.0, Vector2.ZERO, r * 0.25)
-	for i in 12:   # (not on top of you: it lands where you can see it coming)
-		if player == null or not player.alive or Vector2(spot.x - player.global_position.x, spot.z - player.global_position.z).length() > 45.0:
-			break
-		spot = island.random_land_point(2.0, Vector2.ZERO, r * 0.35)
-	boss.arrive(spot)
+	var spot := island.random_land_point(2.0, Vector2.ZERO, r * 0.25) if at == Vector3.INF else at
+	if at == Vector3.INF:
+		# not on top of you (it lands where you can see it coming), and out in
+		# the open if there's open ground: a giant in a wood is hidden, and a
+		# tree's crown would fill its arrival's camera
+		var open := Vector3.INF
+		for i in 40:
+			if player == null or not player.alive or Vector2(spot.x - player.global_position.x, spot.z - player.global_position.z).length() > 45.0:
+				if open == Vector3.INF or island.scatter == null or not island.scatter.blocked(Vector2(spot.x, spot.z), BOSS_CLEARING, false):
+					open = spot
+				if island.scatter == null or not island.scatter.blocked(Vector2(spot.x, spot.z), BOSS_CLEARING, false):
+					break
+			spot = island.random_land_point(2.0, Vector2.ZERO, r * (0.25 if i < 20 else 0.4))
+		if open != Vector3.INF:
+			spot = open
+	boss.arrive(spot, player.global_position if player and player.alive else Vector3.INF)
 	AIBrain.boss = boss
 	Audio.play_music("match_boss", 2.5)
-	Events.announce.emit("%s HAS ARRIVED!" % boss.display_name.to_upper(), "%s %s. Beat it down, together." % [boss.display_name, boss.title])
+	if player:
+		StatBook.note_boss_fought(boss.id)
+	# a rogue names it as it lands (the Warren knows its legend), then the rest
+	# get ready
+	_banter_queue = [[_clock + boss.land_time + 1.0, "bn." + boss.id], [_clock + boss.land_time + 4.5, "bc"]]
+	if not boss_intro:   # (the intro shows its name, then says this: boss_intro_done)
+		Events.announce.emit("%s HAS ARRIVED!" % boss.display_name.to_upper(), "%s %s. Beat it down, together." % [boss.display_name, boss.title])
+		boss_intro_done()
+	boss_arriving.emit(boss)
+
+
+## Its arrival's been seen (the intro's over, or there wasn't one).
+func boss_intro_done() -> void:
 	if can_call_in():
 		Events.headline.emit("Your arsenal is ready: %s to call it in." % GameInput.prompt(&"call_in"))
+
+
+## The rogues on your side shout about the boss: its name as it lands, then
+## to get ready; RUN! when a blow's about to come down on them or you; when
+## it's stunned (the Tin Tyrant winding down: its key); when it's enraged;
+## and now and then where to aim. One at a time, from a rogue near enough you
+## to hear (RogueVoice), never the same kind too often.
+func _boss_banter() -> void:
+	if not banter or boss == null or not is_instance_valid(boss) or boss.state == Boss.State.WAITING:
+		return
+	while not _banter_queue.is_empty() and _clock >= float(_banter_queue[0][0]):
+		_boss_shout(String(_banter_queue.pop_front()[1]), null, true)
+	if not boss.alive:
+		return
+	var stunned := boss.vulnerable()
+	if stunned and not _boss_was.get("stunned", false):
+		_boss_shout("bk" if boss.id == "robot" else "bw.0")
+	if boss.enraged and not _boss_was.get("enraged", false):
+		_boss_shout("be")
+	var newest := float(_boss_was.get("since", -INF))
+	for d in boss.danger:
+		if d.size() < 4 or float(d[3]) <= float(_boss_was.get("since", -INF)):
+			continue
+		newest = maxf(newest, float(d[3]))
+		_warn_shout(d[0], float(d[1]))
+	if boss.state == Boss.State.FIGHTING and boss.fight_time() > 20.0:
+		_boss_shout("tip")
+	_boss_was = {"stunned": stunned, "enraged": boss.enraged, "since": newest}
+
+
+## A blow's coming down at `pos`, `radius` across: if it's on you, the rogue
+## nearest you yells to run; if it's on rogues near you, one of them does.
+func _warn_shout(pos: Vector3, radius: float) -> void:
+	if player == null or not is_instance_valid(player):
+		return
+	var flat := func(a: Vector3, b: Vector3) -> float: return Vector2(a.x - b.x, a.z - b.z).length()
+	var you_in: bool = player.alive and flat.call(player.global_position, pos) < radius + 2.0
+	var who: Critter = null
+	var best := INF
+	for c in alive_critters():
+		if c == player or c.team != player.team:
+			continue
+		var to_you: float = flat.call(c.global_position, player.global_position)
+		if to_you > (40.0 if you_in else BANTER_NEAR) or (not you_in and flat.call(c.global_position, pos) > radius + 3.0):
+			continue
+		if to_you < best:
+			best = to_you
+			who = c
+	if who:
+		_boss_shout("br", who)
+
+
+## A rogue on your side shouts a boss line: `what` is a key prefix (one of its
+## lines at random: Cast.BOSS_LINES), "tip" (where to aim) or a line's own key
+## ("bn.<boss id>", "bk", "bw.0"). By `who`, or the rogue nearest you that
+## can. `now`: whatever was said a moment ago (the arrival's lines).
+func _boss_shout(what: String, who: Critter = null, now := false) -> bool:
+	var kind := "tip" if what == "tip" else what.get_slice(".", 0)
+	if not now and (_clock - float(_banter_t.get("any", -INF)) < BANTER_GAP
+			or _clock - float(_banter_t.get(kind, -INF)) < float(BANTER_EVERY.get(kind, 0.0))):
+		return false
+	if who == null:   # (the whole side hollers its name, and cheers it going down: heard or not)
+		who = _shouter(null, INF if kind in ["bn", "bc", "bd"] else BANTER_NEAR)
+	if who == null:
+		return false
+	var said := {}
+	if what == "tip":
+		said = Cast.say("bw.1", Cast.BOSS_WEAK_LINES[1])
+	elif what == "bk":
+		said = Cast.say("bk", Cast.BOSS_KEY_LINE)
+	elif kind == "bn":
+		said = Cast.say(what, Cast.BOSS_NAME_LINES.get(what.get_slice(".", 1), ""))
+	elif what.contains("."):
+		said = Cast.say(what, Cast.BOSS_LINES[kind][int(what.get_slice(".", 1))])
+	else:
+		said = Cast.pick_say(Cast.BOSS_LINES[kind], kind, rng)
+	if String(said.get("text", "")) == "":
+		return false
+	_banter_t["any"] = _clock
+	_banter_t[kind] = _clock
+	_say(who, said)
+	return true
+
+
+## The rogue on your side nearest you (within `near`), to shout (null if none).
+func _shouter(but: Critter = null, near := BANTER_NEAR) -> Critter:
+	if player == null or not is_instance_valid(player):
+		return null
+	var best: Critter = null
+	var best_d := near
+	for c in alive_critters():
+		if c == player or c == but or c.team != player.team:
+			continue
+		var d := c.global_position.distance_to(player.global_position)
+		if d < best_d:
+			best_d = d
+			best = c
+	return best
 
 
 ## A Boss Battle is lost when nobody's left standing against it.
@@ -1706,9 +1845,19 @@ func _on_boss_died(by: Node) -> void:
 		"You landed the last blow!" if by == player else "%s landed the last blow." % who)
 	for x in alive_critters():
 		x.placement = 1
+	# the rogues near you cheer (two at once: a crowd)
+	var first := _shouter(null, INF) if banter else null
+	var i := rng.randi() % 2
+	if first and _boss_shout("bd.%d" % i, first, true):
+		var second := _shouter(first, INF)
+		if second:
+			_boss_shout("bd.%d" % (1 - i), second, true)
+	if player:
+		StatBook.note_boss_beaten(boss.id, boss.fight_time(), player.alive, by == player, _difficulty == Settings.Difficulty.HARD)
 	if player and player.alive:
 		StatBook.end_match(1, total, false)
-		_check_mastery()
+	if player:
+		_check_mastery()   # (your side beat it, standing or not)
 	_set_phase(Phase.ENDED)
 	finished.emit(player if player and player.alive else null, 1)
 
