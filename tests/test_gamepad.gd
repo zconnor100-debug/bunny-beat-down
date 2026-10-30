@@ -48,6 +48,17 @@ func test_menu_buttons_answer_a_and_b() -> void:
 	await wait_frames(1)
 	check(menu.find_children("*", "TrailPanel", true, false).is_empty() and _focus_text() == run_button, "B closes it (focus: %s)" % _focus_text())
 
+	# The Kernel Hunt: opens on its first act, B comes back to the same button
+	await _pad(JOY_BUTTON_DPAD_DOWN)
+	check(_focus_text() == "The Kernel Hunt", "D-pad down moves to the Kernel Hunt (focus: %s)" % _focus_text())
+	await _pad(JOY_BUTTON_A)
+	var quest := menu.find_children("*", "QuestPanel", true, false)
+	var qf := get_viewport().gui_get_focus_owner()
+	check(quest.size() == 1 and qf is Button and quest[0].is_ancestor_of(qf), "A opens its page, on its first act (focus: %s)" % qf)
+	await _pad(JOY_BUTTON_B)
+	await wait_frames(1)
+	check(menu.find_children("*", "QuestPanel", true, false).is_empty() and _focus_text() == "The Kernel Hunt", "B closes it (focus: %s)" % _focus_text())
+
 	# The Burrow: open with A, B comes back to the same button
 	await _pad(JOY_BUTTON_DPAD_DOWN)
 	check(_focus_text() == "The Burrow", "D-pad down moves to The Burrow (focus: %s)" % _focus_text())
@@ -103,7 +114,7 @@ func test_menu_buttons_answer_a_and_b() -> void:
 	check(_focus_text() == "Settings", "and the pad is back on the Settings button (focus: %s)" % _focus_text())
 
 	# Play: the D-pad steps the opponent count, B goes back
-	for i in 6:
+	for i in 7:
 		await _pad(JOY_BUTTON_DPAD_UP)
 	await _pad(JOY_BUTTON_A)
 	check(_focus_text() == "Drop in!", "A on Play opens the match setup on 'Drop in!' (focus: %s)" % _focus_text())
@@ -121,7 +132,7 @@ func test_menu_buttons_answer_a_and_b() -> void:
 	check(_focus_text() == "Play", "B backs out to Play (focus: %s)" % _focus_text())
 
 	# Credits: opens on Back, B closes it
-	for i in 7:
+	for i in 8:
 		await _pad(JOY_BUTTON_DPAD_DOWN)
 	await _pad(JOY_BUTTON_A)
 	check(menu.find_children("*", "CreditsPanel", true, false).size() == 1, "A on Credits opens them")

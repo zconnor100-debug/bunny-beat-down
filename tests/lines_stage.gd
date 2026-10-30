@@ -40,6 +40,10 @@ func _ready() -> void:
 	for id in Cast.BOSS_NAME_LINES:
 		templates["bn.%s" % id] = Cast.BOSS_NAME_LINES[id]
 	templates["bk"] = Cast.BOSS_KEY_LINE
+	for prefix in Cast.KERNEL_LINES:
+		var lines: Array = Cast.KERNEL_LINES[prefix]
+		for i in lines.size():
+			templates["%s.%d" % [prefix, i]] = lines[i]
 	var rogues := []
 	for n in Cast.names():
 		var m := Cast.member(n)

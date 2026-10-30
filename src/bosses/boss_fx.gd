@@ -91,6 +91,29 @@ static func dust(pos: Vector3, radius: float, color := DUST) -> void:
 		"fade": true, "damping": 2.6, "aabb": radius * 1.6 + 10.0})
 
 
+## A column of dust going up from `pos` for `seconds`, tall enough to see
+## from across the map over the trees (something huge stirring under Boulder
+## Bluff: MissionOutro). Like a flare's smoke, slower and far bigger.
+static func dust_column(pos: Vector3, seconds := 3.0) -> GPUParticles3D:
+	if FX.instance == null:
+		return null
+	var p: GPUParticles3D = FX.instance._make_particles({"amount": 340, "lifetime": 7.0, "speed": Vector2(6.0, 15.0), "spread": 28.0,
+		"gravity": -0.4, "size": 12.0, "scale": Vector2(0.7, 2.2), "color": Color(0.3, 0.26, 0.21, 0.92), "fade": true, "damping": 0.4}, false)
+	p.one_shot = false
+	p.local_coords = false
+	p.visibility_aabb = AABB(Vector3(-90, -90, -10), Vector3(180, 180, 200))   # (its local -Z is the world's up)
+	p.rotation = Vector3(PI * 0.5, 0.0, 0.0)   # (its particles start off along -Z: turned to point up, fast)
+	FX.instance.add_child(p)
+	p.global_position = pos
+	p.emitting = true
+	var tw := p.create_tween()
+	tw.tween_interval(seconds)
+	tw.tween_callback(func(): p.emitting = false)
+	tw.tween_interval(7.0)
+	tw.tween_callback(p.queue_free)
+	return p
+
+
 ## Chips of rock (or tin, or bedding) flying off where something smashed.
 static func chips(pos: Vector3, size: float, color: Color) -> void:
 	FX.burst(pos, Vector3.UP, {"amount": 28, "lifetime": 1.6, "speed": Vector2(4.0, 12.0) * size, "spread": 75.0,

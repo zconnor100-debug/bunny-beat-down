@@ -166,8 +166,8 @@ func _process(delta: float) -> void:
 		_wait -= delta
 		if _wait <= 0.0:
 			_next()
-	elif not playing or get_playback_position() >= _end or Time.get_ticks_msec() > _due:
-		_next()
+	elif not playing or get_playback_position() >= _end or (Time.get_ticks_msec() > _due and Engine.get_write_movie_path() == ""):
+		_next()   # (the clock's no guide while Movie Maker records: it renders slower than real time)
 
 
 func _exit_tree() -> void:

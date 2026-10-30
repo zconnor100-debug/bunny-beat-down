@@ -39,6 +39,9 @@ func test_every_rogue_can_say_every_line() -> void:
 		for id in Cast.BOSS_NAME_LINES:
 			keys.append("bn.%s" % id)
 		keys.append("bk")
+		for prefix in Cast.KERNEL_LINES:
+			for i in Cast.KERNEL_LINES[prefix].size():
+				keys.append("%s.%d" % [prefix, i])
 		for key in keys:
 			var fields := {"you": yous[key.hash() % yous.size()], "k": key.length() % 7, "w": 61,
 				"them": Cast.names()[(Cast.names().find(n) + 1) % Cast.names().size()]}

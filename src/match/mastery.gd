@@ -13,7 +13,8 @@ extends RefCounted
 ## progress(): "kills", "heads", "gun_kills:<gun id>", "gun_heads:<gun id>",
 ## "wins", "map_wins:<map id>", "matches", "critters_played", "cast_beaten",
 ## "max_heat", "signatures", "nemeses_beaten", "runs_done", "run_stops",
-## "boons_at_once", "gang_beaten", "doppels_beaten"), `need` how many, and
+## "boons_at_once", "gang_beaten", "doppels_beaten", "kernel_done:<mission id>",
+## "kernel_all_home"), `need` how many, and
 ## `reward` what it gives:
 ##   {"acorns": n}                      once, when it's reached
 ##   {"look": "category:id"}            a Workshop look, free
@@ -97,6 +98,11 @@ const MILESTONES := [
 		"need": 1, "reward": {"acorns": 150}, "gives": "150 acorns", "boss": "*"},
 	{"id": "hard_nut", "name": "A Hard Nut", "text": "Beat a boss on Hard.", "stat": "boss_hard", "need": 1,
 		"reward": {"acorns": 250}, "gives": "250 acorns", "boss": "*"},
+	# the Kernel Hunt (KernelHunt): its prologue held, and held well
+	{"id": "days_since_brutus", "name": "Days Since Brutus: 0", "text": "Hold the Big Red Barn in the Kernel Hunt's prologue.",
+		"stat": "kernel_done:prologue", "need": 1, "reward": {"look": "coat:touched"}, "gives": "the Touched coat"},
+	{"id": "every_ranger_home", "name": "Every Ranger Home", "text": "Hold the Barn with all seven Barn Rangers still standing.",
+		"stat": "kernel_all_home", "need": 1, "reward": {"acorns": 250}, "gives": "250 acorns"},
 ]
 
 ## The ladders: `text` has a %d for a tier's need, and each tier is [need,
@@ -208,6 +214,8 @@ static func progress(stat: String) -> int:
 		return StatBook.map_wins(stat.get_slice(":", 1))
 	if stat.begins_with("boss_wins:"):
 		return int(StatBook.boss(stat.get_slice(":", 1)).beaten)
+	if stat.begins_with("kernel_done:"):
+		return 1 if KernelHunt.done(stat.get_slice(":", 1)) else 0
 	match stat:
 		"boss_wins":
 			return int(StatBook.boss_total("beaten"))
@@ -250,6 +258,8 @@ static func progress(stat: String) -> int:
 			return int(_book().get_value("mastery_stats", "gang_beaten", 0))
 		"doppels_beaten":
 			return DoppelData.mirror("beaten")
+		"kernel_all_home":
+			return 1 if int(KernelHunt.best("prologue").get("rangers", 0)) >= KernelHunt.RANGERS.size() else 0
 	return 0
 
 

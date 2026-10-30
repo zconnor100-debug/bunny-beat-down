@@ -149,3 +149,55 @@ func test_the_gazette_prints_the_news() -> void:
 	check(none.headline() == "", "no edition, no headline (and no crash)")
 	none.queue_free()
 	await wait_frames(1)
+
+
+## A boss beaten (or the Barn held) can't wait for the rogues' next match: a
+## special edition, at once, stamped so, with the moment's photo in halftone.
+func test_a_boss_beaten_is_a_special_edition() -> void:
+	PlayerProfile.reset_for_tests()
+	var r := {"by": "Hazel", "time": 252.0, "went": 25, "standing": ["Hazel", "Turbo", "Bandit Bill", "Grimsby", "Vex"],
+		"you_standing": false, "times": 1, "best": 252.0, "chapter": "The Dent"}
+	var stories := WarrenSim.boss_news("brute", r)
+	check(String(stories[0].title) == "BRUTUS FALLS AT THE CARROT PATCH", "the headline: %s" % stories[0].title)
+	var lead := String(stories[0].text)
+	check(lead.contains("25 critters went out to the meadow after Brutus") and lead.contains("5 were still on their feet")
+		and lead.contains("Hazel landed the last blow") and lead.contains("4:12") and lead.contains("weren't on your feet"), lead)
+	check(stories.any(func(s): return s.title == "STILL STANDING" and String(s.text).contains("Hazel, Turbo and Bandit Bill, and 2 others")),
+		"who was still standing: %s" % [stories.map(func(s): return s.text)])
+	check(stories.any(func(s): return String(s.text).begins_with("said Hazel")), "the one who landed it, quoted")
+	check(stories.any(func(s): return s.title == "READ ON" and String(s.text).contains("\"The Dent\"")), "the chapter it opened")
+	var again := WarrenSim.boss_news("robot", {"by": "You", "time": 301.0, "went": 25, "standing": [], "you_standing": true,
+		"times": 3, "best": 240.0, "chapter": ""})
+	check(String(again[0].title) == "TIN TYRANT UNWOUND AGAIN" and String(again[0].text).contains("You landed the last blow"), again[0].title)
+	check(again.any(func(s): return (s.title == "THE THIRD TIME" and String(s.text).contains("The Tin Tyrant has gone down 3 times")
+		and String(s.text).contains("4:00"))), "the third time, and the fastest: %s" % [again.map(func(s): return s.title)])
+	# printed at once, over what you hadn't read of the last edition
+	var regular := WarrenSim.catch_up(T0)
+	var ed := WarrenSim.print_extra("boss", stories, T0 + 60.0)
+	check(ed.extra == "boss" and not ed.read and String(ed.stories[0].title) == "BRUTUS FALLS AT THE CARROT PATCH", "a special edition, unread")
+	check((ed.stories as Array).any(func(s): return s.title == regular.stories[0].title), "the news it pushed down still runs")
+	check(WarrenSim.has_news() and GazettePanel.dateline(ed).contains("Special edition"), GazettePanel.dateline(ed))
+	# the photo the game took of it
+	var img := Image.create(320, 180, false, Image.FORMAT_RGB8)
+	img.fill(Color(0.4, 0.5, 0.3))
+	WarrenSim.keep_photo(img, "Brutus, down at last.", T0 + 62.0)
+	check(String(WarrenSim.edition().get("photo", "")) == WarrenSim.TEST_PHOTO and WarrenSim.edition().caption == "Brutus, down at last.",
+		"the photo's on its front page")
+	var g := GazettePanel.new()
+	add_child(g)
+	await wait_frames(3)
+	var labels: Array = g.find_children("*", "Label", true, false).map(func(l): return l.text)
+	check(labels.has("★  SPECIAL EDITION  ★") and g.headline() == "BRUTUS FALLS AT THE CARROT PATCH", "stamped, and on the front page")
+	check(g.photo() != null and g.photo().material is ShaderMaterial and (g.photo().material as ShaderMaterial).shader == GazettePanel.HALFTONE
+		and labels.has("Brutus, down at last."), "its photo in halftone, with its caption")
+	g.queue_free()
+	await wait_frames(1)
+	check(not WarrenSim.has_news(), "read")
+	# a special edition nobody's read stays on the front page when the rogues' news comes in
+	WarrenSim.print_extra("kernel", WarrenSim.mission_news({"wave": 3, "rangers_home": ["Buck Toothington", "Hazel"]}), T0 + 100.0)
+	var later := WarrenSim.catch_up(T0 + 7.0 * HOUR)
+	check(later.get("extra", "") == "kernel" and String(later.stories[0].title) == "THE BARN HOLDS", "the Barn still leads: %s" % later.stories[0].title)
+	check((later.stories as Array).any(func(s): return String(s.text).contains("2 of the 7 rangers came home")), "who came home")
+	check((later.stories as Array).any(func(s): return s.title == "\"SOMEBODY FIX THE TALLY\"" and String(s.text).begins_with("said Buck Toothington")),
+		"the captain, quoted")
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(WarrenSim.TEST_PHOTO))

@@ -101,6 +101,8 @@ var _hunt_until := 0.0
 ## metres off it we hold, and until when.
 var _contest_pos := Vector3.INF
 var _hold_pos := Vector3.INF
+var hold_low := true              ## crouches where it holds (the Touched stand: MissionDirector)
+var hold_run := true              ## sprints to where it holds (the Touched march)
 var _contest_until := 0.0
 const CONTEST_NEAR := 7.0
 const CONTEST_FAR := 14.0
@@ -662,6 +664,20 @@ func contest(pos: Vector3, seconds := 45.0) -> void:
 	_think_t = minf(_think_t, 0.05)
 
 
+## Hold `post`, low, watching `watch`, for `seconds` (a Kernel Hunt mission's:
+## a ranger at its post round the Barn, a Touched in its yard: MissionDirector).
+## Like a flare's crate (`contest`): it fights whoever it sees, then goes back.
+func hold(post: Vector3, watch: Vector3, seconds := 3600.0) -> void:
+	if me and me.is_inside_tree():
+		var on_mesh := NavigationServer3D.map_get_closest_point(me.get_world_3d().navigation_map, post)
+		if on_mesh.distance_to(post) < 6.0:
+			post = on_mesh
+	_contest_pos = watch
+	_hold_pos = post
+	_contest_until = _clock + seconds
+	_think_t = minf(_think_t, 0.05)
+
+
 ## Coming for (or holding by) a flare's crate (see `contest`).
 func contesting() -> bool:
 	return _contest_pos != Vector3.INF and _clock < _contest_until
@@ -673,11 +689,11 @@ func _roam() -> void:
 		if d > 2.0:
 			_set_dest(_hold_pos)
 			_follow_path(false)
-			me.want_sprint = d > 12.0
+			me.want_sprint = d > 12.0 and hold_run
 		else:
 			# there: down low, watching the crate
 			me.move_input = Vector2.ZERO
-			me.want_crouch = true
+			me.want_crouch = hold_low
 			me.look_yaw = lerp_angle(me.look_yaw, _yaw_to(_contest_pos), 0.15)
 			me.look_pitch = lerpf(me.look_pitch, 0.0, 0.1)
 			me.aim_point = me.get_eye_position() + me.look_direction() * 30.0

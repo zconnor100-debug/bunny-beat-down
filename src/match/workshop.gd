@@ -56,7 +56,7 @@ const LOOKS := {
 		["windup_key", "Wind-up key", -1]]},
 	"coat": {"label": "Coat", "options": [["natural", "Your own fur", 0], ["mended_mirror", "Mended mirror", -1],
 		["golden_acorn", "Golden acorn", -1], ["starry_night", "Starry night", -1], ["tiger_stripe", "Tiger stripe", -1],
-		["smouldering", "Smouldering", -1], ["patchwork", "Patchwork", -1], ["brutus", "Brutus", -1]]},
+		["smouldering", "Smouldering", -1], ["patchwork", "Patchwork", -1], ["brutus", "Brutus", -1], ["touched", "Touched", -1]]},
 }
 
 ## Your wardrobe's slots, in the order they're shown.
@@ -74,6 +74,7 @@ const COATS := {
 	"smouldering": [4, Color(0.2, 0.18, 0.18), Color(0.34, 0.28, 0.25), 2.6, 4, Color(1.0, 0.24, 0.05)],
 	"patchwork": [5, Color(1.0, 0.96, 0.86), Color(0.36, 0.3, 0.26), 2.4, 5, Color(0.4, 0.4, 0.4)],
 	"brutus": [6, Color(0.6, 0.55, 0.52), Color(0.3, 0.26, 0.25), 2.2, 6, Color(1.0, 0.16, 0.06)],
+	"touched": [7, Color(0.9, 0.93, 0.8), Color(0.5, 0.56, 0.36), 4.2, 7, Color(0.8, 1.0, 0.34)],
 }
 
 ## The palette the looks pick from.

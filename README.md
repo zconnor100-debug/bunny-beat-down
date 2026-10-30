@@ -17,8 +17,10 @@ closing Briar and be the last critter standing. Or play it as a **Team
 Battle** (you and 24 bots against 25, two balloons, no friendly fire), or a
 **Boss Battle**: you and 24 bots against a boss ten critters tall, Brutus (a
 hulking monster bunny) on the island, the Tin Tyrant (a wind-up robot) in the
-Toy Box, Nibbles the Rabid in the Hamster Cage. Ragdolls, real limb-popping
-gore, and floppy physics ears are included.
+Toy Box, Nibbles the Rabid in the Hamster Cage. Or play the story: **the
+Kernel Hunt**, player against environment, where you and the Barn Rangers
+hold the Big Red Barn against the Touched. Ragdolls, real limb-popping gore,
+and floppy physics ears are included.
 
 Built in **Godot 4.6** (GDScript, Jolt physics, Forward+).
 
@@ -144,7 +146,33 @@ and the final shot replayed from three angles. There's a
   (5/10/25 bosses beaten, 2/5/10 last blows, 25,000/50,000/100,000 damage),
   topped by the Starfall Acorn's gold-green tracers, muzzle flash and reticle.
   The Trophy Room keeps your record against each: faced, beaten, still
-  standing, last blows, on Hard, fastest, your damage.
+  standing, last blows, on Hard, fastest, your damage. And the **Warren
+  Gazette** holds the front page: beat one and a special edition is waiting
+  back at the menu ("BRUTUS FALLS AT THE CARROT PATCH"), with a photo the game
+  took as it fell, printed in halftone, who landed the last blow, who was still
+  standing, a quote from one of them and the chapter of its story you opened.
+
+  ![The Warren Gazette's special editions: BRUTUS FALLS AT THE CARROT PATCH, and THE BARN HOLDS](docs/screenshots/gazette_special.jpg)
+
+- **The Kernel Hunt: the story, player against environment** (main menu).
+  The Starfall Acorn's light is getting into the Warren's critters: the
+  **Touched**, any species, gold-green veins glowing through their fur,
+  silent, coming in waves. Its acts lead to the boss fights; the first, the
+  prologue **Days Since Brutus**, is playable (the rest are on its page,
+  sealed). You start on the ground at the Big Red Barn with the **Barn
+  Rangers**, seven rogues of the cast at their posts round it, and the
+  Touched come out of the Carrot Patch in three waves, then round the sides
+  too, the last with a Touched giant. Every Touched standing in the Barn's
+  yard wears it down (its bar along the top); between waves the rangers patch
+  it up and a crate comes down. The rangers call it all in their own voices
+  ("Look at their eyes... they're GLOWING.", "They're in the yard! Push them
+  out!"). Hold the last wave and the ground shakes: dust goes up off Boulder
+  Bluff, something roars, and the tally on the Barn's door (DAYS SINCE
+  BRUTUS: 9, it has never got past nine) is rubbed out and chalked back to
+  zero. Hold it for the **Touched coat**; hold it with every ranger standing
+  for another milestone. The story's in [docs/LORE.md](docs/LORE.md).
+
+  ![The Kernel Hunt's prologue: the Big Red Barn and its rangers, the Touched in the yard, dust going up off Boulder Bluff, and the tally back at zero](docs/screenshots/kernel_hunt.jpg)
 
 - **Third person with a first-person option** (press **V**): over-the-shoulder
   camera with a shoulder swap, aim-down-sights zoom, recoil kick and trauma
@@ -408,7 +436,8 @@ and the final shot replayed from three angles. There's a
     (braver, sloppier), a fresh scar leaves it wary. When you come back, the
     **Warren Gazette** (main menu) opens on its own: the front-page story,
     the rest of the news, Feud Watch, Wanted (who's after you) and the
-    standings.
+    standings. Big news (a boss beaten, the Barn held) is a special edition,
+    printed at once, with the game's photo of the moment.
 - **Runs down the Trail.** *A Run* (main menu) is five stops picked one at a
   time from a branching map (`Run`, `TrailPanel`): Skirmishes, Grudge Matches
   (your radical bots, as a gang), Golden Groves (better loot, double acorns,

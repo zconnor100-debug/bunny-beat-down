@@ -201,6 +201,8 @@ const OUTFIT_LINES := {
 		"kill": ["Sew THAT back together, {you}."], "lose": ["Beaten by a blanket..."]},
 	"brutus": {"spot": ["Is that BRUTUS you're wearing, {you}?!", "You beat Brutus? Let's see you beat me, {you}!"],
 		"kill": ["Brutus wants his coat back, {you}."], "lose": ["Beaten by Brutus. Again."]},
+	"touched": {"spot": ["Your EYES, {you}... why are your eyes glowing?!", "Stay back, {you}! I know what you are!"],
+		"kill": ["Go back to the Carrot Patch, {you}."], "lose": ["Beaten by one of the Touched. Of course."]},
 }
 ## How often a bot talks about your outfit instead of its usual line.
 const OUTFIT_TAUNT_CHANCE := 0.35
@@ -246,6 +248,23 @@ const BOSS_DOWN_LINES := ["It's down! We DID it!", "Who's the big one NOW?!"]
 ## (the name lines are "bn.<boss id>", the key line "bk").
 const BOSS_LINES := {"bc": BOSS_COMING_LINES, "br": BOSS_RUN_LINES, "bw": BOSS_WEAK_LINES, "be": BOSS_RAGE_LINES,
 	"bd": BOSS_DOWN_LINES}
+## The Kernel Hunt (KernelHunt, a mission's MissionDirector): the rogues on
+## your side, by the key prefix they're picked with. "kt": the tally, as the
+## mission starts; "kw": a wave coming; "ks": the first sight of the Touched;
+## "ky": the Touched in the Barn's yard, "kb": the Barn nearly lost; "kg": a
+## Touched giant; "kc": a wave beaten; "kd": one of yours down; "kr": the
+## roar from Boulder Bluff, said in order.
+const KERNEL_LINES := {
+	"kt": ["Nine days without Brutus. Nobody jinx it."],
+	"kw": ["Here they come! Out of the Carrot Patch!", "More of them! Everyone back to the Barn!"],
+	"ks": ["Look at their eyes... they're GLOWING.", "What's WRONG with them?"],
+	"ky": ["They're in the yard! Push them out!", "They're at the doors! Hold the Barn!"],
+	"kb": ["We're losing the Barn!"],
+	"kg": ["That one's HUGE! Everybody shoot it!", "What did they FEED that one?!"],
+	"kc": ["That's the last of them. For now.", "Patch up! There's more coming."],
+	"kd": ["They got one of us! Watch yourselves!"],
+	"kr": ["What... was THAT?", "That came from Boulder Bluff.", "Somebody fix the tally. It's zero again."],
+}
 ## Grudge points against the director before a bot defies it: its hits on
 ## other bots aren't softened by the director's pacing (and it says so).
 const DEFIANT_AT := 3

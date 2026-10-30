@@ -9,11 +9,20 @@ extends RefCounted
 ## carries into the next match you play, and the Warren Gazette (GazettePanel)
 ## prints the news.
 ##
+## Some news can't wait for the next match: a boss beaten (MatchManager), the
+## Big Red Barn held in the Kernel Hunt (MissionDirector). That's a special
+## edition, printed at once (print_extra), with a photo of the moment when
+## the game could take one (keep_photo).
+##
 ## The warren's clock is kept in its own file; automated test runs use their
 ## own, like Settings.
 
 const PATH := "user://gazette.cfg"
 const TEST_PATH := "user://gazette_test.cfg"
+const PHOTO := "user://gazette_photo.png"
+const TEST_PHOTO := "user://gazette_photo_test.png"
+const PHOTO_FRESH := 120.0      ## seconds a photo waits for its special edition (and the other way round)
+const EXTRA_STORIES := 7
 const HOURS_PER_MATCH := 3.0    ## real hours between off-screen matches
 const MAX_MATCHES := 12         ## at most this many to catch up on (the rest are forgotten)
 const FIRST_EDITION := 2        ## matches in the very first paper (a new warren has news already)
@@ -78,6 +87,13 @@ static func catch_up(now := Time.get_unix_time_from_system()) -> Dictionary:
 	# (the clock keeps the part-hours toward the next match, unless it had to forget some)
 	f.set_value("warren", "clock", now if due > MAX_MATCHES else clock + n * step)
 	var ed := edition_of(played, now, rng)
+	var was := edition()
+	if was.has("extra") and not was.get("read", false):
+		# (a special edition nobody's read yet stays on the front page)
+		for k in ["extra", "photo", "caption"]:
+			if was.has(k):
+				ed[k] = was[k]
+		ed["stories"] = ((was.stories as Array) + (ed.stories as Array)).slice(0, EXTRA_STORIES)
 	f.set_value("warren", "edition", ed)
 	f.save(path())
 	RivalBook.save()
@@ -95,6 +111,124 @@ static func forget_news() -> void:
 	if _file().has_section_key("warren", "edition"):
 		_file().erase_section_key("warren", "edition")
 		_file().save(path())
+
+
+## Whether there's an edition you haven't read.
+static func has_news() -> bool:
+	var ed := edition()
+	return not ed.is_empty() and not ed.get("read", false)
+
+
+## A special edition (`kind`: "boss", "kernel"), printed at once: `stories`
+## first (the first is the headline), over what the last edition had that
+## you haven't read yet. The photo the game just took goes on its front page.
+static func print_extra(kind: String, stories: Array, now := Time.get_unix_time_from_system()) -> Dictionary:
+	var f := _file()
+	var old := edition()
+	var under: Array = [] if old.get("read", true) else (old.get("stories", []) as Array)
+	var ed := {"when": now, "matches": int(old.get("matches", 0)) if not under.is_empty() else 0, "extra": kind,
+		"stories": (stories + under).slice(0, EXTRA_STORIES), "standings": old.get("standings", []), "read": false}
+	var shot: Dictionary = f.get_value("warren", "photo", {})
+	if not shot.is_empty() and now - float(shot.get("at", 0.0)) < PHOTO_FRESH:
+		ed["photo"] = shot.path
+		ed["caption"] = shot.caption
+	if f.has_section_key("warren", "photo"):
+		f.erase_section_key("warren", "photo")   # (a photo is news once)
+	f.set_value("warren", "edition", ed)
+	f.save(path())
+	return ed
+
+
+## The game took a photo of the moment (a boss going down, the tally back at
+## zero): kept for the special edition it's news for (printed just now, or
+## about to be).
+static func keep_photo(img: Image, caption: String, now := Time.get_unix_time_from_system()) -> void:
+	if img == null or img.is_empty():
+		return
+	var to := TEST_PHOTO if Settings.is_test_run() else PHOTO
+	if img.get_width() > 1280:
+		img.resize(1280, roundi(1280.0 * img.get_height() / img.get_width()), Image.INTERPOLATE_BILINEAR)
+	if img.save_png(to) != OK:
+		return
+	var f := _file()
+	var ed := edition()
+	if ed.has("extra") and not ed.has("photo") and not ed.get("read", false) and now - float(ed.get("when", 0.0)) < PHOTO_FRESH:
+		ed["photo"] = to
+		ed["caption"] = caption
+		f.set_value("warren", "edition", ed)
+	else:
+		f.set_value("warren", "photo", {"path": to, "caption": caption, "at": now})   # (for the edition about to be printed)
+	f.save(path())
+
+
+## A boss beaten (MatchManager._on_boss_died): the special edition's stories.
+## `r`: {by (who landed the last blow: "You" or a rogue), time (seconds),
+## went (how many of you went after it), standing (the rogues still on their
+## feet), you_standing, times (it's been beaten, this one too), best (the
+## fastest, seconds), chapter (a chapter of its story this opened, or "")}.
+static func boss_news(id: String, r: Dictionary, rng: RandomNumberGenerator = null) -> Array:
+	var b := BossLore.of(id)
+	var news: Dictionary = BossLore.NEWS.get(id, {})
+	var who := String(b.get("name", "the boss"))
+	var the := "the Tin Tyrant" if who == "Tin Tyrant" else who
+	var times := int(r.get("times", 1))
+	var standing: Array = r.get("standing", [])
+	var on_feet := standing.size() + (1 if r.get("you_standing", false) else 0)
+	var by := String(r.get("by", "You"))
+	var blow := "You landed the last blow." if by == "You" else "%s landed the last blow, and hasn't stopped talking about it." % by
+	var down := "" if r.get("you_standing", false) else " You weren't on your feet by then. They won it for you anyway."
+	var text := "%d critters went %s after %s. %d were still on their feet at the end, and %s wasn't. %s%s It took %s. %s" % [
+		int(r.get("went", on_feet)), news.get("where", "out"), the, on_feet, the, blow, down, _clock_text(float(r.get("time", 0.0))),
+		news.get("after", "")]
+	var out := [{"title": String(news.get("fell" if times <= 1 else "again", "%s IS BEATEN" % who.to_upper())), "text": text.strip_edges()}]
+	if not standing.is_empty():
+		var names: Array = standing.slice(0, 3)
+		var rest := standing.size() - names.size()
+		var list := ", ".join(names.slice(0, names.size() - 1)) + (" and " if names.size() > 1 else "") + String(names.back())
+		out.append({"title": "STILL STANDING", "text": "On their feet when %s went down: %s%s." % [the, list,
+			"" if rest <= 0 else ", and %s" % _count(rest, "other", "others")]})
+		var talker := String(standing[0] if by == "You" or not standing.has(by) else by)
+		var lines: Array = Cast.BOSS_DOWN_LINES
+		var line := String(lines[(rng.randi() if rng else absi(hash(talker))) % lines.size()])
+		out.append({"title": "\"%s\"" % line.to_upper(), "text": "said %s, to anyone who'd listen, and to several who wouldn't." % talker})
+	if times > 1:
+		out.append({"title": "THE %s TIME" % _ordinal(times).to_upper(), "text": "%s has gone down %d times now. The fastest it's been done: %s." % [
+			the.capitalize() if the.begins_with("the") else the, times, _clock_text(float(r.get("best", r.get("time", 0.0))))]})
+	if String(r.get("chapter", "")) != "":
+		out.append({"title": "READ ON", "text": "More of %s's story is open in the Trophy Room (the Bosses page): \"%s\"." % [the, r.chapter]})
+	return out
+
+
+## The Kernel Hunt's prologue held (MissionDirector): the special edition's
+## stories. `r`: MissionDirector.report().
+static func mission_news(r: Dictionary) -> Array:
+	var home: Array = r.get("rangers_home", [])
+	var all := KernelHunt.RANGERS.size()
+	var came := "Every ranger came home." if home.size() >= all else ("%d of the %d rangers came home." % [home.size(), all] if not home.is_empty() \
+		else "None of the rangers came home on their feet.")
+	var out := [
+		{"title": "THE BARN HOLDS", "text": "Something came out of the Carrot Patch: critters with gold-green eyes and gold-green light running through their fur. The Barn Rangers held the Big Red Barn against %d waves of them, and you held it with them. %s Then the ground shook, and something roared at Boulder Bluff." % [
+			int(r.get("wave", KernelHunt.WAVES.size())), came]},
+		{"title": "DAYS SINCE BRUTUS: 0", "text": "The tally on the Barn's door said nine at breakfast. It says nought now. It has never got past nine."},
+		{"title": "WHAT ARE THE TOUCHED?", "text": "Old Mother Clover says it's the Starfall Acorn's light, got into them and looking for the rest of itself. \"Listen,\" she says. \"They hum.\""},
+	]
+	var talker := "Buck Toothington" if home.has("Buck Toothington") else (String(home[0]) if not home.is_empty() else "")
+	if talker != "":
+		out.append({"title": "\"SOMEBODY FIX THE TALLY\"", "text": "said %s, looking at the Bluff and not at the tally." % talker})
+	return out
+
+
+static func _clock_text(seconds: float) -> String:
+	var s := roundi(seconds)
+	return "%d:%02d" % [s / 60, s % 60]
+
+
+static func _ordinal(n: int) -> String:
+	var words := ["", "first", "second", "third", "fourth", "fifth", "sixth", "seventh", "eighth", "ninth", "tenth"]
+	if n < words.size():
+		return words[n]
+	var suffix: String = "th" if n % 100 in [11, 12, 13] else {1: "st", 2: "nd", 3: "rd"}.get(n % 10, "th")
+	return "%d%s" % [n, suffix]
 
 
 static func mark_read() -> void:

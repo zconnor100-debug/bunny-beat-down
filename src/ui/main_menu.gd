@@ -35,8 +35,14 @@ func _ready() -> void:
 	if GameSession.open_trail:   # (back from a run's match)
 		GameSession.open_trail = false
 		_open_trail()
-	elif not Settings.is_test_run() and not WarrenSim.catch_up().is_empty():
-		_open_gazette.call_deferred()   # (the rogues have been busy while you were away)
+	elif GameSession.open_quest:   # (back from a Kernel Hunt mission: the news first, if it made any)
+		GameSession.open_quest = false
+		if WarrenSim.has_news() and not Settings.is_test_run():
+			_open_gazette.call_deferred(_open_quest)
+		else:
+			_open_quest.call_deferred()
+	elif not Settings.is_test_run() and (not WarrenSim.catch_up().is_empty() or WarrenSim.has_news()):
+		_open_gazette.call_deferred()   # (the rogues have been busy while you were away, or a special edition)
 
 
 func _build_diorama() -> void:
@@ -155,7 +161,8 @@ func _build_ui() -> void:
 	var tag := UITheme.label("One bunny. One acorn helmet. A whole lot of carrots.", 24, UITheme.CREAM)
 	_menu.add_child(tag)
 	_menu.add_child(Control.new())
-	for item in [["Play", _open_play], ["Continue the run" if Run.active() else "A Run", _open_trail], ["The Burrow", _open_burrow], ["Rogues' Gallery", _open_gallery],
+	for item in [["Play", _open_play], ["Continue the run" if Run.active() else "A Run", _open_trail], ["The Kernel Hunt", _open_quest],
+			["The Burrow", _open_burrow], ["Rogues' Gallery", _open_gallery],
 			["Warren Gazette", _open_gazette], ["Trophy Room", _open_trophies], ["Settings", _open_settings], ["Credits", _open_credits], ["Quit", func(): get_tree().quit()]]:
 		var b := UITheme.button(item[0], item[1])
 		b.custom_minimum_size = Vector2(320, 54)
@@ -269,9 +276,23 @@ func _open_gallery() -> void:
 	_show_overlay(p)
 
 
-func _open_gazette() -> void:
+## The Warren Gazette (`then`: what to open once it's closed).
+func _open_gazette(then := Callable()) -> void:
 	var p := GazettePanel.new()
+	p.closed.connect(func():
+		_close_overlay()
+		if then.is_valid():
+			then.call())
+	_show_overlay(p)
+
+
+## The Kernel Hunt's page (QuestPanel): a mission begun opens its match.
+func _open_quest() -> void:
+	var p := QuestPanel.new()
 	p.closed.connect(_close_overlay)
+	p.play_mission.connect(func(id):
+		KernelHunt.playing = id
+		get_tree().change_scene_to_file(GAME_SCENE))
 	_show_overlay(p)
 
 

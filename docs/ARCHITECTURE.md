@@ -334,7 +334,15 @@ The third map follows the cage's pattern (`ToyBox extends Island`,
   real matches (`note_bot_beat`, `note_win`) plus `add_scar_from` and
   `set_mood`, so the next real match picks them up with no new code; the
   seed is the clock, so the same absence makes the same news. `edition_of`
-  turns the matches into weighted stories for `GazettePanel`.
+  turns the matches into weighted stories for `GazettePanel`. Big news
+  doesn't wait: `print_extra` prints a special edition at once (a boss
+  beaten: `boss_news` from `MatchManager._on_boss_died`; the Barn held:
+  `mission_news`), over whatever of the last edition you hadn't read, and
+  `catch_up` keeps an unread one on the front page. `keep_photo` saves the
+  game's screenshot of the moment (the HUD hidden for two frames, or the
+  outro's letterbox cropped off) and pins it to the edition it's news for,
+  whichever comes first; the panel prints it through `halftone.gdshader`
+  (a 45-degree dot screen sized by each cell's darkness).
 - **Voices.** Every line a bot says is picked as `Cast.say` (text, a key
   naming the template, the fields that fill it), shown, and spoken by
   **`RogueVoice`** from the bot's head. `tests/export_lines.gd` writes every
@@ -503,6 +511,53 @@ kind of match; a run's stops are always battle royales.
   `coat_lib.gdshaderinc`), gun skin pattern 6, the "froth" beat-down burst
   and the "kernel" colour. The full story, and the quest line it leads to,
   is `docs/LORE.md`.
+
+## The Kernel Hunt (player against environment)
+
+`KernelHunt` is the quest line's data and your record in it (the acts, the
+prologue's island seed, its rangers and waves; `note_result`, `done`,
+`best`, kept in the PlayerProfile). The menu's `QuestPanel` sets
+`KernelHunt.playing`, and the game reads it like `Run.in_match`: mode
+"kernel", the act's map, its fixed seed.
+
+- **MatchManager mode "kernel"** brings no lobby (`opponents` 0) and no
+  balloon: `setup` makes a `MissionDirector`, which spawns the rangers
+  (cast members, dressed and voiced as themselves, team 1, their own
+  favourite guns, `AIBrain.hold` at a post round the Barn watching outward),
+  and `begin_drop` hands over to `MissionDirector.begin`, which puts everyone
+  on their feet at the Barn and starts PLAYING. Beat-downs go to
+  `_mission_down` (your trackers and arsenal count; nothing goes in the
+  `RivalBook`, since the Touched aren't the cast) and on to the director.
+- **The director** finds the Big Red Barn, the Carrot Patch and Boulder
+  Bluff among the island's POIs and runs a small stage machine (BRIEFING,
+  WAVE, BREATHER, OUTRO, OVER). A wave spawns all its Touched at once, at the
+  Patch or out to the sides (`_wave_spot`), each with `AIBrain.hold` on a spot
+  in the Barn's yard: they march on it and fight anyone they see (teams are on,
+  so on sight), standing where they hold (`hold_low` off). The Barn's meter
+  is worn by every Touched in the yard each second. A Touched is any
+  species, wearing coat pattern 7 (veins from Voronoi edges, the glow
+  crawling up them by height) as its overlay, which also gives it its
+  gold-green rim; the giant is a beaver `CritterDef` duplicated with
+  `body_scale` and `max_health` raised. Between waves the director patches
+  the Barn, restocks the rangers and drops a `SupplyDrop` behind it.
+- **The ending** is `MissionOutro`, played when the last wave's held (via
+  `MatchManager.mission_outro`, which the game answers with its rig, HUD and
+  controller, like a boss's arrival): its own Camera3D, the letterbox and
+  title card shared with `BossIntro` (`BossIntro.letterbox`, `title_card`),
+  name tags and loot (their beams) put away while it plays. The rangers
+  still standing are put in a line on the Barn's Bluff side (whichever side
+  gives the clearest view out, by raycasts: `_blocked`), standing and
+  `hold`ing a look at the Bluff; a long lens over their heads watches
+  `BossFX.dust_column` (a slow world-space emitter, its particles turned to
+  start upward) climb over the trees while Brutus's roar plays from it; then
+  their faces for the `kr` lines; then a cut to the `TallySign` on the Barn's
+  door (Label3Ds and chalk-mark boxes on a slate; `wipe_to` squashes them
+  flat under `chalk_smudge.gdshader`'s streaks and chalks the new count). Then
+  `MissionDirector.end`: `KernelHunt.note_result`, the Gazette's special
+  edition, `MatchManager.end_mission`.
+- **The rangers' lines** are `Cast.KERNEL_LINES` (`kt`, `kw`, `ks`, `ky`, `kb`,
+  `kg`, `kc`, `kd`, `kr`), voiced for every rogue like every other line
+  (`<rogue>_8.ogg`), said by the ranger nearest you and kept apart per kind.
 
 ## Tests
 

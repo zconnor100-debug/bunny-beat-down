@@ -55,6 +55,7 @@ var _hunt_label: Label       ## the nemesis hunting you: how far, which way
 var _boons_label: Label
 var _boons_key := ""
 var _boss_bar: BossBar             ## a Boss Battle's boss (top centre)
+var _mission_bar: MissionBar       ## a Kernel Hunt mission's Barn (top centre)
 const ARROWS := ["↑", "↖", "←", "↙", "↓", "↘", "→", "↗"]
 
 
@@ -119,6 +120,13 @@ func setup(player_: Critter, rig_: CameraRig, mm: MatchManager) -> void:
 		_boss_bar.offset_right = BossBar.WIDTH * 0.5
 		_boss_bar.offset_top = 12
 		_root.add_child(_boss_bar)
+	elif mm and mm.mode == "kernel" and mm.mission:
+		_mission_bar = MissionBar.new(mm.mission)
+		_mission_bar.set_anchors_and_offsets_preset(Control.PRESET_CENTER_TOP)
+		_mission_bar.offset_left = -MissionBar.WIDTH * 0.5
+		_mission_bar.offset_right = MissionBar.WIDTH * 0.5
+		_mission_bar.offset_top = 12
+		_root.add_child(_mission_bar)
 	_hunt_label = UITheme.label("", 24, Color(1.0, 0.4, 0.38), true)
 	_hunt_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_hunt_label.set_anchors_and_offsets_preset(Control.PRESET_CENTER_TOP)
@@ -291,6 +299,10 @@ func _show_alive(a: int, _total: int) -> void:
 	if match_manager and match_manager.mode == "teams":
 		var left := match_manager.team_counts()
 		_alive_label.text = "YOUR TEAM %d  •  THEIRS %d" % [left[1], left[2]]
+		return
+	if match_manager and match_manager.mode == "kernel":
+		var left := match_manager.team_counts()
+		_alive_label.text = "YOUR SIDE %d  •  TOUCHED %d" % [left[1], left[2]]
 		return
 	_alive_label.text = "%d CRITTER%s LEFT" % [a, "" if a == 1 else "S"]
 

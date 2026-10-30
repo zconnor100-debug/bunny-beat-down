@@ -12,6 +12,8 @@
 //     any fur
 //   6 brutus: matted, grizzled grey (hanging, like his), torn by claw rakes
 //     healed pale
+//   7 touched: the Starfall Acorn's light got in (the Kernel Hunt's Touched):
+//     the fur gone a sickly olive, darker veins running through it
 shader_type spatial;
 render_mode blend_mul, unshaded, cull_back, depth_draw_never, shadows_disabled, fog_disabled;
 
@@ -66,6 +68,11 @@ void fragment() {
 		float mat = coat_noise(hang * scale * 2.5) * 0.65 + coat_noise(hang * scale * 9.0) * 0.35;
 		c = mix(color_a, color_b, smoothstep(0.32, 0.72, mat));
 		c = mix(c, vec3(1.0, 0.86, 0.84), coat_rakes(p, scale));
+	} else if (pattern == 7) {
+		vec3 id;
+		vec4 cell = coat_cells(p * scale + vec3(0.0, coat_noise(p * 2.0) * 0.8, 0.0), id);
+		float vein = 1.0 - smoothstep(0.0, 0.05, cell.w);
+		c = mix(color_a, color_b, max(vein, smoothstep(0.55, 0.9, coat_noise(p * scale * 0.6)) * 0.3));
 	}
 	ALBEDO = c;
 }

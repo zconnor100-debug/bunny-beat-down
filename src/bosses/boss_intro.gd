@@ -283,52 +283,69 @@ func _build_ui() -> void:
 	_ui = CanvasLayer.new()
 	_ui.layer = 30
 	add_child(_ui)
-	var view := get_viewport().get_visible_rect().size
-	var h := view.y * BAR
-	for top in [true, false]:
-		var b := ColorRect.new()
-		b.color = Color.BLACK
-		b.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		b.size = Vector2(view.x, 0.0)
-		b.position = Vector2(0.0, 0.0 if top else view.y)
-		_ui.add_child(b)
-		_bars.append(b)
-		var tw := b.create_tween().set_ignore_time_scale(true)
-		tw.tween_property(b, "size:y", h, 0.4).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
-		if not top:
-			tw.parallel().tween_property(b, "position:y", view.y - h, 0.4).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	_bars = letterbox(_ui)
 	if skippable:
+		var view := get_viewport().get_visible_rect().size
 		var skip := UITheme.label("Skip: %s" % GameInput.prompt(&"jump"), 18, Color(UITheme.CREAM, 0.55))
-		skip.position = Vector2(view.x - 230.0, view.y - h * 0.5 - 13.0)
+		skip.position = Vector2(view.x - 230.0, view.y - view.y * BAR * 0.5 - 13.0)
 		_ui.add_child(skip)
 
 
 ## Its name, its billing and the Warren's line for it, low on the left.
 func _show_card() -> void:
 	_card_shown = true
-	var view := get_viewport().get_visible_rect().size
+	_card = title_card(_ui, boss.title.to_upper(), boss.display_name.to_upper(), BossLore.epigraph(boss.id))
+
+
+## A cinematic's black bars, top and bottom, sliding in on `layer` (each
+## BAR of the screen's height). Shared with MissionOutro.
+static func letterbox(layer: CanvasLayer) -> Array[ColorRect]:
+	var view := layer.get_viewport().get_visible_rect().size
+	var h := view.y * BAR
+	var bars: Array[ColorRect] = []
+	for top in [true, false]:
+		var b := ColorRect.new()
+		b.color = Color.BLACK
+		b.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		b.size = Vector2(view.x, 0.0)
+		b.position = Vector2(0.0, 0.0 if top else view.y)
+		layer.add_child(b)
+		bars.append(b)
+		var tw := b.create_tween().set_ignore_time_scale(true)
+		tw.tween_property(b, "size:y", h, 0.4).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+		if not top:
+			tw.parallel().tween_property(b, "position:y", view.y - h, 0.4).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	return bars
+
+
+## A cinematic's title card, low on the left over the bottom bar: a kicker
+## (a boss's billing), a big title (its name), a red rule drawn out under it,
+## and a line. It slides in (whatever time's speed). Shared with MissionOutro.
+static func title_card(layer: CanvasLayer, kicker: String, title: String, line_text: String) -> Control:
+	var view := layer.get_viewport().get_visible_rect().size
 	var tall := view.x < view.y
-	_card = VBoxContainer.new()
-	_card.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_card.add_theme_constant_override("separation", 2)
-	_ui.add_child(_card)
-	var billing := UITheme.label(boss.title.to_upper(), 30 if not tall else 24, UITheme.CARROT_LIGHT, true)
-	_card.add_child(billing)
-	var who := UITheme.label(boss.display_name.to_upper(), 112 if not tall else 76, UITheme.CREAM, true)
-	_card.add_child(who)
+	var card := VBoxContainer.new()
+	card.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	card.add_theme_constant_override("separation", 2)
+	layer.add_child(card)
+	var billing := UITheme.label(kicker, 30 if not tall else 24, UITheme.CARROT_LIGHT, true)
+	card.add_child(billing)
+	var who := UITheme.label(title, 112 if not tall else 76, UITheme.CREAM, true)
+	card.add_child(who)
 	var rule := ColorRect.new()
 	rule.color = Color(0.86, 0.12, 0.08)
 	rule.custom_minimum_size = Vector2(0.0, 5.0)
 	rule.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
-	_card.add_child(rule)
-	var line := UITheme.label(BossLore.epigraph(boss.id), 26 if not tall else 21, Color(UITheme.CREAM, 0.9))
+	card.add_child(rule)
+	var line := UITheme.label(line_text, 26 if not tall else 21, Color(UITheme.CREAM, 0.9))
 	line.modulate.a = 0.0
-	_card.add_child(line)
+	card.add_child(line)
 	var left := view.x * (0.06 if not tall else 0.05)
-	_card.position = Vector2(left - 60.0, view.y * (1.0 - BAR) - (210.0 if not tall else 160.0))
-	_card.modulate.a = 0.0
-	var tw := _card.create_tween().set_ignore_time_scale(true)   # (the slow motion doesn't slow the titles)
-	tw.tween_property(_card, "modulate:a", 1.0, 0.45)
-	tw.parallel().tween_property(_card, "position:x", left, 0.5).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	card.position = Vector2(left - 60.0, view.y * (1.0 - BAR) - (210.0 if not tall else 160.0))
+	card.modulate.a = 0.0
+	var tw := card.create_tween().set_ignore_time_scale(true)   # (the slow motion doesn't slow the titles)
+	tw.tween_property(card, "modulate:a", 1.0, 0.45)
+	tw.parallel().tween_property(card, "position:x", left, 0.5).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 	tw.parallel().tween_property(rule, "custom_minimum_size:x", minf(view.x * 0.42, 620.0), 0.7).set_trans(Tween.TRANS_CUBIC)
 	tw.tween_property(line, "modulate:a", 1.0, 0.4)
+	return card

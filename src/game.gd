@@ -12,7 +12,8 @@ const TOYBOX_TIPS := [
 	"Mind the tiny bricks. Ow.",
 ]
 const MAP_NAMES := {"island": "Island", "cage": "Hamster Cage", "toybox": "Toy Box Bash"}
-const MODE_NAMES := {"royale": "Battle Royale", "teams": "Team Battle (25 v 25)", "boss": "Boss Battle (25 v 1)"}
+const MODE_NAMES := {"royale": "Battle Royale", "teams": "Team Battle (25 v 25)", "boss": "Boss Battle (25 v 1)",
+	"kernel": "The Kernel Hunt"}
 const BOSS_NAMES := {"island": "Brutus", "cage": "Nibbles the Rabid", "toybox": "the Tin Tyrant"}
 const TEAM_TIPS := [
 	"Team Battle: blue tags are your team. Friendly fire is off, so let rip.",
@@ -25,6 +26,13 @@ const BOSS_TIPS := [
 	"Headshots count double on a boss. The Tin Tyrant's wind-up key counts most of all.",
 	"Your arsenal can be called in as soon as the boss turns up.",
 	"Every boss you face opens more of its story: the Trophy Room's Bosses page.",
+]
+const KERNEL_TIPS := [
+	"The Touched glow gold-green. Every one standing in the Barn's yard wears the Barn down.",
+	"The rangers hold their posts round the Barn. Help whichever side the Touched come at.",
+	"Between waves the rangers patch the Barn up, and a crate comes down behind it.",
+	"The Touched don't heal and don't run. They don't talk, either.",
+	"Old Mother Clover says the Touched are the Acorn's light, looking for its pieces.",
 ]
 const CAGE_TIPS := [
 	"Hamster tubes are tunnels: run through Tube Town to cross unseen.",
@@ -87,7 +95,11 @@ func _ready() -> void:
 	if GameSession.replay_seed > 0:
 		_seed = GameSession.replay_seed   # "Rematch (same seed)"
 		GameSession.replay_seed = 0
-	if Run.in_match:   # a run's stop: its map, and a seed of its own (and a battle royale, always)
+	if KernelHunt.playing != "":   # a Kernel Hunt mission: its own map and island, always the same
+		_mode = "kernel"
+		_map = String(KernelHunt.act(KernelHunt.playing).get("map", "island"))
+		_seed = KernelHunt.SEED
+	elif Run.in_match:   # a run's stop: its map, and a seed of its own (and a battle royale, always)
 		var rs := Run.state()
 		_map = String(Run.current().get("map", "island"))
 		_mode = "royale"
@@ -158,6 +170,7 @@ func _build_world() -> void:
 	if match_manager.mode == "boss" and Settings.get_value(&"boss_intro"):
 		match_manager.boss_intro = true
 		match_manager.boss_arriving.connect(_play_boss_intro)
+	match_manager.mission_outro.connect(_play_mission_outro)
 
 
 func _spawn_player() -> void:
@@ -188,7 +201,52 @@ func _play_boss_intro(b: Boss) -> void:
 	add_child(BossIntro.new(b, match_manager, rig, hud, match_manager.player.get_node_or_null("PlayerController") as PlayerController))
 
 
+## A Kernel Hunt mission's last wave is beaten: its ending (MissionOutro).
+func _play_mission_outro(d: MissionDirector) -> void:
+	d.play_outro(rig, hud, match_manager.player.get_node_or_null("PlayerController") as PlayerController if match_manager.player else null)
+
+
+## A Kernel Hunt mission starts on the ground at the Barn: no balloon. Its
+## card, and the camera turned to face where the Touched will come from.
+func _start_mission() -> void:
+	match_manager.begin_drop()
+	var d := match_manager.mission
+	var to := d.patch_pos - match_manager.player.global_position
+	rig.yaw = atan2(-to.x, -to.z)
+	rig.pitch = -0.08
+	var tw := create_tween()
+	tw.tween_property(_loading, "offset:y", -1200.0, 0.6).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_IN)
+	tw.tween_callback(_loading.queue_free)
+	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+	Audio.play_music(island.music_slot)
+	var ambience: Node = Audio.make_loop(&"ambient_forest_loop", self, false)
+	if ambience:
+		ambience.volume_db = -10.0
+		ambience.play()
+	var act := KernelHunt.act(d.mission)
+	var card := CanvasLayer.new()
+	card.layer = 30
+	add_child(card)
+	var c := BossIntro.title_card(card, "THE KERNEL HUNT  ·  %s" % String(act.get("name", "")).to_upper(), String(act.get("title", "")).to_upper(),
+		String(act.get("goal", "")))
+	c.position.y = get_viewport().get_visible_rect().size.y * 0.3   # (up off the HUD's health bars)
+	get_tree().create_timer(6.5, false).timeout.connect(func():
+		var out := c.create_tween()
+		out.tween_property(c, "modulate:a", 0.0, 0.6)
+		out.tween_callback(card.queue_free))
+	get_tree().create_timer(7.5, false).timeout.connect(func():
+		if hud:
+			hud.show_message("THE TOUCHED ARE COMING", "Gold-green, out of the Carrot Patch. Every one in the Barn's yard wears it down.", 5.0))
+	match_manager.player.state_changed.connect(_on_player_state)
+	GameSession.matches_played += 1
+	if OS.get_cmdline_user_args().has("--smoke-test"):
+		_smoke_test()
+
+
 func _start() -> void:
+	if match_manager.mode == "kernel":
+		_start_mission()
+		return
 	match_manager.begin_drop()
 	hud.attach_dropship(match_manager.dropship)
 	rig.spectate_target = match_manager.dropship
@@ -340,12 +398,15 @@ func _build_loading() -> void:
 	var tips: Array = {"cage": CAGE_TIPS + TIPS.slice(0, 3), "toybox": TOYBOX_TIPS + TIPS.slice(0, 3)}.get(_map, TIPS)
 	if _mode == "teams":
 		tips = TEAM_TIPS
+	elif _mode == "kernel":
+		tips = KERNEL_TIPS
 	elif _mode == "boss":
 		tips = BOSS_TIPS + BossLore.rumours(_map)   # (and what the Warren says about its boss)
 	var tip := UITheme.label("Tip: " + tips.pick_random(), 22, Color(UITheme.CREAM, 0.8))
 	tip.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(tip)
-	var what := "" if _mode == "royale" else ("  •  Team Battle" if _mode == "teams" else "  •  Boss Battle against %s" % BOSS_NAMES[_map])
+	var what := "" if _mode == "royale" else ("  •  Team Battle" if _mode == "teams" else ("  •  The Kernel Hunt: %s" % String(KernelHunt.act(KernelHunt.playing).get("title", ""))
+		if _mode == "kernel" else "  •  Boss Battle against %s" % BOSS_NAMES[_map]))
 	var s := UITheme.label("%s #%d%s" % [MAP_NAMES[_map], _seed, what], 18, Color(UITheme.CREAM, 0.5))
 	s.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(s)
@@ -483,6 +544,9 @@ func _to_menu() -> void:
 		_finish_run_stop()   # (walking out of a run's match: it counts where you stood)
 		GameSession.open_trail = true
 	Run.in_match = false
+	if KernelHunt.playing != "":
+		KernelHunt.playing = ""
+		GameSession.open_quest = true   # (back to the Kernel Hunt's page)
 	get_tree().change_scene_to_file(MENU_SCENE)
 
 
@@ -566,6 +630,8 @@ func _on_player_eliminated_screen(placement: int, killer: Critter) -> void:
 	elif match_manager.mode == "boss":
 		var with_ := " (%s)" % match_manager.killed_with if match_manager.killed_with != "" else ""
 		sub = "Squashed by %s%s. %d critters are still fighting it." % [who, with_, match_manager.team_counts()[1]]
+	elif match_manager.mode == "kernel":
+		sub = "Taken out by a %s. The rangers hold the Barn without you: %d of them left." % [who, match_manager.team_counts()[1]]
 	if killer and killer != match_manager.player:
 		if killer.has_meta(&"new_rival"):
 			sub += "\n%s the %s is now your RIVAL (%s). It'll be back." % [who, RivalBook.label_of(who), RivalBook.score(who)]
@@ -623,11 +689,19 @@ func _team_result() -> void:
 	if mm.mode == "boss" and won and mm.boss and not Settings.is_test_run():
 		Engine.time_scale = 0.35
 		AudioServer.playback_speed_scale = 0.7
+		_photo_for_the_gazette(String(BossLore.NEWS.get(mm.boss.id, {}).get("caption", "")), 0.9)
 		await get_tree().create_timer(2.6, true, false, true).timeout
 		KillCam.reset_time()
 	var title: String
 	var sub: String
-	if mm.mode == "teams":
+	if mm.mode == "kernel":
+		var r := mm.mission.report() if mm.mission else {}
+		var act := KernelHunt.act(String(r.get("mission", "prologue")))
+		title = "THE BARN HOLDS!" if won else "THE BARN HAS FALLEN"
+		sub = ("%s: complete. %d Touched beaten down, %d of %d rangers home, the Barn %d%% whole." % [act.get("title", ""), int(r.get("touched", 0)),
+			int(r.get("rangers", 0)), KernelHunt.RANGERS.size(), int(r.get("barn", 0))]) if won \
+			else "The Touched took it on wave %d of %d. %d of them beaten down." % [int(r.get("wave", 1)), KernelHunt.WAVES.size(), int(r.get("touched", 0))]
+	elif mm.mode == "teams":
 		title = "YOUR TEAM WINS!" if won else "YOUR TEAM LOST"
 		sub = ("%s beat %s: %d of you still standing" % [MatchManager.TEAM_NAMES[1].capitalize(), MatchManager.TEAM_NAMES[2], left[1]]) if won \
 			else ("%s win, with %d still standing" % [MatchManager.TEAM_NAMES[2].capitalize(), left[2]])
@@ -645,7 +719,26 @@ func _team_result() -> void:
 	_show_end(title, sub, won, null)
 
 
-const TEAM_WIN_BONUS := {"teams": 40, "boss": 80}   ## acorns for your side winning (on top of where you placed)
+## A photo of the moment for the Gazette's special edition (WarrenSim.keep_photo),
+## `after` seconds on (whatever time's speed): the view, without the HUD (or
+## the end screen, if it's up already).
+func _photo_for_the_gazette(caption: String, after: float) -> void:
+	if DisplayServer.get_name() == "headless":
+		return
+	await get_tree().create_timer(after, true, false, true).timeout
+	var put_away := [hud, _end].filter(func(layer): return layer != null and is_instance_valid(layer) and layer.visible)
+	for layer in put_away:
+		layer.visible = false
+	await RenderingServer.frame_post_draw
+	await RenderingServer.frame_post_draw
+	var img := get_viewport().get_texture().get_image()
+	for layer in put_away:
+		if is_instance_valid(layer):
+			layer.visible = true
+	WarrenSim.keep_photo(img, caption)
+
+
+const TEAM_WIN_BONUS := {"teams": 40, "boss": 80, "kernel": 120}   ## acorns for your side winning (on top of where you placed)
 var _team_bonus := 0
 
 
@@ -721,6 +814,10 @@ func _show_end(title: String, sub: String, won: bool, killer: Critter) -> void:
 	if Run.in_match:
 		again = UITheme.button("Back to the Trail", _to_menu)
 		row.add_child(again)
+	elif match_manager.mode == "kernel":
+		again = UITheme.button("Play it again", func(): get_tree().reload_current_scene())
+		row.add_child(again)
+		row.add_child(UITheme.button("Back to the Kernel Hunt", _to_menu))
 	else:
 		again = UITheme.button("Play again", func(): get_tree().reload_current_scene())
 		row.add_child(again)

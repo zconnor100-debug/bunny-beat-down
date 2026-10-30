@@ -11,6 +11,9 @@
 //     as well as white), the seams left dark
 //   6 brutus: his claw rakes glowing red, beating like a heart, and a dull
 //     red rim
+//   7 touched: the veins glowing gold-green, the light crawling up them in
+//     slow pulses, sparks of it in the fur, and a strong gold-green rim (the
+//     Touched are seen at a glance)
 shader_type spatial;
 render_mode blend_add, unshaded, cull_back, depth_draw_never, shadows_disabled, fog_disabled;
 
@@ -95,6 +98,14 @@ void fragment() {
 	} else if (pattern == 6) {
 		float beat = pow(0.5 + 0.5 * sin(TIME * 2.4), 6.0);
 		c = glow_color * coat_rakes(p, scale) * (1.5 + 1.6 * beat) + glow_color * rim * 0.22;
+	} else if (pattern == 7) {
+		vec3 id;
+		vec4 cell = coat_cells(p * scale + vec3(0.0, coat_noise(p * 2.0) * 0.8, 0.0), id);
+		float vein = 1.0 - smoothstep(0.0, 0.04, cell.w);
+		float crawl = pow(0.5 + 0.5 * sin(height * 7.0 - TIME * 2.6 + coat_hash3(id).x * 2.0), 4.0);
+		vec3 rnd = coat_hash3(floor(p * scale * 6.0));
+		float spark = step(0.985, rnd.x) * pow(max(sin(TIME * (1.0 + rnd.y * 2.0) + rnd.z * 30.0), 0.0), 8.0);
+		c = glow_color * (vein * (0.3 + 1.9 * crawl) + spark * 3.0 + rim * 0.85);
 	}
 	ALBEDO = c * strength;
 }

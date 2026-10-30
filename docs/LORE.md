@@ -13,7 +13,9 @@ building toward.
   the only way they know: a beat-down, last critter standing.
 - **The Burrow** is home: acorns to spend, the Workshop and the Coat Rack. The
   **Trophy Room** keeps your record, and the **Rogues' Gallery** the cast's.
-- **The Warren Gazette** reports what the rogues get up to while you're away.
+- **The Warren Gazette** reports what the rogues get up to while you're away,
+  and holds the front page for a special edition when a giant falls or the
+  Barn holds, with a photo of the moment.
 - **The Briar**, the thorny wall that closes in on every match, has never been
   explained. (See *The Starfall*, below.)
 - **The House on the shore**, across the lake from the island, is where the
@@ -115,15 +117,39 @@ Acorn's roots, still growing and still looking for its pieces, which is why it
 closes in wherever critters fight. Nobody knows what happens when the pieces
 find each other.
 
-**The Kernel Hunt** would be a player-versus-environment mode: you and a squad
-of rogues against the **Touched**, critters the Acorn's light has got into
-(the existing species, with gold-green eyes and a glow, run by the bots' brain
-as an enemy team), through chapters of missions that end in the boss fights
-already in the game.
+**The Kernel Hunt** is the player-versus-environment mode: you and a squad of
+rogues against the **Touched**, critters the Acorn's light has got into (any
+species, gold-green light running through their fur in veins, silent, run by
+the bots' brain as an enemy team), through acts of missions that end in the
+boss fights already in the game. Its page is on the main menu. The prologue
+is playable; the acts after it are listed there, sealed.
+
+### The prologue: *Days Since Brutus* (playable)
+
+The tally on the Big Red Barn's door says nine days since anyone saw Brutus.
+It has never got past nine. You start at the Barn with the **Barn Rangers**,
+the Warren's volunteer watch: Buck Toothington (who keeps the tally), Dam Dan,
+Hazel, Kernel, Duchess, Captain Carrot and Lily Pad Lou, each at a post round
+the Barn. The Touched come in three waves, out of the Carrot Patch and then
+round the sides, the last with a Touched giant (a beaver the size of a shed).
+Every Touched standing in the Barn's yard wears the Barn down; let it go to
+nothing and they have it. Between waves the rangers patch it up and a crate
+comes down behind it.
+
+When the last wave falls, the ground shakes. Dust goes up off Boulder Bluff,
+something roars, and the rangers turn to look ("What... was THAT?" "That came
+from Boulder Bluff."). Then the tally on the door is rubbed out and chalked
+back to **0**. Brutus is heard, not seen. Holding the Barn earns **Days Since
+Brutus: 0** and the **Touched coat** (the Touched's own glowing veins, to
+wear); holding it with all seven rangers standing, **Every Ranger Home**. The
+Gazette prints a special edition: THE BARN HOLDS.
+
+In the code: `src/quest/` (KernelHunt, MissionDirector, MissionOutro,
+TallySign), the rangers' lines in `Cast.KERNEL_LINES`.
 
 | Act | Where | Missions (sketch) | Ends with |
 |---|---|---|---|
-| Prologue: *Days Since Brutus* | Wildwood Island | The tally on the Big Red Barn goes back to zero. Hold the Barn with the rangers while the Touched come out of the Carrot Patch. | (Brutus is heard, not seen) |
+| Prologue: *Days Since Brutus* (playable) | Wildwood Island | The tally on the Big Red Barn goes back to zero. Hold the Barn with the Barn Rangers while the Touched come out of the Carrot Patch. | (Brutus is heard, not seen) |
 | I: *The Carrot Patch* | Wildwood Island | Track the glowing carrots; burn the Patch; wake him at Boulder Bluff. | Brutus |
 | II: *The Clockwork Decree* | Toy Box Bash | Free the toys he's wound; break his winding stations; storm Block Castle. | The Tin Tyrant |
 | III: *Foam at the Falls* | the Hamster Cage | Down the tunnels under the bedding; dam Water Bottle Falls. | Nibbles |

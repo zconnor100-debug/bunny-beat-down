@@ -5,16 +5,22 @@ extends PanelContainer
 ## and the other stories, then Feud Watch (the hottest grudges between
 ## rogues), Wanted (who's after you) and the standings. It opens by itself
 ## when there's a new edition (MainMenu), and from the menu any time after.
+## A special edition (a boss beaten, the Barn held: WarrenSim.print_extra) is
+## stamped so, with the photo the game took of the moment on its front page,
+## printed in halftone.
 
 signal closed
 
 const PAPER := Color("f2e8d0")
 const RULE := Color("2b2118")
+const HALFTONE := preload("res://src/ui/halftone.gdshader")
+const PHOTO_SIZE := Vector2(700, 330)   ## (wide: the story starts under it, on the page)
 const STICK_SCROLL := 900.0   # px/s at full right-stick tilt
 
 var _scroll: ScrollContainer
 var _back: Button
 var _headline: Label
+var _photo: TextureRect
 
 
 func _ready() -> void:
@@ -35,6 +41,10 @@ func _ready() -> void:
 	mast.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(mast)
 	v.add_child(_rule(3))
+	if ed.has("extra"):
+		var stamp := UITheme.label("★  SPECIAL EDITION  ★", 30, UITheme.BERRY, true)
+		stamp.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		v.add_child(stamp)
 	var line := UITheme.label(dateline(ed), 19, UITheme.INK)
 	line.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(line)
@@ -59,6 +69,7 @@ func _ready() -> void:
 		news.add_child(head)
 		if i == 0:
 			_headline = head
+			_add_photo(news, ed)
 		news.add_child(_text(String(stories[i].text), 22 if i == 0 else 19))
 		if i < stories.size() - 1:
 			news.add_child(_rule(1))
@@ -83,7 +94,39 @@ func _ready() -> void:
 	WarrenSim.mark_read()
 
 
-## "Wednesday 28 October · 4 matches while you were away · One acorn"
+## The special edition's photo (WarrenSim.keep_photo), under the headline,
+## in halftone, with its caption. Nothing if there's none (or it's gone).
+func _add_photo(news: Control, ed: Dictionary) -> void:
+	var path := String(ed.get("photo", ""))
+	if path == "" or not FileAccess.file_exists(path):
+		return
+	var img := Image.load_from_file(ProjectSettings.globalize_path(path))
+	if img == null or img.is_empty():
+		return
+	_photo = TextureRect.new()
+	_photo.texture = ImageTexture.create_from_image(img)
+	_photo.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_photo.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	_photo.custom_minimum_size = PHOTO_SIZE
+	_photo.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	var m := ShaderMaterial.new()
+	m.shader = HALFTONE
+	m.set_shader_parameter(&"ink", RULE)
+	m.set_shader_parameter(&"paper", PAPER)
+	_photo.material = m
+	news.add_child(_photo)
+	var cap := _text(String(ed.get("caption", "")), 17)
+	cap.modulate = Color(1, 1, 1, 0.8)
+	news.add_child(cap)
+
+
+## The photo on the front page (tests).
+func photo() -> TextureRect:
+	return _photo
+
+
+## "Wednesday 28 October · 4 matches while you were away · One acorn" (a
+## special edition: "Wednesday 28 October · Special edition · One acorn")
 static func dateline(ed: Dictionary) -> String:
 	if ed.is_empty():
 		return "No edition yet"
@@ -92,7 +135,8 @@ static func dateline(ed: Dictionary) -> String:
 	const DAYS := ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
 	const MONTHS := ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
 	var n := int(ed.get("matches", 0))
-	return "%s %d %s  ·  %d %s while you were away  ·  One acorn" % [DAYS[int(d.weekday)], int(d.day), MONTHS[int(d.month) - 1], n, "match" if n == 1 else "matches"]
+	var what := "Special edition" if ed.has("extra") else "%d %s while you were away" % [n, "match" if n == 1 else "matches"]
+	return "%s %d %s  ·  %s  ·  One acorn" % [DAYS[int(d.weekday)], int(d.day), MONTHS[int(d.month) - 1], what]
 
 
 ## The headline as shown (tests).

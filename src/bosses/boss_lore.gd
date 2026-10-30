@@ -60,6 +60,22 @@ const BOSSES := {
 }
 
 
+## How the Warren Gazette reports one beaten (WarrenSim.boss_news): the
+## headline the first time and the times after, where everyone went to fight
+## it, how things stand after, and the caption under the photo of it falling.
+const NEWS := {
+	"brute": {"fell": "BRUTUS FALLS AT THE CARROT PATCH", "again": "BRUTUS DOWN AGAIN", "where": "out to the meadow",
+		"after": "The tally on the Big Red Barn's door went back to zero, which for once nobody minded.",
+		"caption": "Brutus, down at last."},
+	"robot": {"fell": "TIN TYRANT UNWOUND AT BLOCK CASTLE", "again": "TIN TYRANT UNWOUND AGAIN", "where": "into the toy room",
+		"after": "His key has stopped turning. The toys say they'll believe it when it stays stopped.",
+		"caption": "The Tin Tyrant, unwound."},
+	"hamster": {"fell": "NIBBLES STOPPED AT LAST", "again": "NIBBLES STOPPED AGAIN", "where": "into the Hamster Cage",
+		"after": "The water bottle is still full. Nobody is drinking from it.",
+		"caption": "Nibbles, stopped at last."},
+}
+
+
 static func of(id: String) -> Dictionary:
 	return BOSSES.get(id, {})
 

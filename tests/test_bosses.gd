@@ -279,6 +279,7 @@ func test_boss_battles() -> void:
 
 
 func _boss_battle(map: String) -> void:
+	WarrenSim.reset_for_tests()
 	Settings.set_value(&"opponents", 7, false)
 	Settings.set_value(&"difficulty", Settings.Difficulty.NORMAL, false)
 	Settings.set_value(&"seed", 777, false)
@@ -336,6 +337,10 @@ func _boss_battle(map: String) -> void:
 		mm.boss.take_damage(DamageInfo.make(1e9, DamageInfo.Kind.BULLET, mm.player, &"carrot_sniper"))
 		check(won[0] and mm.winning_team == 1 and mm.phase == MatchManager.Phase.ENDED, "%s: it fell, and your side won" % map)
 		check(StatBook.boss(mm.boss.id).beaten == beaten + 1.0, "%s: beaten, on your record" % map)
+		var ed := WarrenSim.edition()
+		var news: Dictionary = BossLore.NEWS[mm.boss.id]
+		check(ed.get("extra", "") == "boss" and String(ed.stories[0].title) in [news.fell, news.again] and WarrenSim.has_news(),
+			"%s: the Gazette's special edition: %s" % [map, ed.get("stories", [{}])[0].get("title", "")])
 	var boss_lines := []
 	for lines in Cast.BOSS_LINES.values() + [Cast.BOSS_NAME_LINES.values(), [Cast.BOSS_KEY_LINE]]:
 		boss_lines.append_array(lines)

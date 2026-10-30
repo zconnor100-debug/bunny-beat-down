@@ -13,6 +13,9 @@ signal player_eliminated(placement: int, killer: Critter)
 signal boons_offered(choices: Array, title: String)
 ## A Boss Battle's boss is arriving (the game plays its intro: BossIntro).
 signal boss_arriving(boss: Boss)
+## A Kernel Hunt mission's last wave is beaten: its ending is to play
+## (game.gd plays it, MissionDirector.play_outro).
+signal mission_outro(director: MissionDirector)
 
 enum Phase { LOADING, DROPPING, PLAYING, ENDED }
 
@@ -113,9 +116,11 @@ var called_in := false
 ## everyone for themselves; "teams", a Team Battle (you and TEAM_SIZE - 1 bots,
 ## the Carrot Crew, against TEAM_SIZE, the Bramble Mob: no friendly fire, the
 ## last team standing wins); "boss", a Boss Battle (you and TEAM_SIZE - 1 bots
-## against the map's boss, no Briar).
+## against the map's boss, no Briar); "kernel", a Kernel Hunt mission (you and
+## a squad of rogues against waves of the Touched, no balloon and no Briar:
+## its MissionDirector runs it).
 var mode := "royale"
-const MODES := ["royale", "teams", "boss"]
+const MODES := ["royale", "teams", "boss", "kernel"]
 const TEAM_SIZE := 25
 const TEAM_NAMES := ["", "the Carrot Crew", "the Bramble Mob"]
 ## Each map's boss (Boss).
@@ -151,6 +156,8 @@ var killed_by := ""
 var killed_with := ""
 ## Your squad in a Team Battle: the bots that jumped with you, sticking by you.
 var squad: Array[Critter] = []
+## A Kernel Hunt mission's director (mode "kernel").
+var mission: MissionDirector
 
 
 func setup(world_root_: Node3D, island_: Island, opponents: int, difficulty: int, seed_: int, pace_ := 1.0) -> void:
@@ -198,7 +205,9 @@ func setup(world_root_: Node3D, island_: Island, opponents: int, difficulty: int
 		opponents = TEAM_SIZE * 2 - 1
 	elif mode == "boss":
 		opponents = TEAM_SIZE - 1
-	AIBrain.teams_on = mode == "teams"
+	elif mode == "kernel":
+		opponents = 0   # (no lobby: the mission brings its rangers, and the Touched as they come)
+	AIBrain.teams_on = mode in ["teams", "kernel"]
 	AIBrain.boss = null
 	# the cast (Cast): your rivals and the bots you've made radical always
 	# come back for more, then the ones with grudges, then anyone
@@ -240,15 +249,20 @@ func setup(world_root_: Node3D, island_: Island, opponents: int, difficulty: int
 		_remembers_you(c, n)
 		if Burrow.modifier_on("stampede"):
 			c.speed_scale = 1.2
-	if mode != "royale":
+	if mode == "kernel":
+		mission = MissionDirector.new()
+		mission.mission = KernelHunt.playing if KernelHunt.playing != "" else "prologue"
+		add_child(mission)
+		mission.setup(self)
+	elif mode != "royale":
 		_pick_teams()
 	if mode == "royale":
 		_form_gang()
-	if mode != "boss":
+	if mode == "boss":
+		_make_boss()
+	elif mode != "kernel":
 		_choose_nemesis()
 		_choose_bounty()
-	else:
-		_make_boss()
 	RivalBook.save()
 	total = critters.size() + 1   # + the player, who joins after picking a critter
 	_alive_cache = total
@@ -907,8 +921,12 @@ func _spawn_loot() -> void:
 		Pickup.spawn(world_root, spec, pos + Vector3.UP * 0.3)
 
 
-## Board everyone and launch the balloon (or the toy plane).
+## Board everyone and launch the balloon (or the toy plane). A Kernel Hunt
+## mission has no balloon: everyone starts on the ground (MissionDirector).
 func begin_drop() -> void:
+	if mode == "kernel":
+		mission.begin()
+		return
 	dropship = Dropship.new()
 	dropship.name = "Dropship"
 	world_root.add_child(dropship)
@@ -1004,7 +1022,7 @@ func _process(delta: float) -> void:
 	AIBrain.kills_held = not bots_may_kill()
 	if storm and storm.shrinking != _was_shrinking:
 		_on_briar_moves(storm.shrinking)
-	if phase == Phase.PLAYING:
+	if phase == Phase.PLAYING and mode != "kernel":   # (a mission runs itself: MissionDirector)
 		if mode == "royale":
 			_direct(delta)
 			_tend_gangs(delta)
@@ -1294,6 +1312,9 @@ func _on_critter_died(victim: Node, info: DamageInfo) -> void:
 	Events.alive_count_changed.emit(alive.size(), total)
 	if player == null:
 		return   # (no match ends before you've joined it)
+	if mode == "kernel":
+		_mission_down(c, info)
+		return
 	var killer := info.attacker as Critter
 	if killer and killer != player and killer != c and critters.has(killer) and killer != doppel:
 		RivalBook.note_bot_kill(killer.display_name, info.weapon_id, killer.global_position.distance_to(c.global_position))
@@ -1387,6 +1408,44 @@ func _on_critter_died(victim: Node, info: DamageInfo) -> void:
 		finished.emit(winner, player.placement if not player.alive else 1)
 
 
+## A beat-down in a Kernel Hunt mission: yours count on your trackers and
+## toward your arsenal (the Touched aren't the cast: nobody keeps score of
+## them, and they don't adapt to you), and the mission hears of it.
+func _mission_down(c: Critter, info: DamageInfo) -> void:
+	var killer := info.attacker as Critter
+	if killer == player and c != player:
+		PlayerProfile.note_kill(info.weapon_id if info.weapon_id != &"" else &"melee")
+		player_beat_downs += 1
+		if player_beat_downs == Arsenal.CALL_AT and can_call_in():
+			Events.announce.emit("YOUR ARSENAL IS READY", "%s to call it in." % GameInput.prompt(&"call_in"))
+		StatBook.note_kill(info.weapon_id, player.global_position.distance_to(c.global_position))
+		_boons_on_kill(c)
+		FX.beat_down(c.get_chest_position(), Workshop.look("kill_fx"))
+		_check_mastery()
+	if c == player:
+		killed_by = name_of(info)
+		StatBook.end_match(c.placement, total, true)
+		_check_mastery()
+		player_eliminated.emit(c.placement, killer)
+	if mission:
+		mission.critter_down(c, info)
+
+
+## A Kernel Hunt mission is over (MissionDirector.end): your side held (or didn't).
+func end_mission(won: bool) -> void:
+	if phase == Phase.ENDED:
+		return
+	winning_team = 1 if won else 2
+	for x in alive_critters():
+		x.placement = 1 if x.team == winning_team else 2
+	if player and player.alive:
+		StatBook.end_match(player.placement, total, false)
+	if player:
+		_check_mastery()
+	_set_phase(Phase.ENDED)
+	finished.emit(player if won and player and player.alive else null, 1 if won else 2)
+
+
 ## Hits, for the trackers (yours: StatBook; the bots' own: RivalBook) and
 ## your boons (Boons: bleeding, Carrot Juice, Bramble Coat's thorns).
 func _on_critter_damaged(victim: Node, info: DamageInfo) -> void:
@@ -1399,7 +1458,7 @@ func _on_critter_damaged(victim: Node, info: DamageInfo) -> void:
 			StatBook.note_hit(info.weapon_id, info.amount, info.headshot, blast)
 			_boons_on_hit(victim as Critter, info)
 	elif info.attacker is Critter and critters.has(info.attacker):
-		if info.attacker != doppel:
+		if _of_the_cast(info.attacker):
 			RivalBook.note_bot_hit(info.attacker.display_name, info.weapon_id, info.amount, info.headshot, blast)
 		if victim == player and not thorns and Boons.has("bramble_coat") and (info.attacker as Critter).alive:
 			var back := DamageInfo.make(info.amount * Boons.value("bramble_coat") / 100.0, DamageInfo.Kind.BLEED, player, &"bramble")
@@ -1506,9 +1565,15 @@ func _check_run_goal() -> void:
 
 ## The bots' carrots fired, for their trackers (yours count in Critter._fire).
 func _on_shot_fired(shooter: Node, _origin: Vector3, weapon_id: StringName) -> void:
-	if player and shooter != player and shooter != doppel and shooter is Critter and critters.has(shooter):
+	if player and shooter != player and shooter is Critter and critters.has(shooter) and _of_the_cast(shooter):
 		var w := WeaponDB.get_weapon(weapon_id)
 		RivalBook.note_bot_shot(shooter.display_name, w.pellets if w else 1)
+
+
+## A bot the RivalBook keeps score of: one of the cast (not your Doppelbunny,
+## not a Kernel Hunt mission's Touched).
+func _of_the_cast(c: Critter) -> bool:
+	return c != doppel and not (mode == "kernel" and c.team == 2)
 
 
 func _rival_names() -> Array:
@@ -1517,8 +1582,8 @@ func _rival_names() -> Array:
 
 ## A bot says something in its own voice ("spot" taunts once a match).
 func taunt(c: Critter, event: String) -> void:
-	if c == null or not is_instance_valid(c) or c == player or player == null:
-		return
+	if c == null or not is_instance_valid(c) or c == player or player == null or (mode == "kernel" and c.team == 2):
+		return   # (the Touched don't talk)
 	var key := "%s|%s" % [c.display_name, event]
 	if event == "spot" and _taunted.has(key):
 		return
@@ -1853,13 +1918,30 @@ func _on_boss_died(by: Node) -> void:
 		if second:
 			_boss_shout("bd.%d" % (1 - i), second, true)
 	if player:
+		var was_open := BossLore.chapters_open(boss.id)
 		StatBook.note_boss_beaten(boss.id, boss.fight_time(), player.alive, by == player, _difficulty == Settings.Difficulty.HARD)
+		_print_boss_news(by, was_open)
 	if player and player.alive:
 		StatBook.end_match(1, total, false)
 	if player:
 		_check_mastery()   # (your side beat it, standing or not)
 	_set_phase(Phase.ENDED)
 	finished.emit(player if player and player.alive else null, 1)
+
+
+## The Warren Gazette holds the front page: a special edition about it
+## (WarrenSim.boss_news), waiting for you back at the menu. `was_open`: how
+## many chapters of its story were open before (beating it may open one).
+func _print_boss_news(by: Node, was_open: int) -> void:
+	var standing := alive_critters().filter(func(c): return c != player and c.team == 1).map(func(c): return c.display_name)
+	var rec := StatBook.boss(boss.id)
+	var opened := BossLore.chapters_open(boss.id)
+	var chapters: Array = BossLore.of(boss.id).get("chapters", [])
+	var r := {"by": "You" if by == player else (String(by.get("display_name")) if by and "display_name" in by else "Somebody"),
+		"time": boss.fight_time(), "went": total, "standing": standing, "you_standing": player.alive,
+		"times": int(rec.beaten), "best": float(rec.best),
+		"chapter": String(chapters[opened - 1][0]) if opened > was_open and opened <= chapters.size() else ""}
+	WarrenSim.print_extra("boss", WarrenSim.boss_news(boss.id, r, rng))
 
 
 ## What did that, by name (the kill feed and the end screen).
