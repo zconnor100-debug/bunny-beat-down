@@ -109,10 +109,11 @@ and the final shot replayed from three angles. There's a
   | **Nibbles the Rabid** | Hamster Cage | The cage's own hamster, grown huge and rabid: matted fur, blood round its mouth and paws, foam at the jaw, red eyes. **Frenzied Charge** (head down, flat out, trampling everyone in its path; if it runs into a wall it knocks itself silly and takes double), **Rabid Bite**, **Foam Spit** (puddles that burn and slow you), and enraged, **Burrow** (it dives into the bedding and comes up under you). |
 
   The bosses are real models (CC-BY, see Credits) given skeletons and
-  animated by code: `tools/characters/boss_build.py` decimates each
-  download, builds a skeleton from joints measured off grid renders, skins
-  it by bone heat on a voxel-remeshed watertight copy (a decimated sculpt
-  is anything but watertight) and copies the weights across, and for
+  animated by code: `tools/characters/boss_build.py` welds each download
+  into one surface (it comes in chunks, split along its UV seams) and
+  decimates it, builds a skeleton from joints measured off grid renders,
+  skins it by bone heat on a voxel-remeshed watertight copy (bone heat
+  wants a closed surface) and copies the weights across, and for
   Nibbles paints the rabid look straight into its texture by where each
   texel sits on the body. In the game `BossPoser` poses them bone by bone
   from a few rotations per role, so every move (a keyframed `BossAction`

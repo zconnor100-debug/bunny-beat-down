@@ -371,9 +371,13 @@ func test_a_flare_brings_them_running() -> void:
 	check(coming.all(func(c): return (c.get_node("AIBrain") as AIBrain).contesting()), "each is on its way")
 	for c in coming:
 		c.get_node("AIBrain").set_physics_process(true)
-	await wait_physics(int(Engine.physics_ticks_per_second * 9.0))
+	var off := func(c: Critter) -> float: return Vector2(c.global_position.x - at.x, c.global_position.z - at.z).length()
+	for t in int(Engine.physics_ticks_per_second * 12.0):   # (they get there in ten seconds or so: two can bump on the way)
+		if [bots[0], bots[1]].all(func(c): return off.call(c) < AIBrain.CONTEST_FAR + 3.0):
+			break
+		await get_tree().physics_frame
 	for c in [bots[0], bots[1]]:
-		var d := Vector2(c.global_position.x - at.x, c.global_position.z - at.z).length()
+		var d: float = off.call(c)
 		check(d < AIBrain.CONTEST_FAR + 3.0, "%s holds by the crate (%.1f m off)" % [c.display_name, d])
 
 

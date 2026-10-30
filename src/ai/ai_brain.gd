@@ -113,6 +113,7 @@ static var boss: Boss
 const BOSS_RANGE := Vector2(28.0, 70.0)   ## how far from a boss bots fight it from
 var _orbit := 1.0                 # (which way round the boss it circles)
 var _orbit_t := 0.0
+var _chase_t := 0.0               # (till its next path toward it)
 var _noticed: Dictionary = {}     # a boss's danger zone -> whether this bot saw it coming
 ## A Team Battle (MatchManager): bots fight the other team on sight, as far
 ## as they can see them, and go looking for it when there's nobody about.
@@ -1078,7 +1079,10 @@ func _fight_boss(delta: float) -> void:
 		_orbit_t = randf_range(3.0, 7.0)
 		_orbit = -_orbit if randf() < 0.4 else _orbit
 	if dist > want * 1.6 or not clear:
-		_set_dest(b.global_position)
+		_chase_t -= delta
+		if _chase_t <= 0.0 or _path.is_empty():   # (it's huge, and fought from range: a path every few seconds will do)
+			_chase_t = randf_range(2.0, 3.0)
+			_set_dest(b.global_position)
 		_follow_path(true)
 		me.want_sprint = dist > want * 2.0
 	else:
@@ -1126,11 +1130,31 @@ func _fight_boss(delta: float) -> void:
 
 # ---- movement ----------------------------------------------------------------------------------------------
 
+## Path queries are the brains' biggest cost (each can search thousands of
+## the island's navmesh polygons), so: a moving destination (a boss walking,
+## someone running) is only re-pathed early once it's moved a fair share of
+## the way off, the timers are staggered, and all the bots together get
+## PATHS_PER_TICK queries a physics tick (the rest keep their path a tick and
+## ask again: a boss turning up sent every bot after it at once, and the
+## island froze for a second).
+const PATHS_PER_TICK := 1
+static var _path_tick := -1
+static var _paths_left := 0
+
+
 func _set_dest(p: Vector3) -> void:
-	if _dest != Vector3.INF and _dest.distance_to(p) < 2.0 and _clock < _repath_t:
+	if _dest != Vector3.INF and _clock < _repath_t \
+			and _dest.distance_to(p) < maxf(2.0, me.global_position.distance_to(p) * 0.15):
 		return
+	var tick := Engine.get_physics_frames()
+	if tick != _path_tick:
+		_path_tick = tick
+		_paths_left = PATHS_PER_TICK
+	if _paths_left <= 0 and not _path.is_empty():
+		return   # (next tick: the path it has will do till then)
+	_paths_left -= 1
 	_dest = p
-	_repath_t = _clock + 1.5
+	_repath_t = _clock + randf_range(1.2, 1.8)
 	var map := me.get_world_3d().navigation_map
 	var from := NavigationServer3D.map_get_closest_point(map, me.global_position)
 	var to := NavigationServer3D.map_get_closest_point(map, p)

@@ -8,7 +8,8 @@
 # tools/_cache/characters/<src>/source.glb (sketchfab_fetch.py fetch <uid> <src>).
 #
 #   grid   import, face -Y (glTF +Z), stand on z = 0, centre, scale to 1.0 tall,
-#          decimate to the recipe's budget, save the result to
+#          weld (a download comes in chunks, split at its UV seams) and only
+#          then decimate to the recipe's budget, save the result to
 #          tools/_cache/characters/<src>/norm.blend and render it front + side
 #          (boss_grid.py puts them on a 0.05 grid: grid.png) to read joint positions off
 #   build  from norm.blend: a skeleton from the recipe's joints (skinned by bone
@@ -192,6 +193,17 @@ def normalize():
         body.modifiers.new("Armature", "ARMATURE").object = arm
     n = tri_count(body)
     budget = CFG.get("max_tris", 60000)
+    if n > budget and not own:
+        # one surface first: a download comes in chunks (65k vertices each) and
+        # split along every UV seam, and decimated like that each piece shrinks
+        # on its own, tearing cracks along all of them (UVs live on the face
+        # corners, so welding keeps the seams)
+        select_only([body], body)
+        bpy.ops.object.mode_set(mode="EDIT")
+        bpy.ops.mesh.select_all(action="SELECT")
+        bpy.ops.mesh.remove_doubles(threshold=0.00005)
+        bpy.ops.object.mode_set(mode="OBJECT")
+        log("welded:", n, "tris,", len(body.data.vertices), "verts")
     if n > budget:
         dm = body.modifiers.new("decimate", "DECIMATE")
         dm.ratio = budget / n * 0.98

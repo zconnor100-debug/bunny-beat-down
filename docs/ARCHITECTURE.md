@@ -555,6 +555,14 @@ prologue's island seed, its rangers and waves; `note_result`, `done`,
   flat under `chalk_smudge.gdshader`'s streaks and chalks the new count). Then
   `MissionDirector.end`: `KernelHunt.note_result`, the Gazette's special
   edition, `MatchManager.end_mission`.
+- **Path queries are budgeted** (`AIBrain._set_dest`): a moving destination is
+  re-pathed early only once it's moved 15% of the way off (at least 2 m), the
+  re-path timers are jittered, a bot chasing a boss asks every 2 to 3 seconds,
+  and all bots share `PATHS_PER_TICK` (1) queries a physics tick, the rest
+  keeping their current path a tick. A boss turning up used to send 24 bots'
+  queries (each up to 20 ms on the island's navmesh) into the same few frames.
+  `tests/perf_boss.gd` measures a Boss Battle's frames through the arrival and
+  the fight (Godot's physics-time monitor is the worst tick of each second).
 - **The rangers' lines** are `Cast.KERNEL_LINES` (`kt`, `kw`, `ks`, `ky`, `kb`,
   `kg`, `kc`, `kd`, `kr`), voiced for every rogue like every other line
   (`<rogue>_8.ogg`), said by the ranger nearest you and kept apart per kind.

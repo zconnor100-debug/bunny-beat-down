@@ -26,27 +26,27 @@
     "tail": "tail"
   },
   "radii": {
-    "hips": 0.3156,
-    "spine": 0.3113,
-    "chest": 0.2431,
-    "neck": 0.1819,
-    "head": 0.1389,
-    "jaw": 0.1707,
+    "hips": 0.183,
+    "spine": 0.3087,
+    "chest": 0.2447,
+    "neck": 0.1914,
+    "head": 0.1457,
+    "jaw": 0.1758,
     "l_upper_arm": 0.1685,
-    "l_lower_arm": 0.0519,
-    "l_hand": 0.0334,
-    "r_upper_arm": 0.1689,
-    "r_lower_arm": 0.0515,
-    "r_hand": 0.0333,
-    "l_upper_leg": 0.2063,
-    "l_lower_leg": 0.0638,
-    "l_foot": 0.0398,
-    "r_upper_leg": 0.2105,
-    "r_lower_leg": 0.059,
-    "r_foot": 0.0389,
-    "l_ear": 0.0666,
-    "r_ear": 0.0757,
-    "tail": 0.1611
+    "l_lower_arm": 0.0507,
+    "l_hand": 0.0333,
+    "r_upper_arm": 0.1715,
+    "r_lower_arm": 0.0504,
+    "r_hand": 0.0338,
+    "l_upper_leg": 0.1974,
+    "l_lower_leg": 0.0635,
+    "l_foot": 0.0402,
+    "r_upper_leg": 0.1995,
+    "r_lower_leg": 0.0629,
+    "r_foot": 0.0403,
+    "l_ear": 0.077,
+    "r_ear": 0.0811,
+    "tail": 0.1517
   },
   "tails": {
     "hips": [
@@ -173,6 +173,6 @@
     0.7,
     0.46
   ],
-  "tris": 58247,
+  "tris": 58770,
   "notes": "Facing +Z (glTF/Godot), +Y up, 1 unit tall to the top of its bounds (the game scales it); feet on y = 0, centred. eyes/mouth are in those units, before any posing."
 }
