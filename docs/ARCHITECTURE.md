@@ -43,7 +43,7 @@ driven by **roles**, not bone names. Each model ships with a `rig.json`
 `r_hand` to that model's bones.
 
 `CritterPoser` is a `SkeletonModifier3D` that rebuilds the pose every frame
-from the rest pose:
+(see below for the ones further off) from the rest pose:
 
 1. A gait clock advances from the critter's *real* velocity (bunnies, the
    hop gait; everyone else, a run cycle), so feet never skate when speed changes.
@@ -94,6 +94,15 @@ from the rest pose:
 Ears and tails run through Godot's `SpringBoneSimulator3D` after the poser, so
 they flop with every hop, landing and hit (stiff enough to keep their shape:
 a long brush tail stays out of the legs at a bound).
+
+Posing is the dearest thing a critter does each frame, so `CritterVisual`
+advances its skeleton itself (`modifier_callback_mode_process` MANUAL,
+`_advance_pose`): every frame within 30 m of the camera, every other frame
+out to 70 m, every third beyond that (or behind the camera), with the time
+that passed, and not at all while the critter is hidden (riding in the
+balloon). The critters take turns. The KillCam's replay, which runs with the
+match paused, sets its critters' skeletons back to advancing themselves every
+frame (`pose_every_frame`).
 
 > Engine detail worth knowing: `Skeleton3D` restores the *un-modified* pose
 > after skinning, so `get_bone_global_pose()` outside the modifier stack
@@ -210,9 +219,15 @@ loading screen (~5 s):
    rocks, logs and mushrooms with cached collision shapes. Ground cover is
    batched into chunked `MultiMesh`es with visibility ranges and a wind
    shader that also bends grass away from the player.
-5. **Navigation**: the navmesh is baked as 4×4 tiles in parallel
+5. **Navigation**: the navmesh is baked as 12×12 tiles of 128 m in parallel
    (`bake_from_source_geometry_data_async`). Each tile's bake area is grown by
-   its border so neighbouring tiles stitch exactly.
+   its border so neighbouring tiles stitch exactly. A path (`Island.find_path`)
+   searches only the tiles round its two ends (the query's `included_regions`):
+   Godot's query checks every polygon on the map to find where a path starts
+   and ends, about 87,000 on the island. A path that stops short there, or a
+   trip over more than `PATH_TILES_MAX` tiles, searches the whole map, and a
+   spot the whole map can't reach either is left alone for 15 s
+   (`_dead_ends`: bots kept asking for loot up on ledges, at ~15 ms a time).
 
 ## The Hamster Cage
 
@@ -568,7 +583,11 @@ prologue's island seed, its rangers and waves; `note_result`, `done`,
   keeping their current path a tick. A boss turning up used to send 24 bots'
   queries (each up to 20 ms on the island's navmesh) into the same few frames.
   `tests/perf_boss.gd` measures a Boss Battle's frames through the arrival and
-  the fight (Godot's physics-time monitor is the worst tick of each second).
+  the fight (Godot's physics-time monitor is the worst tick of each second);
+  `tests/perf_match.gd` a Battle Royale's or a Team Battle's (the balloon, the
+  landings, the fighting), each frame split into the game's code, what was
+  deferred after it (the skeletons), the physics engine and the rendering, and
+  the frames over 50 ms noted with when they came.
 - **The rangers' lines** are `Cast.KERNEL_LINES` (`kt`, `kw`, `ks`, `ky`, `kb`,
   `kg`, `kc`, `kd`, `kr`), voiced for every rogue like every other line
   (`<rogue>_8.ogg`), said by the ranger nearest you and kept apart per kind.

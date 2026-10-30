@@ -1155,10 +1155,8 @@ func _set_dest(p: Vector3) -> void:
 	_paths_left -= 1
 	_dest = p
 	_repath_t = _clock + randf_range(1.2, 1.8)
-	var map := me.get_world_3d().navigation_map
-	var from := NavigationServer3D.map_get_closest_point(map, me.global_position)
-	var to := NavigationServer3D.map_get_closest_point(map, p)
-	_path = Island.find_path(map, from, to)
+	# (the query finds the nearest navmesh to both ends itself)
+	_path = Island.find_path(me.get_world_3d().navigation_map, me.global_position, p)
 	_path_i = 0
 	if _path.is_empty():
 		_path = PackedVector3Array([p])

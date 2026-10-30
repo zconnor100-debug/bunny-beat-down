@@ -534,6 +534,7 @@ func _freeze_scene(on: bool) -> void:
 			continue
 		var v: CritterVisual = c.visual
 		v.skeleton.process_mode = Node.PROCESS_MODE_ALWAYS if on else Node.PROCESS_MODE_INHERIT
+		v.pose_every_frame(on)
 		if v.name_tag:
 			if on:
 				v.set_meta(&"tag_was", v.name_tag.visible)

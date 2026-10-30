@@ -475,9 +475,7 @@ func _walk_to(goal: Vector3, delta: float, speed_k := 1.0) -> void:
 		_path_i = 0
 		_path = PackedVector3Array()
 		if is_inside_tree():
-			var map := get_world_3d().navigation_map
-			_path = Island.find_path(map, NavigationServer3D.map_get_closest_point(map, global_position),
-				NavigationServer3D.map_get_closest_point(map, goal))
+			_path = Island.find_path(get_world_3d().navigation_map, global_position, goal)   # (it finds the navmesh at both ends)
 	var wp := goal
 	while _path_i < _path.size():
 		var p := _path[_path_i]

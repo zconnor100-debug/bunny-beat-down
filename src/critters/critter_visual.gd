@@ -81,6 +81,15 @@ var _loaded_round: Node3D          ## the rocket sitting in the launcher's tube
 var _prev_xf := Transform3D.IDENTITY
 var _curr_xf := Transform3D.IDENTITY
 var _interpolate := true
+## Posing (the animator, the springs, the ragdoll, then the skin) is the
+## dearest thing a critter does each frame, so the skeleton is advanced from
+## here: not while the critter can't be seen (riding in the balloon), every
+## frame up close, every other frame further off and every third beyond that
+## (or behind the camera). The critters take turns.
+const POSE_FULL := 30.0
+const POSE_HALF := 70.0
+var _pose_dt := 0.0
+var _pose_wait := 0
 
 
 func build(critter_: Node3D, def_: CritterDef) -> bool:
@@ -102,6 +111,8 @@ func build(critter_: Node3D, def_: CritterDef) -> bool:
 	if skeleton == null:
 		push_error("%s has no Skeleton3D" % def.resolved_model())
 		return false
+	skeleton.modifier_callback_mode_process = Skeleton3D.MODIFIER_CALLBACK_MODE_PROCESS_MANUAL
+	_pose_wait = randi() % 3
 	rig = RigInfo.new()
 	if not rig.bind(RigInfo.read_json(def.resolved_rig()), skeleton, def.body_scale):
 		return false
@@ -161,6 +172,38 @@ func _process(delta: float) -> void:
 	_size_name_tag()
 	if ragdolled and not _loose.is_empty():
 		_follow_loose_bones()
+	_advance_pose(delta)
+
+
+func _advance_pose(delta: float) -> void:
+	_pose_dt += delta
+	if not is_visible_in_tree():
+		return
+	_pose_wait -= 1
+	if _pose_wait > 0:
+		return
+	_pose_wait = _pose_interval()
+	skeleton.advance(minf(_pose_dt, 0.1))
+	_pose_dt = 0.0
+
+
+## Frames from one pose to the next: 1 up close (or with no camera to judge by).
+func _pose_interval() -> int:
+	var cam := get_viewport().get_camera_3d()
+	if cam == null:
+		return 1
+	var at := global_position
+	var d := cam.global_position.distance_to(at)
+	if d < POSE_FULL:
+		return 1
+	return 3 if d > POSE_HALF or cam.is_position_behind(at) else 2
+
+
+## The KillCam's replay runs with the match paused, this node too: meanwhile
+## the skeleton advances itself, every frame.
+func pose_every_frame(on: bool) -> void:
+	skeleton.modifier_callback_mode_process = Skeleton3D.MODIFIER_CALLBACK_MODE_PROCESS_IDLE if on \
+		else Skeleton3D.MODIFIER_CALLBACK_MODE_PROCESS_MANUAL
 
 
 func set_first_person(on: bool) -> void:

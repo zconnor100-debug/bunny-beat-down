@@ -72,6 +72,7 @@ func _exit_tree() -> void:
 
 func generate(seed_: int, quality := 2, bake_nav := true) -> void:
 	current = self
+	_dead_ends.clear()
 	seed_value = seed_
 	rng.seed = seed_
 	terrain = Terrain.new()
@@ -779,22 +780,102 @@ func _plan_treasure() -> void:
 ## up after 4096 polygons, which on this island cuts long trips short (the
 ## path then stops wherever it got closest), so this searches further.
 const PATH_SEARCH_POLYGONS := 40000
+## Godot's query also checks every polygon on the map to find where a path
+## starts and ends (about 87,000 on the island: 4 ms a path, with the bots
+## planning several a second), so a path first searches only the navmesh
+## tiles round its two ends, this far out; if no way through turns up there
+## (a lake or a cliff in between: the path stops short), the whole map. So
+## does a long trip, over more tiles than PATH_TILES_MAX. Searches over some
+## of the tiles have no polygon limit: in Godot 4.6 one that hits it can come
+## back with a 2-point path and an error.
+const PATH_MARGIN := 48.0
+const PATH_TILES_MAX := 12
+## A search of the whole map that finds no way takes ~15 ms (loot up on a
+## ledge, say, with bots asking every second or so), so when it finds no
+## more than the tiles round the ends did, it isn't done again for that spot
+## for a while.
+const DEAD_END_MS := 15000
 static var _query: NavigationPathQueryParameters3D
 static var _result: NavigationPathQueryResult3D
+static var _dead_ends := {}   ## where (a 4 m cell) -> until when (msec)
 
 
 static func find_path(map: RID, from: Vector3, to: Vector3) -> PackedVector3Array:
 	if _query == null:
 		_query = NavigationPathQueryParameters3D.new()
-		_query.path_search_max_polygons = PATH_SEARCH_POLYGONS
 		_query.simplify_path = true
 		_query.simplify_epsilon = 0.4
 		_result = NavigationPathQueryResult3D.new()
 	_query.map = map
 	_query.start_position = from
 	_query.target_position = to
+	var near: Array[RID] = []
+	if current and is_instance_valid(current) and current.is_inside_tree() and current.get_world_3d().navigation_map == map:
+		near = current.nav_tiles_around(from, to, PATH_MARGIN)
+	_query.included_regions = near
+	_query.path_search_max_polygons = PATH_SEARCH_POLYGONS if near.is_empty() else 0
 	NavigationServer3D.query_path(_query, _result)
-	return _result.path
+	var path := _result.path
+	if near.is_empty() or (not path.is_empty() and path[path.size() - 1].distance_to(current.closest_nav_point(to)) <= 1.0):
+		return path
+	var key := Vector3i((to / 4.0).floor())
+	var now := Time.get_ticks_msec()
+	if int(_dead_ends.get(key, 0)) > now:
+		return path
+	_query.included_regions = []
+	_query.path_search_max_polygons = PATH_SEARCH_POLYGONS
+	NavigationServer3D.query_path(_query, _result)
+	var full := _result.path
+	if not path.is_empty() and not full.is_empty() and full[full.size() - 1].distance_to(path[path.size() - 1]) <= 1.0:
+		if _dead_ends.size() > 512:
+			_dead_ends.clear()
+		_dead_ends[key] = now + DEAD_END_MS
+	return full
+
+
+## The navmesh tiles (their regions) round two points, `margin` metres out
+## from the box between them: none when that's every tile there is, or more
+## than `most`.
+func nav_tiles_around(a: Vector3, b: Vector3, margin: float, most := PATH_TILES_MAX) -> Array[RID]:
+	var out: Array[RID] = []
+	if nav_regions.size() != NAV_TILES * NAV_TILES:
+		return out
+	var tile := Terrain.SIZE / NAV_TILES
+	var x0 := clampi(floori((minf(a.x, b.x) - margin) / tile + NAV_TILES * 0.5), 0, NAV_TILES - 1)
+	var x1 := clampi(floori((maxf(a.x, b.x) + margin) / tile + NAV_TILES * 0.5), 0, NAV_TILES - 1)
+	var z0 := clampi(floori((minf(a.z, b.z) - margin) / tile + NAV_TILES * 0.5), 0, NAV_TILES - 1)
+	var z1 := clampi(floori((maxf(a.z, b.z) + margin) / tile + NAV_TILES * 0.5), 0, NAV_TILES - 1)
+	var all := true
+	for i in nav_regions.size():
+		var r := nav_regions[i]
+		if r.navigation_mesh == null or r.navigation_mesh.get_polygon_count() == 0:
+			continue
+		var tx := i % NAV_TILES
+		var tz := i / NAV_TILES
+		if tx >= x0 and tx <= x1 and tz >= z0 and tz <= z1:
+			out.append(r.get_rid())
+		else:
+			all = false
+	if all or out.size() > most:
+		out.clear()
+	return out
+
+
+## The nearest point on the navmesh to `p`, from the tiles round it only (the
+## map-wide query checks every polygon on the map), or the whole map when
+## there's none near.
+func closest_nav_point(p: Vector3) -> Vector3:
+	var best := p
+	var best_d := INF
+	for rid in nav_tiles_around(p, p, 6.0, NAV_TILES * NAV_TILES):
+		var q := NavigationServer3D.region_get_closest_point(rid, p)
+		var d := q.distance_squared_to(p)
+		if d < best_d:
+			best_d = d
+			best = q
+	if best_d == INF:
+		return NavigationServer3D.map_get_closest_point(get_world_3d().navigation_map, p)
+	return best
 
 
 ## A random reachable spot on land (for AI wandering and landing targets).
