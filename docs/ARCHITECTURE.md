@@ -169,6 +169,16 @@ rest pose: arms out in a T), so the bodies are then moved to the bones as
 rendered (`_bodies_to_pose`, both the node and the physics server's body
 state), and for the physics frame it takes the simulator to catch up the
 poser's pose still shows (`_take_over`: the simulator's influence at 0).
+The joints, though, were built round the rest pose as the simulation
+started, and their limits dragged every body back toward it and apart (a
+hamster pulled out long, a frog's legs out straight, the skin stretched
+between: two and a half to four and a half times as far apart as
+standing), so `_rejoint` builds each one again round the pose it fell in (a
+`PhysicalBone3D` only rebuilds its joint when its type changes; the limits
+are put back after) and it keeps its shape. A body whose bone has no body
+above it in the skeleton (a squirrel's thighs, which hang from hip bones
+that are roots of their own) gets no joint from the simulator at all, so
+`_join_strays` ties it to the hips' body with a `ConeTwistJoint3D`.
 
 **Knocked down, not out.** A hit a critter is still standing after moves it
 (`Critter._react`): a shove; for a bot, a hit off its middle turns it, aim

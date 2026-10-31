@@ -318,6 +318,43 @@ func _run() -> void:
 			await _wait(0.6)
 		print("scene toys")
 
+	# --- beaten down: a critter of each species (a blast, a carrot in the head,
+	# a club), its ragdoll as it falls and as it lies, close, from the side,
+	# following its hips: it should keep its shape, nothing stretched
+	if _wants("deaths"):
+		var ids := ["bun", "squirrel", "fox", "raccoon", "beaver", "hamster", "frog", "bandit_bunny"]
+		var them: Array[Critter] = []
+		for i in ids.size():
+			them.append(_spawn(ids[i], Vector3(-105.0 + i * 30.0, 0.05, 260.0), 0.0, false))
+		await _wait(1.0)
+		var kinds := [DamageInfo.Kind.EXPLOSION, DamageInfo.Kind.BULLET, DamageInfo.Kind.MELEE]
+		for i in them.size():
+			var c := them[i]
+			var info := DamageInfo.make(5000.0, kinds[i % 3], null, [&"carrot_rocket_launcher", &"carrot_sniper", &"melee"][i % 3])
+			info.direction = Vector3(0.25, 0.5 if i % 3 == 0 else 0.1, -1.0).normalized()
+			info.impulse = [30.0, 12.0, 18.0][i % 3]
+			info.position = c.get_eye_position() if i % 3 == 1 else c.get_chest_position()
+			info.bone_role = &"head" if i % 3 == 1 else &"chest"
+			info.dismember_power = 0.0
+			c.take_damage(info)
+		var at := [0.15, 0.4, 0.8, 1.4, 2.4, 4.0]
+		var t := 0.0
+		for k in at.size():
+			await _wait(float(at[k]) - t)
+			t = float(at[k])
+			Engine.time_scale = 0.0
+			await get_tree().process_frame
+			for c in them:
+				var hips := c.visual.bone_world_position(&"hips")
+				var h: float = c.visual.rig.world_head_top
+				cam.global_position = hips + Vector3(h * 1.6, h * 0.9, h * 1.2)
+				cam.look_at(hips, Vector3.UP)
+				await get_tree().process_frame
+				get_viewport().get_texture().get_image().save_png(out_dir.path_join("deaths_%s_%d.png" % [c.def.id, k]))
+			Engine.time_scale = 1.0
+		print("scene deaths")
+		await _clear()
+
 	# --- more toys coming apart: a brick tower, a log cabin and a block fort,
 	# a rocket into each (their pieces: ToyProps, BlockPile)
 	if _wants("toys_more"):

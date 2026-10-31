@@ -103,6 +103,10 @@ func cave_in() -> void:
 	BossFX.dust_column(global_position + Vector3.UP * 2.0, 1.5, 0.3, Color(0.55, 0.44, 0.28, 0.75))
 	var tw := create_tween()
 	if tube and is_instance_valid(tube):
+		for shape in tube.find_children("*", "CollisionShape3D", true, false):
+			shape.queue_free()   # (it's crushed into the ground: and Jolt can't squash its shapes, only scale them evenly;
+		if tube is CollisionObject3D:   # the tube's a body itself: CageKit)
+			(tube as CollisionObject3D).collision_layer = 0
 		tw.tween_property(tube, "global_position", tube.global_position + Vector3.DOWN * 2.4, 0.5).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_IN)
 		tw.parallel().tween_property(tube, "scale", Vector3(1.0, 0.45, 1.0), 0.5)
 	tw.parallel().tween_property(_dark, "scale", Vector3.ONE * 0.01, 0.4)

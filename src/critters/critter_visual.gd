@@ -797,10 +797,8 @@ func _build_hitboxes_and_ragdoll() -> void:
 			elif role == &"head":
 				swing = 40.0
 				twist = 35.0
-			pb.set("joint_constraints/swing_span", swing)
-			pb.set("joint_constraints/twist_span", twist)
-			pb.set("joint_constraints/softness", 0.8)
-			pb.set("joint_constraints/relaxation", 1.0)
+			pb.set_meta(&"cone", Vector2(swing, twist))   # (kept: _rejoint builds the joint again, and these with it)
+			_cone_limits(pb)
 		var pcs := CollisionShape3D.new()
 		var pcap := CapsuleShape3D.new()
 		pcap.radius = radius
@@ -906,6 +904,8 @@ func go_ragdoll(velocity: Vector3) -> void:
 		phys_sim.active = true
 		phys_sim.physical_bones_start_simulation()
 		_bodies_to_pose()
+		_rejoint()
+		_join_strays()
 		_take_over(true)
 	for pb in physical_bones.values():
 		(pb as PhysicalBone3D).linear_velocity = velocity
@@ -927,6 +927,8 @@ func knock_down(velocity: Vector3) -> void:
 	phys_sim.active = true
 	phys_sim.physical_bones_start_simulation()
 	_bodies_to_pose()
+	_rejoint()
+	_join_strays()
 	_take_over(false)
 	var tumble := Vector3(randf_range(-3.0, 3.0), randf_range(-2.0, 2.0), randf_range(-3.0, 3.0))
 	for pb in physical_bones.values():
@@ -967,6 +969,10 @@ func end_knock() -> void:
 	phys_sim.physical_bones_stop_simulation()
 	phys_sim.active = false
 	phys_sim.influence = 1.0
+	for j in _stray_joints:
+		if is_instance_valid(j):
+			j.queue_free()
+	_stray_joints.clear()
 	for b: int in _loose:
 		skeleton.set_bone_pose(b, skeleton.get_bone_rest(b))
 	_loose.clear()
@@ -1002,6 +1008,71 @@ func _bodies_to_pose() -> void:
 			var xf := skeleton.global_transform * current_bone_global(idx) * pb.body_offset
 			pb.global_transform = xf
 			PhysicsServer3D.body_set_state(pb.get_rid(), PhysicsServer3D.BODY_STATE_TRANSFORM, xf)
+
+
+## Each body's joint to its parent built again round the pose the bodies
+## were just put in (_bodies_to_pose), as it goes down. Starting the
+## simulation built them round the rest pose, the model's own (a hamster
+## stretched long, a frog's legs out straight), and their limits pulled every
+## body back toward it: down, a critter straightened out into the shape it
+## was modelled in. Built round the pose it fell in, it keeps its shape.
+func _rejoint() -> void:
+	for pb: PhysicalBone3D in physical_bones.values():
+		if pb.joint_type != PhysicalBone3D.JOINT_TYPE_CONE:
+			continue
+		pb.joint_type = PhysicalBone3D.JOINT_TYPE_NONE   # (a joint's rebuilt only when its type changes:
+		pb.joint_type = PhysicalBone3D.JOINT_TYPE_CONE   # round where its body and its parent's are now)
+		_cone_limits(pb)
+
+
+var _stray_joints: Array[Joint3D] = []
+
+
+## A body whose bone has no body above it in the skeleton (a squirrel's
+## thighs hang from hip bones that are roots of their own, beside its pelvis)
+## gets no joint from the simulator, and fell away on its own, its leg's skin
+## stretched out behind it: tied to the hips' body instead, by a cone joint at
+## the top of its bone, as a thigh's would be.
+func _join_strays() -> void:
+	var hips: PhysicalBone3D = physical_bones.get(&"hips")
+	if hips == null:
+		return
+	var parts := {}
+	for pb: PhysicalBone3D in physical_bones.values():
+		parts[skeleton.find_bone(pb.bone_name)] = pb
+	for idx: int in parts:
+		var pb: PhysicalBone3D = parts[idx]
+		if pb == hips:
+			continue
+		var up := skeleton.get_bone_parent(idx)
+		while up >= 0 and not parts.has(up):
+			up = skeleton.get_bone_parent(up)
+		if up >= 0:
+			continue
+		var bone := skeleton.global_transform * current_bone_global(idx)
+		var along := bone.basis.y.normalized()   # (the cone's axis is the joint's X)
+		var side := along.cross(Vector3.UP if absf(along.y) < 0.95 else Vector3.RIGHT).normalized()
+		var j := ConeTwistJoint3D.new()
+		j.name = "Stray_" + pb.name
+		skeleton.add_child(j)   # (not under the simulator: its children are its bodies)
+		j.global_transform = Transform3D(Basis(along, side.cross(along), side), bone.origin)
+		var cone: Vector2 = pb.get_meta(&"cone", Vector2(60.0, 20.0))
+		j.set_param(ConeTwistJoint3D.PARAM_SWING_SPAN, deg_to_rad(cone.x))
+		j.set_param(ConeTwistJoint3D.PARAM_TWIST_SPAN, deg_to_rad(cone.y))
+		j.set_param(ConeTwistJoint3D.PARAM_SOFTNESS, 0.8)
+		j.set_param(ConeTwistJoint3D.PARAM_RELAXATION, 1.0)
+		j.node_a = j.get_path_to(hips)
+		j.node_b = j.get_path_to(pb)
+		_stray_joints.append(j)
+
+
+## A cone joint's limits (the new joint a type change makes has the defaults).
+func _cone_limits(pb: PhysicalBone3D) -> void:
+	var cone: Vector2 = pb.get_meta(&"cone", Vector2(35.0, 25.0))
+	pb.set("joint_constraints/swing_span", cone.x)
+	pb.set("joint_constraints/twist_span", cone.y)
+	pb.set("joint_constraints/softness", 0.8)
+	pb.set("joint_constraints/relaxation", 1.0)
 
 
 ## Bones hanging straight off the skeleton's root rather than off the body, or

@@ -690,7 +690,10 @@ func release() -> void:
 func _on_navmesh(p: Vector3) -> Vector3:
 	if Island.current and is_instance_valid(Island.current) and Island.current.is_inside_tree():
 		return Island.current.closest_nav_point(p)
-	return NavigationServer3D.map_get_closest_point(me.get_world_3d().navigation_map, p)
+	var map := me.get_world_3d().navigation_map
+	if NavigationServer3D.map_get_iteration_id(map) == 0:
+		return p   # (no navmesh yet, or none at all: an arena's)
+	return NavigationServer3D.map_get_closest_point(map, p)
 
 
 ## Coming for (or holding by) a flare's crate (see `contest`).

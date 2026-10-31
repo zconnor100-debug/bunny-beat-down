@@ -207,3 +207,41 @@ func test_scaled_critter_hitboxes_and_ragdoll() -> void:
 	await wait_physics(120)
 	var head := c.visual.bone_world_position(&"head")
 	check(head.y > -0.2 and head.y < 0.6, "scaled ragdoll settles on the ground (head y=%.2f)" % head.y)
+
+
+## Beaten down, a critter keeps its shape: its ragdoll's bodies, jointed
+## round the pose it fell in (not the model's rest pose, which pulled them
+## apart and out straight), never get much further apart than they were
+## standing. (Before: two and a half to four and a half times as far.)
+func test_a_ragdoll_keeps_its_shape() -> void:
+	for id in ["bun", "squirrel", "hamster", "frog"]:
+		var c := spawn_critter("res://data/critters/%s.tres" % id, Vector3(0, 0.1, 0))
+		await wait_physics(10)
+		var alive := _span(c)
+		var info := DamageInfo.make(5000.0, DamageInfo.Kind.EXPLOSION, null, &"carrot_rocket_launcher")
+		info.direction = Vector3(0.3, 0.6, -1).normalized()
+		info.impulse = 30.0
+		info.dismember_power = 0.0
+		info.position = c.get_chest_position()
+		c.take_damage(info)
+		var most := 0.0
+		for i in 240:
+			await wait_physics(1)
+			most = maxf(most, _span(c))
+		check(most < alive * 1.7, "%s: down, as big as it was standing, near enough (%.2f m, %.2f standing)" % [id, most, alive])
+		c.queue_free()
+		await wait_physics(3)
+
+
+## How far apart a critter's ragdoll bodies are, the furthest two (standing:
+## where its bones are).
+func _span(c: Critter) -> float:
+	var pts: Array[Vector3] = []
+	for pb: PhysicalBone3D in c.visual.physical_bones.values():
+		var at := c.visual.skeleton.global_transform * c.visual.current_bone_global(c.visual.skeleton.find_bone(pb.bone_name)).origin
+		pts.append(pb.global_position if c.visual.ragdolled else at)
+	var most := 0.0
+	for a in pts:
+		for b in pts:
+			most = maxf(most, a.distance_to(b))
+	return most

@@ -374,7 +374,9 @@ and the final shot replayed from three angles. There's a
   cartoon-style, to reach it), the legs dangle, and critter and canopy lean
   together into the steer.
 - **Small-critter physics**:
-  - Jolt ragdolls with per-limb joint limits.
+  - Jolt ragdolls with per-limb joint limits, jointed round the pose a
+    critter falls in, so it crumples as it is instead of stretching out
+    into the shape it was modelled in.
   - **Knocked off their feet**: a rocket, a grenade, a sniper's carrot, a
     shotgun's whole load, a boss's blow or the toy train throws a critter
     into a real ragdoll tumble; a second later it springs back up and fights

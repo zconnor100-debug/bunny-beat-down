@@ -114,8 +114,6 @@ static func apply_global() -> void:
 		RenderingServer.ENV_SSAO_QUALITY_HIGH, RenderingServer.ENV_SSAO_QUALITY_ULTRA][t], t <= Tier.MEDIUM, 0.5, 2, 50.0, 300.0)
 	RenderingServer.environment_set_ssil_quality(
 		RenderingServer.ENV_SSIL_QUALITY_HIGH if t >= Tier.EPIC else RenderingServer.ENV_SSIL_QUALITY_MEDIUM, t < Tier.EPIC, 0.5, 4, 50.0, 300.0)
-	RenderingServer.environment_set_ssr_roughness_quality(
-		RenderingServer.ENV_SSR_ROUGHNESS_QUALITY_HIGH if t >= Tier.EPIC else RenderingServer.ENV_SSR_ROUGHNESS_QUALITY_MEDIUM)
 	RenderingServer.environment_glow_set_use_bicubic_upscale(t >= Tier.HIGH)
 	RenderingServer.environment_set_volumetric_fog_filter_active(t >= Tier.EPIC)
 	RenderingServer.environment_set_volumetric_fog_volume_size(128 if t >= Tier.EPIC else 64, 64 if t >= Tier.EPIC else 48)
