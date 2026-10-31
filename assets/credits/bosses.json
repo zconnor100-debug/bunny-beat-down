@@ -6,10 +6,11 @@
     "source_url": "https://sketchfab.com/3d-models/thumpergeist-easter-bunny-monster-5441e25956174b1fa6f09cf7317c3eb3",
     "license": "CC BY 4.0",
     "license_url": "https://creativecommons.org/licenses/by/4.0/",
-    "changes": "Decimated from 536k to 59k triangles, re-oriented and rescaled; given a skeleton (24 bones, its ears and jaw included) skinned by bone heat on a voxel-remeshed copy and copied across (tools/characters/boss_build.py); colour texture re-encoded as JPEG",
+    "changes": "Decimated from 536k to 59k triangles, re-oriented and rescaled; given a skeleton (24 bones, its ears and jaw included) skinned by bone heat on a voxel-remeshed copy and copied across (tools/characters/boss_build.py); the full sculpt's detail baked into a tangent-space normal map (2048) and its ambient occlusion darkened into the colour map, upscaled to 2048; its roughness set for skin (the download's left it a mirror's); its amber eyes brightened in the colour map, and a mask of them (eyes.png) for their glow; colour texture re-encoded as JPEG",
     "used_for": "Brutus, the island's boss (Boss Battle)",
     "files": [
-      "assets/bosses/brute/brute.glb"
+      "assets/bosses/brute/brute.glb",
+      "assets/bosses/brute/eyes.png"
     ]
   },
   {
@@ -37,6 +38,20 @@
     "files": [
       "assets/bosses/hamster/hamster.glb",
       "assets/bosses/hamster/eyes.png"
+    ]
+  },
+  {
+    "asset": "Snowy Owl - Gliding 3D Bird Model",
+    "author": "Pigcraft (s8819296)",
+    "author_url": "https://sketchfab.com/s8819296",
+    "source_url": "https://sketchfab.com/3d-models/snowy-owl-gliding-3d-bird-model-22ccf3e782484f968e4c1be1e78deffa",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "Its 22 pieces joined and welded, decimated from 1.9 million to 59k triangles, rescaled; given a skeleton (19 bones: its wings on the arms' bones, its talons on the feet's) skinned by bone heat on a voxel-remeshed copy (tools/characters/boss_build.py); the pupil of its left eye painted gold-green, and a mask of it (eyes.png) for its glow; colour textures re-encoded as JPEG",
+    "used_for": "Old Hoot, the island's boss by night (Boss Battle)",
+    "files": [
+      "assets/bosses/owl/owl.glb",
+      "assets/bosses/owl/eyes.png"
     ]
   }
 ]

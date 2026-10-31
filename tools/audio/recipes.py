@@ -3087,3 +3087,71 @@ def night_loop(c, v):
     ev = reverb(ev, r, decay=1.5, mix_db=-10)
     ev = fold_circular(ev, L)
     return beds + ev
+
+
+@recipe("owl_hoot", variants=1, loud=-11.0, src="synth")
+def owl_hoot(c, v):
+    """Old Hoot's hoot (her Boss Battle, by night; her roar): a vast, deep
+    owl's call, HOO, hoo, HOOOO, falling away at the end, out of a throat as
+    big as a barn, rolling off across the island (~3 s)."""
+    r = c.rng
+    notes = [(0.0, 0.38, 138.0, 150.0, 0.85), (0.5, 0.22, 150.0, 144.0, 0.6), (0.86, 1.15, 152.0, 124.0, 1.0)]
+    x = np.zeros(n_of(2.2))
+    for t0, d, fa, fb, a in notes:
+        amp = [(0, 0), (0.06, 1), (d - 0.1, 0.85), (d, 0)]
+        pts = [(0, fa), (d * 0.3, fa * 1.02), (d, fb)]
+        body = B.critter_voice(r, d, pts, [(0, "u"), (d, "oo")], scale=0.55, tilt=1.7, breath=0.22, hoarse=0.12,
+                               drive=1.15, fmax=1400.0, amp_pts=amp)
+        pure = B.whistle(pts, d, amp, harm=0.25)
+        sub = B.whistle([(0, fa / 2), (d, fb / 2)], d, amp, harm=0.05)
+        s = B.unit(body) * 0.7 + B.unit(pure) * 0.5 + B.unit(sub) * 0.4
+        i0 = n_of(t0)
+        x[i0 : i0 + len(s)] += s[: len(x) - i0] * a
+    x = saturate(highpass(x, 30, 2), 1.2)
+    return reverb(x, r, decay=2.4, mix_db=-8, predelay=0.04, bright=1800.0, tail=0.8)[: n_of(3.0)]
+
+
+@recipe("owl_screech", variants=2, loud=-12.0, src="synth")
+def owl_screech(c, v):
+    """Old Hoot's screech as she comes down out of the sky (a snowy owl's
+    bark, giant): a harsh, rasping shriek that tears and falls away, air
+    rushing under it (~1.4 s)."""
+    r = c.rng
+    k = [1.0, 0.86][v]
+    d = 1.1
+    cry = B.critter_voice(r, d, [(0, 620 * k), (0.15, 900 * k), (0.6, 760 * k), (d, 420 * k)], [(0, "e"), (0.3, "ae"), (d, "a")],
+                          scale=0.8, tilt=1.2, sub_pts=[(0, 0.6), (d, 0.9)], breath=0.35, hoarse=0.9, drive=2.4,
+                          fmax=5200.0, amp_pts=[(0, 0), (0.04, 1), (0.7, 0.8), (d, 0)])
+    rush = B.whoosh(r, 1.3, 1800 * k, 500 * k, q=1.2, peak=0.3)
+    x = mix(1.4, (cry, 0, 0), (rush, 0.05, -12))
+    x = saturate(highpass(x, 80, 2), 1.4)
+    return reverb(x, r, decay=1.4, mix_db=-12, predelay=0.03, bright=4000.0, tail=0.4)[: n_of(1.8)]
+
+
+@recipe("owl_flap", variants=2, loud=-14.0, src="synth")
+def owl_flap(c, v):
+    """One beat of Old Hoot's wings (fifty metres of them): a deep, soft whump
+    of air pushed down, her feathers rustling at the end of it (~0.9 s). An
+    owl's wings are quiet: hers are just too big to be."""
+    r = c.rng
+    k = [1.0, 0.9][v]
+    whump = B.lp_burst(r, 0.7, 220 * k, 0.18, attack=0.06)
+    thump = B.kick(48 * k, 30 * k, 0.1, 0.22, 0.6, attack=0.02, drive=1.1)
+    air = B.whoosh(r, 0.8, 300 * k, 900 * k, q=1.0, peak=0.35)
+    rustle = B.grains(r, 0.7, 70, 1500, 6000, glen=(0.003, 0.01), t_tau=0.25, start=0.15)
+    x = mix(0.9, (whump, 0, 0), (thump, 0.02, -6), (air, 0, -6), (rustle, 0.1, -16))
+    return reverb(x, r, decay=0.8, mix_db=-16, predelay=0.02, bright=2500.0, tail=0.2)[: n_of(1.1)]
+
+
+@recipe("feather_volley", variants=1, loud=-13.0, src="synth")
+def feather_volley(c, v):
+    """Old Hoot's Feather Volley: a great beat of her wings and a flurry of
+    big feathers flung off them, hissing as they fly (~1.4 s)."""
+    r = c.rng
+    beat = B.lp_burst(r, 0.6, 260, 0.15, attack=0.04)
+    thump = B.kick(50, 32, 0.1, 0.2, 0.5, attack=0.015, drive=1.1)
+    hiss = [(B.whoosh(r, 0.6, r.uniform(2500, 4500), r.uniform(700, 1200), q=2.0, peak=0.25), 0.12 + 0.04 * i, -7 - i)
+            for i in range(6)]
+    rustle = B.grains(r, 1.0, 120, 1500, 7000, glen=(0.002, 0.008), t_tau=0.3, start=0.05)
+    x = mix(1.4, (beat, 0, 0), (thump, 0, -5), *hiss, (rustle, 0.05, -12))
+    return reverb(x, r, decay=0.9, mix_db=-14, predelay=0.015, bright=5000.0, tail=0.25)[: n_of(1.6)]

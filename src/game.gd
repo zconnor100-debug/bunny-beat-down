@@ -14,7 +14,7 @@ const TOYBOX_TIPS := [
 const MAP_NAMES := {"island": "Island", "cage": "Hamster Cage", "toybox": "Toy Box Bash"}
 const MODE_NAMES := {"royale": "Battle Royale", "teams": "Team Battle (25 v 25)", "boss": "Boss Battle (25 v 1)",
 	"kernel": "The Kernel Hunt"}
-const BOSS_NAMES := {"island": "Brutus", "cage": "Nibbles the Rabid", "toybox": "the Tin Tyrant"}
+const BOSS_NAMES := {"brute": "Brutus", "hamster": "Nibbles the Rabid", "robot": "the Tin Tyrant", "owl": "Old Hoot, by night"}
 const TEAM_TIPS := [
 	"Team Battle: blue tags are your team. Friendly fire is off, so let rip.",
 	"The bots that jump with you are your squad: they stick by you.",
@@ -202,6 +202,8 @@ func _build_world() -> void:
 	match_manager.mission_outro.connect(_play_mission_outro)
 	if match_manager.mission:
 		match_manager.mission.tune_lighting(lighting)   # (the Finale's night)
+	elif match_manager.boss and match_manager.boss.get("night"):
+		lighting.make_night()   # (Old Hoot's battle)
 
 
 func _spawn_player() -> void:
@@ -290,7 +292,8 @@ func _start() -> void:
 	tw.tween_callback(_loading.queue_free)
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	Audio.play_music(island.music_slot)
-	var ambience: Node = Audio.make_loop(&"ambient_forest_loop", self, false)
+	var night: bool = match_manager.boss != null and match_manager.boss.get("night") == true
+	var ambience: Node = Audio.make_loop(&"night_loop" if night else &"ambient_forest_loop", self, false)
 	if ambience:
 		ambience.volume_db = -10.0 if _map == "island" else -18.0   # (birdsong through an open window)
 		ambience.play()
@@ -440,7 +443,7 @@ func _build_loading() -> void:
 	tip.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(tip)
 	var what := "" if _mode == "royale" else ("  •  Team Battle" if _mode == "teams" else ("  •  The Kernel Hunt: %s" % String(KernelHunt.act(KernelHunt.playing).get("title", ""))
-		if _mode == "kernel" else "  •  Boss Battle against %s" % BOSS_NAMES[_map]))
+		if _mode == "kernel" else "  •  Boss Battle against %s" % BOSS_NAMES.get(BossLore.picked(_map), "the boss")))
 	var s := UITheme.label("%s #%d%s" % [MAP_NAMES[_map], _seed, what], 18, Color(UITheme.CREAM, 0.5))
 	s.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(s)

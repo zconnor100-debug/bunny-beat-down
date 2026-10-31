@@ -123,9 +123,13 @@ var mode := "royale"
 const MODES := ["royale", "teams", "boss", "kernel"]
 const TEAM_SIZE := 25
 const TEAM_NAMES := ["", "the Carrot Crew", "the Bramble Mob"]
-## Each map's boss (Boss).
+## Each map's own boss (Boss).
 const BOSSES := {"island": "res://src/bosses/brute_boss.gd", "cage": "res://src/bosses/hamster_boss.gd",
 	"toybox": "res://src/bosses/robot_boss.gd"}
+## Every boss a Boss Battle can be against, by its id (a map can have more
+## than one: Old Hoot's the island's too, by night; BossLore.picked chooses).
+const BOSS_SCRIPTS := {"brute": "res://src/bosses/brute_boss.gd", "robot": "res://src/bosses/robot_boss.gd",
+	"hamster": "res://src/bosses/hamster_boss.gd", "owl": "res://src/bosses/owl_boss.gd"}
 ## A Team Battle's second balloon (theirs: yours is `dropship`).
 var enemy_ship: Dropship
 ## A Boss Battle's boss, and how long after everyone's down it turns up.
@@ -143,7 +147,7 @@ var banter := true
 ## shouted when (by the key prefix, Cast.BOSS_LINES), and what the boss was
 ## doing last we looked.
 const BANTER_GAP := 2.5          ## seconds between any two shouts
-const BANTER_EVERY := {"br": 7.0, "bw": 12.0, "tip": 45.0}   ## and between two of a kind
+const BANTER_EVERY := {"br": 7.0, "bw": 12.0, "tip": 45.0, "bh": 10.0}   ## and between two of a kind
 const BANTER_NEAR := 70.0        ## metres from you a rogue shouts from (so you hear it)
 var _banter_t := {}
 var _banter_queue: Array = []    # [clock to say it at, key prefix or key]
@@ -1728,10 +1732,12 @@ func _check_teams(c: Critter, info: DamageInfo) -> void:
 	finished.emit(player if won and player.alive else null, 1 if won else 2)
 
 
-## The map's boss, built and parked out of sight until it's time (BOSSES; a
-## mission can bring its own: MissionDirector.boss_script).
+## The map's boss, built and parked out of sight until it's time (the one
+## picked, if the map has more than one: BossLore.picked; a mission can
+## bring its own: MissionDirector.boss_script).
 func _make_boss() -> void:
-	var path: String = BOSSES.get(island.map_id if island else "island", BOSSES["island"])
+	var map_id := island.map_id if island else "island"
+	var path: String = BOSS_SCRIPTS.get(BossLore.picked(map_id), BOSSES.get(map_id, BOSSES["island"]))
 	if mission and mission.boss_script() != "":
 		path = mission.boss_script()
 	boss = (load(path) as GDScript).new() as Boss
@@ -1814,6 +1820,9 @@ func _boss_banter() -> void:
 		_boss_shout("bk" if boss.id == "robot" else "bw.0")
 	if boss.enraged and not _boss_was.get("enraged", false):
 		_boss_shout("be")
+	var holding: bool = boss.has_method("holding") and boss.holding() != null   # (Old Hoot, carrying one off)
+	if holding and not _boss_was.get("holding", false):
+		_boss_shout("bh")
 	var newest := float(_boss_was.get("since", -INF))
 	for d in boss.danger:
 		if d.size() < 4 or float(d[3]) <= float(_boss_was.get("since", -INF)):
@@ -1822,7 +1831,7 @@ func _boss_banter() -> void:
 		_warn_shout(d[0], float(d[1]))
 	if boss.state == Boss.State.FIGHTING and boss.fight_time() > 20.0 and boss.id != "briar":   # (the Heart has no head: its mission calls out its pods)
 		_boss_shout("tip")
-	_boss_was = {"stunned": stunned, "enraged": boss.enraged, "since": newest}
+	_boss_was = {"stunned": stunned, "enraged": boss.enraged, "since": newest, "holding": holding}
 
 
 ## A blow's coming down at `pos`, `radius` across: if it's on you, the rogue
@@ -1861,8 +1870,8 @@ func _boss_shout(what: String, who: Critter = null, now := false) -> bool:
 	if who == null:
 		return false
 	var said := {}
-	if what == "tip":
-		said = Cast.say("bw.1", Cast.BOSS_WEAK_LINES[1])
+	if what == "tip":   # (where to aim: Old Hoot's, her wings)
+		said = Cast.say("bo.0", Cast.BOSS_OWL_LINES[0]) if boss and boss.id == "owl" else Cast.say("bw.1", Cast.BOSS_WEAK_LINES[1])
 	elif what == "bk":
 		said = Cast.say("bk", Cast.BOSS_KEY_LINE)
 	elif kind == "bn":

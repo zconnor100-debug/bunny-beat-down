@@ -1,0 +1,165 @@
+{
+  "id": "owl",
+  "display_name": "Old Hoot",
+  "head_top": 0.63,
+  "bones": {
+    "hips": "hips",
+    "spine": "spine",
+    "chest": "chest",
+    "neck": "neck",
+    "head": "head",
+    "jaw": "jaw",
+    "l_upper_arm": "l_upper_arm",
+    "l_lower_arm": "l_lower_arm",
+    "l_hand": "l_hand",
+    "r_upper_arm": "r_upper_arm",
+    "r_lower_arm": "r_lower_arm",
+    "r_hand": "r_hand",
+    "l_upper_leg": "l_upper_leg",
+    "l_lower_leg": "l_lower_leg",
+    "l_foot": "l_foot",
+    "r_upper_leg": "r_upper_leg",
+    "r_lower_leg": "r_lower_leg",
+    "r_foot": "r_foot",
+    "tail": "tail"
+  },
+  "radii": {
+    "hips": 0.1081,
+    "spine": 0.1317,
+    "chest": 0.113,
+    "neck": 0.1036,
+    "head": 0.1165,
+    "jaw": 0.1291,
+    "l_upper_arm": 0.2553,
+    "l_lower_arm": 0.1388,
+    "l_hand": 0.0975,
+    "r_upper_arm": 0.2552,
+    "r_lower_arm": 0.1529,
+    "r_hand": 0.1012,
+    "l_upper_leg": 0.129,
+    "l_lower_leg": 0.0737,
+    "l_foot": 0.034,
+    "r_upper_leg": 0.1285,
+    "r_lower_leg": 0.0729,
+    "r_foot": 0.0333,
+    "tail": 0.1051
+  },
+  "tails": {
+    "hips": [
+      0.0,
+      0.36,
+      0.03
+    ],
+    "spine": [
+      0.0,
+      0.44,
+      0.08
+    ],
+    "chest": [
+      0.0,
+      0.49,
+      0.12
+    ],
+    "neck": [
+      0.0,
+      0.52,
+      0.16
+    ],
+    "head": [
+      0.0,
+      0.63,
+      0.25
+    ],
+    "jaw": [
+      0.0,
+      0.44,
+      0.41
+    ],
+    "l_upper_arm": [
+      0.24,
+      0.7,
+      0.1
+    ],
+    "l_lower_arm": [
+      0.34,
+      0.81,
+      0.11
+    ],
+    "l_hand": [
+      0.58,
+      0.97,
+      0.06
+    ],
+    "r_upper_arm": [
+      -0.24,
+      0.7,
+      0.1
+    ],
+    "r_lower_arm": [
+      -0.34,
+      0.81,
+      0.11
+    ],
+    "r_hand": [
+      -0.58,
+      0.97,
+      0.06
+    ],
+    "l_upper_leg": [
+      0.09,
+      0.16,
+      0.15
+    ],
+    "l_lower_leg": [
+      0.095,
+      0.07,
+      0.14
+    ],
+    "l_foot": [
+      0.095,
+      0.02,
+      0.21
+    ],
+    "r_upper_leg": [
+      -0.09,
+      0.16,
+      0.15
+    ],
+    "r_lower_leg": [
+      -0.095,
+      0.07,
+      0.14
+    ],
+    "r_foot": [
+      -0.095,
+      0.02,
+      0.21
+    ],
+    "tail": [
+      0.0,
+      0.08,
+      -0.4
+    ]
+  },
+  "eyes": [
+    [
+      0.0484,
+      0.5183,
+      0.3566
+    ],
+    [
+      -0.0485,
+      0.5185,
+      0.357
+    ]
+  ],
+  "eye_r": 0.022,
+  "mouth": [
+    0,
+    0.455,
+    0.41
+  ],
+  "eye_mask": "eyes.png",
+  "tris": 58794,
+  "notes": "Facing +Z (glTF/Godot), +Y up, 1 unit tall to the top of its bounds (the game scales it); feet on y = 0, centred. eyes/mouth are in those units, before any posing."
+}

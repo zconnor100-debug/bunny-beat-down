@@ -549,16 +549,22 @@ func _animate(delta: float) -> void:
 	if action:
 		poser.add_pose(action.pose(), action.weight())
 	poser.apply()
-	if _eye_mat or not _eye_skin.is_empty():
-		var c := eye_color(enraged)
-		var glow := (4.0 if enraged else 2.5) * (0.8 + 0.2 * sin(_clock * 6.0))
-		if _eye_mat:
-			_eye_mat.albedo_color = c
-			_eye_mat.emission = c
-			_eye_mat.emission_energy_multiplier = glow
-		for m in _eye_skin:
-			m.emission = c
-			m.emission_energy_multiplier = glow
+	_tend_eyes()
+
+
+## Its eyes' glow, pulsing (eye_color: brighter and redder when it's enraged).
+func _tend_eyes() -> void:
+	if _eye_mat == null and _eye_skin.is_empty():
+		return
+	var c := eye_color(enraged)
+	var glow := (4.0 if enraged else 2.5) * (0.8 + 0.2 * sin(_clock * 6.0))
+	if _eye_mat:
+		_eye_mat.albedo_color = c
+		_eye_mat.emission = c
+		_eye_mat.emission_energy_multiplier = glow
+	for m in _eye_skin:
+		m.emission = c
+		m.emission_energy_multiplier = glow
 
 
 ## How far a step takes it (model units).

@@ -14,6 +14,7 @@ var act1 := false
 var act2 := false
 var act3 := false
 var finale := false
+var owl := false     ## ("owl": Old Hoot's Boss Battle, by night, instead)
 var epic := false    ## ("epic": shot at the Epic graphics tier, as the game looks on a fast GPU, not High)
 var movie := false   ## (recorded with Movie Maker: straight to the ending, its frames marked: OUTRO_AT, END_AT; with "act1", Act I's, and KILL_AT; with "act2", Act II's, and TAKEN_AT, LEAP_AT; with "act3", Act III's, and DAM_AT, WAKE_AT; with "finale", the Finale's, and BRIAR_AT, SHUT_AT, WAKE_AT, POD_AT, SPLIT_AT, KILL_AT)
 
@@ -28,6 +29,7 @@ func _ready() -> void:
 	act2 = a.has("act2")
 	act3 = a.has("act3")
 	finale = a.has("finale")
+	owl = a.has("owl")
 	movie = a.has("movie")
 	epic = a.has("epic")
 	DirAccess.make_dir_recursive_absolute(out_dir)
@@ -88,11 +90,15 @@ func _run() -> void:
 			await _act_three_movie()
 		elif finale:
 			await _finale_movie()
+		elif owl:
+			await _owl_movie()
 		else:
 			await _ending_movie()
 		get_tree().quit()
 		return
-	if boss:
+	if owl:
+		await _owl()
+	elif boss:
 		await _boss_news()
 	elif act1:
 		await _act_one()
@@ -351,6 +357,298 @@ func _boss_news() -> void:
 	await _snap("b01_end")
 	settings.set_value(&"mode", "royale", false)
 	settings.set_value(&"boss_intro", true, false)
+
+
+## Old Hoot's Boss Battle, by night: her arrival (gliding in out of the
+## dark, her name, her hoot), circling up high, a Snatch (the dive, a bot
+## carried off), a perch (up close on her face, the sliver glowing), shot
+## down out of a dive, her Feather Volley, and going down.
+func _owl() -> void:
+	PlayerProfile.reset_for_tests()
+	WarrenSim.reset_for_tests()
+	var settings: Node = get_tree().root.get_node("Settings")
+	settings.set_value(&"map", "island", false)
+	settings.set_value(&"mode", "boss", false)
+	settings.set_value(&"boss", "owl", false)
+	settings.set_value(&"boss_intro", true, false)
+	settings.set_value(&"seed", 4321, false)
+	var g: Node = await _game()
+	var mm: MatchManager = g.match_manager
+	var p := mm.player
+	p.max_health = 100000.0
+	p.health = p.max_health
+	mm.player_jump()
+	var sim := 0.0
+	while p.state != Critter.State.GROUND and sim < 60.0:
+		p.want_jump = p.state == Critter.State.FREEFALL
+		_unpause(g)
+		await get_tree().physics_frame
+		sim += 1.0 / Engine.physics_ticks_per_second
+	while mm.phase != MatchManager.Phase.PLAYING and sim < 120.0:
+		_unpause(g)
+		await get_tree().physics_frame
+		sim += 1.0 / Engine.physics_ticks_per_second
+	mm.release_boss()
+	print("OWL_AT %d" % Engine.get_frames_drawn())
+	var b := mm.boss as OwlBoss
+	# her arrival: gliding in out of the dark, her name, her hoot
+	await _wait(2.6)
+	await _snap("o01_gliding_in")
+	for i in 900:
+		var intro := g.find_children("*", "BossIntro", false, false)
+		if not intro.is_empty() and intro[0]._card_shown:
+			break
+		await get_tree().process_frame
+	await _wait(0.8)
+	await _snap("o02_named")
+	await _wait(1.6)
+	await _snap("o03_hoot")
+	for i in 1200:
+		if g.find_children("*", "BossIntro", false, false).is_empty():
+			break
+		await get_tree().process_frame
+	_unpause(g)
+	# up again, circling the fight
+	b.thinking = false
+	b.start(b._take_off())
+	await _wait(2.2)
+	for k in [&"snatch", &"rake", &"volley", &"perch", &"hoot"]:
+		b.cooldown(k, 99.0)
+	b.thinking = true
+	p.place_at(_dry_spot(g, b._ground_below(), 45.0) + Vector3.UP * 0.3, 0.0)   # (on land: she skims the lake)
+	await _wait(5.0)
+	var to := Vector3.ZERO
+	for i in 30:   # (she's quick: keep turned to her)
+		to = b.get_chest_position() - p.get_eye_position()
+		_look_at(g, b.get_chest_position(), atan2(to.y, Vector2(to.x, to.z).length()))
+		await get_tree().physics_frame
+	await _snap("o04_circling")
+	# a Snatch: down onto you (the bots get out of her ring: you stand there), and off with you
+	b.thinking = false
+	var cam := Camera3D.new()
+	get_tree().root.add_child(cam)
+	cam.fov = 60.0
+	cam.far = 3000.0
+	var side := _clear_side(g, p.global_position, 75.0)
+	b.start(b._snatch(p))
+	await _wait(1.0)
+	cam.global_position = p.global_position + side * 75.0 + Vector3.UP * 4.0
+	cam.look_at(p.global_position + Vector3.UP * 16.0, Vector3.UP)
+	cam.make_current()
+	g.hud.visible = false
+	await _wait(0.9)
+	await _snap("o05_dive")
+	await _wait(1.2)
+	cam.look_at(b.get_chest_position().lerp(p.global_position, 0.5), Vector3.UP)
+	await _wait(0.1)
+	await _snap("o06_carried_off")
+	while b.action != null:
+		await get_tree().process_frame
+	await _wait(2.0)   # (you, down again)
+	# a perch, on open ground: up close on her face
+	var bot2 := _nearest_ally(mm, p.global_position)
+	if bot2:
+		b.start(b._perch(bot2))
+		while b._air or b.action != null:
+			await get_tree().process_frame
+		await _wait(0.6)
+		var eyes := b.eye_positions()
+		var face: Vector3 = (eyes[0] + eyes[1]) * 0.5
+		var fwd := Vector3(b.forward().x, 0.0, b.forward().z).normalized()
+		var view := _clear_side(g, b.global_position, 45.0, fwd)
+		var vside := view.cross(Vector3.UP)
+		cam.global_position = face + view * 42.0 + vside * 8.0 + Vector3.DOWN * 9.0
+		cam.look_at(face + Vector3.DOWN * 6.0, Vector3.UP)
+		b.rotation.y = atan2(-view.x, -view.z)   # (turned to the camera: her face)
+		cam.make_current()
+		g.hud.visible = false
+		await _wait(0.3)
+		await _snap("o07_perched")
+		eyes = b.eye_positions()
+		face = (eyes[0] + eyes[1]) * 0.5
+		cam.global_position = face + view * 15.0 + vside * 3.0 + Vector3.DOWN * 2.0
+		cam.look_at(face, Vector3.UP)
+		await _wait(0.2)
+		await _snap("o08_the_sliver")
+	# shot out of a dive: grounded
+	b.start(b._take_off())
+	while b.action != null:
+		await get_tree().process_frame
+	var bot3 := _nearest_ally(mm, p.global_position)
+	if bot3:
+		b.start(b._snatch(bot3))
+		await _wait(1.6)
+		for i in int(OwlBoss.GROUND_AT) + 1:
+			var hit := DamageInfo.make(5.0, DamageInfo.Kind.BULLET, p, &"carrot_rifle")
+			hit.bone_role = &"l_upper_arm"
+			b.take_damage(hit)
+		while b._air:
+			await get_tree().process_frame
+		await _wait(0.8)
+		var at := b.global_position
+		var w := Vector3(b.forward().x, 0.0, b.forward().z).normalized()
+		cam.global_position = at + w * 55.0 + w.cross(Vector3.UP) * 25.0 + Vector3.UP * 14.0
+		cam.look_at(at + Vector3.UP * 8.0, Vector3.UP)
+		cam.make_current()
+		g.hud.visible = false
+		await _wait(0.2)
+		await _snap("o09_grounded")
+		while b.action != null:
+			await get_tree().process_frame
+	# her Feather Volley
+	b.start(b._take_off())
+	while b.action != null:
+		await get_tree().process_frame
+	var t := _nearest_ally(mm, p.global_position)
+	if t:
+		b.start(b._volley(t))
+		await _wait(1.2)
+		cam.global_position = t.global_position + (b.global_position - t.global_position).normalized().cross(Vector3.UP) * 50.0 + Vector3.UP * 8.0
+		cam.look_at(t.global_position.lerp(b.get_chest_position(), 0.5), Vector3.UP)
+		cam.make_current()
+		g.hud.visible = false
+		await _wait(0.1)
+		await _snap("o10_volley")
+		while b.action != null:
+			await get_tree().process_frame
+	# down, out of the sky
+	var fall_from := _clear_side(g, b._ground_below(), 80.0)
+	cam.global_position = b._ground_below() + fall_from * 80.0 + Vector3.UP * 6.0
+	cam.look_at(b.get_chest_position(), Vector3.UP)
+	b.take_damage(DamageInfo.make(1e9, DamageInfo.Kind.BULLET, p, &"carrot_sniper"))
+	g._photo_for_the_gazette(String(BossLore.NEWS["owl"].caption), 1.8)
+	await _wait(0.7)
+	if g._end:
+		g._end.visible = false
+	cam.look_at(b.get_chest_position(), Vector3.UP)
+	await _snap("o11_falling")
+	g.rig.camera.make_current()
+	g.hud.visible = true
+	if g._end:
+		g._end.visible = true
+	await _wait(3.0)
+	await _snap("o12_end")
+	print("END_AT %d" % Engine.get_frames_drawn())
+	settings.set_value(&"mode", "royale", false)
+	settings.set_value(&"boss", "", false)
+
+
+## A spot on dry, open, flat land about `dist` from `at` (on the island).
+func _dry_spot(g: Node, at: Vector3, dist: float) -> Vector3:
+	for k in 48:
+		var a := TAU * k / 16.0
+		var q := at + Vector3(cos(a), 0.0, sin(a)) * dist * (1.0 + 0.25 * float(k / 16))
+		q.y = g.island.terrain.height_at(q.x, q.z)
+		if q.y > Terrain.WATER_LEVEL + 0.6 and g.island.terrain.normal_at(q.x, q.z).y > 0.94 \
+				and not g.island.scatter.blocked(Vector2(q.x, q.z), 6.0, false):
+			return q
+	return at
+
+
+## Which way from `at` (flat) a camera `dist` out has the fewest trees between
+## them (the map's Scatter knows every trunk): `prefer` first, then round.
+func _clear_side(g: Node, at: Vector3, dist: float, prefer := Vector3.INF) -> Vector3:
+	var scatter: Scatter = g.island.scatter if g.island else null
+	var first := prefer if prefer != Vector3.INF else Vector3.FORWARD
+	var best := first
+	var best_n := 1 << 20
+	for k in 16:
+		var d := first.rotated(Vector3.UP, (1.0 if k % 2 == 0 else -1.0) * float((k + 1) / 2) * TAU / 16.0)
+		var n := 0
+		for i in 10:
+			var q := at + d * dist * (0.15 + 0.085 * i)
+			if scatter and scatter.blocked(Vector2(q.x, q.z), 7.0, false):
+				n += 1
+		if n < best_n:
+			best_n = n
+			best = d
+		if n == 0:
+			break
+	return best
+
+
+## Old Hoot's Boss Battle as a film (Movie Maker): her arrival's own
+## cinematic, then a camera chasing her round the fight for half a minute
+## (she does as she likes: the bots are fighting her), then down she comes.
+## Frames marked OWL_AT, CHASE_AT, KILL_AT, END_AT.
+func _owl_movie() -> void:
+	var settings: Node = get_tree().root.get_node("Settings")
+	settings.set_value(&"map", "island", false)
+	settings.set_value(&"mode", "boss", false)
+	settings.set_value(&"boss", "owl", false)
+	settings.set_value(&"boss_intro", true, false)
+	settings.set_value(&"seed", 4321, false)
+	var g: Node = await _game()
+	var mm: MatchManager = g.match_manager
+	var p := mm.player
+	p.max_health = 100000.0
+	p.health = p.max_health
+	mm.player_jump()
+	Engine.time_scale = 6.0   # (the drop: quick)
+	var sim := 0.0
+	while mm.phase != MatchManager.Phase.PLAYING and sim < 150.0:
+		p.want_jump = p.state == Critter.State.FREEFALL
+		await get_tree().physics_frame
+		sim += Engine.time_scale / Engine.physics_ticks_per_second
+	Engine.time_scale = 1.0
+	p.place_at(_dry_spot(g, p.global_position, 20.0) + Vector3.UP * 0.3, 0.0)
+	await _wait(1.0)
+	mm.release_boss()
+	print("OWL_AT %d" % Engine.get_frames_drawn())
+	var b := mm.boss as OwlBoss
+	for i in 1800:   # (her arrival's own camera, till it's done)
+		if g.find_children("*", "BossIntro", false, false).is_empty() and b.state == Boss.State.FIGHTING:
+			break
+		await get_tree().process_frame
+	print("CHASE_AT %d" % Engine.get_frames_drawn())
+	var cam := Camera3D.new()
+	get_tree().root.add_child(cam)
+	cam.fov = 55.0
+	cam.far = 3000.0
+	cam.make_current()
+	g.hud.visible = false
+	var place := func(snap: bool) -> void:
+		var fwd := Vector3(b.forward().x, 0.0, b.forward().z).normalized()
+		var want := b.global_position - fwd * 72.0 + fwd.cross(Vector3.UP) * 30.0 + Vector3.UP * 22.0
+		want.y = maxf(want.y, g.island.terrain.height_at(want.x, want.z) + 30.0)   # (over the treetops)
+		cam.global_position = want if snap else cam.global_position.lerp(want, 0.06)
+		cam.look_at(b.get_chest_position(), Vector3.UP)
+	place.call(true)
+	var chase := 0.0
+	while chase < 30.0 and b.alive:
+		place.call(false)
+		await get_tree().process_frame
+		chase += 1.0 / 30.0
+	print("KILL_AT %d" % Engine.get_frames_drawn())
+	if b.alive:
+		b.take_damage(DamageInfo.make(1e9, DamageInfo.Kind.BULLET, p, &"carrot_sniper"))
+	for i in 150:   # (down she comes)
+		place.call(false)
+		if g._end:
+			g._end.visible = false
+		await get_tree().process_frame
+	g.rig.camera.make_current()
+	g.hud.visible = true
+	if g._end:
+		g._end.visible = true
+	await _wait(3.0)
+	print("END_AT %d" % Engine.get_frames_drawn())
+	settings.set_value(&"mode", "royale", false)
+	settings.set_value(&"boss", "", false)
+
+
+## The bot on your side nearest `to` that's up and on the ground (null if none).
+func _nearest_ally(mm: MatchManager, to: Vector3) -> Critter:
+	var best: Critter = null
+	var best_d := INF
+	for c in mm.alive_critters():
+		if c == mm.player or c.team != 1 or c.state != Critter.State.GROUND or c.held_by != null:
+			continue
+		var d := c.global_position.distance_to(to)
+		if d < best_d:
+			best_d = d
+			best = c
+	return best
 
 
 ## Act I: the trail of glowing carrots, the Patch burning, Brutus woken at
@@ -1161,10 +1459,10 @@ func _menu() -> void:
 	var menu: Node = get_tree().current_scene
 	menu._open_gazette()
 	await _wait(1.2)
-	var tag := "b" if boss else ("a" if act1 else ("c" if act2 else ("d" if act3 else ("e" if finale else "k"))))
+	var tag := "o" if owl else ("b" if boss else ("a" if act1 else ("c" if act2 else ("d" if act3 else ("e" if finale else "k")))))
 	await _snap(tag + "11_gazette")
 	menu._close_overlay()
-	if not boss:
+	if not (boss or owl):
 		menu._open_quest()
 		await _wait(1.0)
 		await _snap(tag + "12_quest")

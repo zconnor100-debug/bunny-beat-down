@@ -10,9 +10,10 @@ extends RefCounted
 ## the loading screen's rumours. The whole story, and where it's going (the
 ## Kernel Hunt), is in docs/LORE.md. The Briar Heart, the Kernel Hunt's last
 ## boss (its Finale), isn't in a Boss Battle: its story opens in the Finale
-## (`shown`: on the Bosses page once you've faced it there).
+## (`shown`: on the Bosses page once you've faced it there). Old Hoot, the
+## owl, is the island's other boss, by night (`picked`).
 
-const IDS := ["brute", "robot", "hamster"]
+const IDS := ["brute", "robot", "hamster", "owl"]
 const FINALE := "briar"
 
 const MYTH_TITLE := "The Night the Acorn Fell"
@@ -60,6 +61,19 @@ const BOSSES := {
 		"rumours": ["Nibbles can't stop once he's charging. Stand in front of a wall and let him come.",
 			"Don't stand in Nibbles's foam: it burns, it sticks, and it slows you down."],
 	},
+	"owl": {
+		"name": "Old Hoot", "title": "the Night Watch", "map": "island", "where": "Wildwood Island, by night",
+		"epigraph": "Be home before the first hoot.",
+		"chapters": [
+			["The Night Watch", "Every kit in the Warren is told the same thing at bedtime: be home before the first hoot. Old Hoot has kept the night watch over Wildwood since before the Warren dug its first burrow, a snowy owl as white as frost, who sits on the tallest pine on Boulder Bluff and counts every critter still out after dark. She has never once miscounted. The ones still out by the third hoot aren't counted again."],
+			["The Sliver", "She was on the wing the night the Starfall Acorn came down, and it passed so close it singed her feathers. A sliver of its husk, no longer than a pine needle, went into her left eye and stayed there. It has glowed gold-green ever since, and she has grown with every night she's watched through it: as wide as the Big Red Barn now, wing tip to wing tip. She hasn't slept since. She sees in the dark the way you see at noon."],
+			["Grounding Her", "She's silent in the air: you won't hear her coming, so watch the ground for the red ring she's about to drop into, and get out of it, or she'll carry you off and let go from high up. Caught, jump, and keep jumping, and you'll wriggle loose. Shoot her wings as she dives and she comes down hard, and while she's floundering in the grass her eye is right there. When she puffs up to hoot, get out from under her."],
+			["Looking Up", "Since the night the Acorn went home there's been a new star over Boulder Bluff, and Old Hoot watches it more than she watches the Warren. Some nights she flies up so high she's only a speck against it, as if she could reach it. Old Mother Clover says the sliver in her eye wants to go home too, and pulls at her. \"She isn't hunting us,\" she says. \"She's trying to get up there, and she's angry she can't.\""],
+		],
+		"rumours": ["Old Hoot is silent in the air. Watch the ground for her red ring, and get out of it.",
+			"Caught in Old Hoot's talons? Jump, and keep jumping, and you'll wriggle free.",
+			"Shoot Old Hoot's wings as she dives and she'll come down hard. Then go for the eye."],
+	},
 	"briar": {
 		"name": "The Briar Heart", "title": "the Acorn's Roots", "map": "", "where": "Boulder Bluff, by night",
 		"epigraph": "Every match, it closes in. Now you know why.",
@@ -88,6 +102,9 @@ const NEWS := {
 	"hamster": {"fell": "NIBBLES STOPPED AT LAST", "again": "NIBBLES STOPPED AGAIN", "where": "into the Hamster Cage",
 		"after": "The water bottle is still full. Nobody is drinking from it.",
 		"caption": "Nibbles, stopped at last."},
+	"owl": {"fell": "OLD HOOT GROUNDED FOR GOOD", "again": "OLD HOOT GROUNDED AGAIN", "where": "out under the stars",
+		"after": "The Warren stayed out past the first hoot last night, for the first time anyone can remember.",
+		"caption": "Old Hoot, down at last."},
 	"briar": {"fell": "THE BRIAR HEART IS STILL", "again": "THE BRIAR HEART STILLED AGAIN", "where": "up Boulder Bluff by night",
 		"after": "There's a new star over the Bluff.",
 		"caption": "The Starfall Acorn, going home."},
@@ -98,12 +115,24 @@ static func of(id: String) -> Dictionary:
 	return BOSSES.get(id, {})
 
 
-## The boss that lives on a map ("" if none does).
+## The boss that lives on a map ("" if none does): its first, if it has more.
 static func id_for_map(map_id: String) -> String:
 	for id in IDS:
 		if BOSSES[id].map == map_id:
 			return id
 	return ""
+
+
+## Every boss that lives on a map (the island: Brutus, and Old Hoot by night).
+static func ids_for_map(map_id: String) -> Array:
+	return IDS.filter(func(id): return BOSSES[id].map == map_id)
+
+
+## The boss a Boss Battle on `map_id` is against: the one picked (Settings
+## "boss") if it lives there, or the map's first.
+static func picked(map_id: String) -> String:
+	var want := String(Settings.get_value(&"boss"))
+	return want if want in ids_for_map(map_id) else id_for_map(map_id)
 
 
 ## The line under its name as it lands (BossIntro).
@@ -149,7 +178,7 @@ static func opens_when(id: String, i: int) -> String:
 	return "Beat %s to read on." % who if int(need[1]) == 1 else "Beat %s %d times to read on." % [who, int(need[1])]
 
 
-## The rumours about the boss of a map, for the loading screen.
+## The rumours about the boss of a map (the one picked), for the loading screen.
 static func rumours(map_id: String) -> Array:
-	var id := id_for_map(map_id)
+	var id := picked(map_id)
 	return of(id).get("rumours", []) if id != "" else []

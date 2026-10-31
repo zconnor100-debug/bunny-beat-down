@@ -178,14 +178,14 @@
   },
   "eyes": [
     [
-      -0.051,
-      0.66,
-      0.15
+      -0.05,
+      0.6555,
+      0.1995
     ],
     [
-      -0.111,
-      0.66,
-      0.117
+      -0.1433,
+      0.6556,
+      0.12
     ]
   ],
   "eye_r": 0.014,
@@ -194,6 +194,7 @@
     0.575,
     0.2
   ],
+  "eye_mask": "eyes.png",
   "tris": 58799,
   "notes": "Facing +Z (glTF/Godot), +Y up, 1 unit tall to the top of its bounds (the game scales it); feet on y = 0, centred. eyes/mouth are in those units, before any posing."
 }

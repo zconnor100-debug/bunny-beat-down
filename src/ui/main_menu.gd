@@ -6,8 +6,10 @@ const GAME_SCENE := "res://scenes/game.tscn"
 ## [settings value, name in the menu]
 const MAPS := [["island", "Wildwood Island"], ["cage", "Hamster Cage"], ["toybox", "Toy Box Bash"]]
 const MODES := [["royale", "Battle Royale"], ["teams", "Team Battle (25 v 25)"], ["boss", "Boss Battle (25 v 1)"]]
-const MODE_BOSSES := {"island": "Brutus, a bunny the size of a house", "cage": "Nibbles the Rabid, the cage's own hamster gone huge and mad",
-	"toybox": "the Tin Tyrant, a wind-up robot ten critters tall"}
+## A Boss Battle's boss, in a line (BossLore's ids: the island has two).
+const MODE_BOSSES := {"brute": "Brutus, a bunny the size of a house", "hamster": "Nibbles the Rabid, the cage's own hamster gone huge and mad",
+	"robot": "the Tin Tyrant, a wind-up robot ten critters tall",
+	"owl": "Old Hoot, a snowy owl as wide as the Big Red Barn, by night: she flies"}
 
 var _ui: Control
 var _menu: VBoxContainer
@@ -337,6 +339,19 @@ func _open_play() -> void:
 		map.add_item(m[1])
 	map.selected = maxi(0, MAPS.map(func(m): return m[0]).find(String(Settings.get_value(&"map"))))
 	grid.add_child(map)
+	# a Boss Battle's boss, where the map has more than one (BossLore.picked)
+	grid.add_child(UITheme.label("Boss", 22))
+	var boss := OptionButton.new()
+	grid.add_child(boss)
+	var fill_bosses := func():
+		var map_id := String(Settings.get_value(&"map"))
+		var here := BossLore.ids_for_map(map_id)
+		boss.clear()
+		for id in here:
+			boss.add_item("%s, %s" % [BossLore.of(id).name, BossLore.of(id).title])
+			boss.set_item_metadata(boss.item_count - 1, id)
+		boss.selected = maxi(0, here.find(BossLore.picked(map_id)))
+		boss.disabled = String(Settings.get_value(&"mode")) != "boss" or here.size() < 2
 	grid.add_child(UITheme.label("Opponents", 22))
 	var opp := UITheme.pad_spin_box(SpinBox.new())
 	opp.min_value = 1
@@ -354,14 +369,20 @@ func _open_play() -> void:
 		var map_id := String(Settings.get_value(&"map"))
 		opp.editable = m == "royale"
 		about.text = {"teams": "You and 24 bots against 25. Blue tags are your team; no friendly fire. Last team standing wins.",
-			"boss": "You and 24 bots against %s. Find a gun before it turns up." % MODE_BOSSES.get(map_id, "the boss")}.get(m,
+			"boss": "You and 24 bots against %s. Find a gun before it turns up." % MODE_BOSSES.get(BossLore.picked(map_id), "the boss")}.get(m,
 			"Everyone for themselves. Last critter standing wins.")
 	mode.item_selected.connect(func(i):
 		Settings.set_value(&"mode", MODES[i][0])
+		fill_bosses.call()
 		explain.call())
 	map.item_selected.connect(func(i):
 		Settings.set_value(&"map", MAPS[i][0])
+		fill_bosses.call()
 		explain.call())
+	boss.item_selected.connect(func(i):
+		Settings.set_value(&"boss", String(boss.get_item_metadata(i)))
+		explain.call())
+	fill_bosses.call()
 	explain.call()
 	grid.add_child(UITheme.label("Difficulty", 22))
 	var diff := OptionButton.new()

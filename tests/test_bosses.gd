@@ -3,12 +3,15 @@ extends TestCase
 ## carrots (and blasts, and clubs) hurting them (the head more, bots' carrots
 ## less), their blows hurting who's close and sparing who's far or in the
 ## air, the bots fighting them and getting out from under their blows, and a
-## boss going down for good. Then a whole Boss Battle on each map.
+## boss going down for good. Old Hoot, the one that flies: circling up high,
+## carrying a critter off and dropping it (and wriggled free of), grounded by
+## shots on her wings as she dives, her hoot knocking everyone under her
+## down. Then a whole Boss Battle on each map, and against Old Hoot by night.
 
 const TEST_DEF := "res://data/critters/test_critter.tres"
 const BUN := "res://data/critters/bun.tres"
 const SCRIPTS := {"brute": "res://src/bosses/brute_boss.gd", "robot": "res://src/bosses/robot_boss.gd",
-	"hamster": "res://src/bosses/hamster_boss.gd"}
+	"hamster": "res://src/bosses/hamster_boss.gd", "owl": "res://src/bosses/owl_boss.gd"}
 const GAME := "res://scenes/game.tscn"
 
 
@@ -251,9 +254,13 @@ func test_every_boss_does_all_its_moves() -> void:
 		await wait_physics(5)
 		var moves: Array = {"brute": ["_pound", "_toss", "_leap", "_gobble", "_roar_action"],
 			"robot": ["_clamp", "_lasers", "_barrage", "_wind_down", "_roar_action"],
-			"hamster": ["_bite", "_charge", "_spit", "_burrow", "_roar_action"]}[id]
+			"hamster": ["_bite", "_charge", "_spit", "_burrow", "_roar_action"],
+			"owl": ["_snatch", "_rake", "_volley", "_roar_action", "_perch"]}[id]
 		for m in moves:
 			b.global_position = Vector3.ZERO
+			if b is OwlBoss:   # (up where she flies)
+				b._air = true
+				b.global_position = Vector3(0, OwlBoss.CRUISE, 40)
 			victim.global_position = Vector3(0, 0.1, -50 if m not in ["_gobble", "_bite"] else -9)
 			victim.velocity = Vector3.ZERO
 			await wait_physics(3)
@@ -274,16 +281,136 @@ func test_every_boss_does_all_its_moves() -> void:
 		await wait_physics(3)
 
 
+## Old Hoot arrives gliding in out of the sky, lands, takes off again, and
+## circles whoever she's after, up high.
+func test_old_hoot_flies() -> void:
+	var b: OwlBoss = (load(SCRIPTS["owl"]) as GDScript).new()
+	add_child(b)
+	var you := spawn_critter(TEST_DEF, Vector3(0, 0.1, 60))
+	you.team = 1
+	await wait_physics(3)
+	b.arrive(Vector3.ZERO, you.global_position)
+	check(b.global_position.length() < 0.1 and not b.visible, "where she'll land, unseen, till her glide starts (where BossIntro sets up)")
+	await wait_physics(2)
+	check(b.global_position.y > 40.0 and b._air and b.visible, "she glides in from high up (%.0f m)" % b.global_position.y)
+	await _until(func(): return b.state == Boss.State.FIGHTING, 8.0)
+	check(b.state == Boss.State.FIGHTING and not b._air and b.global_position.y < 0.5, "she lands where she was going to")
+	await _until(func(): return b._air and b.global_position.y > 20.0, 12.0)
+	check(b._air and b.global_position.y > 20.0, "and takes off again (%.0f m up)" % b.global_position.y)
+	b.cooldown(&"snatch", 99.0)
+	b.cooldown(&"rake", 99.0)
+	b.cooldown(&"volley", 99.0)
+	b.cooldown(&"perch", 99.0)
+	b.cooldown(&"hoot", 99.0)
+	await wait_physics(360)
+	var flat := Vector2(b.global_position.x - you.global_position.x, b.global_position.z - you.global_position.z).length()
+	check(b._air and b.global_position.y > 20.0 and absf(flat - OwlBoss.ORBIT) < 25.0,
+		"circling you up high (%.0f m up, %.0f m out)" % [b.global_position.y, flat])
+	var nose := b.model.global_basis.z.normalized()   # (the model's front: it's turned to face the boss's)
+	check(nose.y < -0.2, "her body pitched into her flight, nose down (%.2f)" % nose.y)
+	b.queue_free()
+
+
+## Snatch: whoever's still in the ring when she comes down is carried off,
+## dropped from high up and hurt by the fall; you can wriggle free (jump).
+func test_old_hoot_carries_a_critter_off_and_drops_it() -> void:
+	var b := _boss("owl", Vector3(0, OwlBoss.CRUISE, 50))
+	b._air = true
+	var bot := spawn_critter(TEST_DEF, Vector3(0, 0.1, -20))
+	bot.team = 1
+	bot.max_health = 1000.0
+	bot.health = 1000.0
+	await wait_physics(5)
+	b.start(b._snatch(bot))
+	await _until(func(): return b.holding() != null, 4.0)
+	check(b.holding() == bot and bot.held_by == b, "she's got it")
+	await wait_physics(60)
+	check(bot.global_position.y > 10.0, "and she's carrying it off, up (%.0f m)" % bot.global_position.y)
+	await _until(func(): return b.action == null, 6.0)
+	check(b.holding() == null and bot.held_by == null, "let go")
+	await _until(func(): return bot.is_on_floor(), 6.0)
+	await wait_physics(3)
+	check(bot.health < 1000.0 - 40.0, "hurt by the fall (%.0f)" % (1000.0 - bot.health))
+	# you, caught: jump, and keep jumping
+	var you := spawn_critter(TEST_DEF, Vector3(30, 0.1, -20))
+	you.team = 1
+	you.is_player = true
+	you.max_health = 1000.0
+	you.health = 1000.0
+	b._air = true
+	b.global_position = Vector3(30, OwlBoss.CRUISE, 50)
+	b.cooldown(&"snatch", 0.0)
+	await wait_physics(5)
+	b.start(b._snatch(you))
+	await _until(func(): return b.holding() == you, 4.0)
+	check(b.holding() == you, "she's got you")
+	for i in OwlBoss.STRUGGLES:
+		you.want_jump = true
+		await wait_physics(4)
+	check(b.holding() == null and you.held_by == null and b.action != null, "you wriggled free before she let go")
+
+
+## Shot in the wings as she dives, she comes down, and lies there stunned.
+func test_shooting_old_hoots_wings_brings_her_down() -> void:
+	var b := _boss("owl", Vector3(0, OwlBoss.CRUISE, 50))
+	b._air = true
+	var you := spawn_critter(TEST_DEF, Vector3(40, 0.1, -60))
+	you.team = 1
+	you.is_player = true
+	var bot := spawn_critter(TEST_DEF, Vector3(0, 0.1, -20))
+	bot.team = 1
+	await wait_physics(5)
+	b.start(b._snatch(bot))
+	await _until(func(): return b.action != null and b.action.t > 1.2, 3.0)
+	check(b._diving, "diving")
+	for i in int(OwlBoss.GROUND_AT) + 1:
+		var shot := DamageInfo.make(10.0, DamageInfo.Kind.BULLET, you, &"carrot_rifle")
+		shot.bone_role = &"l_upper_arm" if i % 2 == 0 else &"r_lower_arm"
+		b.take_damage(shot)
+	check(b.action != null and b.action.name == &"grounded", "grounded (%s)" % (b.action.name if b.action else "nothing"))
+	await _until(func(): return not b._air, 3.0)
+	check(not b._air and b.global_position.y < 1.0 and b.vulnerable(), "down on the ground, stunned (%.1f m)" % b.global_position.y)
+
+
+## Her hoot knocks everyone in the ring under her off their feet.
+func test_old_hoots_hoot_knocks_them_down() -> void:
+	var b := _boss("owl", Vector3(0, OwlBoss.CRUISE, 0))
+	b._air = true
+	var them: Array[Critter] = []
+	for i in 3:
+		var c := spawn_critter(TEST_DEF, Vector3(i * 8.0 - 8.0, 0.1, 6.0))
+		c.team = 1
+		c.max_health = 1000.0
+		c.health = 1000.0
+		them.append(c)
+	var far := spawn_critter(TEST_DEF, Vector3(80, 0.1, 0))
+	far.team = 1
+	await wait_physics(5)
+	b.start(b._roar_action())
+	await wait_physics(60)
+	check(them.all(func(c): return c.is_knocked() or c.visual.knocked), "everyone under her is knocked down")
+	check(not (far.is_knocked() or far.visual.knocked), "not who's out of the ring")
+
+
+func _until(done: Callable, seconds: float) -> void:
+	var t := 0.0
+	while t < seconds and not done.call():
+		await get_tree().physics_frame
+		t += 1.0 / Engine.physics_ticks_per_second
+
+
 ## A whole Boss Battle on each map: the drop, the boss turning up, the bots
 ## fighting it (it takes damage, it beats some of them down), and the match
-## won when it falls.
+## won when it falls. And against Old Hoot on the island, by night.
 func test_boss_battles() -> void:
 	for map in ["island", "cage", "toybox"]:
 		await _boss_battle(map)
+	await _boss_battle("island", "owl")
 
 
-func _boss_battle(map: String) -> void:
+func _boss_battle(map: String, boss_id := "") -> void:
 	WarrenSim.reset_for_tests()
+	Settings.set_value(&"boss", boss_id, false)
 	Settings.set_value(&"opponents", 7, false)
 	Settings.set_value(&"difficulty", Settings.Difficulty.NORMAL, false)
 	Settings.set_value(&"seed", 777, false)
@@ -303,6 +430,9 @@ func _boss_battle(map: String) -> void:
 		game.queue_free()
 		return
 	check(mm.boss != null and mm.boss.state == Boss.State.WAITING, "%s: its boss waits for the drop" % map)
+	if boss_id != "":
+		check(mm.boss.id == boss_id, "%s: the boss picked (%s)" % [map, mm.boss.id])
+		check((game.get_node("World/Lighting") as WorldLighting).night == (boss_id == "owl"), "%s: by night, with Old Hoot" % map)
 	check(mm.total == MatchManager.TEAM_SIZE, "%s: 25 critters against it (%d)" % [map, mm.total])
 	check(mm.critters.all(func(c): return c.team == 1), "%s: all on the same side" % map)
 	await wait_physics(10)
@@ -354,5 +484,6 @@ func _boss_battle(map: String) -> void:
 	Engine.time_scale = 1.0
 	Settings.set_value(&"mode", "royale", false)
 	Settings.set_value(&"map", "island", false)
+	Settings.set_value(&"boss", "", false)
 	game.queue_free()
 	await wait_frames(5)

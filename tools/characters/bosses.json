@@ -6,6 +6,10 @@
     "display_name": "Brutus",
     "yaw_deg": -90,
     "max_tris": 60000,
+    "bake_normals": 2048,
+    "bake_ao": 0.65,
+    "roughness": 0.72,
+    "paint": {"eyes": {"mode": "colour", "target": [0.7, 0.47, 0.31], "tol": 0.13, "search": 0.065, "color": [1.0, 0.62, 0.12]}},
     "joints": {
       "hips": {"head": [0, 0.12, 0.3], "tail": [0, 0.12, 0.4], "parent": null},
       "spine": {"head": [0, 0.12, 0.4], "tail": [0, 0.09, 0.5], "parent": "hips"},
@@ -186,5 +190,40 @@
         {"from": [0.0, 0.675, 0.45], "to": [0.0, 0.64, 0.44], "radius": 0.02, "freq": 140.0}
       ]
     }
+  },
+  "owl": {
+    "src": "boss_owl",
+    "uid": "22ccf3e782484f968e4c1be1e78deffa",
+    "display_name": "Old Hoot",
+    "yaw_deg": 0,
+    "max_tris": 60000,
+    "head_top": 0.63,
+    "joints": {
+      "hips": {"head": [0, 0.06, 0.27], "tail": [0, -0.03, 0.36], "parent": null},
+      "spine": {"head": [0, -0.03, 0.36], "tail": [0, -0.08, 0.44], "parent": "hips"},
+      "chest": {"head": [0, -0.08, 0.44], "tail": [0, -0.12, 0.49], "parent": "spine"},
+      "neck": {"head": [0, -0.12, 0.49], "tail": [0, -0.16, 0.52], "parent": "chest"},
+      "head": {"head": [0, -0.16, 0.52], "tail": [0, -0.25, 0.63], "parent": "neck"},
+      "jaw": {"head": [0, -0.34, 0.48], "tail": [0, -0.41, 0.44], "parent": "head"},
+      "l_upper_arm": {"head": [0.12, -0.09, 0.55], "tail": [0.24, -0.1, 0.7], "parent": "chest"},
+      "l_lower_arm": {"head": [0.24, -0.1, 0.7], "tail": [0.34, -0.11, 0.81], "parent": "l_upper_arm"},
+      "l_hand": {"head": [0.34, -0.11, 0.81], "tail": [0.58, -0.06, 0.97], "parent": "l_lower_arm"},
+      "l_upper_leg": {"head": [0.06, -0.1, 0.3], "tail": [0.09, -0.15, 0.16], "parent": "hips"},
+      "l_lower_leg": {"head": [0.09, -0.15, 0.16], "tail": [0.095, -0.14, 0.07], "parent": "l_upper_leg"},
+      "l_foot": {"head": [0.095, -0.14, 0.07], "tail": [0.095, -0.21, 0.02], "parent": "l_lower_leg"},
+      "tail": {"head": [0, 0.1, 0.3], "tail": [0, 0.4, 0.08], "parent": "hips"}
+    },
+    "eyes": [[0.0485, -0.357, 0.5185], [-0.0485, -0.357, 0.5185]],
+    "eye_r": 0.022,
+    "mouth": [0, -0.41, 0.455],
+    "paint": {
+      "seed": 11,
+      "eyes": {"search": 0.05, "dark": 0.15, "color": [0.8, 1.0, 0.34], "only": [0]}
+    },
+    "test_poses": [
+      {"l_upper_arm": [0, 0, -50], "r_upper_arm": [0, 0, 50], "l_hand": [0, 0, -30], "r_hand": [0, 0, 30]},
+      {"l_upper_arm": [50, 0, 0], "r_upper_arm": [50, 0, 0], "head": [0, 70, 0]},
+      {"l_foot": [50, 0, 0], "r_foot": [50, 0, 0], "tail": [30, 0, 0], "jaw": [20, 0, 0]}
+    ]
   }
 }

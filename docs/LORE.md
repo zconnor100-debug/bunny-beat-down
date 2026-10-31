@@ -109,6 +109,42 @@ In the game: the Curious Golden Hamster model (restore50, CC BY 4.0), the
 charge, bite, foam spit, burrow. Beat him for **the Rabid froth** beat-down
 burst.
 
+### Old Hoot, the Night Watch (Wildwood Island, by night)
+
+*Be home before the first hoot.*
+
+Not one of the Kernel's giants: she was only flying past. The island's other
+boss, by night (a Boss Battle's pick there), and the first that flies.
+
+1. **The Night Watch.** Every kit in the Warren is told it at bedtime: be home
+   before the first hoot. A snowy owl as white as frost, she's kept the night
+   watch over Wildwood since before the Warren dug its first burrow, from the
+   tallest pine on Boulder Bluff, counting every critter still out after dark.
+   The ones still out by the third hoot aren't counted again.
+2. **The Sliver.** She was on the wing the night the Starfall Acorn came down,
+   and it passed so close it singed her feathers. A sliver of its husk went
+   into her left eye and stayed there, glowing gold-green, and she has grown
+   with every night she's watched through it: as wide as the Big Red Barn now.
+   She hasn't slept since.
+3. **Grounding Her.** Silent in the air: watch the ground for the red ring
+   she's about to drop into and get out of it, or she'll carry you off and let
+   go from high up (jump, and keep jumping, and you'll wriggle loose). Shoot
+   her wings as she dives and she comes down hard; floundering in the grass,
+   her eye is right there. When she puffs up to hoot, get out from under her.
+4. **Looking Up.** Since the Acorn went home she watches the new star over
+   the Bluff more than she watches the Warren, and some nights flies up until
+   she's a speck against it. Old Mother Clover says the sliver in her eye
+   wants to go home too. *She isn't hunting us. She's trying to get up there,
+   and she's angry she can't.*
+
+In the game: the Gliding Snowy Owl model (Pigcraft, CC BY 4.0), rigged with
+her wings on its arms' bones and her talons on its feet's, the pupil of her
+left eye painted gold-green and glowing (`OwlBoss`). She flies on her own,
+not along the navmesh: circling whoever she's after up high, banking into her
+turns, her body pitched into a dive. The Snatch, the Talon Rake, the Feather
+Volley, the Hoot, and a perch now and then; grounded by shots on her wings
+mid-dive. Beat her for **the Feathers** beat-down burst.
+
 ### The Briar Heart, the Acorn's Roots (Boulder Bluff, by night)
 
 *Every match, it closes in. Now you know why.*

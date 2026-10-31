@@ -110,7 +110,11 @@
         "root_snap": {"expect": "A deep woody crack and crunch, splinters, and a bright glassy whoosh of light getting out (~1.7 s).", "when": "The Finale: a root's knot broken, or one of the Briar Heart's pods."},
         "pod_bloom": {"expect": "A wet creaking unfurl of tough leaves peeling apart, and a soft glassy shimmer swelling (~1.8 s).", "when": "One of the Briar Heart's pods opening, its Kernel's light showing."},
         "starfall_chime": {"expect": "A warm rising shimmer of bell tones in the Kernels' chord (A, E, C#), a soft whoosh going up, a high twinkle (~3 s).", "when": "The end of the Kernel Hunt: the Starfall Acorn whole again, and rising home."},
-        "night_loop": {"expect": "Wildwood by night, 10 s seamless loop: crickets near and far, a soft cold breeze, an owl hooting a long way off.", "when": "Under the Kernel Hunt's Finale (the island by night)."}
+        "night_loop": {"expect": "Wildwood by night, 10 s seamless loop: crickets near and far, a soft cold breeze, an owl hooting a long way off.", "when": "Under the Kernel Hunt's Finale and Old Hoot's Boss Battle (the island by night)."},
+        "owl_hoot": {"expect": "A vast, deep owl's call, HOO, hoo, HOOOO, falling away at the end, out of an enormous throat, rolling off into a long echo (~3 s).", "when": "Old Hoot's hoot, knocking everyone under her down (and her arrival's, for the camera)."},
+        "owl_screech": {"expect": "A harsh, rasping shriek that tears and falls away, air rushing under it (~1.6 s).", "when": "Old Hoot coming down out of the sky: a Snatch or a Talon Rake (or grounded)."},
+        "owl_flap": {"expect": "A deep soft whump of air pushed down, feathers rustling at the end of it (~1 s).", "when": "Each beat of Old Hoot's wings as she flies, and as she takes off."},
+        "feather_volley": {"expect": "A great wingbeat and a flurry of big feathers flung off, hissing as they fly (~1.2 s).", "when": "Old Hoot's Feather Volley."}
       }
     },
     {

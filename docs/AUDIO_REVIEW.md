@@ -132,7 +132,11 @@ from `tools/audio/review_checklist.json` — edit that, not this.
 | `root_snap` | A deep woody crack and crunch, splinters, and a bright glassy whoosh of light getting out (~1.7 s). | The Finale: a root's knot broken, or one of the Briar Heart's pods. | [1](../assets/audio/sfx/root_snap_1.ogg) [2](../assets/audio/sfx/root_snap_2.ogg) |
 | `pod_bloom` | A wet creaking unfurl of tough leaves peeling apart, and a soft glassy shimmer swelling (~1.8 s). | One of the Briar Heart's pods opening, its Kernel's light showing. | [1](../assets/audio/sfx/pod_bloom.ogg) |
 | `starfall_chime` | A warm rising shimmer of bell tones in the Kernels' chord (A, E, C#), a soft whoosh going up, a high twinkle (~3 s). | The end of the Kernel Hunt: the Starfall Acorn whole again, and rising home. | [1](../assets/audio/sfx/starfall_chime.ogg) |
-| `night_loop` | Wildwood by night, 10 s seamless loop: crickets near and far, a soft cold breeze, an owl hooting a long way off. | Under the Kernel Hunt's Finale (the island by night). | [1](../assets/audio/sfx/night_loop.ogg) |
+| `night_loop` | Wildwood by night, 10 s seamless loop: crickets near and far, a soft cold breeze, an owl hooting a long way off. | Under the Kernel Hunt's Finale and Old Hoot's Boss Battle (the island by night). | [1](../assets/audio/sfx/night_loop.ogg) |
+| `owl_hoot` | A vast, deep owl's call, HOO, hoo, HOOOO, falling away at the end, out of an enormous throat, rolling off into a long echo (~3 s). | Old Hoot's hoot, knocking everyone under her down (and her arrival's, for the camera). | [1](../assets/audio/sfx/owl_hoot.ogg) |
+| `owl_screech` | A harsh, rasping shriek that tears and falls away, air rushing under it (~1.6 s). | Old Hoot coming down out of the sky: a Snatch or a Talon Rake (or grounded). | [1](../assets/audio/sfx/owl_screech_1.ogg) [2](../assets/audio/sfx/owl_screech_2.ogg) |
+| `owl_flap` | A deep soft whump of air pushed down, feathers rustling at the end of it (~1 s). | Each beat of Old Hoot's wings as she flies, and as she takes off. | [1](../assets/audio/sfx/owl_flap_1.ogg) [2](../assets/audio/sfx/owl_flap_2.ogg) |
+| `feather_volley` | A great wingbeat and a flurry of big feathers flung off, hissing as they fly (~1.2 s). | Old Hoot's Feather Volley. | [1](../assets/audio/sfx/feather_volley.ogg) |
 
 ## UI & match flow
 

@@ -41,6 +41,7 @@ const DEFAULTS := {
 	"map": "island",                # "island" (Wildwood Island), "cage" (Hamster Cage) or "toybox" (Toy Box Bash)
 	"mode": "royale",               # "royale", "teams" (25 v 25) or "boss" (25 v the map's boss): MatchManager.mode
 	"boss_intro": true,             # a boss's arrival plays as a cinematic (BossIntro)
+	"boss": "",                     # a Boss Battle's boss where its map has more than one (BossLore.picked): "" the map's first
 	"player_character": "bun",
 	"player_skin": "default",
 	"check_updates": true,          # ask GitHub for a newer release on the main menu (UpdateCheck)

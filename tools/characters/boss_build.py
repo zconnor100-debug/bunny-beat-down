@@ -111,6 +111,14 @@ def clean_materials(body):
                         m.node_tree.links.new(src, l.to_socket)
                 m.node_tree.nodes.remove(mp)
             log("baked the texture transform into the UVs (scale %.3f %.3f, offset %.3f %.3f)" % (sca[0], sca[1], loc[0], loc[1]))
+        if "roughness" in CFG:
+            # (a download that left its skin shining like a mirror, with no
+            # roughness map: in the game that reflects the sky all over it)
+            bsdf = next((n for n in m.node_tree.nodes if n.type == "BSDF_PRINCIPLED"), None)
+            if bsdf and not bsdf.inputs["Roughness"].links:
+                bsdf.inputs["Roughness"].default_value = float(CFG["roughness"])
+                bsdf.inputs["Specular IOR Level"].default_value = 0.5
+                log("roughness", CFG["roughness"])
         if not CFG.get("keep_emission", False):
             bsdf = next((n for n in m.node_tree.nodes if n.type == "BSDF_PRINCIPLED"), None)
             if bsdf:
@@ -204,6 +212,13 @@ def normalize():
         bpy.ops.mesh.remove_doubles(threshold=0.00005)
         bpy.ops.object.mode_set(mode="OBJECT")
         log("welded:", n, "tris,", len(body.data.vertices), "verts")
+    if n > budget and CFG.get("bake_normals"):
+        # (kept whole, before it's decimated: build bakes its detail into a
+        # normal map on the decimated body)
+        high = body.copy()
+        high.data = body.data.copy()
+        high.name = high.data.name = BID + "_high"
+        bpy.context.scene.collection.objects.link(high)
     if n > budget:
         dm = body.modifiers.new("decimate", "DECIMATE")
         dm.ratio = budget / n * 0.98
@@ -510,9 +525,19 @@ def paint_texture(body):
         # moves). Their real middles go in the boss.json.
         lum = orig @ np.array([0.299, 0.587, 0.114])
         mask = np.zeros((h, w), dtype=np.float32)
-        for e in CFG.get("eyes", []):
+        only = eyes.get("only")   # (which of the recipe's eyes: Old Hoot's glows on one side)
+        for i, e in enumerate(CFG.get("eyes", [])):
             g = np.array([e[0], e[2], -e[1]])
-            dark = valid & (np.linalg.norm(pos - g, axis=2) < eyes.get("search", 0.08)) & (lum < eyes.get("dark", 0.12))
+            if only is not None and i not in only:
+                EYES_FOUND.append([round(float(x), 4) for x in g])   # (listed as the recipe has it, left as it is)
+                continue
+            if eyes.get("mode") == "disk":   # (eyes that aren't dark in the texture: a disk round each, painted)
+                dark = valid & (np.linalg.norm(pos - g, axis=2) < eyes.get("radius", 0.016))
+            elif eyes.get("mode") == "colour":   # (or the texels of the eyes' own colour round each: Brutus's amber)
+                near = np.linalg.norm(pos - g, axis=2) < eyes.get("search", 0.06)
+                dark = valid & near & (np.linalg.norm(orig - np.array(eyes["target"]), axis=2) < eyes.get("tol", 0.12))
+            else:
+                dark = valid & (np.linalg.norm(pos - g, axis=2) < eyes.get("search", 0.08)) & (lum < eyes.get("dark", 0.12))
             if dark.sum() < 30:
                 log("eyes: nothing dark near", g.round(3).tolist())
                 continue
@@ -582,10 +607,84 @@ def seg_dist(P, a, b):
     return np.linalg.norm(P - (a + t[:, None] * ab), axis=1)
 
 
+def bake_normals(body, high, size):
+    """The download's sculpted detail (brows, wrinkles, muscle), lost when it
+    was decimated, baked off the whole mesh into a tangent-space normal map
+    on the decimated body (Cycles, selected to active) and wired into its
+    material, so the glTF carries it: at a boss's size, a decimated face is
+    flat without it."""
+    scene = bpy.context.scene
+    scene.render.engine = "CYCLES"
+    scene.cycles.device = "CPU"
+    scene.cycles.samples = 1
+    img = bpy.data.images.new(BID + "_normal", width=size, height=size, alpha=False)
+    img.colorspace_settings.name = "Non-Color"
+    nt = body.data.materials[0].node_tree
+    tex = nt.nodes.new("ShaderNodeTexImage")
+    tex.image = img
+    nt.nodes.active = tex   # (the bake writes into the active image node)
+    select_only([high, body], body)
+    bpy.ops.object.bake(type="NORMAL", use_selected_to_active=True, cage_extrusion=CFG.get("bake_extrusion", 0.01),
+                        max_ray_distance=CFG.get("bake_ray", 0.03), normal_space="TANGENT", margin=8)
+    img.pack()
+    nm = nt.nodes.new("ShaderNodeNormalMap")
+    nm.space = "TANGENT"
+    nm.inputs["Strength"].default_value = CFG.get("bake_strength", 1.0)
+    nt.links.new(tex.outputs["Color"], nm.inputs["Color"])
+    bsdf = next(n for n in nt.nodes if n.type == "BSDF_PRINCIPLED")
+    nt.links.new(nm.outputs["Normal"], bsdf.inputs["Normal"])
+    base = next((l.from_node for l in bsdf.inputs["Base Color"].links if l.from_node.type == "TEX_IMAGE"), None)
+    if base:
+        nt.nodes.active = base   # (the colour map stays the one previews show)
+    log("baked a %dx%d normal map off %d tris" % (size, size, tri_count(high)))
+    if CFG.get("bake_ao") and base:
+        bake_ao(body, high, base, size, float(CFG["bake_ao"]))
+
+
+def bake_ao(body, high, base, size, strength):
+    """The sculpt's creases and hollows (ambient occlusion, baked off the
+    whole mesh) darkened into the colour map, upscaled to `size` for them:
+    the shape reads at a distance, where a normal map's light alone goes
+    flat."""
+    scene = bpy.context.scene
+    scene.cycles.samples = 64
+    ao = bpy.data.images.new(BID + "_ao", width=size, height=size, alpha=False)
+    ao.colorspace_settings.name = "Non-Color"
+    nt = body.data.materials[0].node_tree
+    tex = nt.nodes.new("ShaderNodeTexImage")
+    tex.image = ao
+    nt.nodes.active = tex
+    select_only([high, body], body)
+    bpy.ops.object.bake(type="AO", use_selected_to_active=True, cage_extrusion=CFG.get("bake_extrusion", 0.01),
+                        max_ray_distance=CFG.get("bake_ray", 0.03), margin=8)
+    col = base.image
+    if col.size[0] < size:
+        col.scale(size, size)
+    a = np.empty(size * size * 4, dtype=np.float32)
+    ao.pixels.foreach_get(a)
+    c = np.empty(size * size * 4, dtype=np.float32)
+    col.pixels.foreach_get(c)
+    a = a.reshape(-1, 4)[:, :1]
+    c = c.reshape(-1, 4)
+    c[:, :3] *= 1.0 - strength * (1.0 - a)
+    col.pixels.foreach_set(c.ravel())
+    col.update()
+    col.pack()
+    nt.nodes.remove(tex)
+    bpy.data.images.remove(ao)
+    nt.nodes.active = base
+    log("baked ambient occlusion into the colour map (%dx%d, %.2f)" % (size, size, strength))
+
+
 def build():
     bpy.ops.wm.open_mainfile(filepath=NORM)
-    body = next(o for o in objs("MESH"))
+    high = bpy.data.objects.get(BID + "_high")
+    body = next(o for o in objs("MESH") if o is not high)
     arm = next(iter(objs("ARMATURE")), None)
+    if high:
+        if CFG.get("bake_normals"):
+            bake_normals(body, high, int(CFG["bake_normals"]))
+        bpy.data.objects.remove(high, do_unlink=True)
     if CFG.get("rig") == "own":
         clean_own_rig(body, arm)
         roles = {r: CFG["roles"].get(r) for r in ROLES if CFG["roles"].get(r)}

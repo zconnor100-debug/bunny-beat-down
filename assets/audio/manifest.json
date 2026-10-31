@@ -311,6 +311,20 @@
   "night_loop": [
     "sfx/night_loop.ogg"
   ],
+  "owl_hoot": [
+    "sfx/owl_hoot.ogg"
+  ],
+  "owl_screech": [
+    "sfx/owl_screech_1.ogg",
+    "sfx/owl_screech_2.ogg"
+  ],
+  "owl_flap": [
+    "sfx/owl_flap_1.ogg",
+    "sfx/owl_flap_2.ogg"
+  ],
+  "feather_volley": [
+    "sfx/feather_volley.ogg"
+  ],
   "music": {
     "menu": "music/menu_monkeys_spinning_monkeys.mp3",
     "match": [

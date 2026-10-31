@@ -176,6 +176,11 @@ const BEAT_DOWN_BURSTS := {
 		{"amount": 9, "speed": Vector2(4.0, 9.0), "spread": 55.0, "additive": true, "damping": 1.6, "lifetime": 1.6}],
 		["blob", [Color(1.0, 1.0, 0.9)], -0.4, 0.05, {"amount": 14, "speed": Vector2(1.0, 4.0), "spread": 120.0, "additive": true,
 		"lifetime": 1.1}]],
+	# (earned by beating Old Hoot: white feathers drifting down, and a fleck of the sliver's gold-green)
+	"feathers": [["leaf", [Color(0.97, 0.98, 1.0), Color(0.86, 0.88, 0.93)], 0.8, 0.18,
+		{"amount": 14, "speed": Vector2(2.0, 5.0), "spread": 80.0, "damping": 2.2, "lifetime": 2.6}],
+		["blob", [Color(0.8, 1.0, 0.34)], -0.3, 0.05, {"amount": 6, "speed": Vector2(1.0, 3.0), "spread": 90.0, "additive": true,
+		"lifetime": 1.0}]],
 }
 
 

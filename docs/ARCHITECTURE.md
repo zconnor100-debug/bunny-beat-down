@@ -521,22 +521,44 @@ kind of match; a run's stops are always battle royales.
   (cutting the corners: it stomps through props), its feet on
   `terrain.height_at`. `BossPoser` poses its skeleton from per-role
   rotations in model space (parents first, so one pose works on any of the
-  three rigs); a move is a `BossAction` (keyframed poses eased between,
+  rigs); a move is a `BossAction` (keyframed poses eased between,
   events at set times, a per-frame `tick`). Every blow is announced by
   `Boss.warn` (a `BossFX` decal ring filling up, and a `danger` zone that
   `AIBrain._dodge` gets out of after a reaction time that depends on the
   bot's skill) and lands through `hurt_ring` / `hurt`, which spare anyone in
-  the air. `BruteBoss`, `RobotBoss` and `HamsterBoss` choose between their
-  moves in `_choose`; `Boss.snapshot`/`restore` let the TimeKeeper rewind it.
-  Bots' carrots count for `Boss.BOT_DAMAGE` of yours.
+  the air. `BruteBoss`, `RobotBoss`, `HamsterBoss` and `OwlBoss` choose
+  between their moves in `_choose`; `Boss.snapshot`/`restore` let the
+  TimeKeeper rewind it. Bots' carrots count for `Boss.BOT_DAMAGE` of yours.
+- **Old Hoot** (`OwlBoss`) flies, so she doesn't walk the navmesh: her own
+  `_fight` circles whoever she's after (`_cruise`: an orbit `ORBIT` out,
+  `CRUISE` up, steering `_vel` toward it at a capped turn rate), and her
+  model is tilted every frame (`_tilt`: pitched into her flight or a dive,
+  banked into her turns; the hitboxes follow its bones). Her pose isn't a
+  walk with moves over it but her flight's (`_body_pose`: wingbeats from a
+  phase, held out for a glide, talons tucked or reaching) or her perch's,
+  her moves adding to it. Snatch carries a critter on her talons (`held_by`,
+  as Brutus's grab; a held player's jump input waits for its own physics, so
+  she reads it: STRUGGLES jumps and she lets go) and drops it, the landing's
+  damage worked out from how fast it fell (`_tend_dropped`: critters take
+  no fall damage of their own). Hits on her wings mid-dive (`WINGS`,
+  counted per hit: yours 1, a bot's 0.15) past `GROUND_AT` ground her: a
+  tumble, then `stun`. Her battle is by night: `game.gd` reads the boss's
+  `night` (`WorldLighting.make_night`, the night loop). A map can have more
+  than one boss (`BossLore.ids_for_map`; `BossLore.picked` reads Settings
+  "boss", the main menu's Boss row; `MatchManager.BOSS_SCRIPTS` by id).
 - The models come from `tools/characters/boss_build.py` (recipes in
   `bosses.json`): decimate, orient and scale a download; build a skeleton
   from joints read off `grid` renders, or keep the download's own (rested in
   its bind pose); skin by bone heat on a voxel-remeshed copy with its stray
   islands removed (bone heat finds no solution on a decimated sculpt) and
   copy the weights across; paint into the texture by where each texel sits
-  on the body (`paint`: Nibbles's blood and foam); export the GLB and a
-  `<id>.boss.json` (bones per role, tips, hitbox radii, eyes, mouth).
+  on the body (`paint`: Nibbles's blood and foam, Old Hoot's one glowing
+  pupil: `eyes.only`, Brutus's amber eyes found by their colour); bake the
+  whole download's detail onto the decimated body (`bake_normals`: Cycles,
+  selected to active, a tangent-space normal map; `bake_ao`: its ambient
+  occlusion multiplied into the colour map) and set a roughness where a
+  download left it a mirror's; export the GLB and a `<id>.boss.json`
+  (bones per role, tips, hitbox radii, eyes, mouth).
 - **Its arrival** is `MatchManager.release_boss` (landing it facing you,
   then `boss_arriving`), which the game answers with a `BossIntro` when
   Settings "boss_intro" is on: a Camera3D of its own driven off the boss's
@@ -566,8 +588,8 @@ kind of match; a run's stops are always battle royales.
   `boss_last_blows`, `boss_damage`); milestones and ladders marked `boss`
   show on the Trophy Room's Bosses page instead of the Milestones and
   Ladders pages. The rewards: coat pattern 6 (`coat_rakes` in
-  `coat_lib.gdshaderinc`), gun skin pattern 6, the "froth" beat-down burst
-  and the "kernel" colour. The full story, and the quest line it leads to,
+  `coat_lib.gdshaderinc`), gun skin pattern 6, the "froth" and "feathers"
+  beat-down bursts and the "kernel" colour. The full story, and the quest line it leads to,
   is `docs/LORE.md`.
 
 ## The Kernel Hunt (player against environment)
