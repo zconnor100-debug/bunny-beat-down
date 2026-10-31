@@ -764,6 +764,13 @@ func _knocked_move(delta: float) -> void:
 	velocity.z = follow.z
 	velocity.y = 0.0 if is_on_floor() else velocity.y - _gravity * delta
 	move_and_slide()
+	if Island.current and Island.current.terrain:
+		# (shoved down through the ground by something solid coming up under
+		# it, a boss bursting out of the bedding: back on top, not out of the world)
+		var ground := Island.current.terrain.height_at(global_position.x, global_position.z)
+		if global_position.y < ground - 0.6:
+			global_position.y = ground + 0.1
+			velocity.y = 0.0
 	if knocked <= KNOCK_RISE and not visual.rising():
 		var lie := visual.bone_world_position(&"head") - hips
 		lie.y = 0.0
