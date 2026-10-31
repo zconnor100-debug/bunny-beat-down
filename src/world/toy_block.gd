@@ -64,7 +64,8 @@ func loosen(impulse := Vector3.ZERO, at := Vector3.INF) -> RigidBody3D:
 		_visual.reparent(body, false)
 	if impulse != Vector3.ZERO:
 		body.apply_impulse(impulse, (at if at != Vector3.INF else global_position) - global_position)
-	body.angular_velocity = Vector3(randf_range(-1, 1), randf_range(-1, 1), randf_range(-1, 1)) * impulse.length() * 0.02
+	if not tips:   # (a domino goes straight over, into the next)
+		body.angular_velocity = Vector3(randf_range(-1, 1), randf_range(-1, 1), randf_range(-1, 1)) * impulse.length() * 0.02
 	for b in under:
 		b.above.erase(self)
 	for b in above.duplicate():
