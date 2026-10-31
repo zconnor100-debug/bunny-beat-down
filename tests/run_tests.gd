@@ -2,6 +2,7 @@ extends SceneTree
 ## Headless test runner.
 ##   godot --headless --path . -s tests/run_tests.gd            # all tests
 ##   godot --headless --path . -s tests/run_tests.gd -- ragdoll # files matching "ragdoll"
+##   godot --headless --path . -s tests/run_tests.gd -- kernel::act_two   # ...and in them, tests matching "act_two"
 ## Exits with code 1 if anything failed, so CI can gate on it.
 
 func _initialize() -> void:
@@ -10,9 +11,13 @@ func _initialize() -> void:
 
 func _run() -> void:
 	var filter := ""
+	var only := ""
 	var user_args := OS.get_cmdline_user_args()
 	if not user_args.is_empty():
 		filter = user_args[0]
+	if filter.contains("::"):
+		only = filter.get_slice("::", 1)
+		filter = filter.get_slice("::", 0)
 	var files: Array[String] = []
 	for f in DirAccess.get_files_at("res://tests"):
 		if f.begins_with("test_") and f.ends_with(".gd") and f != "test_case.gd" and (filter.is_empty() or f.contains(filter)):
@@ -28,7 +33,7 @@ func _run() -> void:
 		root.add_child(suite)
 		for m in script.get_script_method_list():
 			var mname: String = m.name
-			if not mname.begins_with("test_"):
+			if not mname.begins_with("test_") or (only != "" and not mname.contains(only)):
 				continue
 			total += 1
 			suite.current_test = "%s::%s" % [f.get_basename(), mname]

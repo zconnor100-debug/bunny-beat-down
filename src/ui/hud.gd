@@ -668,8 +668,8 @@ class HUDOverlay:
 		_hit_t = 0.22
 		_hit_kill = killed
 		_hit_head = headshot
-		var pos := (victim as Boss).last_hit_pos if victim is Boss \
-			else (victim as Critter).get_eye_position() + Vector3(randf_range(-0.3, 0.3), 0.3, randf_range(-0.3, 0.3))
+		var pos: Vector3 = victim.get(&"last_hit_pos") if not victim is Critter \
+			else (victim as Critter).get_eye_position() + Vector3(randf_range(-0.3, 0.3), 0.3, randf_range(-0.3, 0.3))   # (a boss, a winding station: where it was hit)
 		_numbers.append([pos, "%d" % roundi(damage), 0.9, Color("ffd34d") if headshot else UITheme.CREAM])
 		Audio.play(&"headshot" if headshot else &"carrot_impact_flesh", -6.0 if headshot else -10.0)
 

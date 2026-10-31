@@ -93,12 +93,13 @@ static func dust(pos: Vector3, radius: float, color := DUST) -> void:
 
 ## A column of dust going up from `pos` for `seconds`, tall enough to see
 ## from across the map over the trees (something huge stirring under Boulder
-## Bluff: MissionOutro). Like a flare's smoke, slower and far bigger.
-static func dust_column(pos: Vector3, seconds := 3.0) -> GPUParticles3D:
+## Bluff: MissionOutro). Like a flare's smoke, slower and far bigger. `k`
+## scales it (a broken winding station's smoke: smaller, and `color`).
+static func dust_column(pos: Vector3, seconds := 3.0, k := 1.0, color := Color(0.3, 0.26, 0.21, 0.92)) -> GPUParticles3D:
 	if FX.instance == null:
 		return null
-	var p: GPUParticles3D = FX.instance._make_particles({"amount": 340, "lifetime": 7.0, "speed": Vector2(6.0, 15.0), "spread": 28.0,
-		"gravity": -0.4, "size": 12.0, "scale": Vector2(0.7, 2.2), "color": Color(0.3, 0.26, 0.21, 0.92), "fade": true, "damping": 0.4}, false)
+	var p: GPUParticles3D = FX.instance._make_particles({"amount": maxi(40, int(340 * k)), "lifetime": 7.0 * sqrt(k), "speed": Vector2(6.0, 15.0) * sqrt(k),
+		"spread": 28.0, "gravity": -0.4, "size": 12.0 * k, "scale": Vector2(0.7, 2.2), "color": color, "fade": true, "damping": 0.4}, false)
 	p.one_shot = false
 	p.local_coords = false
 	p.visibility_aabb = AABB(Vector3(-90, -90, -10), Vector3(180, 180, 200))   # (its local -Z is the world's up)

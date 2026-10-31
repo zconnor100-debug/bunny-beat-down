@@ -8,6 +8,8 @@ signal died(info: DamageInfo)
 signal damaged(info: DamageInfo)
 signal weapon_changed(weapon: WeaponInstance)
 signal state_changed(state: int)
+## A blow that would have beaten it down, held on through (`hold_on`).
+signal held_on(info: DamageInfo)
 
 enum State { IN_DROPSHIP, FREEFALL, GLIDING, GROUND, DEAD }
 
@@ -103,6 +105,12 @@ var slow_factor := 1.0              ## the Sticky Briar's thorns set this (1 = n
 var jump_scale := 1.0
 var reload_scale := 1.0
 var second_wind := false
+## A blow that would beat it down leaves it on 1 HP instead, and it's
+## `held_on` (a Wound rogue, which winds down: ClockworkMission).
+var hold_on := false
+## Beaten but spared (a Wound rogue wound down): nobody's target, and nothing
+## hurts it till it's back up.
+var spared := false
 ## A bot sore enough at the director (Cast.DEFIANT_AT) that its hits on
 ## other bots aren't softened by the director's pacing.
 var defies_director := false
@@ -1088,7 +1096,7 @@ func receive_shot(shooter: Node, data: WeaponData, dmg: float, pos: Vector3, dir
 
 
 func take_damage(info: DamageInfo) -> void:
-	if not alive or state == State.IN_DROPSHIP:
+	if not alive or spared or state == State.IN_DROPSHIP:
 		return
 	if team != 0 and info.attacker is Critter and info.attacker != self and (info.attacker as Critter).team == team:
 		return   # (a team mate's stray carrot, blast or club)
@@ -1142,6 +1150,10 @@ func take_damage(info: DamageInfo) -> void:
 	Events.critter_damaged.emit(self, info)
 	if info.attacker is Critter and (info.attacker as Critter).is_player and info.attacker != self:
 		Events.player_hit_confirmed.emit(self, info.amount, info.headshot, health <= 0.0)
+	if health <= 0.0 and hold_on:
+		health = 1.0
+		held_on.emit(info)
+		return
 	if health <= 0.0 and second_wind:
 		second_wind = false
 		health = 1.0

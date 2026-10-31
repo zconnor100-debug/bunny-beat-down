@@ -20,8 +20,9 @@ hulking monster bunny) on the island, the Tin Tyrant (a wind-up robot) in the
 Toy Box, Nibbles the Rabid in the Hamster Cage. Or play the story: **the
 Kernel Hunt**, player against environment, where you and the Barn Rangers
 hold the Big Red Barn against the Touched, then track the glowing carrots,
-burn the Carrot Patch and wake Brutus. Ragdolls, real limb-popping gore,
-and floppy physics ears are included.
+burn the Carrot Patch and wake Brutus, then cross the lake to the toy room,
+unwind the Tin Tyrant's Wound and storm his castle. Ragdolls, real
+limb-popping gore, and floppy physics ears are included.
 
 Built in **Godot 4.6** (GDScript, Jolt physics, Forward+).
 
@@ -159,8 +160,8 @@ and the final shot replayed from three angles. There's a
 - **The Kernel Hunt: the story, player against environment** (main menu).
   The Starfall Acorn's light is getting into the Warren's critters: the
   **Touched**, any species, gold-green veins glowing through their fur,
-  silent, coming in waves. Its acts lead to the boss fights; the prologue and
-  Act I are playable (the rest are on its page, sealed). In the prologue,
+  silent, coming in waves. Its acts lead to the boss fights; the prologue,
+  Act I and Act II are playable (the rest are on its page, sealed). In the prologue,
   **Days Since Brutus**, you start on the ground at the Big Red Barn with the **Barn
   Rangers**, seven rogues of the cast at their posts round it, and the
   Touched come out of the Carrot Patch in three waves, then round the sides
@@ -189,6 +190,25 @@ and the final shot replayed from three angles. There's a
   humming over him. Earns the **Patch fire** beat-down burst.
 
   ![Act I: a glowing carrot, a ring of the Carrot Patch alight, Brutus coming down off Boulder Bluff, and Little Bru under the first Kernel](docs/screenshots/kernel_act1.jpg)
+
+  **Act II, The Clockwork Decree**, opens once the Patch is done, and it's in
+  the toy room across the lake (Toy Box Bash): the first Kernel hums at it.
+  The toy box stands open, critters march with **wind-up keys** turning in
+  their backs (the **Wound**), and two red eyes watch from the top of the
+  bookshelf, their light sweeping the floor. **Free the Wound**: four rogues
+  of the cast went into the House and came back wound; beat one down and it
+  winds down instead, and you pull the key out of its back before it winds
+  itself up again, and then it fights with you. **Break his winding
+  stations**: three tin wind-up machines, drums turning and gears grinding,
+  that wind out more of the Wound while you're near (tin shrugs off carrots,
+  except on the drum; rockets do the job), and come apart in physics scrap.
+  **Storm Block Castle**: take the courtyard and the Warren's flag goes up,
+  and then the **Tin Tyrant** jumps down off the bookshelf. Beat him and he
+  shrinks back into **Model No. 7**, the old toy from the windowsill: three
+  steps, a beep and sparks. The **second Kernel** is out, and the two pull
+  toward the hamster cage. Earns the **Clockwork** beat-down burst.
+
+  ![Act II: a Wound rogue with a key in its back, a winding station coming apart, the Warren's flag over Block Castle, and Model No. 7 under the second Kernel](docs/screenshots/kernel_act2.jpg)
 
 - **Third person with a first-person option** (press **V**): over-the-shoulder
   camera with a shoulder swap, aim-down-sights zoom, recoil kick and trauma

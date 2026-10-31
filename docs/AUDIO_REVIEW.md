@@ -117,6 +117,11 @@ from `tools/audio/review_checklist.json` — edit that, not this.
 | `fire_loop` | A fire burning in the open: a low breathing roar, dense fine crackle, woody pops and the odd sharp split, a soft hiss; seamless 8 s loop. | The Kernel Hunt's Act I: a ring of the Carrot Patch alight, and the whole Patch burning. | [1](../assets/audio/sfx/fire_loop.ogg) |
 | `fire_ignite` | Something catching all at once: a rising whoomph of air over a soft low thump, then a burst of crackle settling (~2 s). | A ring of the Carrot Patch going up (Act I). | [1](../assets/audio/sfx/fire_ignite_1.ogg) [2](../assets/audio/sfx/fire_ignite_2.ogg) |
 | `kernel_hum` | A warm, faintly unearthly chord that beats slowly and breathes, with a glassy shimmer coming and going on top; quiet; seamless 6 s loop. | The Starfall Kernel hanging over Little Bru at the end of Act I. | [1](../assets/audio/sfx/kernel_hum.ogg) |
+| `wind_key` | A wind-up key turned hard: small tin ratchet clicks coming faster and faster over a rising spring whine (~1.3 s). | The Kernel Hunt's Act II: a Wound rogue winding itself back up, a winding station winding one out. | [1](../assets/audio/sfx/wind_key_1.ogg) [2](../assets/audio/sfx/wind_key_2.ogg) |
+| `key_pull` | A gritty little metal scrape, a pop, and a cartoon spring 'boing' with a ring of tin (~1 s). | Pulling the key out of a Wound rogue's back (Act II). | [1](../assets/audio/sfx/key_pull_1.ogg) [2](../assets/audio/sfx/key_pull_2.ogg) |
+| `clockwork_loop` | Machinery at work: steady tick-tock (two a second), a rough whir of gears swelling and easing, a heavy clunk once round, a breath of steam; seamless 4 s loop. | Each of the Tin Tyrant's winding stations, while it stands (Act II). | [1](../assets/audio/sfx/clockwork_loop.ogg) |
+| `station_break` | A tin machine coming apart: a crash and a thud, a long wobbling falling 'sproing', gears and plates clattering down, a couple of loose boings, a last rattle (~2 s). | A winding station broken (Act II). | [1](../assets/audio/sfx/station_break_1.ogg) [2](../assets/audio/sfx/station_break_2.ogg) |
+| `toy_beep` | An old toy's beep: two buzzy square-ish tones, high then higher, through a tiny speaker, then a faint crackle of sparks (~0.8 s). | Model No. 7's beep at the end of Act II. | [1](../assets/audio/sfx/toy_beep.ogg) |
 
 ## UI & match flow
 

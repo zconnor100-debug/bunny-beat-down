@@ -121,8 +121,8 @@ find each other.
 rogues against the **Touched**, critters the Acorn's light has got into (any
 species, gold-green light running through their fur in veins, silent, run by
 the bots' brain as an enemy team), through acts of missions that end in the
-boss fights already in the game. Its page is on the main menu. The prologue
-and Act I are playable; the acts after them are listed there, sealed.
+boss fights already in the game. Its page is on the main menu. The prologue,
+Act I and Act II are playable; the acts after them are listed there, sealed.
 
 ### The prologue: *Days Since Brutus* (playable)
 
@@ -180,16 +180,60 @@ Beating him earns **The First Kernel** and the **Patch fire** beat-down burst
 (embers and a puff of smoke); doing it with every ranger standing, **Nobody
 Singed**. The Gazette's special edition: BRUTUS IS LITTLE BRU AGAIN.
 
-In the code: `src/quest/` (KernelHunt, MissionDirector and PatchMission,
-MissionCinematic, MissionOutro and PatchOutro, TallySign, GlowCarrot,
-BurnSpot, StarfallKernel), `src/fx/fire.gd`, the rangers' lines in
-`Cast.KERNEL_LINES`.
+### Act II: *The Clockwork Decree* (playable)
+
+The first Kernel won't stop humming, and it hums at the House on the shore,
+so the Barn Rangers take it across the lake (Buck Toothington carries it),
+in at the window and down into the children's toy room. The toy box stands
+open: they didn't lock it. Critters are marching stiffly round the room with
+keys turning in their backs, the **Wound**, and a red light sweeps across
+the floor from high on the bookshelf, where two red eyes are watching. Opens
+once the Carrot Patch is done.
+
+1. **Free the Wound.** Four of the Warren's rogues went into the House and
+   never came back: Turbo, Trash Panda, Hopscotch and Twitch, Wound now, each
+   holding a landmark (the Loop-de-Loop, Brick City, Dollhouse Manor, Domino
+   Run) with a few more of the Wound round them. Beat one down and it
+   doesn't go down: it winds down, its key slowing. Pull the key out of its
+   back before it winds itself back up, and it's free, and fights with you.
+2. **Break his winding stations.** Three tin wind-up machines as big as a
+   shed, painted like old toys (in Crayon Canyon, by the Toy Chest and at the
+   Pillow Fort): where the Wound are wound. Each winds another out of its
+   chute every so often while you're near. Tin takes the sting out of
+   carrots, but not on the drum, where the spring is, and a blast does them
+   in. Broken, they come apart: the drum rolls off, the gears fly, the key
+   goes up and comes down somewhere.
+3. **Storm Block Castle.** His. The Wound hold the courtyard; take it with
+   none of them in the ring and the Warren's flag goes up over his castle.
+   Then the eyes on the bookshelf find you, and he jumps: the Tin Tyrant,
+   across the whole room, down in front of his castle.
+
+When he falls, the key in his back slows and stops. A gold-green light comes
+out of the hole it turns in, and he shrinks in his own steam until what's
+lying there is a tin toy robot no taller than a bunny: **Model No. 7**, from
+the toy room windowsill. Out of his back comes what was in his winding drum:
+**the second Starfall Kernel**. "He's... a toy. He's just a toy." "Model
+Number Seven. It says so on his foot." He gets up, turns to them, and does
+what he did for thirty years on the windowsill: three steps, a beep and
+sparks. Buck brings out the first Kernel, and the two pull at each other,
+and then both the same way: "Toward the hamster cage." (To be continued in
+Act III: *Foam at the Falls*.)
+
+Beating him earns **The Second Kernel** and the **Clockwork** beat-down
+burst (cogs and sparks); doing it with every ranger standing, **Nobody Left
+Wound**. The Gazette's special edition: THE TIN TYRANT IS A TOY AGAIN.
+
+In the code: `src/quest/` (KernelHunt, MissionDirector, PatchMission and
+ClockworkMission, MissionCinematic, MissionOutro, PatchOutro and
+ClockworkOutro, TallySign, GlowCarrot, HoldRing and BurnSpot, StarfallKernel,
+WindKey, KeyPull, WindingStation, WarrenFlag, TyrantWatch),
+`src/fx/fire.gd`, the lines in `Cast.KERNEL_LINES`.
 
 | Act | Where | Missions (sketch) | Ends with |
 |---|---|---|---|
 | Prologue: *Days Since Brutus* (playable) | Wildwood Island | The tally on the Big Red Barn goes back to zero. Hold the Barn with the Barn Rangers while the Touched come out of the Carrot Patch. | (Brutus is heard, not seen) |
 | I: *The Carrot Patch* (playable) | Wildwood Island | Track the glowing carrots; burn the Patch; wake him at Boulder Bluff. | Brutus, who shrinks back into Little Bru: the first Kernel |
-| II: *The Clockwork Decree* | Toy Box Bash | Free the toys he's wound; break his winding stations; storm Block Castle. | The Tin Tyrant |
+| II: *The Clockwork Decree* (playable) | Toy Box Bash | Free the rogues he's wound; break his winding stations; storm Block Castle. | The Tin Tyrant, who shrinks back into Model No. 7: the second Kernel |
 | III: *Foam at the Falls* | the Hamster Cage | Down the tunnels under the bedding; dam Water Bottle Falls. | Nibbles |
 | Finale: *The Starfall* | all three, then somewhere new | The Kernels together. The Briar comes for them. | The Briar Heart (a fourth boss, not yet built) |
 

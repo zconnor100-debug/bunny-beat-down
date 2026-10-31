@@ -35,6 +35,9 @@ var display_name := ""
 var title := ""                     ## its billing on the health bar
 var land_time := 2.2                ## seconds into its entrance it lands (or bursts out): BossIntro
 var from_below := false             ## it bursts up out of the ground instead of dropping in (BossIntro)
+## Where it jumps down from, instead of dropping out of the sky (the Tin
+## Tyrant off the bookshelf: ClockworkMission); INF: the sky.
+var entrance_from := Vector3.INF
 var base_health := 30000.0
 var max_health := 30000.0
 var health := 30000.0

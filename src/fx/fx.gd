@@ -164,6 +164,10 @@ const BEAT_DOWN_BURSTS := {
 	"embers": [["blob", [Color(1.0, 0.62, 0.15), Color(1.0, 0.85, 0.4)], -1.6, 0.07,
 		{"amount": 16, "speed": Vector2(1.0, 4.5), "spread": 75.0, "additive": true, "damping": 1.2, "lifetime": 2.0}],
 		["blob", [Color(0.22, 0.2, 0.18, 0.6)], -0.6, 0.55, {"amount": 6, "speed": Vector2(0.6, 1.6), "spread": 50.0, "lifetime": 2.4}]],
+	# (earned in the Kernel Hunt's Act II, unwinding the Tin Tyrant: cogs and springs fly)
+	"cogs": [["cog", [Color(0.86, 0.66, 0.3), Color(0.75, 0.76, 0.8), Color(0.86, 0.2, 0.15)], 10.0, 0.13,
+		{"amount": 10, "speed": Vector2(3.0, 7.5), "spread": 80.0, "lifetime": 1.6}],
+		["chip", [Color(0.95, 0.8, 0.4)], 12.0, 0.05, {"amount": 10, "speed": Vector2(3.0, 8.0), "additive": true, "lifetime": 0.6}]],
 }
 
 

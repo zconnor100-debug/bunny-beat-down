@@ -42,6 +42,14 @@ const PATCH_TIPS := [
 	"Brutus's weak spot is the dent in his skull. Jump his shockwave; run before the boulder flies.",
 	"When he wakes, the Warren answers: rogues who saw the smoke come to fight him with you.",
 ]
+## Act II's (ClockworkMission).
+const CLOCKWORK_TIPS := [
+	"Beat a Wound rogue down and it winds down instead: pull the key out of its back before it winds itself up again.",
+	"Every rogue you unwind fights with you from then on.",
+	"His winding stations are tin. Aim for the drum, where the spring is, or blow them up.",
+	"The red light sweeping the floor is him, watching from the top of the bookshelf.",
+	"The Tin Tyrant's key is his weak spot, and it's softest while he's winding down. Stay out of the red line his eyes paint.",
+]
 const CAGE_TIPS := [
 	"Hamster tubes are tunnels: run through Tube Town to cross unseen.",
 	"Water bowls are brimming: swim in, and climb out over the rim.",
@@ -214,12 +222,13 @@ func _play_mission_outro(d: MissionDirector) -> void:
 	d.play_outro(rig, hud, match_manager.player.get_node_or_null("PlayerController") as PlayerController if match_manager.player else null)
 
 
-## A Kernel Hunt mission starts on the ground at the Barn: no balloon. Its
-## card, and the camera turned to face where the Touched will come from.
+## A Kernel Hunt mission starts on the ground (at the Barn, or by the toy
+## room's train station): no balloon. Its card, and the camera turned to face
+## where the mission wants you looking (MissionDirector.facing).
 func _start_mission() -> void:
 	match_manager.begin_drop()
 	var d := match_manager.mission
-	var to := d.patch_pos - match_manager.player.global_position
+	var to := d.facing() - match_manager.player.global_position
 	rig.yaw = atan2(-to.x, -to.z)
 	rig.pitch = -0.08
 	var tw := create_tween()
@@ -408,7 +417,7 @@ func _build_loading() -> void:
 	if _mode == "teams":
 		tips = TEAM_TIPS
 	elif _mode == "kernel":
-		tips = PATCH_TIPS if KernelHunt.playing == "carrot_patch" else KERNEL_TIPS
+		tips = {"carrot_patch": PATCH_TIPS, "clockwork_decree": CLOCKWORK_TIPS}.get(KernelHunt.playing, KERNEL_TIPS)
 	elif _mode == "boss":
 		tips = BOSS_TIPS + BossLore.rumours(_map)   # (and what the Warren says about its boss)
 	var tip := UITheme.label("Tip: " + tips.pick_random(), 22, Color(UITheme.CREAM, 0.8))

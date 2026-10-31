@@ -253,6 +253,24 @@
   "kernel_hum": [
     "sfx/kernel_hum.ogg"
   ],
+  "wind_key": [
+    "sfx/wind_key_1.ogg",
+    "sfx/wind_key_2.ogg"
+  ],
+  "key_pull": [
+    "sfx/key_pull_1.ogg",
+    "sfx/key_pull_2.ogg"
+  ],
+  "clockwork_loop": [
+    "sfx/clockwork_loop.ogg"
+  ],
+  "station_break": [
+    "sfx/station_break_1.ogg",
+    "sfx/station_break_2.ogg"
+  ],
+  "toy_beep": [
+    "sfx/toy_beep.ogg"
+  ],
   "music": {
     "menu": "music/menu_monkeys_spinning_monkeys.mp3",
     "match": [

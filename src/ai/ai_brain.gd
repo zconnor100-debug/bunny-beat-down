@@ -209,8 +209,8 @@ func _perceive() -> void:
 	var seen := {}
 	for c in me.get_tree().get_nodes_in_group(&"critters"):
 		var other := c as Critter
-		if other == null or other == me or not other.alive or other.state != Critter.State.GROUND:
-			continue
+		if other == null or other == me or not other.alive or other.spared or other.state != Critter.State.GROUND:
+			continue   # (one wound down and spared isn't anyone's target: ClockworkMission)
 		if other.gang != "" and other.gang == me.gang:
 			continue   # (a gang mate: they're out for you together)
 		if other.team != 0 and other.team == me.team:

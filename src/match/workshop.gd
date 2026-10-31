@@ -42,7 +42,7 @@ const LOOKS := {
 	"kill_fx": {"label": "Beat-down burst", "options": [["none", "None", 0], ["confetti", "Confetti", 40],
 		["leaves", "Autumn leaves", 40], ["carrots", "Carrot shower", 50], ["hearts", "Hearts", 50],
 		["fireworks", "Fireworks", -1], ["gold_rush", "Gold rush", -1], ["froth", "Rabid froth", -1],
-		["embers", "Patch fire", -1]]},
+		["embers", "Patch fire", -1], ["cogs", "Clockwork", -1]]},
 	"wear_hat": {"label": "Hat", "options": [["none", "None", 0], ["flap_beanie", "Ear-flap beanie", 50],
 		["flower_crown", "Flower crown", 60], ["santa_hat", "Santa hat", 70], ["fedora", "Fedora", 80],
 		["witch_hat", "Witch's hat", 90], ["wizard_hat", "Wizard's hat", 110], ["grad_cap", "Mortarboard", -1],

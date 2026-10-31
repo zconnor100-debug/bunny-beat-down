@@ -8,8 +8,11 @@ extends RefCounted
 ## Barn Rangers against three waves of the Touched out of the Carrot Patch
 ## (MissionDirector), until something roars at Boulder Bluff. Act I, "The
 ## Carrot Patch", opens once the Barn's held: track the glowing carrots, burn
-## the Patch and wake Brutus at Boulder Bluff (PatchMission). The acts after
-## it are on the Kernel Hunt's page (QuestPanel), sealed.
+## the Patch and wake Brutus at Boulder Bluff (PatchMission). Act II, "The
+## Clockwork Decree", once the Patch is done: across the lake, in the toy room,
+## unwind the Wound, break the winding stations, storm Block Castle and beat
+## the Tin Tyrant (ClockworkMission). The acts after it are on the Kernel
+## Hunt's page (QuestPanel), sealed.
 ##
 ## Which missions you've finished, and your best at each, are kept with the
 ## PlayerProfile.
@@ -23,8 +26,10 @@ const ACTS := [
 	{"id": "carrot_patch", "name": "Act I", "title": "The Carrot Patch", "where": "Wildwood Island", "open": true, "after": "prologue",
 		"brief": "The tally on the Barn's door says nought. The Touched came out of the Carrot Patch, and something there is glowing. Track the glowing carrots back to where they grow, burn the Patch, and wake him at Boulder Bluff.",
 		"goal": "Pull the five glowing carrots, burn the Carrot Patch, and beat Brutus at Boulder Bluff.", "ends": "Brutus"},
-	{"id": "clockwork_decree", "name": "Act II", "title": "The Clockwork Decree", "where": "Toy Box Bash",
-		"brief": "Free the toys he's wound, break his winding stations and storm Block Castle.", "ends": "the Tin Tyrant"},
+	{"id": "clockwork_decree", "name": "Act II", "title": "The Clockwork Decree", "where": "Toy Box Bash", "map": "toybox", "open": true,
+		"after": "carrot_patch",
+		"brief": "The first Kernel won't stop humming, and it hums at the House on the shore. In the children's toy room the toy box stands open, critters march with keys turning in their backs, and two red eyes watch from the top of the bookshelf. Free the rogues he's wound, break his winding stations and storm Block Castle.",
+		"goal": "Unwind the four Wound rogues, break the three winding stations, take Block Castle, and beat the Tin Tyrant.", "ends": "the Tin Tyrant"},
 	{"id": "foam_at_the_falls", "name": "Act III", "title": "Foam at the Falls", "where": "the Hamster Cage",
 		"brief": "Down the tunnels under the bedding, toward the hum, and dam Water Bottle Falls.", "ends": "Nibbles"},
 	{"id": "starfall", "name": "Finale", "title": "The Starfall", "where": "All three, then somewhere new",
@@ -37,6 +42,8 @@ const SEED := 137
 const RANGERS := ["Buck Toothington", "Dam Dan", "Hazel", "Kernel", "Duchess", "Captain Carrot", "Lily Pad Lou"]
 ## Act I: the rogues who see the Patch's smoke and come when Brutus wakes.
 const ANSWER := ["Cottontail Kate", "Hops McGee", "Acorn Al", "Ember", "Rocco", "Bog Boss", "Timber", "Cheeks McGee"]
+## Act II: the rogues who went into the House and came back Wound.
+const WOUND := ["Turbo", "Trash Panda", "Hopscotch", "Twitch"]
 ## The Touched's waves: how many at Scrappy (COUNT_SCALE for the others),
 ## the guns they carry, which ways they come (from the Carrot Patch, and
 ## round the sides), and whether a Touched giant comes with them.

@@ -42,11 +42,14 @@ static func detonate(tree: SceneTree, pos: Vector3, weapon: WeaponInstance, shoo
 		info.bone_role = &"chest"
 		critter.take_damage(info)
 
-	# a boss takes the splash where the blast meets it (Boss.receive_blast)
+	# a boss takes the splash where the blast meets it (Boss.receive_blast), and
+	# so do the things a mission has you blow up (Act II's winding stations)
 	for b in tree.get_nodes_in_group(&"bosses"):
 		var boss := b as Boss
 		if boss and boss.alive and not (shooter is Critter and (shooter as Critter).team == boss.team):
 			boss.receive_blast(pos, radius, data.splash_damage * weapon.damage_scale(), shooter, data.id)
+	for t in tree.get_nodes_in_group(&"blast_targets"):
+		t.receive_blast(pos, radius, data.splash_damage * weapon.damage_scale(), shooter, data.id)
 
 	# shove ragdolls, gibs and props
 	var shape := SphereShape3D.new()

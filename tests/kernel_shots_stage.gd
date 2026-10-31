@@ -3,12 +3,14 @@ extends Node
 ## exist): screenshots of the Kernel Hunt's prologue in the real game, the
 ## Warren Gazette's special edition it prints and the Kernel Hunt's page;
 ## with "boss", a Boss Battle won on the island and its special edition;
-## with "act1", Act I (The Carrot Patch) from the first carrot to the ending.
+## with "act1", Act I (The Carrot Patch) from the first carrot to the ending;
+## with "act2", Act II (The Clockwork Decree) from the train station to it.
 
 var out_dir := "user://kernel"
 var boss := false
 var act1 := false
-var movie := false   ## (recorded with Movie Maker: straight to the ending, its frames marked: OUTRO_AT, END_AT; with "act1", Act I's, and KILL_AT)
+var act2 := false
+var movie := false   ## (recorded with Movie Maker: straight to the ending, its frames marked: OUTRO_AT, END_AT; with "act1", Act I's, and KILL_AT; with "act2", Act II's, and TAKEN_AT, LEAP_AT)
 
 
 func _ready() -> void:
@@ -18,6 +20,7 @@ func _ready() -> void:
 		out_dir = a[0]
 	boss = a.has("boss")
 	act1 = a.has("act1")
+	act2 = a.has("act2")
 	movie = a.has("movie")
 	DirAccess.make_dir_recursive_absolute(out_dir)
 	DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_DISABLED)
@@ -71,6 +74,8 @@ func _run() -> void:
 	if movie:
 		if act1:
 			await _act_one_movie()
+		elif act2:
+			await _act_two_movie()
 		else:
 			await _ending_movie()
 		get_tree().quit()
@@ -79,6 +84,8 @@ func _run() -> void:
 		await _boss_news()
 	elif act1:
 		await _act_one()
+	elif act2:
+		await _act_two()
 	else:
 		await _prologue()
 	await _menu()
@@ -481,6 +488,235 @@ func _act_one() -> void:
 	KernelHunt.playing = ""
 
 
+## Act II hurried through (time sped up) to the castle; then the flag going
+## up, the eyes on the bookshelf, his jump and a few seconds of the fight,
+## him beaten and the ending as it plays, the end screen after.
+func _act_two_movie() -> void:
+	KernelHunt.playing = "clockwork_decree"
+	var g: Node = await _game()
+	var mm: MatchManager = g.match_manager
+	while mm.phase != MatchManager.Phase.PLAYING:
+		await get_tree().process_frame
+	var d := mm.mission as ClockworkMission
+	var p := mm.player
+	p.max_health = 100000.0
+	p.health = p.max_health
+	Engine.time_scale = 6.0
+	await _wait(1.0)
+	for c in d.wound_rogues.duplicate():
+		_beat(mm)
+		c.take_damage(DamageInfo.make(1e6, DamageInfo.Kind.BULLET, p, &"carrot_rifle"))
+		p.place_at(c.global_position + Vector3(1.0, 0.0, 0.6))
+		var pull: KeyPull = d._down[c][0] if d._down.has(c) else null
+		while is_instance_valid(pull) and not pull.opened:
+			pull.channel(p, 1.0 / 60.0)
+			await get_tree().physics_frame
+	while d.step != ClockworkMission.Step.BREAK:
+		await get_tree().process_frame
+	for s in d.stations:
+		s.break_down(p)
+	while d.step != ClockworkMission.Step.STORM:
+		await get_tree().process_frame
+	p.place_at(d.ring.global_position + Vector3(1.0, 0.0, 0.0))
+	while d.ring.progress < 0.9:
+		_beat(mm)
+		await _wait(0.3)
+	_beat(mm)
+	Engine.time_scale = 1.0
+	while not d.ring.lit:
+		await get_tree().process_frame
+	print("TAKEN_AT %d" % Engine.get_frames_drawn())
+	# out of the gate, looking up at the bookshelf as the eyes find you
+	var out := d.castle_out
+	p.place_at(d._ground_at(d.castle_pos + out * 34.0), atan2(out.x, out.z))
+	var to := ClockworkMission.SHELF - p.get_eye_position()
+	_look_at(g, ClockworkMission.SHELF, atan2(to.y, Vector2(to.x, to.z).length()) * 0.75)
+	while d.step != ClockworkMission.Step.BOSS:
+		await get_tree().process_frame
+	print("LEAP_AT %d" % Engine.get_frames_drawn())
+	while mm.boss.state != Boss.State.FIGHTING:
+		await get_tree().process_frame
+	await _wait(2.5)
+	var at := mm.boss.get_chest_position() - p.get_eye_position()
+	_look_at(g, mm.boss.get_chest_position(), atan2(at.y, Vector2(at.x, at.z).length()) * 0.8)
+	await _wait(5.0)
+	print("KILL_AT %d" % Engine.get_frames_drawn())
+	mm.boss.take_damage(DamageInfo.make(1e9, DamageInfo.Kind.BULLET, p, &"carrot_sniper"))
+	while d._outro == null:
+		await get_tree().process_frame
+	print("OUTRO_AT %d" % Engine.get_frames_drawn())
+	while mm.phase != MatchManager.Phase.ENDED:
+		await get_tree().process_frame
+	await _wait(3.5)
+	print("END_AT %d" % Engine.get_frames_drawn())
+	KernelHunt.playing = ""
+
+## Act II: from the train station to the ending, every part of it.
+func _act_two() -> void:
+	KernelHunt.playing = "clockwork_decree"
+	var g: Node = await _game()
+	var mm: MatchManager = g.match_manager
+	while mm.phase != MatchManager.Phase.PLAYING:
+		await get_tree().process_frame
+	var d := mm.mission as ClockworkMission
+	var p := mm.player
+	p.max_health = 100000.0
+	p.health = p.max_health
+	await _wait(2.5)
+	await _snap("c01_start")
+	await _wait(5.0)   # (the act's card gone)
+	var cam := Camera3D.new()
+	get_tree().root.add_child(cam)
+	cam.fov = 50.0
+	# a Wound rogue, the key in its back
+	var w: Critter = d.wound_rogues[0]
+	var wb := -MissionDirector._flat(w.global_basis.z).normalized()   # (its front is -z: its back's this way)
+	cam.global_position = w.global_position - wb * 4.5 + wb.cross(Vector3.UP) * 2.2 + Vector3.UP * 2.0
+	cam.look_at(w.get_chest_position(), Vector3.UP)
+	cam.make_current()
+	g.hud.visible = false
+	await _wait(0.6)
+	await _snap("c02_wound")
+	# the eyes on the bookshelf, and their light on the floor
+	cam.global_position = d.castle_pos + Vector3(60.0, 14.0, 120.0)
+	cam.look_at(ClockworkMission.SHELF, Vector3.UP)
+	cam.fov = 60.0
+	await _wait(0.4)
+	await _snap("c03_watching")
+	# ...and where their light is on the floor
+	var pool: Vector3 = d.watch._at
+	cam.global_position = pool + Vector3(40.0, 45.0, 40.0)
+	cam.look_at(pool, Vector3.UP)
+	await _wait(0.3)
+	await _snap("c03_light")
+	cam.fov = 50.0
+	cam.clear_current(false)
+	g.rig.camera.make_current()
+	g.hud.visible = true
+	# beaten down: it winds down, and you pull its key
+	for c in mm.alive_critters().filter(func(c): return c.team == 2 and c != w and c.global_position.distance_to(w.global_position) < 40.0):
+		c.take_damage(DamageInfo.make(1e6, DamageInfo.Kind.BULLET, p, &"carrot_rifle"))
+	var to := MissionDirector._flat(w.global_position - p.global_position).normalized()
+	p.place_at(d._ground_at(w.global_position - to * 2.0), atan2(-to.x, -to.z))
+	w.take_damage(DamageInfo.make(1e6, DamageInfo.Kind.BULLET, p, &"carrot_rifle"))
+	await _wait(1.6)
+	_look_at(g, w.get_chest_position(), -0.25)
+	await _wait(0.3)
+	await _snap("c04_wound_down")
+	var kp: KeyPull = d._down[w][0]
+	for k in 50:
+		kp.channel(p, 1.0 / 60.0)
+		await get_tree().physics_frame
+	await _snap("c05_pulling")
+	while is_instance_valid(kp) and not kp.opened:
+		kp.channel(p, 1.0 / 60.0)
+		await get_tree().physics_frame
+	await _wait(1.6)
+	await _snap("c06_freed")
+	# the rest unwound
+	for c in d.wound_rogues.duplicate():
+		_beat(mm)
+		c.take_damage(DamageInfo.make(1e6, DamageInfo.Kind.BULLET, p, &"carrot_rifle"))
+		p.place_at(c.global_position + Vector3(1.0, 0.0, 0.6))
+		var pull: KeyPull = d._down[c][0] if d._down.has(c) else null
+		while is_instance_valid(pull) and not pull.opened:
+			pull.channel(p, 1.0 / 60.0)
+			await get_tree().physics_frame
+		await _wait(0.3)
+	while d.step != ClockworkMission.Step.BREAK:
+		await get_tree().process_frame
+	# a winding station, at it
+	var s0: WindingStation = d.stations[0]
+	var front := s0.global_basis.z.normalized()
+	p.place_at(d._ground_at(s0.global_position + front * 30.0), atan2(front.x, front.z))
+	await _wait(1.0)
+	cam.global_position = s0.global_position + front.rotated(Vector3.UP, 0.6) * 22.0 + Vector3.UP * 7.0
+	cam.look_at(s0.global_position + Vector3.UP * 5.0, Vector3.UP)
+	cam.make_current()
+	g.hud.visible = false
+	s0._wind_t = 0.0
+	await _wait(1.0)
+	await _snap("c07_station")
+	await _wait(2.0)
+	await _snap("c08_winding_out")
+	g.rig.camera.make_current()
+	g.hud.visible = true
+	_look_at(g, s0.global_position + Vector3.UP * 6.0, 0.05)
+	var rifle := WeaponDB.get_weapon(&"carrot_rifle")
+	for k in 6:
+		s0.receive_shot(p, rifle, 60.0, s0.global_position + Vector3.UP * 7.0 + front * 2.0, -front, &"spring")
+		await _wait(0.12)
+	await _snap("c09_station_hit")
+	cam.make_current()
+	g.hud.visible = false
+	s0.break_down(p)
+	await _wait(0.35)
+	await _snap("c10_station_breaks")
+	await _wait(2.0)
+	await _snap("c11_scrap")
+	g.rig.camera.make_current()
+	g.hud.visible = true
+	for s in d.stations:
+		s.break_down(p)
+	while d.step != ClockworkMission.Step.STORM:
+		await get_tree().process_frame
+	await _wait(1.0)
+	# the castle: its courtyard held by the Wound
+	var out := d.castle_out
+	p.place_at(d._ground_at(d.castle_pos + out * 40.0), atan2(out.x, out.z))
+	_look_at(g, d.castle_pos + Vector3.UP * 4.0, 0.05)
+	await _wait(1.5)
+	await _snap("c12_castle")
+	p.place_at(d.ring.global_position + Vector3(1.0, 0.0, 0.0))
+	while not d.ring.lit:
+		_beat(mm)
+		await _wait(0.4)
+	await _wait(2.4)
+	cam.global_position = d.castle_pos + out * 40.0 + out.cross(Vector3.UP) * 14.0 + Vector3.UP * 12.0
+	cam.look_at(d.castle_pos + Vector3.UP * 15.0, Vector3.UP)
+	cam.make_current()
+	g.hud.visible = false
+	await _snap("c13_flag")
+	await _wait(1.6)
+	cam.global_position = d.castle_pos + out * 70.0 + Vector3.UP * 26.0
+	cam.look_at(d.castle_pos.lerp(ClockworkMission.SHELF, 0.45), Vector3.UP)
+	cam.fov = 62.0
+	await _wait(0.3)
+	await _snap("c14_glare")
+	cam.fov = 50.0
+	g.rig.camera.make_current()
+	g.hud.visible = true
+	while d.step != ClockworkMission.Step.BOSS:
+		await get_tree().process_frame
+	await _wait(1.8)
+	await _snap("c15_leap")
+	await _wait(2.6)
+	await _snap("c16_tyrant")
+	while mm.boss.state != Boss.State.FIGHTING:
+		await get_tree().process_frame
+	await _wait(5.0)
+	_look_at(g, mm.boss.get_chest_position(), 0.2)
+	await _wait(0.5)
+	await _snap("c17_fight")
+	mm.boss.take_damage(DamageInfo.make(1e9, DamageInfo.Kind.BULLET, p, &"carrot_sniper"))
+	# the ending
+	while d._outro == null:
+		await get_tree().process_frame
+	var o := d._outro as ClockworkOutro
+	for shot in [["c18_key_stops", ClockworkOutro.GLOW_AT + 0.6], ["c19_shrinking", ClockworkOutro.SHRINK_AT + 2.0],
+			["c20_kernel_out", ClockworkOutro.KERNEL_AT + 0.6], ["c21_faces", ClockworkOutro.FACES_AT + 1.5],
+			["c22_gets_up", ClockworkOutro.TURN_AT + 0.4], ["c23_steps", ClockworkOutro.WALK_AT + 1.0], ["c24_beep", ClockworkOutro.BEEP_AT + 0.15],
+			["c25_kernels", ClockworkOutro.KERNELS_AT + 2.6], ["c26_pulling", ClockworkOutro.PULL_AT + 2.0], ["c27_card", ClockworkOutro.CARD_AT + 1.4]]:
+		while o.playing and o.t < float(shot[1]):
+			await get_tree().process_frame
+		await _snap(String(shot[0]))
+	while mm.phase != MatchManager.Phase.ENDED:
+		await get_tree().process_frame
+	await _wait(1.5)
+	await _snap("c28_end")
+	cam.queue_free()
+	KernelHunt.playing = ""
+
 ## The menu: the Gazette's special edition, then the Kernel Hunt's page.
 func _menu() -> void:
 	get_tree().change_scene_to_file("res://scenes/main.tscn")
@@ -488,12 +724,13 @@ func _menu() -> void:
 	var menu: Node = get_tree().current_scene
 	menu._open_gazette()
 	await _wait(1.2)
-	await _snap(("b" if boss else ("a" if act1 else "k")) + "11_gazette")
+	var tag := "b" if boss else ("a" if act1 else ("c" if act2 else "k"))
+	await _snap(tag + "11_gazette")
 	menu._close_overlay()
 	if not boss:
 		menu._open_quest()
 		await _wait(1.0)
-		await _snap(("a" if act1 else "k") + "12_quest")
+		await _snap(tag + "12_quest")
 
 
 func _beat(mm: MatchManager) -> void:

@@ -108,6 +108,11 @@ const MILESTONES := [
 		"stat": "kernel_done:carrot_patch", "need": 1, "reward": {"look": "kill_fx:embers"}, "gives": "the Patch fire beat-down burst"},
 	{"id": "nobody_singed", "name": "Nobody Singed", "text": "Finish Act I with all seven Barn Rangers still standing.",
 		"stat": "kernel_all_home:carrot_patch", "need": 1, "reward": {"acorns": 300}, "gives": "300 acorns"},
+	# its Act II (ClockworkMission): the Tin Tyrant back to Model No. 7, and nobody lost doing it
+	{"id": "the_second_kernel", "name": "The Second Kernel", "text": "Beat the Tin Tyrant in the Kernel Hunt's Act II, The Clockwork Decree.",
+		"stat": "kernel_done:clockwork_decree", "need": 1, "reward": {"look": "kill_fx:cogs"}, "gives": "the Clockwork beat-down burst"},
+	{"id": "nobody_left_wound", "name": "Nobody Left Wound", "text": "Finish Act II with all seven Barn Rangers still standing.",
+		"stat": "kernel_all_home:clockwork_decree", "need": 1, "reward": {"acorns": 300}, "gives": "300 acorns"},
 ]
 
 ## The ladders: `text` has a %d for a tier's need, and each tier is [need,

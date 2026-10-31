@@ -16,10 +16,11 @@ extends Node
 ## species, gold-green veins glowing through their fur (the Touched coat),
 ## silent. They aren't the cast, so nobody keeps score of them (RivalBook).
 ##
-## The acts after the prologue build on it (`make`: PatchMission, Act I): the
-## rangers, the Touched and the talk are here, and what an act does its own
-## way it overrides (`begin`, `_process`, the bar on the HUD: `bar_*`, its
-## ending: `play_outro`, its news: `news`).
+## The acts after the prologue build on it (`make`: PatchMission, Act I;
+## ClockworkMission, Act II): the rangers, the Touched and the talk are here,
+## and what an act does its own way it overrides (`setup`, `begin`,
+## `_process`, the bar on the HUD: `bar_*`, its ending: `play_outro`, its
+## news: `news`).
 
 enum Stage { BRIEFING, WAVE, BREATHER, OUTRO, OVER }
 
@@ -35,7 +36,7 @@ const SKILL := [0.3, 0.5, 0.72]                ## the Touched's aim, by difficul
 const GIANT_SCALE := 2.5
 const GIANT_HEALTH := [500.0, 700.0, 950.0]
 const RANGER_AMMO := 4         ## pickups' worth of ammo a ranger is restocked with
-const SAY_EVERY := {"ky": 14.0, "kd": 6.0, "ks": 999.0, "kg": 999.0}
+const SAY_EVERY := {"ky": 14.0, "kd": 6.0, "ks": 999.0, "kg": 999.0, "cu": 12.0}
 const TALLY_DAYS := 9
 
 var match_manager: MatchManager
@@ -71,7 +72,8 @@ func _init() -> void:
 
 ## The director for mission `id` (KernelHunt.ACTS).
 static func make(id: String) -> MissionDirector:
-	var d: MissionDirector = PatchMission.new() if id == "carrot_patch" else MissionDirector.new()
+	var d: MissionDirector = PatchMission.new() if id == "carrot_patch" else (ClockworkMission.new() if id == "clockwork_decree" \
+		else MissionDirector.new())
 	d.mission = id if id != "" else "prologue"
 	return d
 
@@ -113,6 +115,11 @@ func begin() -> void:
 	_t = 0.0
 	match_manager._set_phase(MatchManager.Phase.PLAYING)
 	get_tree().create_timer(6.0, false).timeout.connect(func(): _shout("kt", 0))
+
+
+## Where the camera looks as it starts (game.gd): where the Touched come from.
+func facing() -> Vector3:
+	return patch_pos
 
 
 ## You, on your feet at `at`, with a rifle and a shotgun, ammo for both, and clovers.
@@ -458,8 +465,9 @@ func _restock(c: Critter) -> void:
 
 ## One of the Touched, at `at`, carrying `gun`, marching on the Barn (and
 ## fighting anyone it sees on the way): a giant one, with `giant`. With a
-## `post`, it holds that instead, watching `watch`.
-func _spawn_touched(at: Vector3, gun: StringName, is_giant := false, post := Vector3.INF, watch := Vector3.INF) -> Critter:
+## `post`, it holds that instead, watching `watch`. `kind`: what they're
+## called (Act II's are the Wound).
+func _spawn_touched(at: Vector3, gun: StringName, is_giant := false, post := Vector3.INF, watch := Vector3.INF, kind := "Touched") -> Critter:
 	var species: String = "beaver" if is_giant else SPECIES[_rng.randi() % SPECIES.size()]
 	var def: CritterDef = load("res://data/critters/%s.tres" % species)
 	if is_giant:
@@ -468,7 +476,7 @@ func _spawn_touched(at: Vector3, gun: StringName, is_giant := false, post := Vec
 		def.max_health = GIANT_HEALTH[clampi(match_manager._difficulty, 0, 2)]
 		def.move_speed *= 0.85
 		def.sprint_speed *= 0.8
-	var title := ("Touched Giant" if is_giant else "Touched %s" % def.display_name)
+	var title := ("%s Giant" % kind if is_giant else "%s %s" % [kind, def.display_name])
 	var c := match_manager._spawn_critter(def, title)
 	c.team = 2
 	var skins := def.skins()

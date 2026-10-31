@@ -344,20 +344,33 @@ func _roar_action() -> BossAction:
 
 # ---- arriving, and going down -------------------------------------------------------------------
 
-## Dropped into the room like any toy, it lands with a clang and winds itself up.
+## Dropped into the room like any toy, it lands with a clang and winds itself
+## up. (Or, with `entrance_from`, it jumps: off the bookshelf, in a long arc
+## over the room, arms up, and comes down the same way.)
 func _entrance() -> BossAction:
 	var at := global_position
 	var drop := land_time
+	var from := entrance_from
 	var a := BossAction.new(&"entrance", drop + 3.0)
 	a.interruptible = false
-	_key_speed = 0.0
-	a.key(0.0, {&"chest": Vector3(20, 0, 0)}).key(drop, {&"chest": Vector3(20, 0, 0), &"root": Vector3(0, -0.03, 0)})
+	_key_speed = 0.0 if from == Vector3.INF else 900.0
+	var flying := {&"chest": Vector3(20, 0, 0)} if from == Vector3.INF else \
+		{&"chest": Vector3(-8, 0, 0), &"l_upper_arm": Vector3(-150, 0, 20), &"r_upper_arm": Vector3(-150, 0, -20),
+			&"l_upper_leg": Vector3(-25, 0, 0), &"r_upper_leg": Vector3(20, 0, 0)}
+	a.key(0.0, flying).key(drop * 0.85, flying).key(drop, {&"chest": Vector3(20, 0, 0), &"root": Vector3(0, -0.03, 0)})
 	a.key(drop + 2.2, {&"chest": Vector3(-10, 0, 0), &"head": Vector3(-12, 0, 0)}).key(drop + 3.0, {})
 	a.on(0.0, func(): warn(at, 24.0, drop))
 	a.tick = func(time: float, _delta: float):
 		if time < drop:
 			var u := time / drop
-			global_position = at + Vector3.UP * 200.0 * (1.0 - u * u)
+			if from == Vector3.INF:
+				global_position = at + Vector3.UP * 200.0 * (1.0 - u * u)
+			else:
+				# a long arc: up a little off the shelf, then down onto the floor
+				var top := maxf(from.y, at.y) + 40.0
+				var p := from.lerp(at, u)
+				p.y = lerpf(from.y, at.y, u) + (top - maxf(from.y, at.y)) * 4.0 * u * (1.0 - u)
+				global_position = p
 		else:
 			_key_speed = lerpf(0.0, 720.0, clampf((time - drop) / 2.0, 0.0, 1.0))
 	a.on(drop, func():

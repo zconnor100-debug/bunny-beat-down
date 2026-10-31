@@ -257,7 +257,11 @@ const BOSS_LINES := {"bc": BOSS_COMING_LINES, "br": BOSS_RUN_LINES, "bw": BOSS_W
 ## starts; "pc": the next glowing carrot lit; "pp": one pulled; "pf": the
 ## Patch to burn; "pl": a ring of it alight; "pd": the ground drumming; "pw":
 ## the Warren come to help; and at the end (PatchOutro) "pb": Brutus become
-## Little Bru, and "pk": the Kernel.
+## Little Bru, and "pk": the Kernel. Act II (ClockworkMission): "ct", as it
+## starts; "cs": the Wound seen; "cu": a Wound rogue winding down; "cf": one
+## freed (said by it); "cw": the stations to break; "cb": one broken; "cc":
+## the castle to storm; "cl": the eyes on the bookshelf; and at the end
+## (ClockworkOutro) "ob": Model No. 7, and "ok": the two Kernels.
 const KERNEL_LINES := {
 	"kt": ["Nine days without Brutus. Nobody jinx it."],
 	"kw": ["Here they come! Out of the Carrot Patch!", "More of them! Everyone back to the Barn!"],
@@ -277,6 +281,16 @@ const KERNEL_LINES := {
 	"pw": ["We saw the smoke! We're with you!"],
 	"pb": ["It's... it's just a bunny.", "Little Bru? Is that you?"],
 	"pk": ["Look at it glow. That's a Kernel. The FIRST Kernel.", "It's humming. Like it's calling something. Across the lake."],
+	"ct": ["It's humming louder in here. Whatever it's calling is in this room."],
+	"cs": ["Look at their backs. KEYS. Somebody's wound them up."],
+	"cu": ["It's winding down! Pull the key out of its back!"],
+	"cf": ["I couldn't stop marching. I couldn't STOP.", "My back! Something was turning in my back!"],
+	"cw": ["That's where they're wound. Break those, and there's no more of them."],
+	"cb": ["That one's scrap!", "Keep going! Break the rest!"],
+	"cc": ["Block Castle. That's his. Let's take it off him."],
+	"cl": ["Up on the bookshelf! Something's looking at us."],
+	"ob": ["He's... a toy. He's just a toy.", "Model Number Seven. It says so on his foot."],
+	"ok": ["The second Kernel. Look at them, pulling at each other.", "They're both pulling the same way. Toward the hamster cage."],
 }
 ## Grudge points against the director before a bot defies it: its hits on
 ## other bots aren't softened by the director's pacing (and it says so).

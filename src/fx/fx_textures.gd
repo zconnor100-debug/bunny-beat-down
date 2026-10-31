@@ -41,6 +41,11 @@ static func shape(kind: String) -> Texture2D:
 					var b := p.distance_to(Vector2(0.33, 0.25)) - 0.42
 					var tip := (absf(p.x) * 0.9 + (p.y + 0.85) * -0.62) if p.y < 0.25 else 1.0
 					d = minf(minf(a, b), maxf(tip, -p.y - 0.85))
+				"cog":
+					# a gear: eight square-ish teeth round a disc, a hole in the middle
+					var r := p.length()
+					var tooth := clampf(cos(atan2(p.y, p.x) * 8.0) * 3.0, -1.0, 1.0) * 0.5 + 0.5
+					d = maxf(r - (0.68 + 0.22 * tooth), 0.24 - r)
 				"leaf":
 					# a pointed oval, and a vein
 					var q := Vector2(p.x * 1.9, p.y)

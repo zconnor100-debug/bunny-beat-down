@@ -236,6 +236,25 @@ static func patch_news(r: Dictionary) -> Array:
 	return out
 
 
+## Act II won (ClockworkMission): the Wound unwound, his stations broken,
+## his castle taken, and the Tin Tyrant is Model No. 7 again.
+static func clockwork_news(r: Dictionary) -> Array:
+	var home: Array = r.get("rangers_home", [])
+	var all := KernelHunt.RANGERS.size()
+	var came := "Every ranger came home across the lake." if home.size() >= all else ("%d of the %d rangers came home across the lake." % [home.size(), all] \
+		if not home.is_empty() else "None of the rangers came home on their feet.")
+	var out := [
+		{"title": "THE TIN TYRANT IS A TOY AGAIN", "text": "The Barn Rangers took the first Kernel across the lake to the House on the shore, and you went with them into the toy room. They broke his winding stations, took Block Castle off him and ran the Warren's flag up over it. When he came down off the bookshelf, you beat him. He shrank to a tin robot no taller than a bunny, got up, took three steps, beeped, and sparked. %s" % came},
+		{"title": "THE SECOND KERNEL", "text": "It was in his winding drum all along. Held up next to the first, the two pull at each other like magnets, and then, both together, toward the hamster cage. \"Something in there is digging,\" says Buck Toothington. \"Toward us.\""},
+		{"title": "THE CLOCKWORK DECREE IS TORN UP", "text": "Three winding stations scrap, %d of the Wound beaten down. Every toy shall be wound no longer." % int(r.get("touched", 0))},
+	]
+	var freed: Array = r.get("freed", [])
+	if not freed.is_empty():
+		out.append({"title": "UNWOUND", "text": "%s came home with no keys in their backs. None of them will say what it was like.%s" % [_names(freed),
+			" Twitch hasn't stopped twitching." if freed.has("Twitch") else ""]})
+	return out
+
+
 ## "A, B and C".
 static func _names(names: Array) -> String:
 	if names.size() <= 1:

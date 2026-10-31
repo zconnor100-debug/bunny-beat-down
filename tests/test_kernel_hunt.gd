@@ -4,7 +4,8 @@ extends TestCase
 ## played through: you and the Barn Rangers at the Big Red Barn, three waves
 ## of the Touched marching on it, the ones in its yard wearing it down, and
 ## the ending (MissionOutro): the tally back at zero, the milestone and the
-## Gazette's special edition. And the Barn falling.
+## Gazette's special edition. And the Barn falling. Act I and Act II played
+## through too.
 
 const GAME := "res://scenes/game.tscn"
 
@@ -27,9 +28,13 @@ func test_the_quest_line() -> void:
 	check(KernelHunt.ACTS.slice(1).all(func(a): return String(a.get("ends", "")) != ""), "the acts each end in a boss")
 	check(KernelHunt.ACTS[1].id == "carrot_patch" and KernelHunt.ACTS[1].open and KernelHunt.ACTS[1].get("after") == "prologue",
 		"Act I, The Carrot Patch, open after the prologue")
-	check(KernelHunt.ACTS.slice(2).all(func(a): return not a.get("open", false)), "the rest sealed")
-	check(KernelHunt.unlocked("prologue") and not KernelHunt.unlocked("carrot_patch") and not KernelHunt.unlocked("starfall"),
-		"Act I locked till the Barn's held")
+	check(KernelHunt.ACTS[2].id == "clockwork_decree" and KernelHunt.ACTS[2].open and KernelHunt.ACTS[2].get("after") == "carrot_patch"
+		and KernelHunt.ACTS[2].get("map") == "toybox", "Act II, The Clockwork Decree, in the toy room, open after Act I")
+	check(KernelHunt.ACTS.slice(3).all(func(a): return not a.get("open", false)), "the rest sealed")
+	check(KernelHunt.unlocked("prologue") and not KernelHunt.unlocked("carrot_patch") and not KernelHunt.unlocked("clockwork_decree")
+		and not KernelHunt.unlocked("starfall"), "Act I locked till the Barn's held (and Act II till the Patch is done)")
+	check(KernelHunt.WOUND.size() == 4 and KernelHunt.WOUND.all(func(n): return Cast.names().has(n) and not KernelHunt.RANGERS.has(n)),
+		"four Wound rogues, all of the cast, none of them rangers")
 	check(KernelHunt.RANGERS.size() == 7 and KernelHunt.RANGERS.all(func(n): return Cast.names().has(n)), "seven rangers, all of the cast")
 	var counts := KernelHunt.WAVES.map(func(w): return int(w.count))
 	check(counts[0] < counts[1] and counts[1] < counts[2] and KernelHunt.WAVES.back().get("giant", false), "the waves grow; the last brings a giant")
@@ -321,6 +326,155 @@ func test_act_one_ends_when_you_go_down() -> void:
 	game.queue_free()
 	await wait_frames(5)
 
+
+## Act II played through, in the toy room: the four Wound rogues unwound
+## (one winds itself back up when nobody pulls its key), the three winding
+## stations broken (tin: carrots on the drum count for more, the Wound don't
+## hurt them), Block Castle taken, the Tin Tyrant off the bookshelf and
+## beaten, and the ending: Model No. 7, and the second Kernel.
+func test_act_two_the_clockwork_decree() -> void:
+	var said := []
+	var hear := func(_c, text): said.append(text)
+	Events.taunt.connect(hear)
+	var game: Node = await _start("clockwork_decree")
+	var mm: MatchManager = game.match_manager
+	var d := mm.mission as ClockworkMission if mm else null
+	check(d != null and d.mission == "clockwork_decree" and mm.island.map_id == "toybox", "Act II, in the toy room")
+	if d == null:
+		Events.taunt.disconnect(hear)
+		game.queue_free()
+		return
+	mm.player.max_health = 1e6
+	mm.player.health = 1e6
+	check(d.rangers.size() == 7 and d.rangers.all(func(r): return r.alive and r.team == 1 and (r.get_node("AIBrain") as AIBrain).escort == mm.player),
+		"the seven rangers, sticking by you")
+	check(mm.boss is RobotBoss and mm.boss.state == Boss.State.WAITING and mm.boss.max_health < 30000.0, "the Tin Tyrant, waiting")
+	check(d.watch != null and d.watch.is_inside_tree(), "the eyes on the bookshelf, watching")
+	var keyed := func(c): return c.team == 2 and c.hold_on and d._keys.get(c) != null and c.is_in_group(&"objectives")
+	check(d.wound_rogues.size() == 4 and d.wound_rogues.all(keyed), "four Wound rogues, keys in their backs, marked")
+	check(d.stations.size() == 3 and d.stations.all(func(s): return not s.active and not s.broken), "three winding stations, not winding yet")
+	var bars: Array = game.hud.find_children("*", "", true, false).filter(func(n): return n is MissionBar)
+	check(bars.size() == 1 and bars[0].visible and bars[0]._name.text == "THE WOUND" and String(bars[0].status()).begins_with("0 of 4 unwound"),
+		"the Wound on the HUD: %s" % (bars[0].status() if bars.size() > 0 else ""))
+	Engine.time_scale = 4.0
+	# beaten down, a Wound rogue winds down instead; nobody pulls its key, and it winds itself back up
+	var first: Critter = d.wound_rogues[0]
+	first.take_damage(DamageInfo.make(1e6, DamageInfo.Kind.BULLET, mm.player, &"carrot_rifle"))
+	check(first.alive and first.spared and first.health >= 1.0 and d._down.has(first), "beaten down, %s winds down instead" % first.display_name)
+	var pull: KeyPull = d._down[first][0] if d._down.has(first) else null
+	check(pull != null and pull.is_in_group(&"objectives") and not first.is_in_group(&"objectives"), "its key, there to pull")
+	check(pull != null and not pull.channel(d.rangers[0], 0.5), "only you pull it")
+	check(String(bars[0].status()).begins_with("PULL %s'S KEY" % first.display_name.to_upper()) and d.bar_warn(), "the HUD: pull it! (%s)" % bars[0].status())
+	await _sim(func(): return not first.spared, ClockworkMission.WIND_BACK + 2.0)
+	check(not first.spared and first.team == 2 and first.health > 1.0 and not is_instance_valid(pull), "nobody pulled it: it wound itself back up")
+	# unwind them all
+	for c in d.wound_rogues.duplicate():
+		c.take_damage(DamageInfo.make(1e6, DamageInfo.Kind.BULLET, mm.player, &"carrot_rifle"))
+		var kp: KeyPull = d._down[c][0] if d._down.has(c) else null
+		if not check(kp != null, "%s wound down" % c.display_name):
+			continue
+		mm.player.place_at(c.global_position + Vector3(1.0, 0.0, 0.6))
+		var tries := 0
+		while is_instance_valid(kp) and not kp.opened and tries < 400:
+			kp.channel(mm.player, 1.0 / 60.0)
+			await get_tree().physics_frame
+			tries += 1
+		check(c.alive and c.team == 1 and d.freed.has(c) and not c.spared and not c.hold_on and (c.get_node("AIBrain") as AIBrain).escort == mm.player,
+			"%s unwound, and with you" % c.display_name)
+	check(d.freed.size() == 4 and d.wound_rogues.is_empty(), "all four unwound")
+	await _sim(func(): return d.step == ClockworkMission.Step.BREAK, 6.0)
+	check(d.step == ClockworkMission.Step.BREAK and d.stations.all(func(s): return s.active and s.is_in_group(&"objectives")),
+		"then: break his winding stations")
+	await wait_frames(2)
+	check(bars[0]._name.text == "HIS WINDING STATIONS", "the stations on the HUD: %s (%s)" % [bars[0].status(), bars[0]._name.text])
+	var s0: WindingStation = d.stations[0]
+	mm.player.place_at(d._ground_at(s0.global_position + s0.global_basis.z * 24.0))
+	s0._wind_t = 0.0
+	var had := s0.wound.size()
+	await _sim(func(): return s0.wound.size() > had, WindingStation.WIND_UP + 2.0)
+	check(s0.wound.size() > had, "a station winds one out of its chute while you're near")
+	var h0 := s0.health
+	var rifle := WeaponDB.get_weapon(&"carrot_rifle")
+	s0.receive_shot(mm.player, rifle, 40.0, s0.global_position + Vector3.UP * 2.0, Vector3.FORWARD, &"tin")
+	var tin_hit := h0 - s0.health
+	h0 = s0.health
+	s0.receive_shot(mm.player, rifle, 40.0, s0.global_position + Vector3.UP * 6.0, Vector3.FORWARD, &"spring")
+	var spring_hit := h0 - s0.health
+	check(tin_hit > 0.0 and tin_hit < 40.0 and spring_hit > 40.0, "carrots on its tin count for less, on its drum more (%.0f, %.0f)" % [tin_hit, spring_hit])
+	var theirs: Array = mm.alive_critters().filter(func(c): return c.team == 2)
+	h0 = s0.health
+	if not theirs.is_empty():
+		s0.receive_shot(theirs[0], rifle, 40.0, s0.global_position + Vector3.UP * 2.0, Vector3.FORWARD, &"spring")
+	check(theirs.is_empty() or s0.health == h0, "the Wound don't hurt their own station")
+	h0 = s0.health
+	s0.receive_blast(s0.global_position + Vector3.UP * 3.0, 6.0, 100.0, mm.player, &"carrot_rocket_launcher")
+	check(h0 - s0.health > 100.0, "a blast does it the most harm (%.0f)" % (h0 - s0.health))
+	for s in d.stations:
+		s.break_down(mm.player)
+		check(s.broken and not s.active and not s.is_in_group(&"objectives"), "a station broken")
+	await _sim(func(): return d.step == ClockworkMission.Step.STORM, 6.0)
+	await wait_frames(2)
+	check(d.step == ClockworkMission.Step.STORM and d.ring != null and bars[0]._name.text == "BLOCK CASTLE",
+		"then: storm Block Castle (%s, %s)" % [ClockworkMission.Step.keys()[d.step], bars[0]._name.text])
+	# take the courtyard
+	mm.player.place_at(d.ring.global_position + Vector3(1.0, 0.0, 0.0))
+	await _sim(func():
+		_beat_wave(mm)
+		return d.ring.lit, 40.0)
+	check(d.ring.lit and d.flag != null, "the courtyard's ours: the Warren's flag goes up")
+	await _sim(func(): return d.step == ClockworkMission.Step.BOSS, 12.0)
+	check(d.step == ClockworkMission.Step.BOSS and mm.boss.state != Boss.State.WAITING and mm.boss.entrance_from == ClockworkMission.SHELF,
+		"the eyes find you, and he jumps off the bookshelf")
+	await _sim(func(): return mm.boss.state == Boss.State.FIGHTING, 16.0)
+	var out := MissionDirector._flat(mm.boss.global_position - d.castle_pos)
+	check(mm.boss.state == Boss.State.FIGHTING and out.length() > 25.0 and out.normalized().dot(d.castle_out) > 0.5,
+		"he comes down in front of his castle (%.0f m out)" % out.length())
+	await wait_frames(2)
+	var boss_bars: Array = game.hud.find_children("*", "", true, false).filter(func(n): return n is BossBar)
+	check(boss_bars.size() == 1 and boss_bars[0].visible and not bars[0].visible, "his bar, up instead of the mission's")
+	mm.boss.take_damage(DamageInfo.make(1e9, DamageInfo.Kind.BULLET, mm.player, &"carrot_sniper"))
+	check(not mm.boss.alive and mm.phase == MatchManager.Phase.PLAYING, "he's down, and it isn't over")
+	await _sim(func(): return d._outro != null, 10.0)
+	var o := d._outro as ClockworkOutro
+	check(o != null and o.playing and get_viewport().get_camera_3d() == o._cam and not game.hud.visible, "the ending plays, with its own camera")
+	await _sim(func(): return o != null and o.kernel != null, 20.0)
+	check(o != null and o.kernel != null and mm.boss.scale.x < 0.2, "he's Model No. 7, and the Kernel's out of him")
+	await _sim(func(): return o != null and o.first != null, 20.0)
+	check(o != null and o.first != null, "and the first Kernel's out with it")
+	await _sim(func(): return mm.phase == MatchManager.Phase.ENDED, 40.0)
+	check(mm.phase == MatchManager.Phase.ENDED and mm.winning_team == 1, "done")
+	check(KernelHunt.done("clockwork_decree") and Mastery.has("the_second_kernel") and Workshop.owns("kill_fx:cogs"),
+		"on your record: The Second Kernel, and the Clockwork burst")
+	var ed := WarrenSim.edition()
+	check(ed.get("extra", "") == "kernel" and String(ed.stories[0].title) == "THE TIN TYRANT IS A TOY AGAIN", "the Gazette's special edition")
+	await wait_frames(3)
+	var end_labels: Array = game._end.find_children("*", "Label", true, false).map(func(l): return l.text) if game._end else []
+	check(end_labels.has("ACT II COMPLETE!"), "the end screen: %s" % [end_labels.slice(0, 3)])
+	var heard := said.filter(func(t): return ["ct", "cs", "cu", "cf", "cw", "cb", "cc", "cl", "ob", "ok"].any(func(k): return (Cast.KERNEL_LINES[k] as Array).has(t)))
+	print("    they said: %s" % [heard])
+	check(heard.has(Cast.KERNEL_LINES.ct[0]) and heard.has(Cast.KERNEL_LINES.cf[0]) and heard.has(Cast.KERNEL_LINES.ob[0]) and heard.has(Cast.KERNEL_LINES.ok[1]),
+		"they talk it through, from the hum to the hamster cage")
+	Events.taunt.disconnect(hear)
+	game.queue_free()
+	await wait_frames(5)
+
+
+## In Act II, going down yourself ends it too.
+func test_act_two_ends_when_you_go_down() -> void:
+	var game: Node = await _start("clockwork_decree")
+	var mm: MatchManager = game.match_manager
+	var d := mm.mission as ClockworkMission if mm else null
+	if not check(d != null, "Act II"):
+		game.queue_free()
+		return
+	Engine.time_scale = 4.0
+	await _sim(func(): return false, 1.0)
+	mm.player.take_damage(DamageInfo.make(1e9, DamageInfo.Kind.BULLET, d.wound_rogues[0], &"carrot_rifle"))
+	await _sim(func(): return mm.phase == MatchManager.Phase.ENDED, 5.0)
+	check(mm.phase == MatchManager.Phase.ENDED and mm.winning_team == 2, "you down: it's over")
+	check(String(d.result(false, d.report())[0]) == "STILL WOUND", "still wound: %s" % d.result(false, d.report())[0])
+	game.queue_free()
+	await wait_frames(5)
 
 ## A mission (the prologue, unless it's `id`), loaded and started (everyone at the Barn).
 func _start(id := "prologue") -> Node:

@@ -649,6 +649,50 @@ points (a sunflower spiral), with procedural textures (`FXTextures.flame`,
 that climbs, embers, a flickering light and `fire_loop`. Its layers fade out
 within 3.5 m of the camera, so standing in it doesn't fill the screen.
 
+### Act II, The Clockwork Decree
+
+`ClockworkMission` is the first act off the island: `KernelHunt` gives an
+act its own `map` (here `toybox`, Toy Box Bash, at the same seed), and the
+director overrides `setup` too (no Barn, no tally: the toy room's landmarks
+from `island.pois`, the rangers, the Wound rogues, the stations, and the Tin
+Tyrant made and parked as in Act I). `facing` says where the camera starts
+looking. Three parts again:
+
+- **FREE**: four rogues from `KernelHunt.WOUND`, on the enemy side, dressed
+  as themselves under the Touched coat, a `WindKey` in their backs (brass, on
+  the chest bone's attachment, placed from `OutfitFit`'s measure of the back
+  like a pack), each holding a landmark with a few generic Wound
+  (`_spawn_touched` takes what to call them now). A Wound rogue has
+  `Critter.hold_on`: the blow that would beat it down leaves it on 1 HP and
+  emits `held_on`, and the director winds it down: `spared` (nothing hurts
+  it, `AIBrain` ignores it, `HoldRing` doesn't count it), its brain stopped,
+  kneeling, its key slowing, and a `KeyPull` on it (a `LootCrate`, like the
+  glowing carrot: held interact, only you). Pulled, it's freed: team 1, an
+  ally tag, its own brain and escort; left `WIND_BACK` seconds, it winds
+  itself back up.
+- **BREAK**: three `WindingStation`s (a `StaticBody3D` of primitives in the
+  toy paints, `CageKit.mat`: a riveted base, a banded drum, gears from
+  `_gear_mesh`, the big key, a chute, a bulb). Area3D hitboxes with the
+  `critter` meta take carrots like a boss's (`receive_shot`; its tin and its
+  drum count differently), and `Explosion` hands blasts to anything in the
+  group `blast_targets` (`receive_blast`). While active and you're near, each
+  winds a Wound out of its chute every `WIND_EVERY` (`wound_out`). Broken,
+  its drum, gears and key come off as `RigidBody3D` scrap.
+- **STORM**: a `HoldRing` in Block Castle's courtyard (`BurnSpot` is a
+  HoldRing now too: the ring, the counting and the filling are shared, the
+  smoke and the fire are its own). Taken, a `WarrenFlag` goes up
+  (`warren_flag.gdshader` flaps the cloth and draws the acorn), the
+  `TyrantWatch` on the bookshelf (two red eyes and a sweeping `SpotLight3D`,
+  all act long) glares at the castle, and he jumps: `Boss.entrance_from`
+  makes `RobotBoss._entrance` an arc from there instead of a drop from the
+  sky, and `BossIntro` follows him down.
+- **His end**: `ClockworkOutro` (a `MissionCinematic`). He stays the boss,
+  posed by hand (`poser`, from his fall's last key to standing, his own
+  `walk_pose` for three steps, his key's turn), shrunk to `SMALL` round his
+  feet; the second `StarfallKernel` rises from his key (`bone_point`), the
+  first comes out of Buck Toothington's paws, and the two orbit each other
+  and drift toward the room's door.
+
 ## Tests
 
 `godot --headless --path . -s tests/run_tests.gd` runs:
@@ -664,9 +708,12 @@ within 3.5 m of the camera, so standing in it doesn't fill the screen.
 * **credits test**: every shipped asset file must have a license-checked
   credit, and every credited file must exist;
 * a **full headless match** with 8 bots that must loot, fight and finish;
-* **Kernel Hunt tests**: the quest line and its records, and the prologue and
-  Act I played through headless (waves held; carrots pulled, rings lit,
-  Brutus woken and beaten, the ending), and the ways each is lost.
+* **Kernel Hunt tests**: the quest line and its records, and the prologue,
+  Act I and Act II played through headless (waves held; carrots pulled, rings
+  lit, Brutus woken and beaten; Wound rogues unwound, stations broken, the
+  castle taken, the Tin Tyrant beaten; the endings), and the ways each is
+  lost. `run_tests.gd -- kernel::act_two` runs just the tests whose names
+  match, in the files that do.
 
 `tests/check_scripts.gd` compiles every script. CI
 (`.github/workflows/tests.yml`) runs all of it on each push.

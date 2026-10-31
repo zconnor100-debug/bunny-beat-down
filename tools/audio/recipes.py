@@ -2740,3 +2740,129 @@ def kernel_hum(c, v):
     x = chord + db(-14) * shimmer + db(-30) * air
     x = circ_filter(x, lambda f: hp_mag(60, 2)(f) * lp_mag(5000, 2)(f))
     return B.unit(x)
+
+
+@recipe("wind_key", variants=2, loud=-14.0, src="synth")
+def wind_key(c, v):
+    """A wind-up key turned hard (the Kernel Hunt's Act II: a Wound winding
+    itself back up, a winding station winding one out): a ratchet of small
+    tin clicks coming faster and faster, each with its own little ring, over
+    the mainspring's rising whine as it tightens (~1.3 s)."""
+    r = c.rng
+    dur = [1.3, 1.1][v]
+    k = [1.0, 1.12][v]
+    tin = B.noise_ir(np.random.default_rng(71), [(1500, -8, 0.02), (3200, 0, 0.03), (6500, -4, 0.02)],
+                     peaks=((2850 * k, 18, 0, 0.04), (4300 * k, 22, -4, 0.03)), dur=0.08)
+    clicks = []
+    t0 = 0.0
+    gap = 0.12
+    while t0 < dur - 0.08:
+        hit = B.modal_hit(r, tin, hard=0.00015, rebounds=((0.004, -12),), tick_db=-4.0, tick_fc=4500.0)
+        clicks.append((hit, t0, r.uniform(-3, 0)))
+        t0 += gap
+        gap = max(0.032, gap * 0.88)   # (faster and faster)
+    n = n_of(dur)
+    whine = additive(glide(n, 210.0 * k, 560.0 * k, 0.7), n, [(1, 1.0), (2, 0.3), (3, 0.12)]) * np.linspace(0.0, 1.0, n) ** 1.6
+    x = mix(dur + 0.15, *clicks, (whine, 0, -20))
+    return reverb(x, r, decay=0.35, mix_db=-17, predelay=0.006, bright=6500.0, tail=0.2)[: n_of(dur + 0.2)]
+
+
+@recipe("key_pull", variants=2, loud=-13.0, src="synth")
+def key_pull(c, v):
+    """A wind-up key pulled out of a critter's back (Act II: a Wound rogue
+    freed): a gritty little metal scrape as it comes, the pop as it's out,
+    and the spring inside letting go, a cartoon 'boing' with a ring of tin
+    (~1 s)."""
+    r = c.rng
+    k = [1.0, 0.9][v]
+    tin = B.noise_ir(np.random.default_rng(72), [(1200, -6, 0.03), (2800, 0, 0.05), (5600, -5, 0.03)],
+                     peaks=((2400 * k, 16, 0, 0.06),), dur=0.12)
+    grind = B.scrape(r, 0.24, 1100, 4200, ir=tin, grains=280.0)
+    pop = B.cork_pop(r, 300 * k, 950 * k, 0.14)
+    boing = B.boing(185 * k, dur=0.65, wobble=0.18, rate=21.0, rise=1.1, tau=0.2)
+    ring = B.struck(r, [(1240 * k, 0.22, 1.0), (2870 * k, 0.15, 0.6), (4410 * k, 0.1, 0.4)], 0.6, exc_ms=0.8)
+    x = mix(1.1, (grind, 0, -10), (pop, 0.22, 0), (boing, 0.25, -3), (ring, 0.23, -12))
+    return reverb(x, r, decay=0.45, mix_db=-16, predelay=0.008, bright=6000.0, tail=0.25)[: n_of(1.1)]
+
+
+@recipe("clockwork_loop", loud=-20.0, src="synth", loop=True)
+def clockwork_loop(c, v):
+    """A winding station at work (Act II), 4 s seamless loop: its escapement
+    ticking twice a second (a tick, and a slightly lower tock), gears
+    whirring under it in a rough hum that swells with each turn, a heavy cam
+    clunking once round, and steam breathing out of its stack. Every layer is
+    exactly periodic, so the loop point is sample-continuous."""
+    r = c.rng
+    L = 4.0
+    N = n_of(L)
+    t = times(N)
+    ev = np.zeros(N + n_of(0.5))
+    for i in range(8):
+        tk = B.clock_tick(r, f_scale=1.0 if i % 2 == 0 else 0.86, body_hz=950.0 if i % 2 == 0 else 760.0)
+        i0 = n_of(i * 0.5 + 0.02)
+        ev[i0:i0 + len(tk)] += tk * (1.0 if i % 2 == 0 else 0.8)
+    ticks = fold_circular(ev, L)
+    turn = 0.55 + 0.45 * np.sin(B.TAU * (2 / L) * t) ** 2
+    whir = B.unit(circ_filter(colored(N, r, -1), lambda f: bp_gain(f, 480.0, 1.4))) * turn
+    grind = B.unit(circ_filter(colored(N, r, 0), lambda f: bp_gain(f, 1900.0, 2.5))) * turn ** 2
+    clunk = B.struck(r, [(140.0, 0.3, 1.0), (323.0, 0.2, 0.6), (546.0, 0.14, 0.4), (760.0, 0.09, 0.3)], 1.0,
+                     exc_ms=3.0, exc_lp=5000.0)
+    cam = np.zeros(N + len(clunk))
+    i0 = n_of(1.77)
+    cam[i0:i0 + len(clunk)] += clunk
+    cam = fold_circular(cam, L)
+    hiss = B.unit(circ_filter(colored(N, r, 0), lambda f: bp_gain(f, 3600.0, 0.8))) \
+        * np.clip(smooth_rand(N, r, 0.7, period=L), 0, 1) ** 2
+    ref = _k_rms(ticks)
+    rel = dict(ticks=0.0, whir=-7.0, grind=-16.0, cam=-3.0, hiss=-18.0)
+    raw = dict(ticks=ticks, whir=whir, grind=grind, cam=cam, hiss=hiss)
+    x = sum(raw[k] * (ref * 10 ** (g / 20) / _k_rms(raw[k])) for k, g in rel.items())
+    x = circ_reverb(x, r, decay=0.35, mix_db=-16.0, predelay=0.006, bright=6000.0)
+    return B.unit(circ_filter(x, hp_mag(45, 2)))
+
+
+@recipe("station_break", variants=2, loud=-10.0, src="synth")
+def station_break(c, v):
+    """A winding station coming apart (Act II): its tin body buckling with a
+    bang and a thud, the mainspring letting go in a long, wobbling, falling
+    'sproing', gears and plates clattering down all round, a couple of loose
+    springs boinging, and a last rattle (~2.8 s)."""
+    r = c.rng
+    k = [1.0, 0.9][v]
+    bang = B.struck(r, [(130 * k, 0.32, 1.0), (301 * k, 0.26, 0.8), (507 * k, 0.2, 0.6), (744 * k, 0.15, 0.45),
+                        (1180 * k, 0.1, 0.3), (1790 * k, 0.07, 0.2)], 1.6, exc_ms=4.0, exc_lp=6000.0)   # (a crash, not a gong)
+    burst = B.lp_burst(r, 0.8, 2400, 0.2, attack=0.002)
+    thud = B.kick(60, 30, 0.1, 0.35, 1.0, drive=1.5)
+    n = n_of(1.6)
+    tt = times(n)
+    sf = glide(n, 520 * k, 140 * k, 0.9) * (1 + 0.12 * np.exp(-tt / 0.5) * np.sin(B.TAU * 13.0 * tt))
+    spring = additive(sf, n, [(1, 1.0), (2, 0.35), (3, 0.15)]) * env_exp(n, 0.003, 0.6)
+    clatter = []
+    at = 0.3
+    for i in range(14):
+        hit = B.struck(r, [(r.uniform(900, 2600), 0.08, 1.0), (r.uniform(2600, 5200), 0.05, 0.5)], 0.25, exc_ms=0.6)
+        clatter.append((hit, at, r.uniform(-16, -6)))
+        at += r.uniform(0.05, 0.15)
+    boings = [(B.boing(r.uniform(160, 260), dur=0.5, wobble=0.2, rate=20.0, rise=1.0, tau=0.18), 0.5 + 0.45 * j, -13)
+              for j in range(2)]
+    rattle = B.grains(r, 1.4, 60, 1800, 6500, glen=(0.002, 0.006), t_tau=0.5, start=0.2)
+    x = mix(2.9, (bang, 0, 0), (burst, 0, -6), (thud, 0, -6), (spring, 0.08, -9), *clatter, *boings, (rattle, 0.3, -14))
+    return reverb(x, r, decay=0.8, mix_db=-12, predelay=0.012, bright=5000.0, tail=0.4)[: n_of(3.0)]
+
+
+@recipe("toy_beep", variants=1, loud=-14.0, src="synth")
+def toy_beep(c, v):
+    """Model No. 7's beep (the end of Act II): an old toy's electronics, two
+    square-ish tones, high then higher, a bit buzzy and lo-fi through a tiny
+    speaker, then a faint crackle of sparks (~0.8 s)."""
+    r = c.rng
+
+    def tone(f, dur):
+        m = n_of(dur)
+        x = additive(np.full(m, f), m, [(1, 1.0), (3, 0.33), (5, 0.2), (7, 0.14), (9, 0.1)])
+        return x * env_pts(m, [(0, 0), (0.004, 1), (dur - 0.012, 1), (dur, 0)])
+
+    sparks = B.crackle(r, 0.4, 70, 2500, 9000)
+    x = mix(0.85, (tone(1318.5, 0.12), 0, 0), (tone(1760.0, 0.17), 0.15, 0), (sparks, 0.33, -14))
+    x = bandpass(x, 2200.0, 0.5)   # (the tiny speaker)
+    return reverb(B.unit(x), r, decay=0.3, mix_db=-18, predelay=0.005, bright=7000.0, tail=0.15)[: n_of(0.85)]
