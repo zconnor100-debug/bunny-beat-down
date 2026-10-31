@@ -51,6 +51,7 @@ const LAND_OUT := 46.0         ## metres out of the castle's gate he comes down
 var step := Step.FREE
 var wound_rogues: Array[Critter] = []   ## still Wound
 var freed: Array[Critter] = []
+var freed_names: Array[String] = []   ## (theirs: one can be gone, body and all, by the time the act's over)
 var stations: Array[WindingStation] = []
 var castle_pos := Vector3.ZERO
 var castle_out := Vector3.FORWARD       ## (flat) out of the castle's gate
@@ -311,6 +312,7 @@ func _on_key_pulled(_by: Critter, c: Critter) -> void:
 		return
 	wound_rogues.erase(c)
 	freed.append(c)
+	freed_names.append(c.display_name)
 	_keys.erase(c)
 	c.spared = false
 	c.hold_on = false
@@ -617,7 +619,7 @@ func report() -> Dictionary:
 	var r := super.report()
 	r.erase("barn")
 	r.erase("wave")
-	r["freed"] = freed.map(func(c): return c.display_name)
+	r["freed"] = freed_names.duplicate()
 	r["freed_home"] = freed.filter(func(c): return is_instance_valid(c) and c.alive).map(func(c): return c.display_name)
 	r["broken"] = stations.filter(func(s): return s.broken).size()
 	r["step"] = Step.keys()[step].to_lower()
