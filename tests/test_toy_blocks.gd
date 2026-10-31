@@ -91,7 +91,7 @@ func test_a_block_coming_down_on_a_critter_bowls_it_over() -> void:
 	add_child(b)
 	b.global_position = Vector3(0, 9.0, 0)
 	await wait_physics(1)
-	var body := b.loosen(Vector3.DOWN * 40.0)
+	var body := b.loosen(Vector3.DOWN * 40.0, Vector3.INF, Vector3.ZERO)   # (flat: tumbling, a corner could land beside it first)
 	await wait_physics(60)
 	check(body != null and c.health < 1000.0 and (c.is_knocked() or c.visual.knocked), "hurt (%.0f) and bowled over" % (1000.0 - c.health))
 
