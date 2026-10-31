@@ -164,6 +164,24 @@ segment becomes:
 
 On death the poser is switched off, the ragdoll starts with the critter's
 velocity, and the killing blow's impulse is applied at the bone that was hit.
+Starting the simulation puts every body at its bone's *unmodified* pose (the
+rest pose: arms out in a T), so the bodies are then moved to the bones as
+rendered (`_bodies_to_pose`, both the node and the physics server's body
+state), and for the physics frame it takes the simulator to catch up the
+poser's pose still shows (`_take_over`: the simulator's influence at 0).
+
+**Knocked down, not out.** A hit a critter is still standing after moves it
+(`Critter._react`): a shove; for a bot, a hit off its middle turns it, aim
+and all; hard enough (a blast, a sniper's carrot, a shotgun's load landing
+in one tick, a club swung hard; for you, blasts only, and a boss's blows and
+the train) it's knocked off its feet (`knock_down`). The same ragdoll takes
+over, thrown and tumbling, while the poser goes on posing it standing
+underneath (the simulator comes after the poser in the modifier stack);
+the critter's body follows the ragdoll's hips over the ground (its camera,
+its name tag and the AI go with it); and near the end the simulator's
+`influence` eases to 0, so it springs back up into the poser's pose, facing
+the way its head lay. `AIBrain` waits while it's down; a rewind, a teleport
+or a boss's grab ends it.
 
 **Dismemberment** works on any model without pre-cut meshes. To sever a limb:
 
@@ -273,6 +291,16 @@ The third map follows the cage's pattern (`ToyBox extends Island`,
   `Area3D` on the engine damages and shoves anyone standing on the line
   (the kill feed: "bonked by the toy train"). The train is added after the
   navmesh bake, so it never becomes part of the walkable floor.
+- **Toys that come apart.** Block Castle is built block by block
+  (`ToyBlock`, a `StaticBody3D` each, so the navmesh is still baked round its
+  walls), and a `BlockPile` listens for every blast (`Events.explosion`: a
+  rocket, a grenade, a boss's stomp) and knocks loose the blocks it reaches,
+  each becoming a `RigidBody3D` of its own (`ToyBlock.Loose`) that tumbles and
+  stays where it lands; blocks that rested on them alone (`ToyBlock.stack`)
+  come down after. Domino Run's dominoes are ToyBlocks that `tips`: a carrot
+  knocks one over (Projectiles), and each one going over knocks over the next
+  (its contact, with the speed it had just before, spin and all). A loose toy
+  coming down hard on a critter hurts it and knocks it down.
 
 ## Characters, rivals and a director
 
@@ -708,6 +736,9 @@ looking. Three parts again:
 * **credits test**: every shipped asset file must have a license-checked
   credit, and every credited file must exist;
 * a **full headless match** with 8 bots that must loot, fight and finish;
+* **physics tests**: knockdowns (what does and doesn't knock a critter down,
+  getting up, staying down when beaten down) and toys that come apart (the
+  castle's blocks, the domino run, a block landing on a critter);
 * **Kernel Hunt tests**: the quest line and its records, and the prologue,
   Act I and Act II played through headless (waves held; carrots pulled, rings
   lit, Brutus woken and beaten; Wound rogues unwound, stations broken, the

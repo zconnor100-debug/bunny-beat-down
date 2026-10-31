@@ -382,6 +382,8 @@ func _on_hit(s: Shot, hit: Dictionary, stick := true) -> void:
 		if s.data.projectile == WeaponData.ProjectileKind.BOLT and not through:
 			_stick(hit.position, dir, col as Node3D, 0.5)
 		return
+	if col is ToyBlock and (col as ToyBlock).tips:
+		(col as ToyBlock).loosen.call_deferred(dir * maxf(s.data.impulse, 2.0) * 3.0, hit.position)   # (a domino: it goes over)
 	if col is RigidBody3D:
 		(col as RigidBody3D).apply_impulse(dir * s.data.impulse * 0.5, hit.position - (col as RigidBody3D).global_position)
 	if s.pops:

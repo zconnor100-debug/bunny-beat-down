@@ -852,7 +852,9 @@ func hurt(c: Critter, amount: float, dir: Vector3, push: float, lift: float, wha
 	c.take_damage(info)
 	damage_done += maxf(0.0, hp - (c.health + c.armor))
 	if c.alive:
-		c.velocity += Vector3(dir.x, 0.0, dir.z) * push + Vector3.UP * lift
+		var throw := Vector3(dir.x, 0.0, dir.z) * push + Vector3.UP * lift
+		if not (lift >= 5.0 or push >= 10.0) or not c.knock_down(throw):
+			c.velocity += throw   # (a big blow knocks it off its feet: Critter.knock_down)
 	elif was_alive:
 		kills += 1
 

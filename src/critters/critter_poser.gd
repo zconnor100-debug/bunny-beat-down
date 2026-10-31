@@ -115,6 +115,7 @@ var armed := false
 var two_handed := true
 var hold_distance := 0.26
 var gliding := false
+var down := false                 ## knocked off its feet (CritterVisual.knock_down): its gun's put away
 var reload_progress := -1.0   ## 0..1 while reloading, -1 otherwise
 var club := false             ## holding the species' melee club instead of a gun
 var prone := 0.0              ## 0 up … 1 lying on the belly (CritterVisual tips the model)
@@ -422,7 +423,7 @@ func _process_modification_with_delta(delta: float) -> void:
 	if reload_progress >= 0.0:
 		reload_k = sin(clampf(reload_progress, 0.0, 1.0) * PI)
 	if holder:
-		holder.visible = armed and not gliding
+		holder.visible = armed and not gliding and not down
 	# army-crawl paw targets (the gun, if any, rides along in the right paw)
 	var crawl_paw := {}
 	if crawling:

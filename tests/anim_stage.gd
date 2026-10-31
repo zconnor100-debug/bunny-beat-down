@@ -253,4 +253,68 @@ func _run() -> void:
 		for c in actors:
 			c.want_fire = false
 		await _clear()
+
+	# --- knocked off their feet: a rocket goes off in front of five of them
+	# (Critter.knock_down), seen from one camera as they tumble and get up
+	if _wants("knock"):
+		var ids := ["bun", "fox", "beaver", "frog", "hamster"]
+		for i in ids.size():
+			var c := _spawn(ids[i], Vector3(-6.0 + i * 3.0, 0.05, 340.0), 0.0, true)
+			c.max_health = 1000.0
+			c.health = 1000.0
+		await _wait(1.0)
+		var blast := Vector3(0.0, 0.3, 337.0)
+		Explosion.detonate(get_tree(), blast, WeaponInstance.new(WeaponDB.get_weapon(&"carrot_rocket_launcher")), null)
+		for k in 14:
+			Engine.time_scale = 0.0
+			await get_tree().process_frame
+			cam.global_position = Vector3(0.0, 4.5, 353.0)
+			cam.look_at(Vector3(0.0, 1.0, 341.0), Vector3.UP)
+			await get_tree().process_frame
+			get_viewport().get_texture().get_image().save_png(out_dir.path_join("knock_%02d.png" % k))
+			Engine.time_scale = 1.0
+			await _wait(0.16)
+		print("scene knock")
+		await _clear()
+
+	# --- toys coming apart: a rocket against Block Castle's wall, then a run
+	# of dominoes, the first tipped over (ToyBlock, BlockPile)
+	if _wants("toys"):
+		var rng := RandomNumberGenerator.new()
+		rng.seed = 5
+		var castle := ToyProps.block_castle(rng)
+		add_child(castle)
+		castle.global_position = Vector3(0.0, 0.0, 150.0)
+		await _wait(0.5)
+		var blast := Vector3(-8.0, 3.0, 150.0 + 14.0 + 2.5)
+		Explosion.detonate(get_tree(), blast, WeaponInstance.new(WeaponDB.get_weapon(&"carrot_rocket_launcher")), null)
+		for k in 8:
+			Engine.time_scale = 0.0
+			await get_tree().process_frame
+			cam.global_position = Vector3(10.0, 12.0, 150.0 + 46.0)
+			cam.look_at(Vector3(-2.0, 4.0, 150.0), Vector3.UP)
+			await get_tree().process_frame
+			get_viewport().get_texture().get_image().save_png(out_dir.path_join("toys_castle_%02d.png" % k))
+			Engine.time_scale = 1.0
+			await _wait(0.3)
+		var run: Array[ToyBlock] = []
+		for i in 8:
+			var a := i * 0.24
+			var d := ToyProps.standing_domino(rng)
+			add_child(d)
+			d.global_position = Vector3(cos(a) * 24.0, d.size.y * 0.5, sin(a) * 24.0 + 60.0)
+			d.rotation.y = -a
+			run.append(d)
+		await _wait(0.3)
+		run[0].loosen(Vector3(0, 0, 12.0), run[0].global_position + Vector3.UP * 3.0)
+		for k in 10:
+			Engine.time_scale = 0.0
+			await get_tree().process_frame
+			cam.global_position = Vector3(46.0, 14.0, 74.0)
+			cam.look_at(Vector3(18.0, 3.0, 72.0), Vector3.UP)
+			await get_tree().process_frame
+			get_viewport().get_texture().get_image().save_png(out_dir.path_join("toys_dominoes_%02d.png" % k))
+			Engine.time_scale = 1.0
+			await _wait(0.6)
+		print("scene toys")
 	get_tree().quit()

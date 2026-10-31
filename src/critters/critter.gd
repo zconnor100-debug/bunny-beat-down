@@ -41,6 +41,9 @@ const THROW_TIME := 0.55          ## one grenade throw: wind-up, release, follow
 const THROW_RELEASE := 0.42       ## share of the throw when the grenade leaves the paw
 const THROW_SPEED := 20.0         ## m/s out of the paw: about 25 m on the flat, lobbed at 45°
 const THROW_LOFT := 0.17          ## rad thrown above where you look (a lob, not a fastball)
+const KNOCK_TIME := 1.3           ## seconds a critter's off its feet when it's knocked down...
+const KNOCK_RISE := 0.45          ## ...the last of them springing back up
+const KNOCK_GUARD := 2.0          ## then this long before it can be knocked down again
 
 @export var def: CritterDef
 
@@ -111,6 +114,13 @@ var hold_on := false
 ## Beaten but spared (a Wound rogue wound down): nobody's target, and nothing
 ## hurts it till it's back up.
 var spared := false
+## Off its feet (knock_down): seconds to go, tumbling as a ragdoll, then
+## springing back up (is_knocked till it's up). Nothing it does counts meanwhile.
+var knocked := 0.0
+var _knocked := false
+var _knock_guard := 0.0            # (just up: not again yet)
+var _hit_frame := -1               # (a shotgun's pellets land in one tick: together they can knock you over)
+var _hit_share := 0.0
 ## A bot sore enough at the director (Cast.DEFIANT_AT) that its hits on
 ## other bots aren't softened by the director's pacing.
 var defies_director := false
@@ -301,6 +311,12 @@ func _physics_process(delta: float) -> void:
 		_bleed(delta)
 	if shield_regrow > 0.0 and _unhurt_t > REGROW_AFTER and armor < shield_regrow:
 		armor = minf(shield_regrow, armor + REGROW_RATE * delta)
+	_knock_guard = maxf(0.0, _knock_guard - delta)
+	if _knocked:
+		_knocked_move(delta)
+		_update_visual(delta)
+		visual.physics_tick(global_transform)
+		return
 	match state:
 		State.FREEFALL, State.GLIDING:
 			_air_drop_move(delta)
@@ -669,6 +685,7 @@ func board_dropship() -> void:
 ## Teleport without interpolation smear. A critter still waiting to board
 ## (see MatchManager) is put down on its feet there.
 func place_at(pos: Vector3, yaw := 0.0) -> void:
+	end_knock()
 	if state == State.IN_DROPSHIP:
 		_set_state(State.GROUND)
 		visible = true
@@ -676,6 +693,104 @@ func place_at(pos: Vector3, yaw := 0.0) -> void:
 	rotation.y = yaw
 	look_yaw = yaw
 	visual.physics_tick(global_transform, true)
+
+
+# ---- knocked off its feet -------------------------------------------------------------------------
+
+## How a hit it's still standing after moves it: a shove, and for a bot, a
+## hit off its middle turns it (its aim with it); hard enough (a blast, the
+## sniper or the Big Root .50, a shotgun's load close up, a club swung hard),
+## off its feet (knock_down). You're only knocked down by blasts (and a
+## boss's blows, and the train: Boss.hurt, ToyTrain).
+func _react(info: DamageInfo) -> void:
+	if _knocked or state != State.GROUND:
+		return
+	var flat := Vector3(info.direction.x, 0.0, info.direction.z)
+	if flat.length_squared() < 1e-4:
+		return
+	flat = flat.normalized()
+	var share := info.amount / maxf(max_health, 1.0)
+	var frame := Engine.get_physics_frames()
+	if frame != _hit_frame:
+		_hit_frame = frame
+		_hit_share = 0.0
+	_hit_share += share
+	var hard := false
+	match info.kind:
+		DamageInfo.Kind.EXPLOSION:
+			hard = info.impulse >= 9.0 or share >= 0.15
+		DamageInfo.Kind.BULLET:
+			hard = not is_player and (_hit_share >= 0.4 or (info.impulse >= 10.0 and share >= 0.2))
+		DamageInfo.Kind.MELEE:
+			hard = not is_player and share >= 0.3
+	if hard and knock_down(flat * clampf(1.5 + info.impulse * 0.18, 2.0, 6.0) + Vector3.UP * clampf(1.5 + info.impulse * 0.12, 2.0, 4.5)):
+		return
+	velocity += flat * clampf(info.impulse * share * 3.0, 0.0, 3.0)   # (a shove)
+	if not is_player and info.kind == DamageInfo.Kind.BULLET and info.position != Vector3.ZERO:
+		# off its middle, a hit turns it (a shoulder: right round, near enough)
+		var r := info.position - global_position
+		var turn := clampf(Vector3(r.x, 0.0, r.z).cross(flat).y * share * 4.0, -0.6, 0.6)
+		rotation.y += turn
+		look_yaw += turn
+
+
+## Off its feet: it tumbles as a ragdoll (CritterVisual.knock_down), `push`
+## throwing it, for `seconds`, its body going where its hips go, then it
+## springs back up (end_knock). False if it can't be: in the air, swimming,
+## held by a boss, down already, or only just up.
+func knock_down(push: Vector3, seconds := KNOCK_TIME) -> bool:
+	if not alive or state != State.GROUND or swimming or held_by != null or _knocked or _knock_guard > 0.0 or visual == null:
+		return false
+	if _throw_t >= 0.0 and is_instance_valid(_held_grenade):
+		# knocked over with the pin out: it drops, live, where we fell
+		Grenade.spawn(Despawner.debris_parent(self), self, _held_grenade.global_position, velocity * 0.5 + Vector3.UP, visual.hitbox_rids)
+	reset_actions()
+	knocked = seconds
+	_knocked = true
+	visual.knock_down((Vector3(velocity.x, maxf(velocity.y, 0.0), velocity.z) + push).limit_length(11.0))
+	Despawner.after(self, 0.45, func(n: Node): Audio.play_at(&"body_fall", (n as Critter).visual.bone_world_position(&"hips"), -4.0, 0.1))
+	return true
+
+
+## Down: the body follows the ragdoll's hips over the ground (so its camera,
+## its name and the AI go with it); near the end it turns the way it lies
+## and springs back up.
+func _knocked_move(delta: float) -> void:
+	knocked = maxf(0.0, knocked - delta)
+	var hips := visual.bone_world_position(&"hips")
+	var to := Vector3(hips.x - global_position.x, 0.0, hips.z - global_position.z)
+	var follow := (to / maxf(delta, 0.001)).limit_length(30.0)
+	velocity.x = follow.x
+	velocity.z = follow.z
+	velocity.y = 0.0 if is_on_floor() else velocity.y - _gravity * delta
+	move_and_slide()
+	if knocked <= KNOCK_RISE and not visual.rising():
+		var lie := visual.bone_world_position(&"head") - hips
+		lie.y = 0.0
+		if lie.length() > 0.05:
+			rotation.y = atan2(-lie.x, -lie.z)   # (up, facing the way its head lay)
+			if not is_player:
+				look_yaw = rotation.y
+		visual.rise(maxf(knocked, 0.05))
+	if knocked <= 0.0 and not visual.rising():
+		end_knock()
+
+
+## Off its feet now (knocked down, or still getting up).
+func is_knocked() -> bool:
+	return _knocked
+
+
+## Back on its feet (or put somewhere else meanwhile: a rewind, a teleport).
+func end_knock() -> void:
+	if not _knocked:
+		return
+	_knocked = false
+	knocked = 0.0
+	_knock_guard = KNOCK_GUARD
+	velocity = Vector3.ZERO   # (its body was chasing its hips: it's standing now)
+	if visual:
+		visual.end_knock()
 
 
 # ---- weapons ------------------------------------------------------------------------------------
@@ -1154,6 +1269,8 @@ func take_damage(info: DamageInfo) -> void:
 		health = 1.0
 		held_on.emit(info)
 		return
+	if health > 0.0 and not bleeding and info.kind != DamageInfo.Kind.STORM:
+		_react(info)
 	if health <= 0.0 and second_wind:
 		second_wind = false
 		health = 1.0
@@ -1166,6 +1283,8 @@ func take_damage(info: DamageInfo) -> void:
 
 
 func _die(info: DamageInfo) -> void:
+	knocked = 0.0   # (down already: it stays down, the ragdoll's own now)
+	_knocked = false
 	if _throw_t >= 0.0 and is_instance_valid(_held_grenade):
 		# beaten down with the pin out: it drops, live, where we fell
 		Grenade.spawn(Despawner.debris_parent(self), self, _held_grenade.global_position, velocity * 0.5 + Vector3.UP, visual.hitbox_rids)

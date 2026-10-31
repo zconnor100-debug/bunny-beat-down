@@ -169,8 +169,8 @@ func _ready() -> void:
 
 
 func _physics_process(delta: float) -> void:
-	if me == null or not me.alive or me.state == Critter.State.IN_DROPSHIP:
-		return
+	if me == null or not me.alive or me.state == Critter.State.IN_DROPSHIP or me.is_knocked():
+		return   # (knocked down: nothing to do till it's up)
 	_clock += delta
 	if _landed_at < 0.0 and me.state == Critter.State.GROUND:
 		_landed_at = _clock

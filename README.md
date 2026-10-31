@@ -321,9 +321,17 @@ and the final shot replayed from three angles. There's a
   together into the steer.
 - **Small-critter physics**:
   - Jolt ragdolls with per-limb joint limits.
+  - **Knocked off their feet**: a rocket, a grenade, a sniper's carrot, a
+    shotgun's whole load, a boss's blow or the toy train throws a critter
+    into a real ragdoll tumble; a second later it springs back up and fights
+    on. Lighter hits shove it, and a hit on a bot's shoulder turns it round.
   - Spring-bone ears and tails.
   - Hit flinches and landing squash.
   - Explosion knockback, with corpses and gibs that react to blasts.
+  - **Toys that come apart**: rockets knock holes in Block Castle's walls
+    (the blocks tumble, and whatever stood on them comes down too), and a
+    carrot sets off Domino Run, every domino knocking over the next. Falling
+    toys bowl over whoever's under them.
 - **A club for every species**, three quarters of the critter's height. It
   comes out with empty paws, or any time on F / R3 (a gun in the paws is
   stowed for the swing and comes straight back). Each swing winds up over the

@@ -295,6 +295,7 @@ func _restore(snap: Dictionary, at: float) -> void:
 
 
 func _restore_critter(c: Critter, r: Dictionary) -> void:
+	c.end_knock()
 	c.global_transform = r.xf
 	c.velocity = r.vel
 	if not c.is_player:   # (the player keeps looking where their camera is)

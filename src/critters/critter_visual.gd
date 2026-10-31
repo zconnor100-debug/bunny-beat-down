@@ -52,6 +52,7 @@ var skeleton: Skeleton3D
 var rig: RigInfo
 var poser: CritterPoser
 var phys_sim: PhysicalBoneSimulator3D
+var knocked := false               ## off its feet for now (Critter.knock_down): the ragdoll's on
 var springs: SpringBoneSimulator3D
 var limb_hider: LimbHider
 var holder: Node3D
@@ -170,7 +171,7 @@ func _process(delta: float) -> void:
 	_update_trick(delta)
 	_update_body_xf()
 	_size_name_tag()
-	if ragdolled and not _loose.is_empty():
+	if (ragdolled or knocked) and not _loose.is_empty():
 		_follow_loose_bones()
 	_advance_pose(delta)
 
@@ -886,20 +887,121 @@ func _attach_helmet() -> void:
 func go_ragdoll(velocity: Vector3) -> void:
 	if ragdolled:
 		return
+	var was_down := knocked
+	if knocked:   # (beaten down while it was down: the ragdoll's on already, and stays)
+		knocked = false
+		if _rise and _rise.is_valid():
+			_rise.kill()
 	ragdolled = true
-	poser.active = false
 	clear_enemy_highlight()
 	for area in hitboxes.values():
 		(area as Area3D).collision_layer = 0
 	for pb in physical_bones.values():
 		(pb as PhysicalBone3D).collision_layer = Layers.RAGDOLL
-	_note_loose_bones()
-	phys_sim.active = true
-	phys_sim.physical_bones_start_simulation()
+	if was_down:
+		poser.active = false
+		phys_sim.influence = 1.0
+	else:
+		_note_loose_bones()
+		phys_sim.active = true
+		phys_sim.physical_bones_start_simulation()
+		_bodies_to_pose()
+		_take_over(true)
 	for pb in physical_bones.values():
 		(pb as PhysicalBone3D).linear_velocity = velocity
 	if holder:
 		holder.visible = false
+
+
+## Off its feet (Critter.knock_down): the ragdoll takes over, thrown with
+## `velocity` and tumbling, while the poser keeps its standing pose
+## underneath (the simulator comes after it) for when it gets up (`rise`).
+## Its gun's put away meanwhile.
+func knock_down(velocity: Vector3) -> void:
+	if ragdolled or knocked:
+		return
+	knocked = true
+	if _rise and _rise.is_valid():
+		_rise.kill()
+	_note_loose_bones()
+	phys_sim.active = true
+	phys_sim.physical_bones_start_simulation()
+	_bodies_to_pose()
+	_take_over(false)
+	var tumble := Vector3(randf_range(-3.0, 3.0), randf_range(-2.0, 2.0), randf_range(-3.0, 3.0))
+	for pb in physical_bones.values():
+		(pb as PhysicalBone3D).linear_velocity = velocity
+		(pb as PhysicalBone3D).angular_velocity = tumble
+	poser.down = true
+	if holder:
+		holder.visible = false
+
+
+## Up again over `seconds`: the ragdoll's hold eases off and the standing
+## pose takes over (it springs back to its feet), then the ragdoll's off.
+func rise(seconds: float) -> void:
+	if not knocked or ragdolled:
+		return
+	if _rise and _rise.is_valid():
+		_rise.kill()
+	_rise = create_tween()
+	_rise.tween_property(phys_sim, "influence", 0.0, seconds).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN_OUT)
+	_rise.tween_callback(end_knock)
+
+
+func rising() -> bool:
+	return _rise != null and _rise.is_valid() and _rise.is_running()
+
+
+## On its feet (or put back somewhere: a rewind, a teleport): the ragdoll's
+## off, the bones it left lying go back where the poser has them, the gun's out.
+func end_knock() -> void:
+	if not knocked:
+		return
+	knocked = false
+	if _rise and _rise.is_valid():
+		_rise.kill()
+	_rise = null
+	if ragdolled:
+		return
+	phys_sim.physical_bones_stop_simulation()
+	phys_sim.active = false
+	phys_sim.influence = 1.0
+	for b: int in _loose:
+		skeleton.set_bone_pose(b, skeleton.get_bone_rest(b))
+	_loose.clear()
+	poser.down = false
+
+
+var _rise: Tween
+
+
+## The ragdoll takes over once its bodies have been stepped from where they
+## were put (_bodies_to_pose): till then the simulator still has them at the
+## rest pose, so for that frame the poser's pose shows instead (`stop_poser`:
+## a death's, and then the poser's done).
+func _take_over(stop_poser: bool) -> void:
+	phys_sim.influence = 0.0
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	if not is_instance_valid(phys_sim) or not phys_sim.active:
+		return
+	if stop_poser:
+		poser.active = false
+	if not rising():
+		phys_sim.influence = 1.0
+
+
+## The ragdoll's bodies put where the bones are as rendered, as it takes over
+## (starting the simulation puts every body at its bone's unmodified pose, the
+## rest pose: left alone, every ragdoll started arms out, in a T).
+func _bodies_to_pose() -> void:
+	for pb: PhysicalBone3D in physical_bones.values():
+		var idx := skeleton.find_bone(pb.bone_name)
+		if idx >= 0:
+			var xf := skeleton.global_transform * current_bone_global(idx) * pb.body_offset
+			pb.global_transform = xf
+			PhysicsServer3D.body_set_state(pb.get_rid(), PhysicsServer3D.BODY_STATE_TRANSFORM, xf)
 
 
 ## Bones hanging straight off the skeleton's root rather than off the body, or

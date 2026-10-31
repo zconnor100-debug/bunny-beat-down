@@ -152,6 +152,8 @@ func _check_bonks() -> void:
 		# ragdoll too, instead of folding up in front of the engine)
 		c.velocity = fwd * SPEED * 0.8 + side * 9.0 + Vector3.UP * 7.0
 		c.take_damage(info)
+		if c.alive:
+			c.knock_down(Vector3.ZERO)   # (bowled over: it tumbles off the track, then gets up)
 		Audio.play_at(&"melee_hit", c.global_position, 2.0, 0.1)
 
 

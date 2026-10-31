@@ -294,6 +294,7 @@ func _gobble(t: Critter) -> BossAction:
 				grabbed = c
 		if grabbed:
 			_held = grabbed
+			_held.end_knock()   # (picked up off the floor if it was knocked down)
 			_held.held_by = self
 		else:
 			hurt_ring(spot, 7.0, 40.0, 25.0, 10.0, 5.0, &"gobble"))

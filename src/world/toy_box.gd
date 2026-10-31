@@ -171,11 +171,19 @@ func _build_toy_pois() -> void:
 					var length := rng.randf_range(12.0, 20.0)
 					_scatter_long(ToyProps.crayon(rng, length), at, 16.0, p.radius + 10.0, length * 0.5, 2.2)
 			"dominoes":
+				# a run of them round an arc, near enough that each one going over
+				# knocks over the next (ToyBlock); the last two have gone over already
+				# (the two lying flat are as long as a domino's tall: further apart)
 				var start := rng.randf() * TAU
 				for i in 13:
-					var a := start + i * 0.36
+					var a := start + (i * 0.24 if i <= 10 else (10.0 + (i - 10) * 1.6) * 0.24)
 					var d := Vector2(cos(a), sin(a)) * 24.0
-					_prop(ToyProps.domino(rng, i > 10), at + d, -a, NAN)
+					if i > 10:
+						_prop(ToyProps.domino(rng, true), at + d, -a, NAN)
+						continue
+					var dom := _prop(ToyProps.standing_domino(rng), at + d, -a, NAN) as ToyBlock
+					dom.global_position.y += dom.size.y * 0.5   # (its middle at its origin: stood on its end)
+					scatter.add_obstacle(at + d, 12.0)   # (as much room as the kits always had)
 			"tea":
 				_prop(ToyProps.tea_table(rng), at, 0.0)
 				for i in 3:

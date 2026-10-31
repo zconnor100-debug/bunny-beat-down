@@ -115,6 +115,16 @@ static func block_castle(rng: RandomNumberGenerator) -> CageKit:
 	k.footprint = half + 6.0
 	k.floor_y = 0.0
 	var cells := func() -> Array: return [rng.randi() % 16, rng.randi() % 16, rng.randi() % 16, rng.randi() % 16, rng.randi() % 16, rng.randi() % 16]
+	# every block a piece of its own (ToyBlock), so blasts can knock the walls
+	# down (BlockPile); the random draws in the order they always were
+	var pile := BlockPile.new()
+	pile.reach = half * 1.5 + s
+	var block := func(at: Vector3, basis: Basis, c: Array) -> void:
+		var b := letter_piece(s, c)
+		b.position = at
+		b.basis = basis
+		k.add_child(b)
+		pile.blocks.append(b)
 	for side in 4:
 		var b := Basis(Vector3.UP, side * PI * 0.5)
 		# each wall stops one block short: the next wall's first block is the corner
@@ -124,21 +134,52 @@ static func block_castle(rng: RandomNumberGenerator) -> CageKit:
 			for layer in 2:
 				if gate:
 					continue
-				k._letter_box(b * Vector3(along, s * 0.5 + layer * s, half), s, b, cells.call())
+				block.call(b * Vector3(along, s * 0.5 + layer * s, half), b, cells.call())
 			if i % 2 == 0 and i > 0 and not gate:
-				k._letter_box(b * Vector3(along, s * 2.5, half), s, b, cells.call())
+				block.call(b * Vector3(along, s * 2.5, half), b, cells.call())
 	for xs in [-1.0, 1.0]:
 		for zs in [-1.0, 1.0]:
 			for layer in [2, 3]:
-				k._letter_box(Vector3(xs * half, s * 0.5 + layer * s, zs * half), s, Basis(Vector3.UP, rng.randf_range(-0.2, 0.2)), cells.call())
+				block.call(Vector3(xs * half, s * 0.5 + layer * s, zs * half), Basis(Vector3.UP, rng.randf_range(-0.2, 0.2)), cells.call())
 	# a lintel over the gate, and a pile of blocks inside as cover
-	k._box(&"paint_blue", Vector3(0, s * 2.0 + 0.4, half), Vector3(s * 3.0, 0.8, s))
+	var lintel := ToyBlock.new(Vector3(s * 3.0, 0.8, s))
+	lintel.name = "Lintel"
+	var plank := MeshInstance3D.new()
+	var box := BoxMesh.new()
+	box.size = lintel.size
+	plank.mesh = box
+	plank.material_override = CageKit.mat(&"paint_blue")
+	lintel.dress(plank)
+	lintel.position = Vector3(0, s * 2.0 + 0.4, half)
+	k.add_child(lintel)
+	pile.blocks.append(lintel)
 	for i in 3:
-		k._letter_box(Vector3(-6.5 + i * 5.2, s * 0.5, -6.0), s, Basis(Vector3.UP, rng.randf() * 0.4), cells.call())
-	k._letter_box(Vector3(-3.9, s * 1.5, -6.0), s, Basis(Vector3.UP, 0.3), cells.call())
+		block.call(Vector3(-6.5 + i * 5.2, s * 0.5, -6.0), Basis(Vector3.UP, rng.randf() * 0.4), cells.call())
+	block.call(Vector3(-3.9, s * 1.5, -6.0), Basis(Vector3.UP, 0.3), cells.call())
+	k.add_child(pile)
 	k.loot_spots = [Vector3(6.0, 0.0, 4.0), Vector3(-7.0, 0.0, 6.0), Vector3(7.0, 0.0, -8.0), Vector3(0.0, 0.0, 1.0)]
 	k.chest_spot = Vector3(-8.0, 0.0, 0.0)
-	return k.made_as("toy/block_castle").finish()
+	return k.finish()
+
+
+## One lettered block `size` across as a piece of its own (ToyBlock), its
+## middle at its origin, the lettered block model picked by its letters.
+static func letter_piece(size: float, cells: Array) -> ToyBlock:
+	var b := ToyBlock.new(Vector3.ONE * size)
+	b.name = "LetterBlock"
+	var v: int = (int(cells[0]) + int(cells[1]) + int(cells[2])) % LETTER_VARIANTS
+	var m := CageKit.model(made("toy/letter_block_%d" % v))
+	if m == null:
+		var mi := MeshInstance3D.new()
+		var box := BoxMesh.new()
+		box.size = b.size
+		mi.mesh = box
+		mi.material_override = CageKit.mat(StringName("plastic_" + String(CREW[v % CREW.size()])))
+		m = mi
+	else:
+		m.transform = Transform3D(Basis.from_scale(Vector3.ONE * size), Vector3.DOWN * size * 0.5)   # (the model stands on its own bottom)
+	b.dress(m)
+	return b
 
 
 ## A plastic-brick house: walls in courses of bricks (the grooves between the
@@ -368,15 +409,46 @@ static func domino(rng: RandomNumberGenerator, toppled := false) -> CageKit:
 	var c := Vector3(0, 0.7, 0) if toppled else Vector3(0, 4.0, 0)
 	k._box(&"domino", c, Vector3(4.2, 8.0, 1.4), b)
 	k._box(&"plastic_white", c + b * Vector3(0, 0, 0.71), Vector3(3.4, 0.15, 0.05), b, false)
-	var pips := []
-	for half in [-1.0, 1.0]:
-		var n := rng.randi_range(1, 4)
-		pips.append(n)
-		for i in n:
-			var at := Vector3(rng.randf_range(-1.3, 1.3), half * rng.randf_range(1.0, 3.0), 0.72)
+	var pips := _domino_pips(rng)
+	for half in 2:
+		for at: Vector3 in pips[half][1]:
 			k._ellipsoid(&"plastic_white", c + b * at, Vector3(0.38, 0.38, 0.06), b, false, 4, 8)
 	# the model: pips laid out like a real domino's, the same counts (top, bottom)
-	return k.dress(made("toy/domino_%d%d" % [pips[1], pips[0]]), Transform3D(b, c - b * Vector3(0, 4.0, 0))).finish()
+	return k.dress(made("toy/domino_%d%d" % [pips[1][0], pips[0][0]]), Transform3D(b, c - b * Vector3(0, 4.0, 0))).finish()
+
+
+## A domino standing on its end that a carrot can tip over, and that knocks
+## the next one over as it goes (ToyBlock): its middle at its origin, 8 m tall.
+static func standing_domino(rng: RandomNumberGenerator) -> ToyBlock:
+	var d := ToyBlock.new(Vector3(4.2, 8.0, 1.4))
+	d.name = "Domino"
+	d.tips = true
+	var pips := _domino_pips(rng)
+	var m := CageKit.model(made("toy/domino_%d%d" % [pips[1][0], pips[0][0]]))
+	if m == null:
+		var mi := MeshInstance3D.new()
+		var box := BoxMesh.new()
+		box.size = d.size
+		mi.mesh = box
+		mi.material_override = CageKit.mat(&"domino")
+		m = mi
+	else:
+		m.position = Vector3.DOWN * 4.0
+	d.dress(m)
+	return d
+
+
+## A domino's two halves (bottom, top): how many pips each, and where each
+## sits on its face (the random draws in the order the dominoes always made them).
+static func _domino_pips(rng: RandomNumberGenerator) -> Array:
+	var out := []
+	for half in [-1.0, 1.0]:
+		var n := rng.randi_range(1, 4)
+		var at := []
+		for i in n:
+			at.append(Vector3(rng.randf_range(-1.3, 1.3), half * rng.randf_range(1.0, 3.0), 0.72))
+		out.append([n, at])
+	return out
 
 
 ## The toy chest: a painted wooden box with its lid flung open.
