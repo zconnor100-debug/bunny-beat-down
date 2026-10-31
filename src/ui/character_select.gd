@@ -12,9 +12,12 @@ const ROSTER := ["bun", "bandit_bunny", "squirrel", "fox", "raccoon", "frog", "b
 var ready_to_drop := false:
 	set(v):
 		ready_to_drop = v
-		if _go:
-			_go.disabled = not v
-			_go.text = "Drop in!" if v else "Growing the island…"
+		if v and _waiting:
+			_confirm.call_deferred()   # (they readied up while it grew: straight in, once the game's listening)
+		_label_go()
+## Readied up while the island was still growing: they drop in the moment it's
+## grown, without another press (press again to keep looking).
+var _waiting := false
 
 var _index := 0
 var _skin_index := 0
@@ -29,6 +32,7 @@ var _skin_label: Label
 var _blurb: Label
 var _stats: Label
 var _go: Button
+var _go_hint: Label
 var _t := 0.0
 var _next_trick := 2.5
 ## Turntable angle added to "facing the camera" (critters face −Z; the camera
@@ -123,10 +127,13 @@ func _ready() -> void:
 	var spacer := Control.new()
 	spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	v.add_child(spacer)
-	_go = _mouse_button("Growing the island…", _confirm)
+	_go = _mouse_button("Ready", _confirm)
 	_go.custom_minimum_size = Vector2(320, 64)
 	_go.size_flags_horizontal = Control.SIZE_SHRINK_END
 	v.add_child(_go)
+	_go_hint = UITheme.label("", 16, Color(UITheme.CREAM, 0.6))
+	_go_hint.size_flags_horizontal = Control.SIZE_SHRINK_END
+	v.add_child(_go_hint)
 	ready_to_drop = ready_to_drop
 	_show()
 
@@ -137,10 +144,31 @@ func _mouse_button(text: String, on_press: Callable) -> Button:
 	return b
 
 
+## Drop in; or, while the island's still growing, ready up (or back down
+## again) to drop in the moment it's grown.
 func _confirm() -> void:
-	if ready_to_drop and not _done:
+	if _done:
+		return
+	if ready_to_drop:
 		_done = true
 		confirmed.emit()
+	else:
+		_waiting = not _waiting
+		_label_go()
+
+
+func _label_go() -> void:
+	if _go == null:
+		return
+	if ready_to_drop:
+		_go.text = "Drop in!"
+		_go_hint.text = ""
+	elif _waiting:
+		_go.text = "✓ Ready!"
+		_go_hint.text = "Dropping in the moment the island's grown (press again to wait)"
+	else:
+		_go.text = "Ready"
+		_go_hint.text = "Ready up to drop in the moment the island's grown"
 
 
 func _build_stage() -> void:

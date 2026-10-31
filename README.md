@@ -340,7 +340,8 @@ and the final shot replayed from three angles. There's a
 - **Pick your critter** on the loading screen while the island grows:
   - all eight species (bunnies, squirrel, fox, raccoon, frog, beaver, hamster),
     each with several skins;
-  - a live 3D preview showing the species' jump trick.
+  - a live 3D preview showing the species' jump trick;
+  - ready up before it's grown and you drop in the moment it is.
 
   ![Choosing a critter on the loading screen](docs/screenshots/picker.jpg)
   ![All 40 critter skins](docs/screenshots/skins.jpg)

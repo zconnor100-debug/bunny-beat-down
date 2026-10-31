@@ -188,6 +188,36 @@ func test_character_picker_follows_the_pad() -> void:
 	layer.queue_free()
 
 
+## A press while the island's still growing readies you up: you drop in the
+## moment it's grown, without pressing again (and another press backs out).
+func test_readying_up_while_it_grows_drops_straight_in() -> void:
+	var layer := CanvasLayer.new()
+	add_child(layer)
+	var picker := CharacterSelect.new()
+	layer.add_child(picker)
+	await wait_frames(4)
+	var drops := [0]
+	picker.confirmed.connect(func(): drops[0] += 1)
+	check(not picker._go.disabled, "the button works while it grows")
+	await _pad(JOY_BUTTON_A)
+	check(drops[0] == 0 and picker._waiting, "A while it grows readies up, without dropping in yet")
+	await _pad(JOY_BUTTON_A)
+	check(not picker._waiting, "A again backs out")
+	await _pad(JOY_BUTTON_A)
+	await _pad(JOY_BUTTON_DPAD_RIGHT)
+	check(picker._waiting, "looking at the next critter keeps you ready")
+	# the island's grown: the drop comes once the game's listening (it awaits
+	# `confirmed` right after saying so)
+	picker.ready_to_drop = true
+	var heard := [false]
+	picker.confirmed.connect(func(): heard[0] = true, CONNECT_ONE_SHOT)
+	await wait_frames(3)
+	check(heard[0] and drops[0] == 1, "ready up and you drop in the moment it's grown (%d)" % drops[0])
+	await _pad(JOY_BUTTON_A)
+	check(drops[0] == 1, "and only once (%d)" % drops[0])
+	layer.queue_free()
+
+
 func _button_event(button: JoyButton) -> InputEventJoypadButton:
 	var e := InputEventJoypadButton.new()
 	e.button_index = button
