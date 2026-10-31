@@ -3,10 +3,11 @@ extends RefCounted
 ## Eyeballs put where they can be seen: the squirrel model's sit inside the
 ## head, above its eye sockets, so the sockets read as dark holes. rig.json
 ## "eye_bulge": {"material": the eyeballs' material, "to": [x, y, z] where the
-## right eyeball's middle goes (the left one mirrored), or "out": how far to
-## move each one out from between the eyes and forward; "scale": how much
-## bigger}. Each eyeball (one per side) moves and grows about its own middle;
-## the meshes are built once per model and shared.
+## eyeball on the +x side goes (the other mirrored), or {"+x": [x, y, z],
+## "-x": [x, y, z]} for each its own (sockets that aren't level), or "out":
+## how far to move each one out from between the eyes and forward; "scale":
+## how much bigger}. Each eyeball (one per side) moves and grows about its own
+## middle; the meshes are built once per model and shared.
 
 static var _cache := {}   # model path -> {mesh index: ArrayMesh}
 
@@ -90,5 +91,9 @@ static func _bulge(arr: Array, push: float, grow: float, to_skel: Transform3D, t
 		var goal := mid + dir * push
 		if to is Array:
 			goal = Vector3(absf(float(to[0])) * signf(mid.x - between.x), float(to[1]), float(to[2]))
+		elif to is Dictionary:   # (each side its own)
+			var t: Array = to.get("+x" if mid.x >= between.x else "-x", [])
+			if t.size() == 3:
+				goal = Vector3(float(t[0]), float(t[1]), float(t[2]))
 		vs[i] = back * (goal + (vs[i] - mid) * grow)
 	arr[Mesh.ARRAY_VERTEX] = vs

@@ -104,6 +104,38 @@ func test_a_squirrels_tail_goes_with_its_ragdoll() -> void:
 	check(absf(gap.call() - before) < 0.1, "the tail stayed on it (%.2f m from the hips, %.2f before)" % [gap.call(), before])
 
 
+func test_a_squirrels_eyes_sit_in_its_sockets() -> void:
+	# (its left socket's higher than its right: each eyeball goes in its own,
+	# not one mirrored off the other, which left the left socket showing)
+	var c := spawn_critter("res://data/critters/squirrel.tres", Vector3(0, 0.1, 0))
+	await wait_physics(2)
+	var spec: Dictionary = c.visual.rig.data["eye_bulge"]
+	var mids := {}   # side -> [sum, count]
+	for m: MeshInstance3D in c.visual.meshes:
+		var mesh := m.mesh as ArrayMesh
+		if mesh == null:
+			continue
+		var to_skel := EyeBulge._to_skeleton(m, c.visual)
+		for si in mesh.get_surface_count():
+			var mat := mesh.surface_get_material(si)
+			if mat == null or mat.resource_name != spec["material"]:
+				continue
+			for v: Vector3 in mesh.surface_get_arrays(si)[Mesh.ARRAY_VERTEX]:
+				var p := to_skel * v
+				var side := "+x" if p.x >= 0.0 else "-x"
+				var s: Array = mids.get(side, [Vector3.ZERO, 0])
+				mids[side] = [s[0] + p, s[1] + 1]
+	check(mids.size() == 2, "two eyeballs found (%d)" % mids.size())
+	for side: String in mids:
+		var mid: Vector3 = mids[side][0] / mids[side][1]
+		var t: Array = spec["to"][side]
+		var goal := Vector3(t[0], t[1], t[2])
+		check(mid.distance_to(goal) < 0.003, "the %s eyeball's in its socket (%s, wanted %s)" % [side, mid, goal])
+	if mids.size() == 2:
+		var hi: float = (mids["-x"][0] / mids["-x"][1]).y - (mids["+x"][0] / mids["+x"][1]).y
+		check(hi > 0.01, "the left one sits higher, the way its socket does (%.3f m)" % hi)
+
+
 func test_dismember_spawns_gib_and_hides_limb() -> void:
 	Settings.set_value(&"gore", Settings.Gore.BLOOD, false)
 	var c := spawn_critter(TEST_DEF, Vector3(0, 0.1, 0))
