@@ -604,13 +604,22 @@ func _act_three_movie() -> void:
 	print("WAKE_AT %d" % Engine.get_frames_drawn())
 	while mm.boss == null or mm.boss.state != Boss.State.FIGHTING:
 		await get_tree().process_frame
+	# out in the open while his intro plays (he'd be on top of you by its end,
+	# out of the shot), and the camera kept on him as he comes
+	p.place_at(d._ground_at(d.falls_pos + into * 34.0))
 	await _wait(2.5)
-	var at := mm.boss.get_chest_position() - p.get_eye_position()
-	_look_at(g, mm.boss.get_chest_position(), atan2(at.y, Vector2(at.x, at.z).length()) * 0.8)
-	await _wait(5.0)
+	var fight := 0.0
+	while fight < 5.0:
+		var at := mm.boss.get_chest_position() - p.get_eye_position()
+		_look_at(g, mm.boss.get_chest_position(), atan2(at.y, Vector2(at.x, at.z).length()) * 0.8)
+		await get_tree().physics_frame
+		fight += 1.0 / Engine.physics_ticks_per_second
 	print("KILL_AT %d" % Engine.get_frames_drawn())
-	mm.boss.take_damage(DamageInfo.make(1e9, DamageInfo.Kind.BULLET, p, &"carrot_sniper"))
+	var nibbles := mm.boss
+	nibbles.take_damage(DamageInfo.make(1e9, DamageInfo.Kind.BULLET, p, &"carrot_sniper"))
 	while d._outro == null:
+		if is_instance_valid(nibbles):   # (on him as he goes down)
+			_look_at(g, nibbles.global_position + Vector3.UP * 2.0, 0.05)
 		await get_tree().process_frame
 	print("OUTRO_AT %d" % Engine.get_frames_drawn())
 	while mm.phase != MatchManager.Phase.ENDED:
