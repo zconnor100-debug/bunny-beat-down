@@ -345,9 +345,13 @@ and the final shot replayed from three angles. There's a
   - Hit flinches and landing squash.
   - Explosion knockback, with corpses and gibs that react to blasts.
   - **Toys that come apart**: rockets knock holes in Block Castle's walls
-    (the blocks tumble, and whatever stood on them comes down too), and a
-    carrot sets off Domino Run, every domino knocking over the next. Falling
-    toys bowl over whoever's under them.
+    (the blocks tumble, and whatever stood on them comes down too), knock
+    the bottom out of Brick City's towers so they topple, blow the logs out
+    of the log cabins (the roof comes down once both its gable ends have
+    gone), knock the block forts' platforms, pillars and gates apart, and
+    send the loose letter blocks flying; a carrot sets off Domino Run, every
+    domino knocking over the next. Falling toys bowl over whoever's under
+    them.
 - **A club for every species**, three quarters of the critter's height. It
   comes out with empty paws, or any time on F / R3 (a gun in the paws is
   stowed for the swing and comes straight back). Each swing winds up over the

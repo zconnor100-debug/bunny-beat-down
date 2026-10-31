@@ -300,7 +300,22 @@ The third map follows the cage's pattern (`ToyBox extends Island`,
   come down after. Domino Run's dominoes are ToyBlocks that `tips`: a carrot
   knocks one over (Projectiles), and each one going over knocks over the next
   (its contact, with the speed it had just before, spin and all). A loose toy
-  coming down hard on a critter hurts it and knocks it down.
+  coming down hard on a critter hurts it and knocks it down. Brick City's
+  towers (a brick a course, in a refined brick model), the log cabins (every
+  log of every course, the gable ends and the roof slats), the block forts
+  and the loose letter blocks are built the same way (`ToyProps.piece`: a
+  ToyBlock drawn by CageKit's primitives into a kit of its own, so it looks
+  as it did merged), keeping the map's random draws in the order they always
+  were. What rests on what is a footprint overlap (separating axes), so long
+  blocks laid crossways stack; a log cabin's roof rests on both gable ends
+  (`under` set by hand), and comes down only when both have. A blast reaches
+  a block by how far it is from the block's surface. A brick tower's pile
+  `topples`: its bricks are 9 m wide, so ones knocked loose in the middle of
+  the stack only slide a little with it, and what was on them dropped back
+  onto them and stood. So a blast knocks out just the bricks right by it, and
+  everything resting on them is loosened at once, turning as one about the
+  near edge of the gap, back toward the blast (the way a tower falls when
+  its bottom's knocked out from under it).
 
 ## Characters, rivals and a director
 
@@ -762,7 +777,8 @@ looking. Three parts again:
 * a **full headless match** with 8 bots that must loot, fight and finish;
 * **physics tests**: knockdowns (what does and doesn't knock a critter down,
   getting up, staying down when beaten down) and toys that come apart (the
-  castle's blocks, the domino run, a block landing on a critter);
+  castle's blocks, a brick tower, a letter block, a block fort and a log
+  cabin, the domino run, a block landing on a critter);
 * **Kernel Hunt tests**: the quest line and its records, and the prologue
   and Acts I to III played through headless (waves held; carrots pulled,
   rings lit, Brutus woken and beaten; Wound rogues unwound, stations broken,

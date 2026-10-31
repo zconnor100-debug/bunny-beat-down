@@ -4,6 +4,9 @@ extends RefCounted
 ## CageKit primitives (one merged mesh per toy, every visible piece solid
 ## unless it says otherwise). Each stands on its origin, front toward +Z.
 ## Critter scale: a Bun is ~2.6 m, the dollhouse three storeys of 8.5 m.
+## Some are built of pieces that blasts can knock apart (ToyBlock, in a
+## BlockPile): Block Castle, Brick City's towers, the loose letter blocks,
+## the block forts and the log cabins.
 
 const CREW := [&"red", &"blue", &"yellow", &"lime", &"purple", &"orange", &"teal", &"pink"]
 
@@ -28,6 +31,26 @@ static func env(id: String) -> String:
 
 static func made(name: String) -> String:
 	return CageProps.made(name)
+
+
+## A piece of a toy that can come apart (ToyBlock), `size` (its box) and
+## drawn by `draw` (CageKit's primitives, into a kit of its own: the same
+## look as the rest of the toy) round its middle at its origin.
+static func piece(name_: String, size: Vector3, draw: Callable) -> ToyBlock:
+	var b := ToyBlock.new(size)
+	b.name = name_
+	b.set_meta(&"piece", name_)   # (what it is: a sibling of the same name is renamed)
+	var k := CageKit.blank(name_, _piece_rng)
+	draw.call(k)
+	k._commit()
+	var mesh := k.get_node("Mesh") as MeshInstance3D
+	k.remove_child(mesh)
+	k.free()
+	b.dress(mesh)
+	return b
+
+
+static var _piece_rng := RandomNumberGenerator.new()   # (a piece's draws never touch the map's)
 
 
 ## Dollhouse Manor: three storeys and an attic under a pink roof, open at the
@@ -213,21 +236,62 @@ static func baseplate(rng: RandomNumberGenerator) -> CageKit:
 	return plate.made_as("toy/baseplate").finish()
 
 
-## A tower of stacked plastic bricks, each course a different colour, studs on top.
+## A tower of stacked plastic bricks, each course a different colour, studs
+## on top: each course a brick of its own (`brick`), so a blast can knock the
+## tower down (BlockPile), what's above coming down after.
 static func brick_tower(rng: RandomNumberGenerator) -> CageKit:
 	var k := CageKit.blank("BrickTower", rng, &"wood")
 	var s := rng.randf_range(7.0, 9.0)
 	var courses := rng.randi_range(4, 8)
 	if CageKit.exporting:
 		s = TOWER_S
+	var pile := BlockPile.new()
+	pile.reach = s + courses * 3.0
+	pile.topples = true
 	for i in courses:
 		var b := Basis(Vector3.UP, rng.randf_range(-0.08, 0.08))
-		k._box(k.accent("accent%d" % i, StringName("plastic_" + String(_c(rng)))), Vector3(0, i * 3.0 + 1.5, 0), Vector3(s, 3.0, s * 0.62), b)
+		var colour := k.accent("accent%d" % i, StringName("plastic_" + String(_c(rng))))
+		if CageKit.exporting:
+			k._box(colour, Vector3(0, i * 3.0 + 1.5, 0), Vector3(s, 3.0, s * 0.62), b)
+			continue
+		var piece_ := brick(s, colour)
+		piece_.position = Vector3(0, i * 3.0 + 1.5, 0)
+		piece_.basis = b
+		k.add_child(piece_)
+		pile.blocks.append(piece_)
+	k.footprint = s * 0.7
+	if not CageKit.exporting:
+		k.add_child(pile)
+		return k.finish()
 	for x in range(-1, 2):
 		for z in range(-1, 1):
 			k._lathe(&"plastic_white", [Vector2(0.9, 0.0), Vector2(0.9, 0.6), Vector2(0.0, 0.6)], 10, Vector3(x * s * 0.33, courses * 3.0, (z + 0.5) * s * 0.3), false)
-	k.footprint = s * 0.7
 	return k.made_as("toy/brick_tower_%d" % courses, Transform3D(Basis.from_scale(Vector3(s / TOWER_S, 1.0, s / TOWER_S)), Vector3.ZERO)).finish()
+
+
+## One plastic brick `s` across in `colour`, studs on top, as a piece of its
+## own (ToyBlock: its middle at its origin), in the refined brick's model
+## (made at TOWER_S across) or, without it, the procedural one.
+static func brick(s: float, colour: StringName) -> ToyBlock:
+	var size := Vector3(s, 3.0, s * 0.62)
+	var m := CageKit.model(made("toy/brick"), {"accent": colour})
+	if m == null:
+		return piece("Brick", size, func(k: CageKit) -> void: brick_shape(k, s, colour, Vector3.DOWN * 1.5))
+	var b := ToyBlock.new(size)
+	b.name = "Brick"
+	b.set_meta(&"piece", "Brick")
+	m.transform = Transform3D(Basis.from_scale(Vector3(s / TOWER_S, 1.0, s / TOWER_S)), Vector3.DOWN * 1.5)
+	b.dress(m)
+	return b
+
+
+## A brick drawn into `k`, standing on `at`: its body, and six studs on top.
+static func brick_shape(k: CageKit, s: float, colour: StringName, at := Vector3.ZERO) -> void:
+	k._box(colour, at + Vector3(0, 1.5, 0), Vector3(s, 3.0, s * 0.62), Basis(), false)
+	for x in range(-1, 2):
+		for z in range(-1, 1):
+			k._lathe(&"plastic_white", [Vector2(0.9, 0.0), Vector2(0.9, 0.6), Vector2(0.0, 0.6)], 10,
+				at + Vector3(x * s * 0.33, 3.0, (z + 0.5) * s * 0.3), false)
 
 
 ## Pillow Fort: two chairs back to back with a gingham blanket draped over
@@ -599,19 +663,25 @@ static func paper_plane(rng: RandomNumberGenerator) -> Node3D:
 	return k.dress(env("toy_paper_plane"), Transform3D(Basis(), Vector3(0, -3.0, -2.0)), {"material_0": "paper"}).finish()
 
 
-## One loose alphabet block (cover), sometimes with a second stacked on it.
+## One loose alphabet block (cover), sometimes with a second stacked on it:
+## each a piece of its own (letter_piece) a blast can send flying (BlockPile).
 static func letter_block(rng: RandomNumberGenerator, size := 4.0) -> CageKit:
 	var k := CageKit.blank("LetterBlock", rng)
 	var cells := func() -> Array: return [rng.randi() % 16, rng.randi() % 16, rng.randi() % 16, rng.randi() % 16, rng.randi() % 16, rng.randi() % 16]
+	var pile := BlockPile.new()
+	pile.reach = size * 1.5
 	# each block is one of the lettered block models, picked by the letters drawn
 	var block := func(at: Vector3, basis: Basis, c: Array) -> void:
-		k._letter_box(at, size, basis, c)
-		var v: int = (c[0] + c[1] + c[2]) % LETTER_VARIANTS
-		k.dress(made("toy/letter_block_%d" % v), Transform3D(basis * Basis.from_scale(Vector3.ONE * size), at - Vector3.UP * size * 0.5))
+		var b := letter_piece(size, c)
+		b.position = at
+		b.basis = basis
+		k.add_child(b)
+		pile.blocks.append(b)
 	block.call(Vector3(0, size * 0.5, 0), Basis(Vector3.UP, rng.randf() * TAU), cells.call())
 	if rng.randf() < 0.3:
 		var at := Vector3(rng.randf_range(-0.6, 0.6), size * 1.5, rng.randf_range(-0.6, 0.6))
 		block.call(at, Basis(Vector3.UP, rng.randf() * TAU), cells.call())
+	k.add_child(pile)
 	return k.finish()
 
 
@@ -789,14 +859,26 @@ static func _sock_mesh(id: String) -> Mesh:
 static func block_fort(rng: RandomNumberGenerator) -> CageKit:
 	var k := CageKit.blank("BlockFort", rng, &"wood")
 	var u := UNIT
+	# every block a piece of its own (ToyBlock) blasts can knock loose
+	# (BlockPile), what rested on it coming down after; the ramps stay put
+	var pile := BlockPile.new()
+	var part := func(mat: StringName, c: Vector3, size: Vector3, basis: Basis) -> void:
+		if CageKit.exporting:
+			k._box(mat, c, size, basis)
+			return
+		var b := piece("FortBlock", size, func(pk: CageKit) -> void: pk._box(mat, Vector3.ZERO, size, Basis(), false))
+		b.position = c
+		b.basis = basis
+		k.add_child(b)
+		pile.blocks.append(b)
 	var paint := func() -> StringName: return StringName("paint_" + String([&"red", &"blue", &"yellow", &"lime"][rng.randi() % 4]))
 	var half := u * 4.0           # the platform: 16 m square, 4 m high
 	# two courses of long blocks, crossing
 	for i in 4:
 		var z := -half + u + i * u * 2.0
-		k._box(&"maple", Vector3(0, u * 0.5, z), Vector3(half * 2.0, u, u * 2.0))
+		part.call(&"maple", Vector3(0, u * 0.5, z), Vector3(half * 2.0, u, u * 2.0), Basis())
 		var x := -half + u + i * u * 2.0
-		k._box(&"maple", Vector3(x, u * 1.5, 0), Vector3(u * 2.0, u, half * 2.0))
+		part.call(&"maple", Vector3(x, u * 1.5, 0), Vector3(u * 2.0, u, half * 2.0), Basis())
 	# ramp blocks: up the +X side and the +Z side
 	var ramp_a: StringName = paint.call()
 	k._prism(ramp_a, [Vector2(half, 0.0), Vector2(half + u * 4.0, 0.0), Vector2(half, u * 2.0)], u * 1.5, u * 2.0)
@@ -805,31 +887,48 @@ static func block_fort(rng: RandomNumberGenerator) -> CageKit:
 	var top := u * 4.0
 	for i in 2:
 		var z := -half + u + i * u * 2.0
-		k._box(&"maple", Vector3(-half * 0.5, u * 2.5, z), Vector3(half, u, u * 2.0))
+		part.call(&"maple", Vector3(-half * 0.5, u * 2.5, z), Vector3(half, u, u * 2.0), Basis())
 		var x := -half + u + i * u * 2.0
-		k._box(&"maple", Vector3(x, u * 3.5, -half * 0.5), Vector3(u * 2.0, u, half))
+		part.call(&"maple", Vector3(x, u * 3.5, -half * 0.5), Vector3(u * 2.0, u, half), Basis())
 	k._prism(paint.call(), [Vector2(u * 4.0, u * 2.0), Vector2(0.0, u * 2.0), Vector2(0.0, top)], -half + u, u * 2.0, true)
 	# a parapet of cubes along the tower's outer edges, with gaps to shoot through
 	for c in [Vector2(-half + u * 0.5, -half + u * 0.5), Vector2(-half + u * 0.5, -half + u * 2.5), Vector2(-half + u * 2.5, -half + u * 0.5)]:
-		k._box(paint.call(), Vector3(c.x, top + u * 0.5, c.y), Vector3.ONE * u)
+		part.call(paint.call(), Vector3(c.x, top + u * 0.5, c.y), Vector3.ONE * u, Basis())
 	# pillar blocks on the platform's +X corners, a long block across them
 	for zs in [-1.0, 1.0]:
 		var c := Vector3(half - u * 0.5, u * 2.0, zs * (half - u * 0.5))
-		k._rod(&"maple", c, c + Vector3.UP * u * 4.0, u * 0.5)
-	k._box(&"maple", Vector3(half - u * 0.5, u * 6.0 + u * 0.25, 0), Vector3(u, u * 0.5, half * 2.0 + u))
+		if CageKit.exporting:
+			k._rod(&"maple", c, c + Vector3.UP * u * 4.0, u * 0.5)
+			continue
+		var pillar := piece("FortPillar", Vector3(u, u * 4.0, u), func(pk: CageKit) -> void:
+			pk._rod(&"maple", Vector3.DOWN * u * 2.0, Vector3.UP * u * 2.0, u * 0.5, false))
+		pillar.position = c + Vector3.UP * u * 2.0
+		k.add_child(pillar)
+		pile.blocks.append(pillar)
+	part.call(&"maple", Vector3(half - u * 0.5, u * 6.0 + u * 0.25, 0), Vector3(u, u * 0.5, half * 2.0 + u), Basis())
 	# the arch gate out in front (-X): two legs and an arch block, a bunny's height under it
 	var gate := Vector3(-half - u * 6.0, 0, half * 0.25)
 	for zs in [-1.0, 1.0]:
-		k._box(&"maple", gate + Vector3(0, u, zs * u * 1.5), Vector3(u * 2.0, u * 2.0, u))
-	k._box(&"maple", gate + Vector3(0, u * 2.0 + u * 0.4, 0), Vector3(u * 2.0, u * 0.8, u * 4.0))
-	for i in 6:
-		var a0 := PI * i / 6.0
-		var a1 := PI * (i + 1) / 6.0
-		var rr := u * 1.0
-		var p0 := gate + Vector3(0, u * 2.0 - 0.02 - rr * (1.0 - sin(a0)) * 0.6, cos(a0) * rr)
-		var p1 := gate + Vector3(0, u * 2.0 - 0.02 - rr * (1.0 - sin(a1)) * 0.6, cos(a1) * rr)
-		k._box(&"maple", (p0 + p1) * 0.5 + Vector3.DOWN * 0.15, Vector3(u * 2.0, 0.3, p0.distance_to(p1) + 0.1),
-			Basis(Vector3.RIGHT, atan2(p1.y - p0.y, p1.z - p0.z)), false)
+		part.call(&"maple", gate + Vector3(0, u, zs * u * 1.5), Vector3(u * 2.0, u * 2.0, u), Basis())
+	# the arch block, and the arch's curve drawn under it (it comes away with it)
+	var arch_at := gate + Vector3(0, u * 2.0 + u * 0.4, 0)
+	var arch := func(dk: CageKit, off: Vector3) -> void:
+		dk._box(&"maple", off, Vector3(u * 2.0, u * 0.8, u * 4.0), Basis(), CageKit.exporting)
+		for i in 6:
+			var a0 := PI * i / 6.0
+			var a1 := PI * (i + 1) / 6.0
+			var rr := u * 1.0
+			var p0 := gate + Vector3(0, u * 2.0 - 0.02 - rr * (1.0 - sin(a0)) * 0.6, cos(a0) * rr) - arch_at + off
+			var p1 := gate + Vector3(0, u * 2.0 - 0.02 - rr * (1.0 - sin(a1)) * 0.6, cos(a1) * rr) - arch_at + off
+			dk._box(&"maple", (p0 + p1) * 0.5 + Vector3.DOWN * 0.15, Vector3(u * 2.0, 0.3, p0.distance_to(p1) + 0.1),
+				Basis(Vector3.RIGHT, atan2(p1.y - p0.y, p1.z - p0.z)), false)
+	if CageKit.exporting:
+		arch.call(k, arch_at)
+	else:
+		var block := piece("FortArch", Vector3(u * 2.0, u * 0.8, u * 4.0), func(pk: CageKit) -> void: arch.call(pk, Vector3.ZERO))
+		block.position = arch_at
+		k.add_child(block)
+		pile.blocks.append(block)
 	# tumbled blocks lying round about
 	for i in rng.randi_range(4, 6):
 		var a := rng.randf() * TAU
@@ -842,10 +941,13 @@ static func block_fort(rng: RandomNumberGenerator) -> CageKit:
 		var mat: StringName = &"maple" if rng.randf() < 0.65 else paint.call()
 		if rng.randf() < 0.35:
 			size = Vector3(size.x, size.z, size.y)   # (stood on its long edge)
-		k._box(mat, at + Vector3.UP * size.y * 0.5, size, Basis(Vector3.UP, rng.randf() * TAU))
+		part.call(mat, at + Vector3.UP * size.y * 0.5, size, Basis(Vector3.UP, rng.randf() * TAU))
 	k.footprint = half + u * 8.0
 	k.floor_y = u * 2.0
 	k.loot_spots = [Vector3(half * 0.5, u * 2.0, half * 0.4), Vector3(-half * 0.5, top, -half * 0.5)]
+	if not CageKit.exporting:
+		pile.reach = half + u * 8.0
+		k.add_child(pile)
 	return k.finish()
 
 
@@ -853,6 +955,9 @@ static func block_fort(rng: RandomNumberGenerator) -> CageKit:
 ## log above or below the next wall's, so they cross at the corners), a
 ## doorway and windows, gable ends and a green slatted roof; a pile of
 ## spare logs and a few loose roof slats beside it. Walk in for its loot.
+## Every log, gable end and roof slat is a piece of its own blasts can knock
+## loose (BlockPile): what rested on it comes down after (the roof when both
+## gable ends have gone).
 static func log_cabin(rng: RandomNumberGenerator) -> CageKit:
 	var k := CageKit.blank("LogCabin", rng, &"wood")
 	var w := rng.randf_range(13.0, 15.0)
@@ -861,15 +966,36 @@ static func log_cabin(rng: RandomNumberGenerator) -> CageKit:
 	var wall_h := r * 2.0 * 4.0 + r
 	var door := [0.0, 3.6, 0.0, 4.6]
 	var window := [0.0, 2.6, 2.0, 4.4]
-	k._log_wall(Vector3(-w * 0.5, 0, d * 0.5), Vector3(w * 0.5, 0, d * 0.5), wall_h, r, [door], 0.0, &"lincoln")
-	k._log_wall(Vector3(-w * 0.5, 0, -d * 0.5), Vector3(w * 0.5, 0, -d * 0.5), wall_h, r, [window], 0.0, &"lincoln")
+	var pile_ := BlockPile.new()
+	var walls := [[Vector3(-w * 0.5, 0, d * 0.5), Vector3(w * 0.5, 0, d * 0.5), [door], 0.0],
+		[Vector3(-w * 0.5, 0, -d * 0.5), Vector3(w * 0.5, 0, -d * 0.5), [window], 0.0]]
 	for xs in [-1.0, 1.0]:
-		k._log_wall(Vector3(xs * w * 0.5, 0, -d * 0.5), Vector3(xs * w * 0.5, 0, d * 0.5), wall_h, r, [window], r, &"lincoln")
+		walls.append([Vector3(xs * w * 0.5, 0, -d * 0.5), Vector3(xs * w * 0.5, 0, d * 0.5), [window], r])
+	var tops := {}   # wall index -> its top course's logs (what the gable ends rest on)
+	var logs: Array[ToyBlock] = []
+	for wi in walls.size():
+		var wall: Array = walls[wi]
+		if CageKit.exporting:
+			k._log_wall(wall[0], wall[1], wall_h, r, wall[2], wall[3], &"lincoln")
+		else:
+			tops[wi] = _log_wall_pieces(k, logs, wall[0], wall[1], wall_h, r, wall[2], wall[3], &"lincoln")
 	# gable ends of shorter and shorter logs, and the green slat roof (ridge along X)
 	var eave := wall_h + r * 0.5
 	var ridge := eave + d * 0.32
+	var gables: Array[ToyBlock] = []
 	for xs in [-1.0, 1.0]:
-		k._gable_end(&"lincoln", d, eave - 0.2, ridge - 0.2, xs * w * 0.5, r * 1.6)
+		if CageKit.exporting:
+			k._gable_end(&"lincoln", d, eave - 0.2, ridge - 0.2, xs * w * 0.5, r * 1.6)
+			continue
+		var base := eave - 0.2
+		var h := ridge - 0.2 - base
+		var cy := base + h * 0.25
+		var gable := piece("Gable", Vector3(r * 1.6, h * 0.5, d * 0.7), func(pk: CageKit) -> void:
+			pk._prism(&"lincoln", [Vector2(-d * 0.5, base - cy), Vector2(0.0, base + h - cy), Vector2(d * 0.5, base - cy)], 0.0, r * 1.6, true))
+		gable.position = Vector3(xs * w * 0.5, cy, 0)
+		k.add_child(gable)
+		gables.append(gable)
+	var slats: Array[ToyBlock] = []
 	for zs in [-1.0, 1.0]:
 		for i in 5:
 			var t0 := float(i) / 5.0
@@ -877,8 +1003,16 @@ static func log_cabin(rng: RandomNumberGenerator) -> CageKit:
 			var p0 := Vector3(0, lerpf(eave - 0.4, ridge, t0), zs * lerpf(d * 0.5 + 1.2, 0.0, t0))
 			var p1 := Vector3(0, lerpf(eave - 0.4, ridge, t1), zs * lerpf(d * 0.5 + 1.2, 0.0, t1))
 			var ang := atan2(p1.y - p0.y, absf(p1.z - p0.z))
-			k._box(&"lincoln_green", (p0 + p1) * 0.5 + Vector3.UP * 0.2, Vector3(w + 2.6, 0.32, p0.distance_to(p1) + 0.12),
-				Basis(Vector3.RIGHT, zs * ang))
+			var at := (p0 + p1) * 0.5 + Vector3.UP * 0.2
+			var size := Vector3(w + 2.6, 0.32, p0.distance_to(p1) + 0.12)
+			if CageKit.exporting:
+				k._box(&"lincoln_green", at, size, Basis(Vector3.RIGHT, zs * ang))
+				continue
+			var slat := piece("RoofSlat", size, func(pk: CageKit) -> void: pk._box(&"lincoln_green", Vector3.ZERO, size, Basis(), false))
+			slat.position = at
+			slat.basis = Basis(Vector3.RIGHT, zs * ang)
+			k.add_child(slat)
+			slats.append(slat)
 	# a pile of spare logs (three, two, one) and loose roof slats
 	var pile := Vector3(w * 0.5 + 4.2, 0, rng.randf_range(-1.0, 1.0))
 	var length := rng.randf_range(7.0, 9.0)
@@ -886,14 +1020,90 @@ static func log_cabin(rng: RandomNumberGenerator) -> CageKit:
 		for i in 3 - row:
 			var x := (i - (2 - row) * 0.5) * r * 2.05
 			var y := r + row * r * 1.75
-			k._log(&"lincoln", pile + Vector3(x, y, -length * 0.5), pile + Vector3(x, y, length * 0.5), r)
+			if CageKit.exporting:
+				k._log(&"lincoln", pile + Vector3(x, y, -length * 0.5), pile + Vector3(x, y, length * 0.5), r)
+				continue
+			var spare := piece("Log", Vector3(r * 2.0, r * 2.0, length - 0.4), func(pk: CageKit) -> void:
+				pk._log(&"lincoln", Vector3(0, 0, -length * 0.5), Vector3(0, 0, length * 0.5), r, false))
+			spare.position = pile + Vector3(x, y, 0)
+			k.add_child(spare)
+			logs.append(spare)
 	for i in rng.randi_range(2, 3):
 		var at := Vector3(rng.randf_range(-w * 0.5, w * 0.5), 0.16, -d * 0.5 - rng.randf_range(3.0, 5.0))
 		k._box(&"lincoln_green", at, Vector3(rng.randf_range(4.0, 6.0), 0.32, 1.4), Basis(Vector3.UP, rng.randf_range(-0.6, 0.6)), false)
 	k.footprint = w * 0.5 + 7.0
 	k.floor_y = 0.0
 	k.loot_spots = [Vector3(-w * 0.25, 0, -d * 0.2), Vector3(w * 0.25, 0, 0.0)]
+	if not CageKit.exporting:
+		# the logs on each other by height; each gable end on its side wall's top
+		# logs; the roof on both gable ends (it comes down once both have)
+		ToyBlock.stack(logs)
+		for gi in gables.size():
+			for top in tops.get(2 + gi, []):
+				gables[gi].under.append(top)
+				(top as ToyBlock).above.append(gables[gi])
+		for slat in slats:
+			for g in gables:
+				slat.under.append(g)
+				g.above.append(slat)
+		pile_.blocks.append_array(logs)
+		pile_.blocks.append_array(gables)
+		pile_.blocks.append_array(slats)
+		pile_.reach = w * 0.5 + 8.0
+		pile_.stack_first = false
+		k.add_child(pile_)
 	return k.finish()
+
+
+## A log wall from `a` to `b` as pieces (ToyBlock: each log of each course, in
+## its spans between the doorways and windows), into `logs`, drawn as
+## Building's _log_wall draws it (the same draws from the kit's rng, in the
+## same order). Returns its top course's logs.
+static func _log_wall_pieces(k: CageKit, logs: Array[ToyBlock], a: Vector3, b: Vector3, height: float, r: float, openings: Array,
+		offset: float, mat: StringName) -> Array:
+	var along := b - a
+	var length := along.length()
+	var dir := along / length
+	var basis := Basis(dir, Vector3.UP, dir.cross(Vector3.UP))
+	var mid := (a + b) * 0.5
+	var rows := int(height / (r * 2.0))
+	var top := []
+	for i in rows:
+		var y := r + i * r * 2.0 + offset
+		if y + r > height + 0.01:
+			break
+		var spans := [[-length * 0.5 - 0.6, length * 0.5 + 0.6]]
+		for o in openings:
+			if y + r > float(o[2]) and y - r < float(o[3]):
+				var next := []
+				for sp in spans:
+					var lo := float(o[0]) - float(o[1]) * 0.5
+					var hi := float(o[0]) + float(o[1]) * 0.5
+					if lo > sp[0]:
+						next.append([sp[0], minf(lo, sp[1])])
+					if hi < sp[1]:
+						next.append([maxf(hi, sp[0]), sp[1]])
+				spans = next
+		var course := []
+		for sp in spans:
+			if sp[1] - sp[0] <= 0.2:
+				continue
+			var rr: float = r * (0.92 + k._rng.randf() * 0.12)
+			var span: float = sp[1] - sp[0]
+			# its box stops short of an end that crosses the next wall at a corner
+			# (the two would start inside each other, and fly apart when loosed)
+			var lo: float = float(sp[0]) + (0.7 if float(sp[0]) < -length * 0.5 else 0.0)
+			var hi: float = float(sp[1]) - (0.7 if float(sp[1]) > length * 0.5 else 0.0)
+			var log_ := piece("Log", Vector3(maxf(hi - lo, 0.4), rr * 2.0, rr * 2.0), func(pk: CageKit) -> void:
+				pk._log(mat, Vector3(float(sp[0]) - (lo + hi) * 0.5, 0, 0), Vector3(float(sp[1]) - (lo + hi) * 0.5, 0, 0), rr, false))
+			log_.position = mid + dir * (lo + hi) * 0.5 + Vector3.UP * y
+			log_.basis = basis
+			k.add_child(log_)
+			logs.append(log_)
+			course.append(log_)
+		if not course.is_empty():
+			top = course
+	return top
 
 
 ## A big, well-loved stuffed animal flopped on the floor (soft cover), one

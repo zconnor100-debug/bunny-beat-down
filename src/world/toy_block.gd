@@ -41,8 +41,9 @@ func dress(visual: Node3D) -> void:
 
 
 ## Knocked loose: a body of its own from here on, given `impulse` at `at`
-## (world). Whatever rested on it alone follows a moment later.
-func loosen(impulse := Vector3.ZERO, at := Vector3.INF) -> RigidBody3D:
+## (world), turning at `spin` (rad/s; left out, a tumble of its own).
+## Whatever rested on it alone follows a moment later.
+func loosen(impulse := Vector3.ZERO, at := Vector3.INF, spin := Vector3.INF) -> RigidBody3D:
 	if loose or not is_inside_tree():
 		return null
 	loose = true
@@ -51,7 +52,7 @@ func loosen(impulse := Vector3.ZERO, at := Vector3.INF) -> RigidBody3D:
 	body.reach = size.length() * 0.5
 	body.collision_layer = Layers.WORLD | Layers.DEBRIS
 	body.collision_mask = Layers.WORLD | Layers.DEBRIS | Layers.CRITTERS
-	body.mass = maxf(size.x * size.y * size.z * DENSITY, 0.5)
+	body.mass = mass()
 	body.physics_material_override = _bouncy()
 	body.contact_monitor = true
 	body.max_contacts_reported = 4
@@ -64,7 +65,9 @@ func loosen(impulse := Vector3.ZERO, at := Vector3.INF) -> RigidBody3D:
 		_visual.reparent(body, false)
 	if impulse != Vector3.ZERO:
 		body.apply_impulse(impulse, (at if at != Vector3.INF else global_position) - global_position)
-	if not tips:   # (a domino goes straight over, into the next)
+	if spin != Vector3.INF:
+		body.angular_velocity = spin
+	elif not tips:   # (a domino goes straight over, into the next)
 		body.angular_velocity = Vector3(randf_range(-1, 1), randf_range(-1, 1), randf_range(-1, 1)) * impulse.length() * 0.02
 	for b in under:
 		b.above.erase(self)
@@ -75,6 +78,17 @@ func loosen(impulse := Vector3.ZERO, at := Vector3.INF) -> RigidBody3D:
 	above.clear()
 	queue_free()
 	return body
+
+
+func mass() -> float:
+	return maxf(size.x * size.y * size.z * DENSITY, 0.5)
+
+
+## How far `p` (world) is from its surface (0 inside it).
+func surface_distance(p: Vector3) -> float:
+	var l := global_transform.affine_inverse() * p
+	var h := size * 0.5
+	return Vector3(maxf(absf(l.x) - h.x, 0.0), maxf(absf(l.y) - h.y, 0.0), maxf(absf(l.z) - h.z, 0.0)).length()
 
 
 static var _bounce: PhysicsMaterial
@@ -89,20 +103,36 @@ static func _bouncy() -> PhysicsMaterial:
 
 
 ## Blocks in `blocks` (all under one parent) resting on each other: B rests
-## on A when B's bottom is at A's top and they overlap across (the castle's
-## walls, its towers).
+## on A when B's bottom is at A's top and their footprints overlap (the
+## castle's walls and towers, a brick tower's courses, a log cabin's logs, a
+## fort's long blocks laid crossways).
 static func stack(blocks: Array[ToyBlock]) -> void:
 	for a in blocks:
 		for b in blocks:
 			if a == b:
 				continue
-			var at := a.position
-			var bt := b.position
-			var gap := (bt.y - b.size.y * 0.5) - (at.y + a.size.y * 0.5)
-			var across := Vector2(bt.x - at.x, bt.z - at.z).length()
-			if absf(gap) < 0.3 and across < (a.size.x + b.size.x) * 0.5 * 0.95:
+			var gap := (b.position.y - b.size.y * 0.5) - (a.position.y + a.size.y * 0.5)
+			if absf(gap) < 0.3 and _footprints_overlap(a, b):
 				b.under.append(a)
 				a.above.append(b)
+
+
+## Whether two blocks' footprints (turned rectangles on the floor) overlap,
+## by more than a sliver (separating axes: theirs).
+static func _footprints_overlap(a: ToyBlock, b: ToyBlock) -> bool:
+	var ax := [_flat_axis(a.basis.x), _flat_axis(a.basis.z), _flat_axis(b.basis.x), _flat_axis(b.basis.z)]
+	var d := Vector2(b.position.x - a.position.x, b.position.z - a.position.z)
+	for n: Vector2 in ax:
+		var ra := absf(n.dot(_flat_axis(a.basis.x))) * a.size.x * 0.5 + absf(n.dot(_flat_axis(a.basis.z))) * a.size.z * 0.5
+		var rb := absf(n.dot(_flat_axis(b.basis.x))) * b.size.x * 0.5 + absf(n.dot(_flat_axis(b.basis.z))) * b.size.z * 0.5
+		if absf(d.dot(n)) > (ra + rb) * 0.9:
+			return false
+	return true
+
+
+static func _flat_axis(v: Vector3) -> Vector2:
+	var f := Vector2(v.x, v.z)
+	return f.normalized() if f.length() > 1e-4 else Vector2.RIGHT
 
 
 ## A block knocked loose: what it does when it runs into things (another

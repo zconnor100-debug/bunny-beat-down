@@ -317,4 +317,37 @@ func _run() -> void:
 			Engine.time_scale = 1.0
 			await _wait(0.6)
 		print("scene toys")
+
+	# --- more toys coming apart: a brick tower, a log cabin and a block fort,
+	# a rocket into each (their pieces: ToyProps, BlockPile)
+	if _wants("toys_more"):
+		var rng := RandomNumberGenerator.new()
+		var spots := {"tower": Vector3(-46.0, 0.0, -150.0), "cabin": Vector3(0.0, 0.0, -150.0), "fort": Vector3(52.0, 0.0, -150.0)}
+		var made := {"tower": [21, ToyProps.brick_tower], "cabin": [7, ToyProps.log_cabin], "fort": [11, ToyProps.block_fort]}
+		for id: String in made:
+			rng.seed = made[id][0]
+			var toy: Node3D = made[id][1].call(rng)
+			add_child(toy)
+			toy.global_position = spots[id]
+		await _wait(0.8)
+		cam.global_position = Vector3(0.0, 30.0, -150.0 + 95.0)
+		cam.look_at(Vector3(0.0, 4.0, -150.0), Vector3.UP)
+		await _wait(0.2)
+		get_viewport().get_texture().get_image().save_png(out_dir.path_join("toys_more_all.png"))
+		# [which, where the rocket goes off, the camera, what it looks at] (from the toy's middle)
+		for shot in [["tower", Vector3(5.5, 1.5, 0.0), Vector3(14.0, 12.0, 34.0), Vector3(0.0, 8.0, 0.0)],
+				["cabin", Vector3(-9.0, 3.0, 2.0), Vector3(-16.0, 10.0, 26.0), Vector3(0.0, 3.0, 0.0)],
+				["fort", Vector3(9.5, 8.0, 0.0), Vector3(30.0, 16.0, 30.0), Vector3(0.0, 4.0, 0.0)]]:
+			var at: Vector3 = spots[shot[0]]
+			Explosion.detonate(get_tree(), at + shot[1], WeaponInstance.new(WeaponDB.get_weapon(&"carrot_rocket_launcher")), null)
+			for k in 8:
+				Engine.time_scale = 0.0
+				await get_tree().process_frame
+				cam.global_position = at + shot[2]
+				cam.look_at(at + shot[3], Vector3.UP)
+				await get_tree().process_frame
+				get_viewport().get_texture().get_image().save_png(out_dir.path_join("toys_more_%s_%02d.png" % [shot[0], k]))
+				Engine.time_scale = 1.0
+				await _wait(0.3)
+		print("scene toys_more")
 	get_tree().quit()

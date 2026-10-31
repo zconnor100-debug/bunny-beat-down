@@ -105,6 +105,11 @@ func specs() -> Array:
 	for n in range(4, 9):
 		var s := _tower_seed(n)
 		out.append(["toy/brick_tower_%d" % n, func(): return ToyProps.brick_tower(_rng(s))])
+	# one course of a brick tower, on its own (each course is a piece that can come loose)
+	out.append(["toy/brick", func():
+		var k := CageKit.blank("Brick", _rng(1))
+		ToyProps.brick_shape(k, ToyProps.TOWER_S, k.accent("accent", &"plastic_red"))
+		return k.finish()])
 	for h in CageGym.LOOKOUT_HEIGHTS:
 		for canopy in [false, true]:
 			var s := _coin(canopy)
