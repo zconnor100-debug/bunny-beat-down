@@ -32,13 +32,13 @@ const DROP_FROM := 30.0             ## how high she lets go of what she's caught
 const RAKE_LEN := 80.0
 const RAKE_W := 10.0
 const HOOT_R := 34.0
-const FEATHER_R := 3.6
+const FEATHER_R := 5.0
 const PERCH_R := 18.0               ## her wingbeats as she lands or takes off: everyone this near is blown back
 const PERCH_FOR := 5.5              ## seconds she rests when she perches
 const REST := 2.4                   ## seconds' cruising between two of her moves
 const GROUND_AT := 7.0              ## hits on her wings in one dive that bring her down (yours count 1, a bot's 0.15)
 const GROUNDED_FOR := 5.5
-const LET_GO_AT := 6.0              ## hits while she's carrying someone that make her let go
+const LET_GO_AT := 9.0              ## hits while she's carrying someone that make her let go (yours count 1, a bot's 0.15)
 const STRUGGLES := 4                ## jumps that wriggle you free of her talons
 const WINGS := [&"l_upper_arm", &"l_lower_arm", &"l_hand", &"r_upper_arm", &"r_lower_arm", &"r_hand"]
 
@@ -326,16 +326,21 @@ func _snatch(t: Critter) -> BossAction:
 	var dive := 1.3
 	var climb := 2.4
 	var a := BossAction.new(&"snatch", line_up + dive + climb)
-	var spot := t.global_position + Vector3(t.velocity.x, 0.0, t.velocity.z) * 0.6
-	spot.y = _surface_y(spot)
+	# where she'll strike: her prey, followed while she lines up (shared by the
+	# action's lambdas), then fixed, and the ring shown, as she dives
+	var aim := {"spot": _snatch_spot(t)}
 	var start := Vector3.INF
 	var away := Vector3.ZERO
 	a.on(0.0, func():
-		warn(spot, SNATCH_R, line_up + dive)
 		_dive_start()
 		Audio.play_at(&"owl_screech", get_eye_position(), 8.0, 0.05, {"max_distance": 700.0, "unit_size": 50.0}))
+	a.on(line_up, func(): warn(aim.spot, SNATCH_R, dive))
 	a.tick = func(time: float, delta: float):
+		var spot: Vector3 = aim.spot
 		if time < line_up:   # up over it, banking round to where the dive starts
+			if is_instance_valid(t) and t.alive:
+				aim.spot = _snatch_spot(t)
+				spot = aim.spot
 			var from_it := Vector3(global_position.x - spot.x, 0.0, global_position.z - spot.z)
 			var over := spot + (from_it.normalized() if from_it.length() > 1.0 else -forward()) * 34.0
 			over.y = spot.y + CRUISE + 6.0
@@ -368,12 +373,20 @@ func _snatch(t: Critter) -> BossAction:
 		goal.y = spot.y + DROP_FROM + 6.0
 		_steer(goal, CRUISE_SPEED, delta, 1.2)
 		_carry()
-	a.on(line_up + dive, func(): _strike(spot))
+	a.on(line_up + dive, func(): _strike(aim.spot))
 	a.on(line_up + dive + climb - 0.05, func(): _let_go())
 	a.data["cancel"] = func():
 		_let_go()
 		_dive_end()
 	return a
+
+
+## Where a snatch at `t` comes down: just ahead of it, on the ground (or the
+## water).
+func _snatch_spot(t: Critter) -> Vector3:
+	var spot := t.global_position + Vector3(t.velocity.x, 0.0, t.velocity.z) * 0.6
+	spot.y = _surface_y(spot)
+	return spot
 
 
 ## At the bottom of the dive: whoever's still in the ring, caught (the
@@ -386,7 +399,7 @@ func _strike(spot: Vector3) -> void:
 			caught = c
 	BossFX.dust(spot, SNATCH_R * 1.4)
 	if caught == null:
-		hurt_ring(spot, SNATCH_R, 30.0, 10.0, 8.0, 4.0, &"talons", false)
+		hurt_ring(spot, SNATCH_R, 60.0, 20.0, 8.0, 4.0, &"talons", false)   # (her blows as hard as the others': she was the softest by half)
 		Audio.play_at(&"boss_stomp", spot, -2.0, 0.1, {"max_distance": 300.0, "unit_size": 20.0})
 		return
 	_held = caught
@@ -394,7 +407,7 @@ func _strike(spot: Vector3) -> void:
 	_carry_hits = 0.0
 	caught.end_knock()   # (picked up off the floor if it was knocked down)
 	caught.held_by = self
-	hurt(caught, 12.0, forward(), 0.0, 0.0, &"talons", DamageInfo.Kind.MELEE, 0.0)
+	hurt(caught, 25.0, forward(), 0.0, 0.0, &"talons", DamageInfo.Kind.MELEE, 0.0)
 	Audio.play_at(&"gore_splat", spot, 2.0, 0.1, {"max_distance": 200.0, "unit_size": 20.0})
 	if caught.is_player:
 		Events.headline.emit("Old Hoot's got you! Jump, and keep jumping, to wriggle free.")
@@ -479,9 +492,9 @@ func _rake(t: Critter) -> BossAction:
 	var hit := {}
 	var start := Vector3.INF
 	a.on(0.0, func():
-		warn_strip(a0, b0, RAKE_W, line_up + pass_for * 0.4)
 		_dive_start()
 		Audio.play_at(&"owl_screech", get_eye_position(), 6.0, 0.08, {"max_distance": 700.0, "unit_size": 50.0}))
+	a.on(line_up * 0.5, func(): warn_strip(a0, b0, RAKE_W, line_up * 0.5 + pass_for * 0.4))   # (as she swoops: shown from the start, everyone was long gone)
 	a.tick = func(time: float, delta: float):
 		if time < line_up:   # down to the start of the strip
 			if start == Vector3.INF:
@@ -504,11 +517,11 @@ func _rake(t: Critter) -> BossAction:
 			_face_along(delta)
 			_talons = 1.0
 			var claws := _talons_point()
-			for c in foes_near(claws, RAKE_W * 0.6):
+			for c in foes_near(claws, RAKE_W * 0.75):
 				if hit.has(c) or absf(c.global_position.y - claws.y) > 7.0:
 					continue
 				hit[c] = true
-				hurt(c, 42.0, along, 12.0, 6.0, &"rake", DamageInfo.Kind.MELEE, 0.8)
+				hurt(c, 70.0, along, 12.0, 6.0, &"rake", DamageInfo.Kind.MELEE, 0.8)
 			return
 		# and back up
 		_dive_end()
@@ -524,7 +537,7 @@ func _rake(t: Critter) -> BossAction:
 
 func _volley(t: Critter) -> BossAction:
 	cooldown(&"volley", 8.0)
-	var n := 8 if enraged else 6
+	var n := 10 if enraged else 8
 	var a := BossAction.new(&"volley", 2.2)
 	a.key(0.0, {}).key(0.45, {&"l_upper_arm": Vector3(0, 0, 35), &"r_upper_arm": Vector3(0, 0, -35), &"chest": Vector3(-8, 0, 0)})
 	a.key(0.8, {&"l_upper_arm": Vector3(-30, 0, -45), &"r_upper_arm": Vector3(-30, 0, 45), &"chest": Vector3(10, 0, 0)}).key(2.2, {})
@@ -569,7 +582,7 @@ func _feather(at: Vector3, flight: float) -> void:
 	var tw := f.create_tween()
 	tw.tween_method(arc, 0.0, 1.0, flight)
 	tw.tween_callback(func():
-		hurt_ring(at, FEATHER_R, 28.0, 10.0, 6.0, 4.0, &"feathers", false)
+		hurt_ring(at, FEATHER_R, 45.0, 15.0, 6.0, 4.0, &"feathers", false)
 		BossFX.dust(at, 3.5, Color(0.6, 0.62, 0.66, 0.6))
 		Audio.play_at(&"carrot_impact_dirt", at, 2.0, 0.1, {"max_distance": 200.0})
 		f.global_position = at + Vector3.UP * 2.2)   # (stuck in the ground, quill first)

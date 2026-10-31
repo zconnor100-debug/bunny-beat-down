@@ -556,7 +556,10 @@ kind of match; a run's stops are always battle royales.
   banked into her turns; the hitboxes follow its bones). Her pose isn't a
   walk with moves over it but her flight's (`_body_pose`: wingbeats from a
   phase, held out for a glide, talons tucked or reaching) or her perch's,
-  her moves adding to it. Snatch carries a critter on her talons (`held_by`,
+  her moves adding to it. Snatch follows its prey while she lines up and
+  only shows its ring as she dives (and the rake's strip, halfway into her
+  swoop): warned from the start, the bots were always long gone and she was
+  the one boss that hardly hurt anyone. It carries a critter on her talons (`held_by`,
   as Brutus's grab; a held player's jump input waits for its own physics, so
   she reads it: STRUGGLES jumps and she lets go) and drops it, the landing's
   damage worked out from how fast it fell (`_tend_dropped`: critters take
