@@ -46,6 +46,7 @@ cp tools/env/godot_eyelevel.gd /tmp/bbd-envcheck/ && \
 | `build_credits.py` | Credits JSON from recipes + build records + download metadata; refuses non-allowed licenses and missing files. |
 | `render_previews.py`, `make_preview_sheet.py` | Cycles scale-check renders next to a 1 m capsule critter, assembled into `assets/env/preview_sheet.png`. |
 | `godot_eyelevel.gd` | Godot-rendered close-ups: camera 1 m high, 4 m away, sun + sky (`id@top` = overview) → `/tmp/bbd-eyelevel/`. |
+| `bake_hulls.gd` | Bakes every `"collision": "convex"` model's convex hull (Godot's own decomposition, as `Scatter` would) into `assets/env/hulls.json`, so islands don't decompose them as they load: `godot4 --headless --path . -s tools/env/bake_hulls.gd` after adding or changing one (`tests/test_island.gd` fails until you do). |
 | `godot_check.sh`, `godot_check.gd` | Copies assets into `/tmp/bbd-envcheck`, imports headless, loads every GLB/texture/HDRI and compares AABBs with the manifest. |
 | `polyhaven_fetch.py`, `ambientcg_fetch.py`, `sketchfab_api.py` | Source downloaders (the Sketchfab one only ever returns CC0 / CC-BY models; the token is read from `~/.config/sketchfab/token` and never printed). `thumbs` sub-commands make contact sheets for choosing assets by eye. |
 | `inspect_source.py`, `glb_info.py` | Inspection helpers (source sub-objects/materials; exported GLB contents). |

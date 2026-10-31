@@ -176,6 +176,8 @@ func _build_world() -> void:
 	island.progress.connect(_on_load_progress)
 	await island.generate(_seed, quality, true)
 	island.tune_lighting(lighting)
+	if _mode == "boss" or _mode == "kernel":
+		BossFX.warm_up()   # (its warnings' textures, before the fight: not a hitch on its first blow)
 	if Burrow.modifier_on("pea_soup"):
 		lighting.env.fog_density *= 6.0   # (Pea Soup: distance fog only; height fog blanks the view here)
 		lighting.env.fog_light_color = Color(0.72, 0.78, 0.62)

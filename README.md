@@ -805,8 +805,8 @@ The full write-up is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
   bots get no aim or movement cheats.
 - **Deterministic island generation**: fBm, ridged and mesa terrain blended
   by a noise-warped biome map, a splat-map shader (with a swamp-mud layer),
-  biome-aware POI placement and flattening, a scatter system with cached
-  collision, a spatial hash for spacing and MultiMesh ground cover, buildings
+  biome-aware POI placement and flattening, a scatter system with collision
+  hulls baked ahead of time, a spatial hash for spacing and MultiMesh ground cover, buildings
   assembled in code from textured boxes and logs (every wall run is a
   collider, so doorways are real gaps for the navmesh), and a tiled async
   navmesh bake. The Hamster Cage reuses all of it: `HamsterCage` extends

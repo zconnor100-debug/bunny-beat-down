@@ -6,6 +6,9 @@ extends Node3D
 ## chunked MultiMeshes with visibility ranges and a wind shader.
 
 const MANIFEST := "res://assets/env/manifest.json"
+## Convex collision decomposed ahead of time (tools/env/bake_hulls.gd): model
+## id -> {"faces": its mesh's face vertices, "points": [x, y, z, ...]}.
+const HULLS := "res://assets/env/hulls.json"
 const CHUNK := 64.0
 const FOLIAGE_SHADER := preload("res://src/world/shaders/foliage.gdshader")
 const BATCHED := ["grass", "flower", "bush", "reed", "lily"]
@@ -14,7 +17,8 @@ const SHADOW_REACH := {"bush": 70.0, "reed": 60.0}
 
 var entries: Array = []                 # manifest dictionaries
 var by_category: Dictionary = {}        # category -> Array of entries
-var _shape_cache: Dictionary = {}
+static var _shape_cache: Dictionary = {}   # (for the whole session: every island after the first reuses them)
+static var _hulls: Dictionary = {}
 var _foliage_mats: Dictionary = {}          # model id -> foliage Mesh copy
 var _foliage_shader_mats: Array[ShaderMaterial] = []
 var _batches: Dictionary = {}           # "id|cx|cz" -> Array[Transform3D]
@@ -215,11 +219,33 @@ func _shape_for(e: Dictionary, kind: String) -> Shape3D:
 			c.height = h
 			shape = c
 		"convex", "trimesh":
-			var mesh := _merged_mesh(e["res"])
-			if mesh:
-				shape = mesh.create_convex_shape(true, true) if kind == "convex" else mesh.create_trimesh_shape()
+			var baked := baked_hull(e["id"]) if kind == "convex" else PackedVector3Array()
+			if not baked.is_empty():
+				var hull := ConvexPolygonShape3D.new()
+				hull.points = baked
+				shape = hull
+			else:
+				var mesh := _merged_mesh(e["res"])
+				if mesh:
+					shape = mesh.create_convex_shape(true, true) if kind == "convex" else mesh.create_trimesh_shape()
 	_shape_cache[key] = shape
 	return shape
+
+
+## A model's convex collision as baked (empty if it isn't: it's decomposed
+## as the island loads instead, the better part of a second for a few of them
+## and two seconds for the lot, which is why they're baked).
+static func baked_hull(id: String) -> PackedVector3Array:
+	if _hulls.is_empty() and FileAccess.file_exists(HULLS):
+		var data: Variant = JSON.parse_string(FileAccess.get_file_as_string(HULLS))
+		_hulls = data if data is Dictionary else {"": null}
+	var h: Variant = _hulls.get(id)
+	var out := PackedVector3Array()
+	if h is Dictionary:
+		var f: Array = h.get("points", [])
+		for i in range(0, f.size() - 2, 3):
+			out.append(Vector3(f[i], f[i + 1], f[i + 2]))
+	return out
 
 
 func _merged_mesh(path: String) -> ArrayMesh:

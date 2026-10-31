@@ -244,11 +244,18 @@ loading screen (~5 s):
    feeds `terrain.gdshader`. That shader has six PBR layers, anti-tiling,
    macro colour variation and tri-planar rock on cliffs.
 4. **Scatter**: giant trees on a jittered grid gated by a forest-density noise,
-   rocks, logs and mushrooms with cached collision shapes. Ground cover is
+   rocks, logs and mushrooms with cached collision shapes. A solid model's
+   convex hull is decomposed ahead of time (`tools/env/bake_hulls.gd` →
+   `assets/env/hulls.json`, a test says when one's out of date) and every
+   shape is kept for the whole session: decomposing them as the island
+   loaded was two seconds of every load. Ground cover is
    batched into chunked `MultiMesh`es with visibility ranges and a wind
    shader that also bends grass away from the player.
 5. **Navigation**: the navmesh is baked as 12×12 tiles of 128 m in parallel
-   (`bake_from_source_geometry_data_async`). Each tile's bake area is grown by
+   (`bake_from_source_geometry_data_async`), straight after the trees (the
+   last solid things), so the navigation map joins the tiles up on its own
+   thread while the ground cover is scattered instead of the island waiting
+   on it at the end. Each tile's bake area is grown by
    its border so neighbouring tiles stitch exactly. A path (`Island.find_path`)
    searches only the tiles round its two ends (the query's `included_regions`):
    Godot's query checks every polygon on the map to find where a path starts
@@ -536,7 +543,10 @@ kind of match; a run's stops are always battle royales.
   `Boss.warn` (a `BossFX` decal ring filling up, and a `danger` zone that
   `AIBrain._dodge` gets out of after a reaction time that depends on the
   bot's skill) and lands through `hurt_ring` / `hurt`, which spare anyone in
-  the air. `BruteBoss`, `RobotBoss`, `HamsterBoss` and `OwlBoss` choose
+  the air. The rings' and Nibbles's foam's textures are drawn in code, as a
+  Boss Battle or a mission loads (`BossFX.warm_up`), not on the first blow:
+  the foam's took 0.4 s and hitched the fight on Nibbles's first spit, until
+  each blob was drawn only over the pixels it covers. `BruteBoss`, `RobotBoss`, `HamsterBoss` and `OwlBoss` choose
   between their moves in `_choose`; `Boss.snapshot`/`restore` let the
   TimeKeeper rewind it. Bots' carrots count for `Boss.BOT_DAMAGE` of yours.
 - **Old Hoot** (`OwlBoss`) flies, so she doesn't walk the navmesh: her own
@@ -853,7 +863,8 @@ glows the sky low over Boulder Bluff from wherever the camera is. Its
 * **IK and spread maths** (pure functions);
 * **critter tests**: rig binding, paws on the grip, raycasts hitting
   hitboxes, a carrot kill, a ragdoll that lands on the floor, dismemberment;
-* **island tests**: determinism, POIs on land, and a navmesh path across tiles;
+* **island tests**: determinism, POIs on land, a navmesh path across tiles,
+  and every solid model's baked collision hull up to date with its model;
 * **player tests**, driven through real input events: [E] to pick up a gun,
   open a crate, auto-collect ammo, heal with a clover;
 * **rules tests**: weapon balance sanity, rarity scaling and drop odds, the

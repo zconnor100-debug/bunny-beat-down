@@ -107,7 +107,17 @@ func generate(seed_: int, quality := 2, bake_nav := true) -> void:
 	progress.emit(0.45, "Planting giant trees")
 	await get_tree().process_frame
 	_scatter_forest()
-	progress.emit(0.55, "Scattering mushrooms and pebbles")
+	# the navmesh's tiles next (nothing after this is solid), so the map joins
+	# them up on its own thread while the ground cover's scattered, instead of
+	# the island waiting on it at the end (a second and a half of the load)
+	var nav_tiles: Array[NavigationMesh] = []
+	if bake_nav:
+		progress.emit(0.55, "Teaching critters the paths")
+		await get_tree().process_frame
+		nav_tiles = await _bake_nav_tiles()
+		for i in 5:
+			await get_tree().physics_frame   # (the server sets the map building between frames)
+	progress.emit(0.65, "Scattering mushrooms and pebbles")
 	await get_tree().process_frame
 	_scatter_ground_cover(quality)
 	_scatter_swamp(quality)
@@ -116,9 +126,7 @@ func generate(seed_: int, quality := 2, bake_nav := true) -> void:
 	_plan_loot()
 
 	if bake_nav:
-		progress.emit(0.7, "Teaching critters the paths")
-		await get_tree().process_frame
-		await _bake_navigation()
+		await _wait_for_nav_map(nav_tiles)
 	progress.emit(1.0, "Ready")
 	ready_to_play = true
 
@@ -345,10 +353,17 @@ func _put_entry(e: Dictionary, at: Vector2, yaw: float, scale_: float, float_on_
 
 
 func _pond_level(at: Vector2) -> float:
-	for p in pois:
-		if p.kit == "pond" and at.distance_to(p.center) < p.radius:
+	if _ponds_of != pois.size():   # (just the ponds: this is asked for every blade of grass)
+		_ponds = pois.filter(func(p): return p.kit == "pond")
+		_ponds_of = pois.size()
+	for p in _ponds:
+		if at.distance_to(p.center) < p.radius:
 			return p.height - 0.9
 	return Terrain.WATER_LEVEL
+
+
+var _ponds: Array = []
+var _ponds_of := -1
 
 
 ## Height of the water surface above a point (sea level, a pond's surface,
@@ -483,6 +498,13 @@ func _scatter_ground_cover(quality: int) -> void:
 	var density: float = [0.35, 0.6, 1.0, 1.4, 1.75][clampi(quality, 0, 4)]
 	var area := PI * terrain.island_radius * terrain.island_radius
 	var counts := {"grass": int(area / 8.0 * density), "flower": int(area / 50.0 * density), "bush": int(area / 85.0 * density)}
+	# the POIs as in_poi(p, 0.6) sees them, packed (a few hundred thousand spots
+	# are tried, and its dictionaries were a good part of the island's load)
+	var centres := PackedVector2Array()
+	var reach := PackedFloat64Array()
+	for poi in pois:
+		centres.append(poi.center)
+		reach.append(poi.radius * 0.6)
 	for cat in counts:
 		for i in counts[cat]:
 			var p := _random_land(1.3)
@@ -499,8 +521,12 @@ func _scatter_ground_cover(quality: int) -> void:
 				continue   # wildflowers are a grassland thing
 			if cat == "bush" and (rng.randf() < ctl.r * 0.6 or rng.randf() > w.x + w.y * 0.7 + w.z * 0.2):
 				continue   # ferns prefer the forest
-			var poi := in_poi(p, 0.6)
-			if not poi.is_empty() and (cat != "flower" or not (poi.buildings as Array).is_empty()):
+			var at := -1
+			for k in centres.size():
+				if p.distance_to(centres[k]) < reach[k]:
+					at = k
+					break
+			if at >= 0 and (cat != "flower" or not (pois[at].buildings as Array).is_empty()):
 				continue
 			var e := scatter.pick(cat, rng)
 			var sr: Array = e.get("scale_range", [0.8, 1.2])
@@ -514,6 +540,8 @@ func _scatter_swamp(quality: int) -> void:
 	var density: float = [0.35, 0.6, 1.0, 1.4, 1.75][clampi(quality, 0, 4)]
 	var reed := SwampPlants.entry("reed")
 	var lilies := [SwampPlants.entry("pad"), SwampPlants.entry("pad"), SwampPlants.entry("flower")]
+	var lily_rng := RandomNumberGenerator.new()   # (its own: the same seed, the same pads, and the island's draws as they were)
+	lily_rng.seed = seed_value * 7 + 3
 	var clump := FastNoiseLite.new()
 	clump.seed = rng.randi()
 	clump.frequency = 0.03
@@ -529,7 +557,7 @@ func _scatter_swamp(quality: int) -> void:
 		var c := clump.get_noise_2d(p.x, p.y)
 		if depth > 0.3 and _in_swamp_water(p.x, p.y):
 			if c > 0.1 and rng.randf() < 0.5:
-				var e: Dictionary = lilies.pick_random()
+				var e: Dictionary = lilies[lily_rng.randi() % lilies.size()]
 				var sr: Array = e.scale_range
 				scatter.place(e, Vector3(p.x, Terrain.SWAMP_LEVEL + 0.03, p.y), rng.randf() * TAU, rng.randf_range(sr[0], sr[1]))
 		elif depth > -0.7 and c > -0.25:
@@ -945,6 +973,12 @@ func random_land_point(min_h := 2.0, inside_center := Vector2.ZERO, inside_radiu
 # ---- navigation ----------------------------------------------------------------------------------
 
 func _bake_navigation() -> void:
+	await _wait_for_nav_map(await _bake_nav_tiles())
+
+
+## Bake the navmesh's tiles (on the worker threads) and hand them to their
+## regions; the map then joins them up on its own thread (_wait_for_nav_map).
+func _bake_nav_tiles() -> Array[NavigationMesh]:
 	var template := NavigationMesh.new()
 	template.agent_radius = 0.5
 	template.agent_height = 3.0   # the tallest critter (fox) stands 2.8 m
@@ -996,7 +1030,7 @@ func _bake_navigation() -> void:
 	# left out of the map
 	for i in nav_regions.size():
 		nav_regions[i].navigation_mesh = baked[i]
-	await _wait_for_nav_map(baked)
+	return baked
 
 
 ## Don't hand the island over until the navigation map really has every tile

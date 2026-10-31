@@ -418,6 +418,7 @@ func _boss_battle(map: String, boss_id := "") -> void:
 	Settings.set_value(&"map", map, false)
 	Settings.set_value(&"mode", "boss", false)
 	GameSession.quick = true
+	BossFX._tex.clear()
 	var game: Node = load(GAME).instantiate()
 	get_tree().root.add_child(game)
 	var t := 0.0
@@ -426,6 +427,8 @@ func _boss_battle(map: String, boss_id := "") -> void:
 		t += get_process_delta_time()
 	var mm: MatchManager = game.match_manager
 	check(mm != null and mm.mode == "boss", "%s: a Boss Battle" % map)
+	check(["ring", "disc", "strip", "foam"].all(func(k): return BossFX._tex.has(k)),
+		"%s: its warnings' textures made while it loaded, not on its first blow (%s)" % [map, BossFX._tex.keys()])
 	if mm == null:
 		game.queue_free()
 		return

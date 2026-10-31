@@ -11,6 +11,13 @@ const DUST := Color(0.62, 0.55, 0.44, 0.62)
 static var _tex: Dictionary = {}
 
 
+## Make the warnings' and the foam's textures now (while a match with a boss
+## or a mission in it loads), not on the first blow or spit in the fight.
+static func warm_up() -> void:
+	for kind in ["ring", "disc", "strip", "foam"]:
+		_texture(kind)
+
+
 ## A red ring on the ground at `pos`, `radius` across, filling in from the
 ## middle over `seconds` (when the blow lands), then gone. Projected on the
 ## ground and what's on it, never on critters or the boss.
@@ -235,12 +242,20 @@ static func _texture(kind: String) -> Texture2D:
 	var img := Image.create(w, h, false, Image.FORMAT_RGBA8)
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 7
-	var blobs := []
+	var froth := PackedFloat64Array()   # (foam: each pixel's thickest blob)
 	if kind == "foam":
+		froth.resize(w * h)
 		for i in 70:
 			var a := rng.randf() * TAU
 			var r := sqrt(rng.randf()) * 0.85
-			blobs.append([Vector2(cos(a), sin(a)) * r, rng.randf_range(0.05, 0.16)])
+			var c := Vector2(cos(a), sin(a)) * r
+			var size := rng.randf_range(0.05, 0.16)
+			# only the pixels its square covers (every blob over every pixel took
+			# the better part of a second, and Nibbles's first spit hitched on it)
+			for y in range(maxi(int((c.y - size + 1.0) * 0.5 * h) - 1, 0), mini(int((c.y + size + 1.0) * 0.5 * h) + 2, h)):
+				for x in range(maxi(int((c.x - size + 1.0) * 0.5 * w) - 1, 0), mini(int((c.x + size + 1.0) * 0.5 * w) + 2, w)):
+					var p := Vector2((x + 0.5) / w * 2.0 - 1.0, (y + 0.5) / h * 2.0 - 1.0)
+					froth[y * w + x] = maxf(froth[y * w + x], clampf((size - p.distance_to(c)) * 30.0, 0.0, 1.0))
 	for y in h:
 		for x in w:
 			var p := Vector2((x + 0.5) / w * 2.0 - 1.0, (y + 0.5) / h * 2.0 - 1.0)
@@ -258,9 +273,7 @@ static func _texture(kind: String) -> Texture2D:
 						edge = 0.85
 					a = edge * clampf((1.0 - absf(p.y)) * 30.0, 0.0, 1.0)
 				"foam":
-					for b in blobs:
-						a = maxf(a, clampf((b[1] - p.distance_to(b[0])) * 30.0, 0.0, 1.0))
-					a *= clampf((1.0 - p.length()) * 5.0, 0.0, 1.0)
+					a = froth[y * w + x] * clampf((1.0 - p.length()) * 5.0, 0.0, 1.0)
 			img.set_pixel(x, y, Color(a, a, a, a))   # (premultiplied: the emission, which ignores alpha, is dark where it's clear)
 	img.generate_mipmaps()
 	var t := ImageTexture.create_from_image(img)
