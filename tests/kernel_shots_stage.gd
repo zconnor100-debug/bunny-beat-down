@@ -5,14 +5,17 @@ extends Node
 ## with "boss", a Boss Battle won on the island and its special edition;
 ## with "act1", Act I (The Carrot Patch) from the first carrot to the ending;
 ## with "act2", Act II (The Clockwork Decree) from the train station to it;
-## with "act3", Act III (Foam at the Falls) from Tube Town to it.
+## with "act3", Act III (Foam at the Falls) from Tube Town to it; with
+## "finale", the Finale (The Starfall) from the Barn by night to it.
 
 var out_dir := "user://kernel"
 var boss := false
 var act1 := false
 var act2 := false
 var act3 := false
-var movie := false   ## (recorded with Movie Maker: straight to the ending, its frames marked: OUTRO_AT, END_AT; with "act1", Act I's, and KILL_AT; with "act2", Act II's, and TAKEN_AT, LEAP_AT; with "act3", Act III's, and DAM_AT, WAKE_AT)
+var finale := false
+var epic := false    ## ("epic": shot at the Epic graphics tier, as the game looks on a fast GPU, not High)
+var movie := false   ## (recorded with Movie Maker: straight to the ending, its frames marked: OUTRO_AT, END_AT; with "act1", Act I's, and KILL_AT; with "act2", Act II's, and TAKEN_AT, LEAP_AT; with "act3", Act III's, and DAM_AT, WAKE_AT; with "finale", the Finale's, and BRIAR_AT, SHUT_AT, WAKE_AT, POD_AT, SPLIT_AT, KILL_AT)
 
 
 func _ready() -> void:
@@ -24,7 +27,9 @@ func _ready() -> void:
 	act1 = a.has("act1")
 	act2 = a.has("act2")
 	act3 = a.has("act3")
+	finale = a.has("finale")
 	movie = a.has("movie")
+	epic = a.has("epic")
 	DirAccess.make_dir_recursive_absolute(out_dir)
 	DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_DISABLED)
 	_run.call_deferred()
@@ -72,7 +77,7 @@ func _game() -> Node:
 
 func _run() -> void:
 	var settings: Node = get_tree().root.get_node("Settings")
-	settings.set_value(&"quality", 2, false)
+	settings.set_value(&"quality", 4 if epic else 2, false)
 	settings.set_value(&"difficulty", Settings.Difficulty.NORMAL, false)
 	if movie:
 		if act1:
@@ -81,6 +86,8 @@ func _run() -> void:
 			await _act_two_movie()
 		elif act3:
 			await _act_three_movie()
+		elif finale:
+			await _finale_movie()
 		else:
 			await _ending_movie()
 		get_tree().quit()
@@ -93,6 +100,8 @@ func _run() -> void:
 		await _act_two()
 	elif act3:
 		await _act_three()
+	elif finale:
+		await _finale()
 	else:
 		await _prologue()
 	await _menu()
@@ -628,6 +637,100 @@ func _act_three_movie() -> void:
 	print("END_AT %d" % Engine.get_frames_drawn())
 	KernelHunt.playing = ""
 
+## The Finale hurried through (time sped up) to the Briar coming up round the
+## Bluff and the Warren gliding in, then the Heart up out of the Bluff, a pod
+## broken and its Kernel free, split open, beaten, and the ending as it plays,
+## the end screen.
+func _finale_movie() -> void:
+	KernelHunt.playing = "starfall"
+	var g: Node = await _game()
+	var unpause := _unpause.bind(g)
+	get_tree().process_frame.connect(unpause)   # (every frame of it)
+	var mm: MatchManager = g.match_manager
+	while mm.phase != MatchManager.Phase.PLAYING:
+		await get_tree().process_frame
+	var d := mm.mission as StarfallMission
+	var p := mm.player
+	p.max_health = 100000.0
+	p.health = p.max_health
+	Engine.time_scale = 6.0
+	await _wait(1.0)
+	for r in d.roots:
+		_beat(mm)
+		r.receive_blast(r.knot_point(), 6.0, 1e5, p, &"carrot_rocket_launcher")
+	while d.step != StarfallMission.Step.BRIAR:
+		await get_tree().process_frame
+	# the Briar up round the Bluff, closing, and the Warren gliding in
+	Engine.time_scale = 1.0
+	var toward := MissionDirector._flat(d.barn_pos - d.heart_pos).normalized()
+	p.place_at(d._ground_at(d.heart_pos + toward * 75.0), atan2(toward.x, toward.z))
+	_look_at(g, d.heart_pos + Vector3.UP * 25.0, 0.12)
+	print("BRIAR_AT %d" % Engine.get_frames_drawn())
+	await _wait(9.0)
+	Engine.time_scale = 6.0
+	p.place_at(d._ground_at(d.heart_pos + toward * 40.0), atan2(toward.x, toward.z))
+	while mm.storm.shrinking:
+		_beat(mm)
+		await get_tree().process_frame
+	Engine.time_scale = 1.0
+	_look_at(g, d.heart_pos + Vector3.UP * 6.0, 0.1)
+	print("SHUT_AT %d" % Engine.get_frames_drawn())
+	while d.step != StarfallMission.Step.BOSS:
+		await get_tree().process_frame
+	print("WAKE_AT %d" % Engine.get_frames_drawn())
+	var heart := mm.boss as BriarHeart
+	while heart.state != Boss.State.FIGHTING:
+		await get_tree().process_frame
+	for i in 1200:   # (its arrival over: the camera's yours)
+		if g.find_children("*", "BossIntro", false, false).is_empty():
+			break
+		await get_tree().process_frame
+	# up close for the fight, just outside its Lash
+	p.place_at(d._ground_at(d.heart_pos + toward * (BriarHeart.LASH_R + 4.0)), atan2(toward.x, toward.z))
+	heart._bloom_t = 1.5
+	var fight := 0.0
+	var broke := false
+	while fight < 14.0:
+		var aim := heart.get_eye_position()
+		var at := aim - p.get_eye_position()
+		_look_at(g, aim, atan2(at.y, Vector2(at.x, at.z).length()))
+		if not broke and heart.bloom_i >= 0 and heart.pod_open(heart.bloom_i) and fight > 4.0:
+			broke = true
+			print("POD_AT %d" % Engine.get_frames_drawn())
+			var shot := DamageInfo.make(heart.pod_max / BriarHeart.POD_OPEN + 1.0, DamageInfo.Kind.BULLET, p, &"carrot_rifle")
+			shot.bone_role = StringName("pod_%d" % heart.bloom_i)
+			heart.take_damage(shot)
+		await get_tree().physics_frame
+		fight += 1.0 / Engine.physics_ticks_per_second
+	# the other two, and it splits open
+	for i in BriarHeart.PODS:
+		if not heart._pods[i].broken:
+			var hit := DamageInfo.make(heart.pod_max / BriarHeart.POD_SHUT + 1.0, DamageInfo.Kind.BULLET, p, &"carrot_rifle")
+			hit.bone_role = StringName("pod_%d" % i)
+			heart.take_damage(hit)
+	print("SPLIT_AT %d" % Engine.get_frames_drawn())
+	fight = 0.0
+	while fight < 5.0:
+		var at := heart.get_chest_position() - p.get_eye_position()
+		_look_at(g, heart.get_chest_position(), atan2(at.y, Vector2(at.x, at.z).length()))
+		await get_tree().physics_frame
+		fight += 1.0 / Engine.physics_ticks_per_second
+	print("KILL_AT %d" % Engine.get_frames_drawn())
+	var core := DamageInfo.make(1e7, DamageInfo.Kind.BULLET, p, &"carrot_sniper")
+	core.bone_role = &"core"
+	heart.take_damage(core)
+	while d._outro == null:
+		var at := heart.get_chest_position() - p.get_eye_position()
+		_look_at(g, heart.get_chest_position(), atan2(at.y, Vector2(at.x, at.z).length()))
+		await get_tree().process_frame
+	print("OUTRO_AT %d" % Engine.get_frames_drawn())
+	while mm.phase != MatchManager.Phase.ENDED:
+		await get_tree().process_frame
+	await _wait(3.5)
+	print("END_AT %d" % Engine.get_frames_drawn())
+	get_tree().process_frame.disconnect(unpause)
+	KernelHunt.playing = ""
+
 ## Act II: from the train station to the ending, every part of it.
 func _act_two() -> void:
 	KernelHunt.playing = "clockwork_decree"
@@ -920,6 +1023,137 @@ func _act_three() -> void:
 	cam.queue_free()
 	KernelHunt.playing = ""
 
+## The Finale by night: the Barn facing the Bluff's light, a root and its
+## knot, the Briar closing, the Heart up out of the Bluff and named, its pods,
+## split open, then the ending as it plays, and the end screen.
+func _finale() -> void:
+	KernelHunt.playing = "starfall"
+	var g: Node = await _game()
+	var mm: MatchManager = g.match_manager
+	while mm.phase != MatchManager.Phase.PLAYING:
+		await get_tree().process_frame
+	var d := mm.mission as StarfallMission
+	var p := mm.player
+	p.max_health = 100000.0
+	p.health = p.max_health
+	await _wait(2.5)
+	await _snap("e01_start")
+	await _wait(5.0)   # (the act's card gone)
+	var cam := Camera3D.new()
+	get_tree().root.add_child(cam)
+	cam.fov = 50.0
+	cam.far = 3000.0
+	# a root's knot, the root running off to the Bluff, the Touched growing up by it
+	var r0: BriarRoot = d.roots[1]
+	var out := MissionDirector._flat(r0.global_position - d.heart_pos).normalized()
+	var side := out.cross(Vector3.UP)
+	p.place_at(d._ground_at(r0.global_position + out * 30.0))
+	r0._sprout_t = 0.0
+	await _wait(1.2)
+	cam.global_position = r0.global_position + out * 14.0 + side * 7.0 + Vector3.UP * 4.5
+	cam.look_at(r0.knot_point() - out * 6.0, Vector3.UP)
+	cam.make_current()
+	g.hud.visible = false
+	await _wait(0.4)
+	await _snap("e02_root")
+	r0.receive_blast(r0.knot_point(), 6.0, 1e5, p, &"carrot_rocket_launcher")
+	await _wait(0.3)
+	await _snap("e03_knot_bursts")
+	await _wait(2.5)
+	await _snap("e04_withered")
+	g.rig.camera.make_current()
+	g.hud.visible = true
+	for r in d.roots:
+		_beat(mm)
+		r.receive_blast(r.knot_point(), 6.0, 1e5, p, &"carrot_rocket_launcher")
+	while d.step != StarfallMission.Step.BRIAR:
+		await get_tree().process_frame
+	await _wait(3.0)
+	# the Briar coming up round the Bluff, closing in
+	var toward := MissionDirector._flat(d.barn_pos - d.heart_pos).normalized()
+	p.place_at(d._ground_at(d.heart_pos + toward * 90.0))
+	_look_at(g, d.heart_pos + Vector3.UP * 20.0, 0.1)
+	await _wait(1.0)
+	await _snap("e05_briar_closing")
+	await _wait(4.0)
+	await _snap("e06_warren")
+	p.place_at(d._ground_at(d.heart_pos + toward * 40.0))
+	_beat(mm)
+	Engine.time_scale = 4.0
+	while mm.storm.shrinking:
+		await get_tree().process_frame
+	Engine.time_scale = 1.0
+	while d.step != StarfallMission.Step.BOSS:
+		await get_tree().process_frame
+	await _wait(1.6)
+	await _snap("e07_rising")
+	for i in 900:
+		var intro := g.find_children("*", "BossIntro", false, false)
+		if not intro.is_empty() and intro[0]._card_shown:
+			break
+		await get_tree().process_frame
+	await _wait(0.8)
+	await _snap("e08_named")
+	var heart := mm.boss as BriarHeart
+	while heart.state != Boss.State.FIGHTING:
+		await get_tree().process_frame
+	await _wait(3.0)
+	_look_at(g, heart.get_chest_position(), 0.2)
+	await _wait(0.5)
+	await _snap("e09_fight")
+	heart.thinking = false
+	heart._bloom_t = 0.0
+	while heart.bloom_i < 0 or not heart.pod_open(heart.bloom_i):
+		await get_tree().process_frame
+	await _wait(0.6)
+	var pod := heart.pod_point(heart.bloom_i)
+	var pod_out := MissionDirector._flat(pod - heart.global_position).normalized()
+	cam.global_position = pod + pod_out * 9.0 + heart.forward() * 8.0 + Vector3.DOWN * 3.0
+	cam.look_at(pod, Vector3.UP)
+	cam.make_current()
+	g.hud.visible = false
+	await _wait(0.2)
+	await _snap("e10_pod_open")
+	var shot := DamageInfo.make(heart.pod_max / BriarHeart.POD_OPEN + 1.0, DamageInfo.Kind.BULLET, p, &"carrot_rifle")
+	shot.bone_role = StringName("pod_%d" % heart.bloom_i)
+	heart.take_damage(shot)
+	await _wait(0.4)
+	await _snap("e11_pod_broken")
+	for i in BriarHeart.PODS:
+		if not heart._pods[i].broken:
+			var hit := DamageInfo.make(heart.pod_max / BriarHeart.POD_SHUT + 1.0, DamageInfo.Kind.BULLET, p, &"carrot_rifle")
+			hit.bone_role = StringName("pod_%d" % i)
+			heart.take_damage(hit)
+	await _wait(2.4)
+	cam.global_position = heart.global_position + heart.forward() * 44.0 + Vector3.UP * 9.0
+	cam.look_at(heart.get_chest_position(), Vector3.UP)
+	await _wait(0.2)
+	await _snap("e12_split_open")
+	g.rig.camera.make_current()
+	g.hud.visible = true
+	_look_at(g, heart.get_chest_position(), 0.2)
+	await _wait(0.6)
+	await _snap("e13_fight_open")
+	var core := DamageInfo.make(1e7, DamageInfo.Kind.BULLET, p, &"carrot_sniper")
+	core.bone_role = &"core"
+	heart.take_damage(core)
+	while d._outro == null:
+		await get_tree().process_frame
+	var o := d._outro as StarfallOutro
+	for s in [["e14_drained", StarfallOutro.GATHER_AT + 2.0], ["e15_husk", StarfallOutro.HUSK_AT + 2.0],
+			["e16_whole", StarfallOutro.WHOLE_AT + 0.9], ["e17_faces", StarfallOutro.WHOLE_AT + 2.6],
+			["e18_rising", StarfallOutro.RISE_AT + 3.0], ["e19_going", StarfallOutro.RISE_AT + 6.5],
+			["e20_star", StarfallOutro.STAR_AT + 1.6], ["e21_card", StarfallOutro.CARD_AT + 1.4]]:
+		while o.playing and o.t < float(s[1]):
+			await get_tree().process_frame
+		await _snap(String(s[0]))
+	while mm.phase != MatchManager.Phase.ENDED:
+		await get_tree().process_frame
+	await _wait(1.5)
+	await _snap("e22_end")
+	cam.queue_free()
+	KernelHunt.playing = ""
+
 ## The menu: the Gazette's special edition, then the Kernel Hunt's page.
 func _menu() -> void:
 	get_tree().change_scene_to_file("res://scenes/main.tscn")
@@ -927,7 +1161,7 @@ func _menu() -> void:
 	var menu: Node = get_tree().current_scene
 	menu._open_gazette()
 	await _wait(1.2)
-	var tag := "b" if boss else ("a" if act1 else ("c" if act2 else ("d" if act3 else "k")))
+	var tag := "b" if boss else ("a" if act1 else ("c" if act2 else ("d" if act3 else ("e" if finale else "k"))))
 	await _snap(tag + "11_gazette")
 	menu._close_overlay()
 	if not boss:

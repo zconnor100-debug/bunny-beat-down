@@ -8,9 +8,12 @@ extends RefCounted
 ## the last once you've beaten it three times. Shown on the Trophy Room's
 ## Bosses page (TrophyPanel), the boss's line on its arrival (BossIntro) and
 ## the loading screen's rumours. The whole story, and where it's going (the
-## Kernel Hunt), is in docs/LORE.md.
+## Kernel Hunt), is in docs/LORE.md. The Briar Heart, the Kernel Hunt's last
+## boss (its Finale), isn't in a Boss Battle: its story opens in the Finale
+## (`shown`: on the Bosses page once you've faced it there).
 
 const IDS := ["brute", "robot", "hamster"]
+const FINALE := "briar"
 
 const MYTH_TITLE := "The Night the Acorn Fell"
 const MYTH := "Ask anyone in the Warren how the giants came and they'll tell it the same way, usually with a torch under their chin. One midsummer night a star fell over Wildwood. It wasn't a star. It was an acorn, gold and humming, as big as the Big Red Barn, and it hit Boulder Bluff so hard the lake jumped. It split three ways. The biggest piece rolled down into the Carrot Patch. The second skipped across the lake and in through an open window of the House on the shore, into a toy box. The last, no bigger than a seed, fell plink into a hamster's water bottle. Whatever ate a piece, or was wound by one, or drank one, grew. And grew. And went wrong. The Warren calls the pieces the Starfall Kernels. Nobody has ever held one: the giants carry them inside."
@@ -57,6 +60,18 @@ const BOSSES := {
 		"rumours": ["Nibbles can't stop once he's charging. Stand in front of a wall and let him come.",
 			"Don't stand in Nibbles's foam: it burns, it sticks, and it slows you down."],
 	},
+	"briar": {
+		"name": "The Briar Heart", "title": "the Acorn's Roots", "map": "", "where": "Boulder Bluff, by night",
+		"epigraph": "Every match, it closes in. Now you know why.",
+		"chapters": [
+			["The Roots", "The oldest stories say the Briar is the Acorn's roots. When the Starfall Acorn hit Boulder Bluff and split three ways, what was left of it, the husk, sank into the Bluff and put down roots, and they've been growing under Wildwood ever since: under the meadows, under the lake, under the House on the shore. Looking for the three pieces. That's why the Briar closes in wherever critters fight. It thinks the noise is them."],
+			["The Heart", "Where the husk lies, the roots knotted into a heart: a knot of thorn as big as the Big Red Barn, and it beats. When the three Kernels came together in the hamster cage it felt them, and pulled them home through its roots. It keeps them shut in thorny pods on vines of their own, and opens them one at a time to drink. That's when to shoot."],
+			["Starved", "Cut its roots and it starves. Break its pods and the Kernels fly free, and with every one it loses it reels. When the last is out it splits open down the front, and what's inside is only the light it drank, burning, and the Briar closing in round it one last time."],
+			["Number One Hundred and Thirteen", "Old Mother Clover says the Acorn never meant anyone harm. It only ever wanted to go home, and the Briar only ever wanted to hold on to it. On clear nights now there's a new star over Boulder Bluff, gold-green, low in the east. If you lie in the long grass and count, Little Bru will tell you which one it is. It's number one hundred and thirteen."],
+		],
+		"rumours": ["The Briar Heart's pods open one at a time. That's when to shoot: shut, its thorns take it.",
+			"Every match, the Briar closes in. Old Mother Clover says it's looking for something."],
+	},
 }
 
 
@@ -73,6 +88,9 @@ const NEWS := {
 	"hamster": {"fell": "NIBBLES STOPPED AT LAST", "again": "NIBBLES STOPPED AGAIN", "where": "into the Hamster Cage",
 		"after": "The water bottle is still full. Nobody is drinking from it.",
 		"caption": "Nibbles, stopped at last."},
+	"briar": {"fell": "THE BRIAR HEART IS STILL", "again": "THE BRIAR HEART STILLED AGAIN", "where": "up Boulder Bluff by night",
+		"after": "There's a new star over the Bluff.",
+		"caption": "The Starfall Acorn, going home."},
 }
 
 
@@ -110,16 +128,24 @@ static func chapters_open(id: String) -> int:
 	return n
 
 
+## The bosses on the Bosses page: the three giants, and the Briar Heart once
+## you've faced it (in the Kernel Hunt's Finale).
+static func shown() -> Array:
+	return IDS + ([FINALE] if float(StatBook.boss(FINALE).fought) > 0.0 else [])
+
+
 ## What opens chapter `i`, for a closed one ("Beat Brutus to read on.").
 static func opens_when(id: String, i: int) -> String:
 	var who := String(of(id).get("name", "it"))
 	if who == "Tin Tyrant":
 		who = "the Tin Tyrant"
+	if who == "The Briar Heart":
+		who = "the Briar Heart"
 	var need: Array = OPENS[mini(i, OPENS.size() - 1)]
 	if need.is_empty():
 		return ""
 	if need[0] == "fought":
-		return "Face %s in a Boss Battle to read on." % who
+		return "Face %s %s to read on." % [who, "in the Kernel Hunt's Finale" if id == FINALE else "in a Boss Battle"]
 	return "Beat %s to read on." % who if int(need[1]) == 1 else "Beat %s %d times to read on." % [who, int(need[1])]
 
 

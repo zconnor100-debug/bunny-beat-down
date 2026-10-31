@@ -8,8 +8,11 @@ extends Node3D
 const SKY_HDRI := "res://assets/sky/kloofendal_48d_partly_cloudy_puresky_2k.hdr"
 const SKY_HDRI_4K := "res://assets/sky/kloofendal_48d_partly_cloudy_puresky_4k.hdr"
 
+const NIGHT_SKY := preload("res://src/world/night_sky.gdshader")
+
 var sun: DirectionalLight3D
 var env: Environment
+var night := false                   ## make_night()
 
 
 ## Indoors (the hamster tank, the bedroom): pale toys under a room's light
@@ -24,6 +27,43 @@ func make_indoor() -> void:
 	env.adjustment_saturation = 1.2
 	env.adjustment_contrast = 1.1
 	env.fog_density *= 0.6
+
+
+## Night (the Kernel Hunt's Finale, StarfallMission): the stars out over the
+## island (night_sky.gdshader), the moon for a sun, low and cold, a blue fill
+## so you can still see who's who, the fog gone dark, and the glow turned up
+## so whatever's lit (the Touched, the Kernels, the Briar Heart) shines.
+func make_night() -> void:
+	var sky_mat := ShaderMaterial.new()
+	sky_mat.shader = NIGHT_SKY
+	env.sky.sky_material = sky_mat
+	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
+	env.ambient_light_color = Color(0.34, 0.4, 0.66)
+	env.ambient_light_energy = 0.62
+	env.tonemap_exposure = 1.12
+	env.glow_intensity = 0.75
+	env.glow_bloom = 0.07
+	env.glow_hdr_threshold = 0.95
+	env.fog_light_color = Color(0.06, 0.08, 0.15)
+	env.fog_density = 0.0024
+	env.fog_sun_scatter = 0.04
+	env.fog_aerial_perspective = 0.2
+	env.adjustment_saturation = 0.96
+	env.volumetric_fog_albedo = Color(0.3, 0.34, 0.45)
+	sun.rotation_degrees = Vector3(-34.0, 150.0, 0.0)
+	sun.light_color = Color(0.64, 0.74, 1.0)
+	sun.light_energy = 0.46
+	sun.light_volumetric_fog_energy = 0.5
+	night = true
+
+
+## The night sky glowing low on the horizon the way of `dir` (from the camera
+## to something big and bright out there: kept up to date as you move).
+func glow_toward(dir: Vector3, amount: float) -> void:
+	var m := env.sky.sky_material as ShaderMaterial if env and env.sky else null
+	if m:
+		m.set_shader_parameter(&"glow_dir", Vector3(dir.x, 0.0, dir.z).normalized() if Vector2(dir.x, dir.z).length() > 0.01 else Vector3.RIGHT)
+		m.set_shader_parameter(&"glow_amount", amount)
 
 
 func build(quality: int) -> void:

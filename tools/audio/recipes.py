@@ -2921,3 +2921,169 @@ def water_stop(c, v):
     glug = B.thump(220, 120, 0.05, 0.12, 0.35)
     x = mix(2.8, *plinks, (gurgle, 0.6, -6), (glug, 1.1, -8), (glug, 1.5, -11))
     return reverb(x, r, decay=0.5, mix_db=-14, predelay=0.008, bright=4500.0, tail=0.3)[: n_of(2.7)]
+
+
+@recipe("heart_beat", variants=2, loud=-12.0, src="synth")
+def heart_beat(c, v):
+    """The Briar Heart beating (the Kernel Hunt's Finale): a huge, deep
+    lub-dub you feel more than hear, two soft low thumps, the second smaller,
+    wet and woody, a creak of bark under it (~1.1 s)."""
+    r = c.rng
+    k = [1.0, 0.9][v]
+    lub = B.kick(52 * k, 30 * k, 0.09, 0.22, 0.7, attack=0.008, drive=1.4)
+    dub = B.kick(60 * k, 34 * k, 0.07, 0.18, 0.6, attack=0.006, drive=1.3)
+    body = B.lowbody(r, 0.6, 40, 220, 0.16, attack=0.01, slope=-4.0)
+    wet = B.squelch(r, 0.5, [(0, 180.0), (0.25, 120.0), (0.5, 90.0)], q=2.5, amp_pts=[(0, 0), (0.05, 1), (0.5, 0)])
+    creak = lowpass(B.thorn_scrape(r, 0.45), 2400, 2)
+    x = mix(1.1, (lub, 0, 0), (body, 0, -6), (wet, 0.01, -16), (dub, 0.26, -3), (body, 0.26, -9), (creak, 0.05, -24))
+    x = saturate(highpass(x, 22, 2), 1.3)
+    return reverb(x, r, decay=0.9, mix_db=-16, predelay=0.02, bright=1800.0, tail=0.3)[: n_of(1.3)]
+
+
+@recipe("thorn_volley", variants=2, loud=-13.0, src="synth")
+def thorn_volley(c, v):
+    """Thorns flung (the Briar Heart's Thorn Volley): a creaking strain of
+    wood drawn back, then a whip-crack and the hiss of a spray of spikes
+    flying off, twigs snapping (~1.3 s)."""
+    r = c.rng
+    k = [1.0, 1.1][v]
+    strain = lowpass(B.thorn_scrape(r, 0.5), 3000 * k, 2)
+    crack = B.crack(r, tau=0.008, fc=2500 * k)
+    whip = B.whoosh(r, 0.6, 2400 * k, 600 * k, q=1.4, peak=0.25)
+    hiss = [(B.whoosh(r, 0.5, r.uniform(3000, 5000), r.uniform(900, 1500), q=2.0, peak=0.2), 0.42 + 0.03 * i, -8 - i)
+            for i in range(5)]
+    snaps = [(B.twig_snap(r), 0.4 + r.uniform(0, 0.12), -6) for _ in range(4)]
+    x = mix(1.4, (strain, 0, -10), (crack, 0.4, 0), (whip, 0.38, -4), *hiss, *snaps)
+    return reverb(x, r, decay=0.7, mix_db=-15, predelay=0.012, bright=5000.0, tail=0.25)[: n_of(1.5)]
+
+
+@recipe("root_burst", variants=2, loud=-11.0, src="synth")
+def root_burst(c, v):
+    """Roots ripping up out of the ground (the Finale: a Root Burst, the
+    Touched growing up, the Briar Heart rising): a deep crack, earth
+    tearing, wood splintering, clods thrown up and pattering down (~1.8 s)."""
+    r = c.rng
+    k = [1.0, 0.9][v]
+    boom = B.kick(70 * k, 32 * k, 0.07, 0.3, 1.0, attack=0.002, drive=1.5)
+    tear = B.lowbody(r, 0.9, 120, 1600, 0.25, attack=0.004, slope=-2.0)
+    splinter = B.grains(r, 1.0, 60, 900, 5000, glen=(0.003, 0.012), t_tau=0.18, start=0.02)
+    snaps = [(B.twig_snap(r), r.uniform(0.0, 0.3), -4) for _ in range(6)]
+    clods = B.grains(r, 1.6, 50, 200, 1800, glen=(0.01, 0.03), t_tau=0.4, start=0.35)
+    x = mix(1.8, (boom, 0, 0), (tear, 0.0, -4), (splinter, 0.01, -8), *snaps, (clods, 0, -10))
+    x = saturate(highpass(x, 28, 2), 1.4)
+    return reverb(x, r, decay=0.9, mix_db=-14, predelay=0.015, bright=3000.0, tail=0.3)[: n_of(2.0)]
+
+
+@recipe("briar_groan", variants=2, loud=-11.0, src="synth")
+def briar_groan(c, v):
+    """The Briar Heart's groan (rising, split open, going down): a vast
+    creaking of wood under strain, like an old tree in a gale, rising and
+    falling over a sub rumble, its thorns rattling (~2.6 s)."""
+    r = c.rng
+    dur = 2.6
+    n = n_of(dur)
+    rate = [(0, 18.0), (0.6, 34.0), (1.4, 26.0), (2.0, 40.0), (dur, 14.0)] if v == 0 else \
+        [(0, 24.0), (0.5, 16.0), (1.2, 38.0), (dur, 12.0)]
+    pulses = B.glottal_pulses(r, n, rate, tau=0.006, jit=0.35)
+    wood = bandpass(pulses, 520.0, 3.0) + 0.7 * bandpass(pulses, 1150.0, 4.0) + 0.5 * bandpass(pulses, 260.0, 2.5)
+    wood = B.unit(wood) * env_pts(n, [(0, 0), (0.15, 1), (1.8, 0.85), (dur, 0)])
+    groan = B.critter_voice(r, dur, [(0, 48), (0.5, 62), (1.4, 55), (dur, 40)], [(0, "o"), (1.2, "aw"), (dur, "uh")],
+                            scale=0.45, tilt=1.6, sub_pts=[(0, 0.9), (dur, 1.0)], breath=0.3, hoarse=0.8, drive=2.2,
+                            fmax=1800.0, amp_pts=[(0, 0), (0.25, 1), (1.9, 0.8), (dur, 0)])
+    rumble = B.lp_burst(r, dur, 90, 1.4, attack=0.2)
+    rattle = B.grains(r, dur, 70, 2000, 6000, glen=(0.002, 0.006), t_tau=1.0, start=0.2)
+    x = mix(dur, (wood, 0, 0), (groan, 0, -7), (rumble, 0, -6), (rattle, 0, -18))
+    x = saturate(highpass(x, 25, 2), 1.5)
+    return reverb(x, r, decay=1.6, mix_db=-10, predelay=0.03, bright=2600.0, tail=0.6)[: n_of(3.2)]
+
+
+@recipe("root_snap", variants=2, loud=-10.0, src="synth")
+def root_snap(c, v):
+    """A root's knot breaking (the Finale), or a pod of the Briar Heart's: a
+    deep woody crack and crunch, splinters, and a bright glassy whoosh of the
+    light getting out (~2 s)."""
+    r = c.rng
+    k = [1.0, 0.92][v]
+    crack = B.struck(r, [(180 * k, 0.12, 1.0), (410 * k, 0.08, 0.7), (950 * k, 0.05, 0.5), (2100 * k, 0.03, 0.3)], 0.6,
+                     exc_ms=1.5, exc_lp=8000.0)
+    crunch = B.lowbody(r, 0.4, 300, 3000, 0.08, attack=0.001)
+    splinter = B.grains(r, 0.9, 50, 1200, 6000, glen=(0.002, 0.01), t_tau=0.15)
+    boom = B.kick(60 * k, 30 * k, 0.08, 0.35, 1.2, drive=1.4)
+    n = n_of(1.6)
+    shine = sum(np.sin(2 * np.pi * f * times(n)) * 0.5 ** i for i, f in enumerate([1320.0, 1760.0, 2217.5, 2637.0]))
+    shine = B.unit(shine) * env_pts(n, [(0, 0), (0.08, 1), (1.6, 0)])
+    whoosh = B.whoosh(r, 1.2, 900, 4200, q=1.6, peak=0.35)
+    x = mix(2.0, (crack, 0, 0), (crunch, 0, -3), (splinter, 0.01, -8), (boom, 0, -4), (shine, 0.12, -18), (whoosh, 0.1, -12))
+    return reverb(x, r, decay=1.1, mix_db=-13, predelay=0.012, bright=6000.0, tail=0.35)[: n_of(2.3)]
+
+
+@recipe("pod_bloom", variants=1, loud=-15.0, src="synth")
+def pod_bloom(c, v):
+    """One of the Briar Heart's pods opening: a wet, creaking unfurl of tough
+    leaves peeling apart, and a soft glassy shimmer swelling as the Kernel's
+    light shows (~1.6 s)."""
+    r = c.rng
+    dur = 1.6
+    n = n_of(dur)
+    peel = B.squelch(r, 0.9, [(0, 300.0), (0.4, 520.0), (0.9, 380.0)], q=3.0, amp_pts=[(0, 0), (0.1, 1), (0.9, 0)])
+    creak = bandpass(B.glottal_pulses(r, n_of(0.8), [(0, 30.0), (0.8, 60.0)], tau=0.005, jit=0.4), 700.0, 3.0)
+    shimmer = sum(np.sin(2 * np.pi * f * times(n) + i) * 0.7 ** i for i, f in enumerate([880.0, 1318.5, 1760.0, 2637.0]))
+    shimmer = B.unit(shimmer) * env_pts(n, [(0, 0), (0.5, 0.2), (1.1, 1), (dur, 0)])
+    x = mix(dur, (peel, 0, -2), (B.unit(creak), 0.02, -8), (shimmer, 0, -12))
+    return reverb(x, r, decay=0.9, mix_db=-12, predelay=0.01, bright=6000.0, tail=0.3)[: n_of(2.0)]
+
+
+@recipe("starfall_chime", variants=1, loud=-14.0, src="synth")
+def starfall_chime(c, v):
+    """The Starfall Acorn whole again, and going home (the end of the Kernel
+    Hunt): a warm rising shimmer of bell tones in the Kernels' own chord (A,
+    E, C#), swelling, a soft whoosh going up, a high twinkle at the end
+    (~3.6 s)."""
+    r = c.rng
+    dur = 3.6
+    x = np.zeros(n_of(dur))
+    for i, m in enumerate([57, 64, 69, 73, 76, 81, 85, 88]):   # A3 E4 A4 C#5 E5 A5 C#6 E6
+        b = bell(midi_hz(m), 2.4, tau=0.7)
+        i0 = n_of(0.18 * i)
+        x[i0:i0 + len(b)] += b[: len(x) - i0] * (0.85 ** i)
+    swell = B.whoosh(r, 2.6, 400, 3000, q=1.2, peak=0.6)
+    tn = n_of(1.2)
+    twinkle = B.unit(np.sin(2 * np.pi * 3520.0 * times(tn)) + np.sin(2 * np.pi * 4186.0 * times(tn))) \
+        * env_pts(tn, [(0, 0), (0.05, 1), (1.2, 0)])
+    out = mix(dur, (B.unit(x), 0, 0), (swell, 0.2, -16), (twinkle, 2.3, -20))
+    return reverb(out, r, decay=2.2, mix_db=-8, predelay=0.03, bright=7000.0, tail=0.8)[: n_of(4.4)]
+
+
+@recipe("night_loop", loud=-24.0, src="synth", loop=True)
+def night_loop(c, v):
+    """Wildwood by night (the Kernel Hunt's Finale), 10 s seamless loop:
+    crickets in chirping layers near and far, a soft cold breeze, and an owl
+    hooting a long way off."""
+    r = c.rng
+    L, X = 10.0, 1.0
+    tot = L + X
+    n = n_of(tot)
+    swell = 0.55 + 0.45 * smooth_rand(n, r, 0.2, period=L)
+    wind = B.unit(lowpass(colored(n, r, -3), 700, 1)) * swell
+    beds = make_loop(mix(tot, (wind, 0, -8)), L, X)
+
+    ev = np.zeros(n_of(L + 2.5))
+
+    def put(sig, t0, gain_db, far=False):
+        if far:
+            sig = lowpass(sig, 3000, 1)
+        i0 = n_of(t0)
+        ev[i0 : i0 + len(sig)] += sig * 10 ** (gain_db / 20)
+
+    # crickets: chirp periods that divide the loop length exactly
+    for k in range(20):
+        put(B.cricket_chirp(4650), k * L / 20, -16)
+    for k in range(16):
+        put(B.cricket_chirp(5200, pulses=3), k * L / 16 + 0.13, -22, far=True)
+    for k in range(10):
+        put(B.cricket_chirp(4300, pulses=5), k * L / 10 + 0.37, -24, far=True)
+    put(B.dove_coo(330), 3.1, -12, far=True)    # (an owl, far off)
+    put(B.dove_coo(320), 3.9, -14, far=True)
+    ev = reverb(ev, r, decay=1.5, mix_db=-10)
+    ev = fold_circular(ev, L)
+    return beds + ev

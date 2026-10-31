@@ -181,12 +181,13 @@ func _pick_side() -> void:
 	var front := Vector3(boss.forward().x, 0.0, boss.forward().z).normalized()
 	var best := front
 	var best_trees := 1 << 20
+	var s := boss.intro_scale
 	for k in [0, 1, -1, 2, -2, 3, -3, 4, -4]:
 		var d := front.rotated(Vector3.UP, deg_to_rad(18.0 * k))
 		var side := d.cross(Vector3.UP)
-		var trees := _trees_on_view(scatter, _spot + d * 62.0 + side * 12.0)
+		var trees := _trees_on_view(scatter, _spot + (d * 62.0 + side * 12.0) * s)
 		for dist in [24.0, 29.0, 34.0]:   # (the face shot pushes in from 34 m to 24)
-			trees += _trees_on_view(scatter, _spot + d * dist + side * 7.0) * 2
+			trees += _trees_on_view(scatter, _spot + (d * dist + side * 7.0) * s) * 2
 		if trees < best_trees:
 			best_trees = trees
 			best = d
@@ -214,14 +215,15 @@ func _aim(t: float, snap: bool) -> void:
 	var pos: Vector3
 	var look: Vector3
 	var fov := 52.0
+	var big := boss.intro_scale   # (a big boss: further back, and higher)
 	if t < boss.land_time:
 		if boss.from_below:   # (the ground heaving where it's about to come up)
-			pos = _spot + _dir * 36.0 + side * 8.0
-			pos.y = boss.ground_y(pos) + 2.6
-			look = _spot + Vector3.UP * 4.0
+			pos = _spot + (_dir * 36.0 + side * 8.0) * big
+			pos.y = maxf(boss.ground_y(pos) + 2.6 * big, _spot.y + 10.0 * (big - 1.0))   # (a big one: up over whatever's round it)
+			look = _spot + Vector3.UP * 4.0 * big
 			_shake = maxf(_shake, 0.2 + 0.45 * t / boss.land_time)
 		else:   # (looking up at it dropping out of the sky)
-			pos = _spot + _dir * 62.0 + side * 12.0
+			pos = _spot + (_dir * 62.0 + side * 12.0) * big
 			pos.y = boss.ground_y(pos) + 2.0
 			look = boss.get_chest_position()
 			fov = 62.0
@@ -230,9 +232,9 @@ func _aim(t: float, snap: bool) -> void:
 		var fside := fwd.cross(Vector3.UP).normalized()
 		var face := _face()
 		var k := smoothstep(0.0, 1.0, clampf((t - boss.land_time) / 3.5, 0.0, 1.0))
-		var dist := lerpf(34.0, 24.0, k)
-		pos = face + fwd * dist + fside * lerpf(9.0, 5.0, k)
-		pos.y = maxf(face.y - lerpf(6.0, 3.5, k), boss.ground_y(pos) + 2.0)   # (a little below its eyes: looking up at it)
+		var dist := lerpf(34.0, 24.0, k) * big
+		pos = face + fwd * dist + fside * lerpf(9.0, 5.0, k) * big
+		pos.y = maxf(face.y - lerpf(6.0, 3.5, k) * big, boss.ground_y(pos) + 2.0)   # (a little below its eyes: looking up at it)
 		look = face.lerp(boss.get_chest_position(), 0.12)
 		fov = 50.0
 		if not _landed:

@@ -760,6 +760,60 @@ looking. Three parts again:
   cylinders, thorns all up them, rising out of the ground round them) calls
   up the finale.
 
+### The Finale, The Starfall
+
+`StarfallMission`, back on the island (the prologue's seed) **by night**: the
+director's `tune_lighting` (the game calls it once the match is set up) runs
+`WorldLighting.make_night`, a sky shader (`night_sky.gdshader`: a gradient,
+three layers of hashed stars that twinkle, the Milky Way's band as fbm with
+dust lanes, the moon drawn where the scene's directional light is, plain in
+the radiance pass), moonlight, a flat blue ambient and dark fog; a uniform
+glows the sky low over Boulder Bluff from wherever the camera is. Its
+`ambience` is a night loop (crickets, an owl).
+
+- **ROOTS**: three `BriarRoot`s, their knots `ROOT_OUT` from the Heart round
+  the Barn's side of the Bluff (`clear_loot_spot` finds each room), each a
+  tube along a wandering, ground-hugging line to the Bluff's foot. The tubes
+  and thorns are `VineMesh`: a SurfaceTool tube with a frame carried along it
+  (UV.x is metres along, for `vine.gdshader`'s pulses of light running down
+  thin, broken cracks between the bark's ridges) and thorns in a MultiMesh.
+  The knot is a target like a winding station (an Area3D on the hitbox layer
+  that names itself the `critter`, `receive_shot`, and `blast_targets` for
+  `receive_blast`), growing the Touched round it (`sprouted`) while you're
+  near. Cut, its shader's `alive` goes to 0 and it sinks.
+- **BRIAR**: the match's `Storm`, which a mission can drive now
+  (`close_on`: no stages or moods, its wall up round a centre and closing
+  from one radius to another over some seconds, then holding; `dim` by
+  night; `wither` fades and sinks it, once), closes on the Bluff; the Touched
+  pour off it, and the Warren answers like Act I's (twelve rogues, gliding).
+  Shut round you, the Bluff heaves.
+- **The Briar Heart** (`BriarHeart`, a `Boss` the mission names with
+  `boss_script`) has no model: it builds itself from `VineMesh` (heart-shaped
+  loops of vine from the old parametric heart curve, nested in depth for a
+  fat heart, the front loops in halves on hinges so it can split open; vines
+  wound round it; three arms ending in pods of five sepals round a
+  `StarfallKernel`; the husk of the Acorn in two halves and its cap). Rooted,
+  it only turns; `take_damage` routes by hitbox role to each pod's share or
+  its heart's (a pod's sepals shut take `POD_SHUT`, open `POD_OPEN`; the knot
+  `BODY` until it's split; the heart's share can't be worn below a floor
+  till then), and the bar is their sum. Pods open one at a time on a timer
+  (`pod_opened`); its `get_eye_position` is the open pod, so the bots aim at
+  it. A broken pod lets its Kernel go and stuns it; the last splits it open
+  (the hinges swing, the core comes out the front, enraged: the mission
+  closes the Briar in tighter). Its moves are `BossAction`s like the
+  others': a Thorn Volley (spikes on arcs to warned circles), a Root Burst (a
+  warned strip, then stalks bursting up along it, each critter in it thrown
+  once), a Lash (a vine sweeping round its foot, jumped). The knot scales
+  only evenly (its hitboxes ride it, and Jolt won't stretch a sphere).
+- **Its end**: `StarfallOutro` frees the Touched (team 1, the coat's overlay
+  off), brings the three Kernels down together, reparents the husk's pieces
+  and interpolates them shut round them, swaps in one `StarfallKernel` scaled
+  as big as the Barn (`glow_k` turned down), and sends it up and away beyond
+  the Bluff on a cubic ease until it's a fixed-size sprite with a glint: a
+  star. Little Bru, a tiny `RobotBoss` (posed, not thinking) as Model No. 7,
+  and Nibbles stand at the front of the crowd. `BossLore` has the Heart's
+  four chapters (`shown` puts it on the Bosses page once you've faced it).
+
 ## Tests
 
 `godot --headless --path . -s tests/run_tests.gd` runs:
@@ -779,11 +833,12 @@ looking. Three parts again:
   getting up, staying down when beaten down) and toys that come apart (the
   castle's blocks, a brick tower, a letter block, a block fort and a log
   cabin, the domino run, a block landing on a critter);
-* **Kernel Hunt tests**: the quest line and its records, and the prologue
-  and Acts I to III played through headless (waves held; carrots pulled,
-  rings lit, Brutus woken and beaten; Wound rogues unwound, stations broken,
-  the castle taken, the Tin Tyrant beaten; burrows caved in, the falls
-  dammed, Nibbles beaten; the endings), and the ways each is lost. `run_tests.gd -- kernel::act_two` runs just the tests whose names
+* **Kernel Hunt tests**: the quest line and its records, and the prologue,
+  Acts I to III and the Finale played through headless (waves held; carrots
+  pulled, rings lit, Brutus woken and beaten; Wound rogues unwound, stations
+  broken, the castle taken, the Tin Tyrant beaten; burrows caved in, the
+  falls dammed, Nibbles beaten; roots cut, the Briar closed, the Briar
+  Heart's moves, pods and core; the endings), and the ways each is lost. `run_tests.gd -- kernel::act_two` runs just the tests whose names
   match, in the files that do.
 
 `tests/check_scripts.gd` compiles every script. CI

@@ -21,9 +21,10 @@ Toy Box, Nibbles the Rabid in the Hamster Cage. Or play the story: **the
 Kernel Hunt**, player against environment, where you and the Barn Rangers
 hold the Big Red Barn against the Touched, then track the glowing carrots,
 burn the Carrot Patch and wake Brutus, cross the lake to the toy room to
-unwind the Tin Tyrant's Wound and storm his castle, then go down into the
-hamster cage to dam Water Bottle Falls. Ragdolls, real limb-popping gore,
-and floppy physics ears are included.
+unwind the Tin Tyrant's Wound and storm his castle, go down into the
+hamster cage to dam Water Bottle Falls, and in the Finale, by night, cut the
+Briar's roots and stop its heart to send the Starfall Acorn home. Ragdolls,
+real limb-popping gore, and floppy physics ears are included.
 
 Built in **Godot 4.6** (GDScript, Jolt physics, Forward+).
 
@@ -161,8 +162,8 @@ and the final shot replayed from three angles. There's a
 - **The Kernel Hunt: the story, player against environment** (main menu).
   The Starfall Acorn's light is getting into the Warren's critters: the
   **Touched**, any species, gold-green veins glowing through their fur,
-  silent, coming in waves. Its acts lead to the boss fights; the prologue
-  and Acts I to III are playable (the finale is on its page, sealed). In the prologue,
+  silent, coming in waves. Its acts lead to the boss fights, and all of it is
+  playable, from the prologue to the Finale. In the prologue,
   **Days Since Brutus**, you start on the ground at the Big Red Barn with the **Barn
   Rangers**, seven rogues of the cast at their posts round it, and the
   Touched come out of the Carrot Patch in three waves, then round the sides
@@ -225,6 +226,29 @@ and the final shot replayed from three angles. There's a
   beat-down burst.
 
   ![Act III: one of the Touched scrabbling up out of a burrow, a chew block carried to the falls, Nibbles the Rabid come up out of the bedding, and the three Kernels as the Briar rises](docs/screenshots/kernel_act3.jpg)
+
+  **The Finale, The Starfall**, opens once the falls are dammed, and it's back
+  on the island **by night**: a starry sky with the Milky Way and the moon
+  (a sky shader), moonlight, and Boulder Bluff glowing gold-green over
+  everything, because the Briar took the three Kernels home to where the
+  Acorn fell. **Cut the roots**: three of its taproots have broken up out of
+  the island, the Kernels' light pulsing along them toward the Bluff, and the
+  Touched grow up out of the ground round their knots (carrots barely scratch
+  the bark; blasts do it real harm). **Get inside the Briar**: the wall that
+  closes in on every match comes up round the Bluff and closes on it, the
+  Touched pour down at you, and the Warren answers, twelve rogues gliding
+  down. Then the Bluff heaves and the **Briar Heart** comes up out of it, a
+  fourth boss built entirely in code: a beating heart of thorny vine in the
+  split husk of the Acorn, its three Kernels shut in pods that open one at a
+  time (shoot the light), a Thorn Volley, a Root Burst that throws you off
+  your feet, and a Lash round its foot you jump. Break its pods and it splits
+  open, and the Briar closes in tighter. Beat it and the Touched are free, the
+  Kernels come together, the husk closes round them, and the Starfall Acorn,
+  whole, rises off the Bluff into the sky until it's a new star, with Little
+  Bru, Model No. 7 and Nibbles watching it go. Earns the **Shooting stars**
+  beat-down burst.
+
+  ![The Finale: a root's knot glowing by night, the Briar Heart split open on Boulder Bluff, one of its pods open on a Kernel, and the Starfall Acorn going home over Nibbles, Model No. 7 and Little Bru](docs/screenshots/kernel_finale.jpg)
 
 - **Third person with a first-person option** (press **V**): over-the-shoulder
   camera with a shoulder swap, aim-down-sights zoom, recoil kick and trauma

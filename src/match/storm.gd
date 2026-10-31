@@ -2,7 +2,9 @@ class_name Storm
 extends Node3D
 ## The closing "Briar": a ring of thorny purple haze. Outside the safe circle
 ## critters take damage every second; each stage waits, then shrinks the
-## circle toward a new centre inside the old one.
+## circle toward a new centre inside the old one. A Kernel Hunt mission can
+## drive it instead (`close_on`: the Finale's Briar closing on Boulder Bluff,
+## StarfallMission), and let it wither away (`wither`).
 
 signal changed(stage: int, center: Vector2, radius: float, next_center: Vector2, next_radius: float, time_left: float, shrinking: bool)
 
@@ -55,6 +57,12 @@ var _from_center := Vector2.ZERO
 var _from_radius := 0.0
 var _tick := 0.0
 var _wall: MeshInstance3D
+## Driven by a mission (close_on): no stages, no moods, no waiting.
+var scripted := false
+var _close_for := 1.0
+var _fade := 1.0
+var _withering := false
+var _brightness := 1.0
 var _k := 1.0
 var _hum: AudioStreamPlayer3D
 
@@ -118,8 +126,79 @@ func _plan_next() -> void:
 	next_center = best
 
 
+## A mission's Briar (StarfallMission): it comes up round `c` (if it isn't up
+## already), `from` metres out, and closes in to `to` over `seconds`, then
+## holds there till it's told again. `dps_` a second to anyone outside it.
+func close_on(island_: Island, c: Vector2, from: float, to: float, seconds: float, dps_: float) -> void:
+	island = island_
+	if not active or not scripted:
+		center = c
+		radius = from
+	scripted = true
+	variant = "classic"
+	_fade = 1.0
+	_withering = false
+	_from_center = center
+	_from_radius = radius
+	next_center = c
+	next_radius = to
+	dps = dps_
+	_close_for = maxf(seconds, 0.01)
+	time_left = _close_for
+	shrinking = true
+	active = true
+	if _wall == null:
+		_build_wall()
+	_wall.visible = true
+	_update_wall()
+
+
+## Dimmer (by night: StarfallMission), 0..1.
+func dim(k: float) -> void:
+	_brightness = k
+	if _wall:
+		(_wall.material_override as ShaderMaterial).set_shader_parameter(&"brightness", k)
+
+
+## It withers: the thorns stop biting and the wall fades and sinks away (once).
+func wither(seconds := 4.0) -> void:
+	if _withering:
+		return
+	_withering = true
+	active = false
+	shrinking = false
+	if _hum:
+		_hum.stop()
+	if _wall == null:
+		return
+	var tw := create_tween()
+	tw.tween_method(_set_fade, 1.0, 0.0, seconds)
+	tw.tween_callback(func(): _wall.visible = false)
+
+
+## How much of the wall is left (1 all of it, 0 withered into the ground).
+func _set_fade(k: float) -> void:
+	_fade = k
+	(_wall.material_override as ShaderMaterial).set_shader_parameter(&"fade", k)
+	_wall.global_position.y = 60.0 - (1.0 - k) * 90.0
+
+
 func _process(delta: float) -> void:
 	if not active:
+		return
+	if scripted:
+		if shrinking:
+			time_left -= delta
+			var k := 1.0 - clampf(time_left / _close_for, 0.0, 1.0)
+			center = _from_center.lerp(next_center, k)
+			radius = lerpf(_from_radius, next_radius, k)
+			if time_left <= 0.0:
+				shrinking = false
+				time_left = 0.0
+				center = next_center
+				radius = next_radius
+		_update_wall()
+		changed.emit(stage, center, radius, next_center, next_radius, maxf(time_left, 0.0), shrinking)
 		return
 	if nap_left > 0.0:
 		# bribed: the Briar naps (the clock stops, the circle holds still)
@@ -222,6 +301,7 @@ func _build_wall() -> void:
 	_wall.material_override = m
 	_wall.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(_wall)
+	m.set_shader_parameter(&"brightness", _brightness)
 
 
 func _update_wall() -> void:
@@ -244,3 +324,4 @@ func _update_wall() -> void:
 	_wall.scale = Vector3(r, 160.0, r)
 	_wall.global_position = Vector3(center.x, 60.0, center.y)
 	(_wall.material_override as ShaderMaterial).set_shader_parameter(&"radius", r)
+	(_wall.material_override as ShaderMaterial).set_shader_parameter(&"fade", _fade)

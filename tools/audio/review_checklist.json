@@ -102,7 +102,15 @@
         "toy_beep": {"expect": "An old toy's beep: two buzzy square-ish tones, high then higher, through a tiny speaker, then a faint crackle of sparks (~0.8 s).", "when": "Model No. 7's beep at the end of Act II."},
         "burrow_scrabble": {"expect": "Claws scrabbling in dry shavings and dirt, muffled then nearer, a dull knock or two (~1.3 s).", "when": "The Kernel Hunt's Act III: the Touched coming up out of one of Nibbles's burrows."},
         "burrow_collapse": {"expect": "A deep soft whump, then the rush of shavings and dirt sliding down and settling, a few dry patters (~2 s).", "when": "A burrow caved in by a blast (Act III)."},
-        "water_stop": {"expect": "The last drips plinking slower and slower, a deep gurgle and a glug or two, then quiet (~2 s).", "when": "Water Bottle Falls dammed (Act III)."}
+        "water_stop": {"expect": "The last drips plinking slower and slower, a deep gurgle and a glug or two, then quiet (~2 s).", "when": "Water Bottle Falls dammed (Act III)."},
+        "heart_beat": {"expect": "A huge deep lub-dub you feel more than hear, wet and woody, a creak of bark under it (~1.1 s).", "when": "The Kernel Hunt's Finale: the Briar Heart beating."},
+        "thorn_volley": {"expect": "Wood creaking as it's drawn back, then a whip-crack and the hiss of a spray of spikes flying off (~1.2 s).", "when": "The Briar Heart's Thorn Volley (and, lower, its Lash)."},
+        "root_burst": {"expect": "A deep crack, earth tearing, wood splintering, clods thrown up and pattering down (~1.7 s).", "when": "The Finale: roots ripping up out of the ground (a Root Burst, the Touched growing up, the Briar Heart rising)."},
+        "briar_groan": {"expect": "A vast creaking of wood under strain, like an old tree in a gale, over a sub rumble, thorns rattling (~3 s).", "when": "The Briar Heart's groan: rising out of Boulder Bluff, split open, going down."},
+        "root_snap": {"expect": "A deep woody crack and crunch, splinters, and a bright glassy whoosh of light getting out (~1.7 s).", "when": "The Finale: a root's knot broken, or one of the Briar Heart's pods."},
+        "pod_bloom": {"expect": "A wet creaking unfurl of tough leaves peeling apart, and a soft glassy shimmer swelling (~1.8 s).", "when": "One of the Briar Heart's pods opening, its Kernel's light showing."},
+        "starfall_chime": {"expect": "A warm rising shimmer of bell tones in the Kernels' chord (A, E, C#), a soft whoosh going up, a high twinkle (~3 s).", "when": "The end of the Kernel Hunt: the Starfall Acorn whole again, and rising home."},
+        "night_loop": {"expect": "Wildwood by night, 10 s seamless loop: crickets near and far, a soft cold breeze, an owl hooting a long way off.", "when": "Under the Kernel Hunt's Finale (the island by night)."}
       }
     },
     {

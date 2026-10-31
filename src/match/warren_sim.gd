@@ -270,6 +270,20 @@ static func foam_news(r: Dictionary) -> Array:
 	]
 
 
+## The Gazette's special edition when the Kernel Hunt's Finale is won (StarfallMission).
+static func starfall_news(r: Dictionary) -> Array:
+	var home: Array = r.get("rangers_home", [])
+	var all := KernelHunt.RANGERS.size()
+	var came := "Every ranger walked home." if home.size() >= all else ("%d of the %d rangers walked home." % [home.size(), all] \
+		if not home.is_empty() else "None of the rangers walked home on their feet.")
+	return [
+		{"title": "THE ACORN GOES HOME", "text": "The Briar took the three Kernels home to Boulder Bluff, and the Barn Rangers went after them by night. They cut its roots, got inside its wall as it closed, and beat the Briar Heart in the husk of the Starfall Acorn. Then the three Kernels came together, the husk closed round them, and the Acorn, whole again, went up off the Bluff into the sky. %s" % came},
+		{"title": "A NEW STAR OVER BOULDER BLUFF", "text": "Gold-green, low in the east. Little Bru, who used to count stars in the Carrot Patch, says it's number one hundred and thirteen. Nobody has the heart to tell him he skipped some."},
+		{"title": "THE BRIAR IS JUST A BRIAR", "text": "Its wall withered where it stood. It still closes in wherever critters fight, but Old Mother Clover says it isn't looking for anything any more. \"It found it,\" she says. \"And it let it go.\""},
+		{"title": "THE TOUCHED COME HOME", "text": "The light went out of every one of them at once. %d of them were beaten down on the night; the rest just sat down where they stood and asked what day it was. %d rogues came to fight beside the rangers." % [int(r.get("touched", 0)), int(r.get("answered", 0))]},
+	]
+
+
 ## "A, B and C".
 static func _names(names: Array) -> String:
 	if names.size() <= 1:

@@ -7,6 +7,8 @@ render_mode blend_mix, cull_disabled, unshaded, depth_draw_never, shadows_disabl
 uniform float radius = 100.0;
 uniform vec3 haze : source_color = vec3(0.55, 0.25, 0.75);
 uniform vec3 thorn : source_color = vec3(0.12, 0.04, 0.16);
+uniform float fade = 1.0;                   // 0: withered away (Storm.wither)
+uniform float brightness = 1.0;             // (dimmer by night: Storm.dim)
 
 varying vec3 local_pos;
 
@@ -35,6 +37,6 @@ void fragment() {
 	float vines = smoothstep(0.62, 0.7, fbm(uv * vec2(0.8, 0.25) + vec2(0.0, TIME * 0.05)));
 	vec3 col = mix(haze * (0.6 + 0.8 * n), thorn, vines * 0.85);
 	float pulse = 0.85 + 0.15 * sin(TIME * 1.7 + around * 0.2);
-	ALBEDO = col * pulse;
-	ALPHA = clamp((0.45 + 0.4 * n + vines * 0.3) * (1.0 - smoothstep(0.35, 1.0, h)), 0.0, 0.92);
+	ALBEDO = col * pulse * brightness;
+	ALPHA = clamp((0.45 + 0.4 * n + vines * 0.3) * (1.0 - smoothstep(0.35, 1.0, h)), 0.0, 0.92) * fade;
 }

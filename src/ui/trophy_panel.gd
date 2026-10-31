@@ -136,7 +136,7 @@ func _bosses_page() -> VBoxContainer:
 	var body := VBoxContainer.new()
 	body.add_theme_constant_override("separation", 6)
 	page.add_child(body)
-	for id in BossLore.IDS:
+	for id in BossLore.shown():
 		var b: Dictionary = BossLore.of(id)
 		pick.add_child(UITheme.button("%s (%s)" % [b.name, b.where], func(): _show_boss(body, id)))
 	_show_boss(body, BossLore.IDS[0])

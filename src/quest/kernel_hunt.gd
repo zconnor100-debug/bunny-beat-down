@@ -13,13 +13,15 @@ extends RefCounted
 ## unwind the Wound, break the winding stations, storm Block Castle and beat
 ## the Tin Tyrant (ClockworkMission). Act III, "Foam at the Falls", after
 ## that: in the hamster cage, cave in Nibbles's burrows, dam Water Bottle
-## Falls and beat him (FoamMission). The finale is on the Kernel Hunt's page
-## (QuestPanel), sealed.
+## Falls and beat him (FoamMission). The Finale, "The Starfall", last of all:
+## back on the island by night, cut the Briar's roots, get inside its wall as
+## it closes on Boulder Bluff, and beat the Briar Heart (StarfallMission):
+## the Acorn goes home.
 ##
 ## Which missions you've finished, and your best at each, are kept with the
 ## PlayerProfile.
 
-## The acts, in order. `open`: playable (the rest are sealed for now), once
+## The acts, in order. `open`: playable (an act that isn't is sealed), once
 ## the act `after` names is done.
 const ACTS := [
 	{"id": "prologue", "name": "Prologue", "title": "Days Since Brutus", "where": "Wildwood Island", "map": "island", "open": true,
@@ -36,8 +38,10 @@ const ACTS := [
 		"after": "clockwork_decree",
 		"brief": "Both Kernels pull at the hamster cage. Under the bedding Nibbles has dug his tunnels toward the toy room, and his water bottle has never once run dry: the third Kernel's in it. Cave in his burrows, dam Water Bottle Falls, and see what comes up for a drink.",
 		"goal": "Blast his burrows shut, carry three chew blocks to dam Water Bottle Falls, and beat Nibbles.", "ends": "Nibbles"},
-	{"id": "starfall", "name": "Finale", "title": "The Starfall", "where": "All three, then somewhere new",
-		"brief": "The Kernels, together at last. The Briar comes for them.", "ends": "the Briar Heart"},
+	{"id": "starfall", "name": "Finale", "title": "The Starfall", "where": "Wildwood Island, by night", "map": "island", "open": true,
+		"after": "foam_at_the_falls",
+		"brief": "The Briar took all three Kernels down through its roots, under the lake, home to where the Acorn fell, and all night Boulder Bluff has glowed gold-green over the island. Its roots are carrying the Kernels' light up to it. Cut them, get inside the Briar before it closes, and stop its heart.",
+		"goal": "Cut the Briar's three roots, get inside its wall as it closes on Boulder Bluff, and beat the Briar Heart.", "ends": "the Briar Heart"},
 ]
 
 ## The prologue's island (its Big Red Barn, Carrot Patch and Boulder Bluff

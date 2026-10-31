@@ -17,8 +17,8 @@ extends Node
 ## silent. They aren't the cast, so nobody keeps score of them (RivalBook).
 ##
 ## The acts after the prologue build on it (`make`: PatchMission, Act I;
-## ClockworkMission, Act II; FoamMission, Act III): the rangers, the Touched
-## and the talk are here,
+## ClockworkMission, Act II; FoamMission, Act III; StarfallMission, the
+## Finale): the rangers, the Touched and the talk are here,
 ## and what an act does its own way it overrides (`setup`, `begin`,
 ## `_process`, the bar on the HUD: `bar_*`, its ending: `play_outro`, its
 ## news: `news`).
@@ -74,7 +74,7 @@ func _init() -> void:
 ## The director for mission `id` (KernelHunt.ACTS).
 static func make(id: String) -> MissionDirector:
 	var d: MissionDirector = {"carrot_patch": PatchMission, "clockwork_decree": ClockworkMission,
-		"foam_at_the_falls": FoamMission}.get(id, MissionDirector).new()
+		"foam_at_the_falls": FoamMission, "starfall": StarfallMission}.get(id, MissionDirector).new()
 	d.mission = id if id != "" else "prologue"
 	return d
 
@@ -347,6 +347,22 @@ func play_outro(rig: CameraRig = null, hud: CanvasLayer = null, pc: PlayerContro
 ## its arrival (BossIntro) and the HUD shows its bar once it's here.
 func wants_boss() -> bool:
 	return false
+
+
+## Its boss's script, if it isn't the map's (MatchManager.BOSSES): "" for the map's.
+func boss_script() -> String:
+	return ""
+
+
+## The mission's own light (the game's, once the match is set up): the
+## Finale's night.
+func tune_lighting(_lighting: WorldLighting) -> void:
+	pass
+
+
+## What you hear under it all (the game's loop as it starts): the woods by day.
+func ambience() -> StringName:
+	return &"ambient_forest_loop"
 
 
 ## The mission's boss is down (MatchManager routes it here, not to a Boss

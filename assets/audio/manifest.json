@@ -282,6 +282,35 @@
   "water_stop": [
     "sfx/water_stop.ogg"
   ],
+  "heart_beat": [
+    "sfx/heart_beat_1.ogg",
+    "sfx/heart_beat_2.ogg"
+  ],
+  "thorn_volley": [
+    "sfx/thorn_volley_1.ogg",
+    "sfx/thorn_volley_2.ogg"
+  ],
+  "root_burst": [
+    "sfx/root_burst_1.ogg",
+    "sfx/root_burst_2.ogg"
+  ],
+  "briar_groan": [
+    "sfx/briar_groan_1.ogg",
+    "sfx/briar_groan_2.ogg"
+  ],
+  "root_snap": [
+    "sfx/root_snap_1.ogg",
+    "sfx/root_snap_2.ogg"
+  ],
+  "pod_bloom": [
+    "sfx/pod_bloom.ogg"
+  ],
+  "starfall_chime": [
+    "sfx/starfall_chime.ogg"
+  ],
+  "night_loop": [
+    "sfx/night_loop.ogg"
+  ],
   "music": {
     "menu": "music/menu_monkeys_spinning_monkeys.mp3",
     "match": [

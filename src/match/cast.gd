@@ -238,7 +238,7 @@ const GANG_LINES := {"gspot": GANG_SPOT_LINES, "grush": GANG_RUSH_LINES, "gr": T
 ## Tyrant's key when it winds down), and cheer it going down.
 const BOSS_COMING_LINES := ["Here it comes! Spread out!", "That's... that is BIG."]
 const BOSS_NAME_LINES := {"brute": "It's Brutus! Somebody reset the tally!", "robot": "The Tin Tyrant! Who opened the lid?!",
-	"hamster": "It's Nibbles! Don't touch the foam!"}
+	"hamster": "It's Nibbles! Don't touch the foam!", "briar": "The Briar's got a HEART. And it's BEATING."}
 const BOSS_RUN_LINES := ["RUN!", "Out of the red! MOVE!"]
 const BOSS_WEAK_LINES := ["It's stunned! Hit it NOW!", "Aim for the head!"]
 const BOSS_KEY_LINE := "It's winding down! Shoot the key!"
@@ -265,7 +265,12 @@ const BOSS_LINES := {"bc": BOSS_COMING_LINES, "br": BOSS_RUN_LINES, "bw": BOSS_W
 ## (FoamMission): "ft", as it starts; "fb": the Touched up out of a burrow;
 ## "fx": one caved in; "fd": the falls to dam; "fp": a block in; "fw": the
 ## water stopped; and at the end (FoamOutro) "nb": little Nibbles, and "nk":
-## the three Kernels, and the Briar.
+## the three Kernels, and the Briar. The Finale (StarfallMission): "st", as it
+## starts; "sr": the Briar's roots; "ss": the Touched growing up out of the
+## ground; "sc": a root cut; "sb": the Briar closing in on Boulder Bluff;
+## "sw": the Warren come to help; "sq": the Heart's pods opening; "sp": one
+## broken open, its Kernel free; "so": the Heart split open; and at the end
+## (StarfallOutro) "sa": the Acorn whole again, and "sg": going home.
 const KERNEL_LINES := {
 	"kt": ["Nine days without Brutus. Nobody jinx it."],
 	"kw": ["Here they come! Out of the Carrot Patch!", "More of them! Everyone back to the Barn!"],
@@ -303,6 +308,17 @@ const KERNEL_LINES := {
 	"fw": ["The water's stopped. And the bedding's moving."],
 	"nb": ["He's... tiny.", "Nibbles? Good boy. Who's a good boy?"],
 	"nk": ["All three of them. Together.", "The Briar! It's coming up through the floor!"],
+	"st": ["It took them home. Back where the Acorn fell."],
+	"sr": ["Look at the roots! They're carrying the light up to the Bluff.", "Cut the roots, and we starve it."],
+	"ss": ["They're growing up out of the ground!"],
+	"sc": ["That root's withering! Cut the rest!"],
+	"sb": ["The Briar's closing in on the Bluff!", "Get inside before it shuts! RUN!"],
+	"sw": ["We saw the light from across the lake! We're with you!"],
+	"sq": ["The pods are opening! Shoot the light!"],
+	"sp": ["A Kernel's free! Get them ALL out!"],
+	"so": ["It's split open! Hit it in the heart!"],
+	"sa": ["They're putting themselves back together. It's the ACORN."],
+	"sg": ["It's going home.", "Look. Up there. It's a star again."],
 }
 ## Grudge points against the director before a bot defies it: its hits on
 ## other bots aren't softened by the director's pacing (and it says so).

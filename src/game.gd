@@ -57,6 +57,12 @@ const FOAM_TIPS := [
 	"Nibbles can't stop for walls: stand in front of something hard and let him run into it.",
 	"Stay out of the foam: it burns, and it slows you down.",
 ]
+const STARFALL_TIPS := [
+	"Carrots barely scratch a root's knot. A grenade or a rocket does it real harm, and a crate of both comes down by you.",
+	"When the Briar starts closing on Boulder Bluff, run for it: outside its wall, its thorns bite.",
+	"The Briar Heart's pods open one at a time to drink the light. That's when to shoot: shut, its thorns take it.",
+	"Its last pod broken, the Heart splits open down the front. Hit the light inside. And jump when the ring goes red round its foot.",
+]
 const CAGE_TIPS := [
 	"Hamster tubes are tunnels: run through Tube Town to cross unseen.",
 	"Water bowls are brimming: swim in, and climb out over the rim.",
@@ -194,6 +200,8 @@ func _build_world() -> void:
 		match_manager.boss_intro = true
 		match_manager.boss_arriving.connect(_play_boss_intro)
 	match_manager.mission_outro.connect(_play_mission_outro)
+	if match_manager.mission:
+		match_manager.mission.tune_lighting(lighting)   # (the Finale's night)
 
 
 func _spawn_player() -> void:
@@ -243,7 +251,7 @@ func _start_mission() -> void:
 	tw.tween_callback(_loading.queue_free)
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	Audio.play_music(island.music_slot)
-	var ambience: Node = Audio.make_loop(&"ambient_forest_loop", self, false)
+	var ambience: Node = Audio.make_loop(d.ambience(), self, false)
 	if ambience:
 		ambience.volume_db = -10.0
 		ambience.play()
@@ -254,10 +262,10 @@ func _start_mission() -> void:
 	var c := BossIntro.title_card(card, "THE KERNEL HUNT  ·  %s" % String(act.get("name", "")).to_upper(), String(act.get("title", "")).to_upper(),
 		String(act.get("goal", "")))
 	c.position.y = get_viewport().get_visible_rect().size.y * 0.3   # (up off the HUD's health bars)
-	get_tree().create_timer(6.5, false).timeout.connect(func():
-		var out := c.create_tween()
-		out.tween_property(c, "modulate:a", 0.0, 0.6)
-		out.tween_callback(card.queue_free))
+	var out := c.create_tween()   # (the card's own: gone with it if the match is, not a timer left calling it)
+	out.tween_interval(6.5)
+	out.tween_property(c, "modulate:a", 0.0, 0.6)
+	out.tween_callback(card.queue_free)
 	var opening := d.opening()
 	get_tree().create_timer(7.5, false).timeout.connect(func():
 		if hud:
@@ -424,7 +432,8 @@ func _build_loading() -> void:
 	if _mode == "teams":
 		tips = TEAM_TIPS
 	elif _mode == "kernel":
-		tips = {"carrot_patch": PATCH_TIPS, "clockwork_decree": CLOCKWORK_TIPS, "foam_at_the_falls": FOAM_TIPS}.get(KernelHunt.playing, KERNEL_TIPS)
+		tips = {"carrot_patch": PATCH_TIPS, "clockwork_decree": CLOCKWORK_TIPS, "foam_at_the_falls": FOAM_TIPS,
+			"starfall": STARFALL_TIPS}.get(KernelHunt.playing, KERNEL_TIPS)
 	elif _mode == "boss":
 		tips = BOSS_TIPS + BossLore.rumours(_map)   # (and what the Warren says about its boss)
 	var tip := UITheme.label("Tip: " + tips.pick_random(), 22, Color(UITheme.CREAM, 0.8))

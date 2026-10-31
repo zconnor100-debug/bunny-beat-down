@@ -16,8 +16,9 @@ building toward.
 - **The Warren Gazette** reports what the rogues get up to while you're away,
   and holds the front page for a special edition when a giant falls or the
   Barn holds, with a photo of the moment.
-- **The Briar**, the thorny wall that closes in on every match, has never been
-  explained. (See *The Starfall*, below.)
+- **The Briar**, the thorny wall that closes in on every match, is the
+  Starfall Acorn's roots, still looking for its pieces. (The Kernel Hunt's
+  Finale, *The Starfall*, below.)
 - **The House on the shore**, across the lake from the island, is where the
   Warren goes when the people are out: the children's toy room (**Toy Box
   Bash**) and the hamster cage (**the Hamster Cage**).
@@ -108,6 +109,35 @@ In the game: the Curious Golden Hamster model (restore50, CC BY 4.0), the
 charge, bite, foam spit, burrow. Beat him for **the Rabid froth** beat-down
 burst.
 
+### The Briar Heart, the Acorn's Roots (Boulder Bluff, by night)
+
+*Every match, it closes in. Now you know why.*
+
+Not a giant of the Boss Battles: the Kernel Hunt's last boss. Its chapters
+open in the Finale (faced, beaten, beaten three times).
+
+1. **The Roots.** When the Acorn split three ways, what was left of it, the
+   husk, sank into Boulder Bluff and put down roots, and they've grown under
+   Wildwood ever since, under the lake and the House, looking for the three
+   pieces. That's why the Briar closes in wherever critters fight: it thinks
+   the noise is them.
+2. **The Heart.** Where the husk lies the roots knotted into a heart, a knot
+   of thorn as big as the Big Red Barn, and it beats. It keeps the Kernels
+   shut in thorny pods on vines of their own and opens them one at a time to
+   drink: that's when to shoot.
+3. **Starved.** Cut its roots and it starves; break its pods and the Kernels
+   fly free. With the last out it splits open, and there's only the light it
+   drank, burning, and the Briar closing in one last time.
+4. **Number One Hundred and Thirteen.** Old Mother Clover says the Acorn only
+   ever wanted to go home, and the Briar only ever wanted to hold on to it.
+   There's a new star over the Bluff now. Little Bru will tell you which.
+
+In the game: built in code, no model (a heart of nested loops of thorny vine
+in the split husk of the Acorn, VineMesh), rooted, turning to face whoever
+it's after. Its pods (shut, they shrug carrots off; open, they don't), the
+Thorn Volley, the Root Burst, the Lash round its foot (jump it), and, split
+open, its heart. Beat it for **the Shooting stars** beat-down burst.
+
 ## Where it's going: the Kernel Hunt (a PvE quest line)
 
 The three last chapters set it up: the Kernels hum for each other. Brutus
@@ -122,7 +152,7 @@ rogues against the **Touched**, critters the Acorn's light has got into (any
 species, gold-green light running through their fur in veins, silent, run by
 the bots' brain as an enemy team), through acts of missions that end in the
 boss fights already in the game. Its page is on the main menu. The prologue
-and Acts I, II and III are playable; the finale is listed there, sealed.
+and Acts I, II and III and the Finale are playable.
 
 ### The prologue: *Days Since Brutus* (playable)
 
@@ -256,12 +286,59 @@ Beating him earns **The Third Kernel** and the **Sunflower seeds** beat-down
 burst; doing it with every ranger standing, **Nobody Foamed**. The Gazette's
 special edition: NIBBLES IS A GOOD BOY AGAIN.
 
+### The Finale: *The Starfall* (playable)
+
+The Briar's vines closed over the three Kernels and pulled them down through
+the bedding, and its roots carried them under the lake, home to where the
+Acorn fell. By nightfall Boulder Bluff was glowing gold-green over the whole
+island. The Barn Rangers start at the Big Red Barn, by night, the stars out.
+Opens once Foam at the Falls is done.
+
+1. **Cut the roots.** Three of the Briar's taproots have broken up out of the
+   island round the Barn's side of the Bluff, the Kernels' light running
+   along them in pulses toward it. Break the knot of each, where it came up:
+   carrots barely scratch the bark, a blast does it real harm (you start with
+   grenades, and a crate brings more and a rocket launcher). The Touched grow
+   up out of the ground round a knot while you're near. Cut, a root withers
+   grey and sinks back into the ground. "Cut the roots, and we starve it."
+2. **Get inside the Briar.** With the roots cut it calls up the Briar: its
+   wall comes up round the Bluff and closes in (outside it, its thorns
+   bite), the Touched pour down off the Bluff at you, and the Warren
+   answers: the rogues who came for Brutus and the ones you unwound in the
+   toy room glide down to fight beside you. "We saw the light from across the
+   lake! We're with you!"
+3. **Stop its heart.** The ring shut, the Bluff heaves, and the **Briar
+   Heart** comes up out of it in the husk of the Acorn. Break its pods while
+   they're open and the Kernels fly free; split open, it closes the Briar in
+   tighter, and its heart's out.
+
+When it falls the light goes out of the Touched, all of them at once, and
+they blink and sit down, critters again. The three Kernels come down
+together over the husk; its pieces lift off the Bluff and close round them,
+and there it is, whole for the first time since it fell: **the Starfall
+Acorn**, gold and humming, as big as the Big Red Barn. "They're putting
+themselves back together. It's the ACORN." It rises off the Bluff, slowly
+and then faster, up into the stars, while the Briar's wall withers away; at
+the front of the crowd watching it go are the three it made into giants,
+small again: Little Bru, Model No. 7 and Nibbles. "It's going home." It's a
+point of light, then a star, a new one over Boulder Bluff. "Look. Up there.
+It's a star again." Little Bru is counting: "...a hundred and twelve. A
+hundred and thirteen." The Kernel Hunt is complete; the Acorn's gone home,
+and the Briar's just a briar. (It still closes in wherever critters fight.
+Old Mother Clover says it isn't looking for anything any more.)
+
+Beating it earns **The Starfall** and the **Shooting stars** beat-down
+burst; doing it with every ranger standing, **Nobody Pricked**. The Gazette's
+special edition: THE ACORN GOES HOME.
+
 In the code: `src/quest/` (KernelHunt, MissionDirector, PatchMission,
-ClockworkMission and FoamMission, MissionCinematic, MissionOutro, PatchOutro,
-ClockworkOutro and FoamOutro, TallySign, GlowCarrot, HoldRing and BurnSpot,
-StarfallKernel, WindKey, KeyPull, WindingStation, WarrenFlag, TyrantWatch,
-BurrowMouth, ChewBlock, Dam, BriarBurst), `src/fx/fire.gd`, the lines in
-`Cast.KERNEL_LINES`.
+ClockworkMission, FoamMission and StarfallMission, MissionCinematic,
+MissionOutro, PatchOutro, ClockworkOutro, FoamOutro and StarfallOutro,
+TallySign, GlowCarrot, HoldRing and BurnSpot, StarfallKernel, WindKey,
+KeyPull, WindingStation, WarrenFlag, TyrantWatch, BurrowMouth, ChewBlock, Dam,
+BriarBurst, BriarRoot, VineMesh), `src/bosses/briar_heart.gd`, the Briar a
+mission drives (`Storm.close_on`), the night (`WorldLighting.make_night`,
+`night_sky.gdshader`), `src/fx/fire.gd`, the lines in `Cast.KERNEL_LINES`.
 
 | Act | Where | Missions (sketch) | Ends with |
 |---|---|---|---|
@@ -269,7 +346,7 @@ BurrowMouth, ChewBlock, Dam, BriarBurst), `src/fx/fire.gd`, the lines in
 | I: *The Carrot Patch* (playable) | Wildwood Island | Track the glowing carrots; burn the Patch; wake him at Boulder Bluff. | Brutus, who shrinks back into Little Bru: the first Kernel |
 | II: *The Clockwork Decree* (playable) | Toy Box Bash | Free the rogues he's wound; break his winding stations; storm Block Castle. | The Tin Tyrant, who shrinks back into Model No. 7: the second Kernel |
 | III: *Foam at the Falls* (playable) | the Hamster Cage | Cave in his burrows; dam Water Bottle Falls. | Nibbles, a good boy again: the third Kernel, and the Briar comes |
-| Finale: *The Starfall* | all three, then somewhere new | The Kernels together. The Briar comes for them. | The Briar Heart (a fourth boss, not yet built) |
+| Finale: *The Starfall* (playable) | Wildwood Island, by night | Cut the Briar's three roots; get inside its wall as it closes on Boulder Bluff. | The Briar Heart: the Starfall Acorn whole again, going home |
 
 What's already built that it would stand on:
 

@@ -1728,9 +1728,12 @@ func _check_teams(c: Critter, info: DamageInfo) -> void:
 	finished.emit(player if won and player.alive else null, 1 if won else 2)
 
 
-## The map's boss, built and parked out of sight until it's time (BOSSES).
+## The map's boss, built and parked out of sight until it's time (BOSSES; a
+## mission can bring its own: MissionDirector.boss_script).
 func _make_boss() -> void:
 	var path: String = BOSSES.get(island.map_id if island else "island", BOSSES["island"])
+	if mission and mission.boss_script() != "":
+		path = mission.boss_script()
 	boss = (load(path) as GDScript).new() as Boss
 	boss.setup(self, _difficulty)
 	world_root.add_child(boss)
@@ -1817,7 +1820,7 @@ func _boss_banter() -> void:
 			continue
 		newest = maxf(newest, float(d[3]))
 		_warn_shout(d[0], float(d[1]))
-	if boss.state == Boss.State.FIGHTING and boss.fight_time() > 20.0:
+	if boss.state == Boss.State.FIGHTING and boss.fight_time() > 20.0 and boss.id != "briar":   # (the Heart has no head: its mission calls out its pods)
 		_boss_shout("tip")
 	_boss_was = {"stunned": stunned, "enraged": boss.enraged, "since": newest}
 

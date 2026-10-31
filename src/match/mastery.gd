@@ -118,6 +118,11 @@ const MILESTONES := [
 		"stat": "kernel_done:foam_at_the_falls", "need": 1, "reward": {"look": "kill_fx:seeds"}, "gives": "the Sunflower seeds beat-down burst"},
 	{"id": "nobody_foamed", "name": "Nobody Foamed", "text": "Finish Act III with all seven Barn Rangers still standing.",
 		"stat": "kernel_all_home:foam_at_the_falls", "need": 1, "reward": {"acorns": 300}, "gives": "300 acorns"},
+	# its Finale (StarfallMission): the Briar Heart beaten and the Acorn gone home, and nobody lost doing it
+	{"id": "the_starfall", "name": "The Starfall", "text": "Beat the Briar Heart in the Kernel Hunt's Finale, The Starfall.",
+		"stat": "kernel_done:starfall", "need": 1, "reward": {"look": "kill_fx:stars"}, "gives": "the Shooting stars beat-down burst"},
+	{"id": "nobody_pricked", "name": "Nobody Pricked", "text": "Finish the Finale with all seven Barn Rangers still standing.",
+		"stat": "kernel_all_home:starfall", "need": 1, "reward": {"acorns": 500}, "gives": "500 acorns"},
 ]
 
 ## The ladders: `text` has a %d for a tier's need, and each tier is [need,

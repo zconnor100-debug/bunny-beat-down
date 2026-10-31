@@ -10,7 +10,15 @@ const SIZE := 0.75             ## metres, along its length
 const GLOW := Color(0.8, 1.0, 0.34)
 const GOLD := Color(0.95, 0.78, 0.3)
 
+## How much it glows (1: a Kernel; the whole Acorn, StarfallOutro, much less:
+## it's huge).
+var glow_k := 1.0:
+	set(v):
+		glow_k = v
+		if _mat:
+			_mat.emission_energy_multiplier = 2.2 * v
 var _body: Node3D
+var _mat: StandardMaterial3D
 var _halo: Sprite3D
 var _light: OmniLight3D
 var _hum: AudioStreamPlayer3D
@@ -35,17 +43,17 @@ func _ready() -> void:
 		hold.rotation.z = PI * 0.5   # (the model lies along x: stood on its point, cap up)
 		hold.add_child(acorn)
 		_body.add_child(hold)
-		var mat := StandardMaterial3D.new()
-		mat.albedo_color = GOLD
-		mat.metallic = 0.6
-		mat.roughness = 0.3
-		mat.emission_enabled = true
-		mat.emission = GLOW
-		mat.emission_energy_multiplier = 2.2
-		mat.rim_enabled = true
-		mat.rim = 0.6
+		_mat = StandardMaterial3D.new()
+		_mat.albedo_color = GOLD
+		_mat.metallic = 0.6
+		_mat.roughness = 0.3
+		_mat.emission_enabled = true
+		_mat.emission = GLOW
+		_mat.emission_energy_multiplier = 2.2 * glow_k
+		_mat.rim_enabled = true
+		_mat.rim = 0.6
 		for mi in ModelUtil.find_all(acorn, "MeshInstance3D"):
-			(mi as MeshInstance3D).material_override = mat
+			(mi as MeshInstance3D).material_override = _mat
 			(mi as MeshInstance3D).cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	else:
 		var mi := MeshInstance3D.new()
@@ -81,11 +89,19 @@ func _process(delta: float) -> void:
 	_body.rotation.y += delta * 0.9
 	_body.position.y = sin(_t * 1.7) * 0.08
 	var glow := 0.85 + 0.15 * sin(_t * 4.3) + _flare
-	_light.light_energy = 2.4 * glow
-	_halo.modulate = Color(GLOW, clampf(0.45 * glow, 0.0, 1.0))
+	_light.light_energy = 2.4 * glow * glow_k
+	_halo.modulate = Color(_halo.modulate, clampf(0.45 * glow * glow_k, 0.0, 1.0))   # (its colour kept: gold-green, or gold)
 	_halo.scale = Vector3.ONE * (1.0 + _flare * 0.8)
 	if _hum:
 		_hum.pitch_scale = 1.0 + _flare * 0.08
+
+
+## Gold all through, not gold-green (the whole Acorn, back together: StarfallOutro).
+func gild() -> void:
+	if _mat:
+		_mat.emission = Color(1.0, 0.8, 0.38)
+	_halo.modulate = Color(1.0, 0.85, 0.45, _halo.modulate.a)
+	_light.light_color = Color(1.0, 0.85, 0.5)
 
 
 ## It flares, and hums louder for a moment.

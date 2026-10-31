@@ -4,8 +4,8 @@ extends TestCase
 ## played through: you and the Barn Rangers at the Big Red Barn, three waves
 ## of the Touched marching on it, the ones in its yard wearing it down, and
 ## the ending (MissionOutro): the tally back at zero, the milestone and the
-## Gazette's special edition. And the Barn falling. Acts I, II and III played
-## through too.
+## Gazette's special edition. And the Barn falling. Acts I, II and III, and
+## the Finale, played through too.
 
 const GAME := "res://scenes/game.tscn"
 
@@ -32,7 +32,8 @@ func test_the_quest_line() -> void:
 		and KernelHunt.ACTS[2].get("map") == "toybox", "Act II, The Clockwork Decree, in the toy room, open after Act I")
 	check(KernelHunt.ACTS[3].id == "foam_at_the_falls" and KernelHunt.ACTS[3].open and KernelHunt.ACTS[3].get("after") == "clockwork_decree"
 		and KernelHunt.ACTS[3].get("map") == "cage", "Act III, Foam at the Falls, in the hamster cage, open after Act II")
-	check(KernelHunt.ACTS.slice(4).all(func(a): return not a.get("open", false)), "the finale sealed")
+	check(KernelHunt.ACTS[4].id == "starfall" and KernelHunt.ACTS[4].open and KernelHunt.ACTS[4].get("after") == "foam_at_the_falls"
+		and KernelHunt.ACTS[4].get("map") == "island", "the Finale, The Starfall, back on the island, open after Act III")
 	check(KernelHunt.unlocked("prologue") and not KernelHunt.unlocked("carrot_patch") and not KernelHunt.unlocked("clockwork_decree")
 		and not KernelHunt.unlocked("foam_at_the_falls") and not KernelHunt.unlocked("starfall"),
 		"Act I locked till the Barn's held (and each act till the one before is done)")
@@ -70,7 +71,7 @@ func test_the_quest_line() -> void:
 	page.show_act("starfall")
 	await wait_frames(1)
 	labels = page.find_children("*", "Label", true, false).filter(func(l): return not l.is_queued_for_deletion()).map(func(l): return l.text)
-	check(labels.has("Sealed. This part of the hunt comes in a later update."), "the finale, sealed")
+	check(labels.has("Locked. Finish Act III: Foam at the Falls first."), "the Finale, locked till Act III's done")
 	page.queue_free()
 
 
@@ -585,6 +586,145 @@ func test_act_three_ends_when_you_go_down() -> void:
 	await _sim(func(): return mm.phase == MatchManager.Phase.ENDED, 5.0)
 	check(mm.phase == MatchManager.Phase.ENDED and mm.winning_team == 2, "you down: it's over")
 	check(String(d.result(false, d.report())[0]) == "THE BURROWS STAY OPEN", "the burrows stay open: %s" % d.result(false, d.report())[0])
+	game.queue_free()
+	await wait_frames(5)
+
+
+## The Finale, The Starfall, played through: by night on the island, the
+## Briar's three roots cut, its wall closing on Boulder Bluff and the Warren
+## answering, the Briar Heart up out of the Bluff (its moves, its pods, split
+## open), and the ending: the Acorn whole, gone home, a star.
+func test_the_finale_the_starfall() -> void:
+	var said := []
+	var hear := func(_c, text): said.append(text)
+	Events.taunt.connect(hear)
+	var game: Node = await _start("starfall")
+	var mm: MatchManager = game.match_manager
+	var d := mm.mission as StarfallMission if mm else null
+	check(d != null and d.mission == "starfall" and mm.island.map_id == "island", "the Finale, on the island")
+	if d == null:
+		Events.taunt.disconnect(hear)
+		game.queue_free()
+		return
+	var lighting := game.get_node_or_null("World/Lighting") as WorldLighting
+	check(lighting != null and lighting.night and lighting.env.sky.sky_material is ShaderMaterial, "by night: the stars out")
+	mm.player.max_health = 1e6
+	mm.player.health = 1e6
+	check(d.rangers.size() == 7 and d.rangers.all(func(r): return r.alive and r.team == 1 and (r.get_node("AIBrain") as AIBrain).escort == mm.player),
+		"the seven rangers, sticking by you")
+	var heart := mm.boss as BriarHeart
+	check(heart != null and heart.state == Boss.State.WAITING and heart.pods_left() == BriarHeart.PODS, "the Briar Heart, waiting under the Bluff, its pods shut")
+	check(d.roots.size() == StarfallMission.ROOTS and d.roots.all(func(r): return not r.broken and r.is_in_group(&"objectives")), "three roots to cut")
+	check(d.roots.all(func(r): return MissionDirector._flat(r.global_position - d.heart_pos).length() > 60.0), "their knots well out from the Bluff")
+	check(mm.player.inventory.grenades >= StarfallMission.GRENADES, "grenades to cut them with")
+	var bars: Array = game.hud.find_children("*", "", true, false).filter(func(n): return n is MissionBar)
+	await wait_frames(2)
+	check(bars.size() == 1 and bars[0]._name.text == "THE BRIAR'S ROOTS", "the roots on the HUD: %s" % (bars[0].status() if bars.size() > 0 else ""))
+	Engine.time_scale = 4.0
+	var r0: BriarRoot = d.roots[0]
+	mm.player.place_at(d._ground_at(r0.global_position + Vector3(20, 0, 0)))
+	var before := r0.sprouts.size()
+	r0._sprout_t = 0.0
+	await _sim(func(): return r0.sprouts.size() > before, 2.0)
+	check(r0.sprouts.size() > before and r0.sprouts.back().team == 2, "the Touched grow up out of the ground by a knot while you're near")
+	var hp := r0.health
+	r0.receive_shot(mm.player, WeaponDB.get_weapon(&"carrot_rifle"), 100.0, r0.knot_point(), Vector3.FORWARD, &"knot")
+	check(is_equal_approx(hp - r0.health, 100.0 * BriarRoot.BARK), "carrots barely scratch its bark (%.0f)" % (hp - r0.health))
+	for r in d.roots:
+		r.receive_blast(r.knot_point(), 6.0, 1e5, mm.player, &"carrot_rocket_launcher")
+	check(d.roots.all(func(r): return r.broken and not r.is_in_group(&"objectives")), "a blast in each knot: cut")
+	await _sim(func(): return d.step == StarfallMission.Step.BRIAR, 6.0)
+	await wait_frames(2)
+	check(d.step == StarfallMission.Step.BRIAR and mm.storm.active and mm.storm.scripted and mm.storm.shrinking and bars[0]._name.text == "THE BRIAR",
+		"then the Briar comes up round the Bluff, closing in (%s)" % bars[0]._name.text)
+	await _sim(func(): return d.answered.size() > 0, 8.0)
+	check(d.answered.size() == KernelHunt.ANSWER.size() + KernelHunt.WOUND.size() and d.answered.all(func(c): return c.team == 1),
+		"the Warren answers (%d)" % d.answered.size())
+	mm.player.place_at(d._ground_at(d.heart_pos + MissionDirector._flat(d.barn_pos - d.heart_pos).normalized() * 40.0))
+	_beat_wave(mm)
+	await _sim(func(): return not mm.storm.shrinking, StarfallMission.CLOSE_FOR + 2.0)
+	check(not mm.storm.shrinking and is_equal_approx(mm.storm.radius, StarfallMission.ARENA), "it shuts, %d m round the Heart" % roundi(mm.storm.radius))
+	await _sim(func(): return d.step == StarfallMission.Step.BOSS, 8.0)
+	check(d.step == StarfallMission.Step.BOSS and heart.state != Boss.State.WAITING, "the Bluff heaves, and the Briar Heart comes up out of it")
+	await _sim(func(): return heart.state == Boss.State.FIGHTING, 16.0)
+	check(heart.state == Boss.State.FIGHTING, "it's up")
+	# its moves, each once
+	var you := mm.player
+	heart.thinking = false
+	await _sim(func(): return heart.action == null, 6.0)
+	for move in [heart._volley(you), heart._root_burst(you), heart._lash(), heart._roar_action()]:
+		heart.start(move)
+		await _sim(func(): return heart.action == null, 6.0)
+	check(heart.moves_used.has(&"volley") and heart.moves_used.has(&"roots") and heart.moves_used.has(&"lash") and heart.moves_used.has(&"groan"),
+		"its Thorn Volley, Root Burst, Lash and groan: %s" % [heart.moves_used.keys()])
+	# its pods: shut, they shrug it off; open, they don't
+	check(is_equal_approx(heart.part_scale(&"pod_0"), BriarHeart.POD_SHUT) and is_equal_approx(heart.part_scale(&"heart"), BriarHeart.BODY),
+		"shut pods and its knot: mostly thorns")
+	heart._bloom_t = 0.0
+	await _sim(func(): return heart.bloom_i >= 0 and heart.pod_open(heart.bloom_i), 6.0)
+	var open_i := heart.bloom_i
+	check(open_i >= 0 and heart.pod_open(open_i) and heart.get_eye_position().distance_to(heart.pod_point(open_i)) < 0.1, "a pod opens (and the bots aim at it)")
+	var shot := DamageInfo.make(heart.pod_max / BriarHeart.POD_OPEN + 1.0, DamageInfo.Kind.BULLET, you, &"carrot_rifle")
+	shot.bone_role = StringName("pod_%d" % open_i)
+	heart.take_damage(shot)
+	check(heart.pods_left() == 2 and heart.kernels.size() == 1 and heart.vulnerable(), "broken: its Kernel flies free, and it reels")
+	for i in BriarHeart.PODS:
+		if not heart._pods[i].broken:
+			var hit := DamageInfo.make(heart.pod_max / BriarHeart.POD_SHUT + 1.0, DamageInfo.Kind.BULLET, you, &"carrot_rifle")
+			hit.bone_role = StringName("pod_%d" % i)
+			heart.take_damage(hit)
+	check(heart.pods_left() == 0 and heart.kernels.size() == 3 and heart.split and heart.enraged and heart.alive, "the last pod broken: it splits open")
+	await _sim(func(): return mm.storm.shrinking, 4.0)
+	check(mm.storm.next_radius < StarfallMission.ARENA, "and the Briar closes in tighter")
+	var core := DamageInfo.make(1e7, DamageInfo.Kind.BULLET, you, &"carrot_sniper")
+	core.bone_role = &"core"
+	heart.take_damage(core)
+	check(not heart.alive and mm.phase == MatchManager.Phase.PLAYING, "its heart hit: down, and it isn't over")
+	await _sim(func(): return d._outro != null, 12.0)
+	var o := d._outro as StarfallOutro
+	check(o != null and o.playing and get_viewport().get_camera_3d() == o._cam and not game.hud.visible, "the ending plays, with its own camera")
+	check(o != null and o.bru != null and o.nibbles != null and o.seven != null, "Little Bru, Nibbles and Model No. 7 are there")
+	check(o != null and o.bru != null and (-o.bru.global_basis.z).dot(MissionDirector._flat(d.heart_pos - o.bru.global_position).normalized()) > 0.9,
+		"Little Bru facing the Heart (and what comes up off it)")
+	await _sim(func(): return o != null and o.acorn != null, 20.0)
+	check(o != null and o.acorn != null and mm.alive_critters().all(func(c): return c.team != 2), "the Acorn, whole; the Touched, free")
+	await _sim(func(): return o != null and o.star != null, 30.0)
+	check(o != null and o.star != null and o.acorn == null and not mm.storm.active, "it's gone home: a star, and the Briar's withered")
+	await _sim(func(): return mm.phase == MatchManager.Phase.ENDED, 40.0)
+	check(mm.phase == MatchManager.Phase.ENDED and mm.winning_team == 1, "done")
+	check(KernelHunt.done("starfall") and Mastery.has("the_starfall") and Workshop.owns("kill_fx:stars"),
+		"on your record: The Starfall, and the Shooting stars")
+	var ed := WarrenSim.edition()
+	check(ed.get("extra", "") == "kernel" and String(ed.stories[0].title) == "THE ACORN GOES HOME", "the Gazette's special edition")
+	check(BossLore.shown().has("briar") and BossLore.chapters_open("briar") >= 3, "the Briar Heart's story, on the Bosses page")
+	await wait_frames(3)
+	var end_labels: Array = game._end.find_children("*", "Label", true, false).map(func(l): return l.text) if game._end else []
+	check(end_labels.has("THE KERNEL HUNT IS COMPLETE!"), "the end screen: %s" % [end_labels.slice(0, 3)])
+	var keys := ["st", "sr", "ss", "sc", "sb", "sw", "sq", "sp", "so", "sa", "sg"]
+	var heard := said.filter(func(t): return keys.any(func(k): return (Cast.KERNEL_LINES[k] as Array).has(t)))
+	print("    they said: %s" % [heard])
+	check(heard.has(Cast.KERNEL_LINES.st[0]) and heard.has(Cast.KERNEL_LINES.sb[0]) and heard.has(Cast.KERNEL_LINES.sa[0])
+		and heard.has(Cast.KERNEL_LINES.sg[1]), "they talk it through, from the roots to the star")
+	Events.taunt.disconnect(hear)
+	game.queue_free()
+	await wait_frames(5)
+
+
+## In the Finale, going down yourself ends it too.
+func test_the_finale_ends_when_you_go_down() -> void:
+	var game: Node = await _start("starfall")
+	var mm: MatchManager = game.match_manager
+	var d := mm.mission as StarfallMission if mm else null
+	if not check(d != null, "the Finale"):
+		game.queue_free()
+		return
+	Engine.time_scale = 4.0
+	await _sim(func(): return false, 1.0)
+	var guard := d._spawn_touched(mm.player.global_position + Vector3(8, 0, 0), &"carrot_pistol")
+	mm.player.take_damage(DamageInfo.make(1e9, DamageInfo.Kind.BULLET, guard, &"carrot_rifle"))
+	await _sim(func(): return mm.phase == MatchManager.Phase.ENDED, 5.0)
+	check(mm.phase == MatchManager.Phase.ENDED and mm.winning_team == 2, "you down: it's over")
+	check(String(d.result(false, d.report())[0]) == "THE ROOTS HOLD", "the roots hold: %s" % d.result(false, d.report())[0])
 	game.queue_free()
 	await wait_frames(5)
 

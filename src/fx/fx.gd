@@ -171,6 +171,11 @@ const BEAT_DOWN_BURSTS := {
 	# (earned in the Kernel Hunt's Act III, out of Nibbles's cheeks: sunflower seeds, striped)
 	"seeds": [["leaf", [Color(0.12, 0.11, 0.1), Color(0.9, 0.88, 0.8), Color(0.3, 0.28, 0.26)], 11.0, 0.12,
 		{"amount": 12, "speed": Vector2(3.0, 7.0), "spread": 75.0, "lifetime": 1.6}]],
+	# (earned in the Kernel Hunt's Finale, sending the Acorn home: stars shooting up, and a sparkle)
+	"stars": [["star", [Color(1.0, 0.95, 0.7), Color(0.8, 1.0, 0.34)], -2.5, 0.16,
+		{"amount": 9, "speed": Vector2(4.0, 9.0), "spread": 55.0, "additive": true, "damping": 1.6, "lifetime": 1.6}],
+		["blob", [Color(1.0, 1.0, 0.9)], -0.4, 0.05, {"amount": 14, "speed": Vector2(1.0, 4.0), "spread": 120.0, "additive": true,
+		"lifetime": 1.1}]],
 }
 
 

@@ -46,6 +46,11 @@ static func shape(kind: String) -> Texture2D:
 					var r := p.length()
 					var tooth := clampf(cos(atan2(p.y, p.x) * 8.0) * 3.0, -1.0, 1.0) * 0.5 + 0.5
 					d = maxf(r - (0.68 + 0.22 * tooth), 0.24 - r)
+				"star":
+					# five points round a middle (distance to a star-shaped outline)
+					var a := atan2(p.y, p.x)
+					var pts := 0.5 + 0.5 * cos(a * 5.0 - PI * 0.5)
+					d = p.length() - lerpf(0.36, 0.9, pow(pts, 2.5))
 				"leaf":
 					# a pointed oval, and a vein
 					var q := Vector2(p.x * 1.9, p.y)

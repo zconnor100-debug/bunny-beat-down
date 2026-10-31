@@ -482,6 +482,8 @@ func _process(delta: float) -> void:
 		var title: String = Storm.VARIANTS[storm.variant].title
 		if storm.nap_left > 0.0:
 			_storm_label.text = "%s is napping  %d" % [title, ceili(storm.nap_left)]
+		elif storm.scripted:   # (a mission's Briar: its bar says how it's closing)
+			_storm_label.text = ""
 		else:
 			_storm_label.text = ("%s IS CLOSING  %s" % [title.to_upper(), mmss]) if storm.shrinking else ("%s closes in %s" % [title, mmss])
 		_storm_label.add_theme_color_override("font_color", Color("d9a0ff") if storm.shrinking else UITheme.CREAM)
