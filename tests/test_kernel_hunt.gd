@@ -657,7 +657,10 @@ func test_the_finale_the_starfall() -> void:
 		await _sim(func(): return heart.action == null, 6.0)
 	check(heart.moves_used.has(&"volley") and heart.moves_used.has(&"roots") and heart.moves_used.has(&"lash") and heart.moves_used.has(&"groan"),
 		"its Thorn Volley, Root Burst, Lash and groan: %s" % [heart.moves_used.keys()])
-	# its pods: shut, they shrug it off; open, they don't
+	# its pods: shut, they shrug it off; open, they don't (one may have opened
+	# by itself during its moves: wait till it's shut, and keep it so to look)
+	await _sim(func(): return heart.bloom_i < 0 and not heart.pod_open(0), 12.0)
+	heart._bloom_t = 99.0
 	check(is_equal_approx(heart.part_scale(&"pod_0"), BriarHeart.POD_SHUT) and is_equal_approx(heart.part_scale(&"heart"), BriarHeart.BODY),
 		"shut pods and its knot: mostly thorns")
 	heart._bloom_t = 0.0
