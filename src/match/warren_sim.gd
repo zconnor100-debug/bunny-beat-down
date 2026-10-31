@@ -255,6 +255,21 @@ static func clockwork_news(r: Dictionary) -> Array:
 	return out
 
 
+## Act III won (FoamMission): the burrows caved in, the falls dammed, and
+## Nibbles is a little golden hamster again; and the Briar came up.
+static func foam_news(r: Dictionary) -> Array:
+	var home: Array = r.get("rangers_home", [])
+	var all := KernelHunt.RANGERS.size()
+	var came := "Every ranger climbed back out of the cage." if home.size() >= all else ("%d of the %d rangers climbed back out of the cage." % [home.size(), all] \
+		if not home.is_empty() else "None of the rangers climbed out on their feet.")
+	return [
+		{"title": "NIBBLES IS A GOOD BOY AGAIN", "text": "The two Kernels pulled the Barn Rangers into the hamster cage, and you went down into the bedding with them. They caved in his burrows and dammed Water Bottle Falls, and when he came up for a drink, you beat him. He shrank to a golden hamster with very full cheeks, and spat out the third Kernel. %s" % came},
+		{"title": "THE THIRD KERNEL", "text": "The size of a seed, and it hums like the others. When Buck Toothington brought the first two out, the three found each other in the air and wouldn't stop turning. That's when the floor shook."},
+		{"title": "THE BRIAR CAME UP THROUGH THE FLOOR", "text": "Thorns, through the bedding, all round them. Old Mother Clover says it's the Acorn's roots, looking for its pieces. \"It's found them,\" she says. Nobody has slept since."},
+		{"title": "THE FALLS RUN DRY", "text": "%d burrows caved in, three chew blocks across the water, %d of the Touched beaten down. The bottle has run dry for the first time anyone can remember." % [int(r.get("caved", 0)), int(r.get("touched", 0))]},
+	]
+
+
 ## "A, B and C".
 static func _names(names: Array) -> String:
 	if names.size() <= 1:

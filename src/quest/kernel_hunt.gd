@@ -11,8 +11,10 @@ extends RefCounted
 ## the Patch and wake Brutus at Boulder Bluff (PatchMission). Act II, "The
 ## Clockwork Decree", once the Patch is done: across the lake, in the toy room,
 ## unwind the Wound, break the winding stations, storm Block Castle and beat
-## the Tin Tyrant (ClockworkMission). The acts after it are on the Kernel
-## Hunt's page (QuestPanel), sealed.
+## the Tin Tyrant (ClockworkMission). Act III, "Foam at the Falls", after
+## that: in the hamster cage, cave in Nibbles's burrows, dam Water Bottle
+## Falls and beat him (FoamMission). The finale is on the Kernel Hunt's page
+## (QuestPanel), sealed.
 ##
 ## Which missions you've finished, and your best at each, are kept with the
 ## PlayerProfile.
@@ -30,8 +32,10 @@ const ACTS := [
 		"after": "carrot_patch",
 		"brief": "The first Kernel won't stop humming, and it hums at the House on the shore. In the children's toy room the toy box stands open, critters march with keys turning in their backs, and two red eyes watch from the top of the bookshelf. Free the rogues he's wound, break his winding stations and storm Block Castle.",
 		"goal": "Unwind the four Wound rogues, break the three winding stations, take Block Castle, and beat the Tin Tyrant.", "ends": "the Tin Tyrant"},
-	{"id": "foam_at_the_falls", "name": "Act III", "title": "Foam at the Falls", "where": "the Hamster Cage",
-		"brief": "Down the tunnels under the bedding, toward the hum, and dam Water Bottle Falls.", "ends": "Nibbles"},
+	{"id": "foam_at_the_falls", "name": "Act III", "title": "Foam at the Falls", "where": "the Hamster Cage", "map": "cage", "open": true,
+		"after": "clockwork_decree",
+		"brief": "Both Kernels pull at the hamster cage. Under the bedding Nibbles has dug his tunnels toward the toy room, and his water bottle has never once run dry: the third Kernel's in it. Cave in his burrows, dam Water Bottle Falls, and see what comes up for a drink.",
+		"goal": "Blast his burrows shut, carry three chew blocks to dam Water Bottle Falls, and beat Nibbles.", "ends": "Nibbles"},
 	{"id": "starfall", "name": "Finale", "title": "The Starfall", "where": "All three, then somewhere new",
 		"brief": "The Kernels, together at last. The Briar comes for them.", "ends": "the Briar Heart"},
 ]

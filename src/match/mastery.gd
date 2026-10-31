@@ -113,6 +113,11 @@ const MILESTONES := [
 		"stat": "kernel_done:clockwork_decree", "need": 1, "reward": {"look": "kill_fx:cogs"}, "gives": "the Clockwork beat-down burst"},
 	{"id": "nobody_left_wound", "name": "Nobody Left Wound", "text": "Finish Act II with all seven Barn Rangers still standing.",
 		"stat": "kernel_all_home:clockwork_decree", "need": 1, "reward": {"acorns": 300}, "gives": "300 acorns"},
+	# its Act III (FoamMission): Nibbles a good boy again, and nobody lost doing it
+	{"id": "the_third_kernel", "name": "The Third Kernel", "text": "Beat Nibbles in the Kernel Hunt's Act III, Foam at the Falls.",
+		"stat": "kernel_done:foam_at_the_falls", "need": 1, "reward": {"look": "kill_fx:seeds"}, "gives": "the Sunflower seeds beat-down burst"},
+	{"id": "nobody_foamed", "name": "Nobody Foamed", "text": "Finish Act III with all seven Barn Rangers still standing.",
+		"stat": "kernel_all_home:foam_at_the_falls", "need": 1, "reward": {"acorns": 300}, "gives": "300 acorns"},
 ]
 
 ## The ladders: `text` has a %d for a tier's need, and each tier is [need,

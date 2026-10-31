@@ -122,6 +122,9 @@ from `tools/audio/review_checklist.json` — edit that, not this.
 | `clockwork_loop` | Machinery at work: steady tick-tock (two a second), a rough whir of gears swelling and easing, a heavy clunk once round, a breath of steam; seamless 4 s loop. | Each of the Tin Tyrant's winding stations, while it stands (Act II). | [1](../assets/audio/sfx/clockwork_loop.ogg) |
 | `station_break` | A tin machine coming apart: a crash and a thud, a long wobbling falling 'sproing', gears and plates clattering down, a couple of loose boings, a last rattle (~2 s). | A winding station broken (Act II). | [1](../assets/audio/sfx/station_break_1.ogg) [2](../assets/audio/sfx/station_break_2.ogg) |
 | `toy_beep` | An old toy's beep: two buzzy square-ish tones, high then higher, through a tiny speaker, then a faint crackle of sparks (~0.8 s). | Model No. 7's beep at the end of Act II. | [1](../assets/audio/sfx/toy_beep.ogg) |
+| `burrow_scrabble` | Claws scrabbling in dry shavings and dirt, muffled then nearer, a dull knock or two (~1.3 s). | The Kernel Hunt's Act III: the Touched coming up out of one of Nibbles's burrows. | [1](../assets/audio/sfx/burrow_scrabble_1.ogg) [2](../assets/audio/sfx/burrow_scrabble_2.ogg) |
+| `burrow_collapse` | A deep soft whump, then the rush of shavings and dirt sliding down and settling, a few dry patters (~2 s). | A burrow caved in by a blast (Act III). | [1](../assets/audio/sfx/burrow_collapse_1.ogg) [2](../assets/audio/sfx/burrow_collapse_2.ogg) |
+| `water_stop` | The last drips plinking slower and slower, a deep gurgle and a glug or two, then quiet (~2 s). | Water Bottle Falls dammed (Act III). | [1](../assets/audio/sfx/water_stop.ogg) |
 
 ## UI & match flow
 

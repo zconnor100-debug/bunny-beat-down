@@ -121,8 +121,8 @@ find each other.
 rogues against the **Touched**, critters the Acorn's light has got into (any
 species, gold-green light running through their fur in veins, silent, run by
 the bots' brain as an enemy team), through acts of missions that end in the
-boss fights already in the game. Its page is on the main menu. The prologue,
-Act I and Act II are playable; the acts after them are listed there, sealed.
+boss fights already in the game. Its page is on the main menu. The prologue
+and Acts I, II and III are playable; the finale is listed there, sealed.
 
 ### The prologue: *Days Since Brutus* (playable)
 
@@ -223,18 +223,52 @@ Beating him earns **The Second Kernel** and the **Clockwork** beat-down
 burst (cogs and sparks); doing it with every ranger standing, **Nobody Left
 Wound**. The Gazette's special edition: THE TIN TYRANT IS A TOY AGAIN.
 
-In the code: `src/quest/` (KernelHunt, MissionDirector, PatchMission and
-ClockworkMission, MissionCinematic, MissionOutro, PatchOutro and
-ClockworkOutro, TallySign, GlowCarrot, HoldRing and BurnSpot, StarfallKernel,
-WindKey, KeyPull, WindingStation, WarrenFlag, TyrantWatch),
-`src/fx/fire.gd`, the lines in `Cast.KERNEL_LINES`.
+### Act III: *Foam at the Falls* (playable)
+
+Both Kernels pull at the hamster cage, so the Barn Rangers follow them in,
+over the glass and down into the bedding. Under it Nibbles has dug his
+tunnels from here toward the toy room, toward the hum, and his water bottle
+has never once run dry: the third Kernel, the one no bigger than a seed, is
+in it. Opens once the Clockwork Decree is done.
+
+1. **Cave in his burrows.** His burrows are dug into the hamster's heaps of
+   bedding, and the Touched keep coming up out of them while you're near.
+   Nothing you can shoot shuts one: a blast in its mouth caves it in (a
+   grenade: a crate of them comes down; a rocket; the rangers' rockets too).
+2. **Dam Water Bottle Falls.** Carry chew blocks, one at a time, over your
+   head, slowly, into the ring under the bottle's spout while the Touched come
+   at you; knocked off your feet, you drop it. Three, and the falls are
+   dammed: the last drips stop and the puddle drains away.
+3. **Something wants a drink.** The bedding by the dam heaves, and Nibbles
+   bursts up out of it.
+
+When he falls, a gold-green light swells in his cheeks and he shrinks, in a
+froth of foam, until what's sitting there is a little golden hamster with
+very full cheeks: the children's Nibbles, a good boy. He squeaks and spits
+out **the third Starfall Kernel**. "He's... tiny." "Nibbles? Good boy. Who's
+a good boy?" Buck Toothington brings out the other two, and the three find
+each other in the air and turn round each other, brighter and brighter.
+Then the floor shakes, and the Briar comes up through the bedding all round
+them: "All three of them. Together." "The Briar! It's coming up through the
+floor!" (To be continued in the Finale: *The Starfall*.)
+
+Beating him earns **The Third Kernel** and the **Sunflower seeds** beat-down
+burst; doing it with every ranger standing, **Nobody Foamed**. The Gazette's
+special edition: NIBBLES IS A GOOD BOY AGAIN.
+
+In the code: `src/quest/` (KernelHunt, MissionDirector, PatchMission,
+ClockworkMission and FoamMission, MissionCinematic, MissionOutro, PatchOutro,
+ClockworkOutro and FoamOutro, TallySign, GlowCarrot, HoldRing and BurnSpot,
+StarfallKernel, WindKey, KeyPull, WindingStation, WarrenFlag, TyrantWatch,
+BurrowMouth, ChewBlock, Dam, BriarBurst), `src/fx/fire.gd`, the lines in
+`Cast.KERNEL_LINES`.
 
 | Act | Where | Missions (sketch) | Ends with |
 |---|---|---|---|
 | Prologue: *Days Since Brutus* (playable) | Wildwood Island | The tally on the Big Red Barn goes back to zero. Hold the Barn with the Barn Rangers while the Touched come out of the Carrot Patch. | (Brutus is heard, not seen) |
 | I: *The Carrot Patch* (playable) | Wildwood Island | Track the glowing carrots; burn the Patch; wake him at Boulder Bluff. | Brutus, who shrinks back into Little Bru: the first Kernel |
 | II: *The Clockwork Decree* (playable) | Toy Box Bash | Free the rogues he's wound; break his winding stations; storm Block Castle. | The Tin Tyrant, who shrinks back into Model No. 7: the second Kernel |
-| III: *Foam at the Falls* | the Hamster Cage | Down the tunnels under the bedding; dam Water Bottle Falls. | Nibbles |
+| III: *Foam at the Falls* (playable) | the Hamster Cage | Cave in his burrows; dam Water Bottle Falls. | Nibbles, a good boy again: the third Kernel, and the Briar comes |
 | Finale: *The Starfall* | all three, then somewhere new | The Kernels together. The Briar comes for them. | The Briar Heart (a fourth boss, not yet built) |
 
 What's already built that it would stand on:

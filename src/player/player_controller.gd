@@ -473,6 +473,8 @@ func _update_focus() -> void:
 		text = "[Hold %s] Pull up the glowing carrot" % _interact_key()
 	elif best is KeyPull:
 		text = "[Hold %s] Pull the key out of %s's back" % [_interact_key(), (best as KeyPull).rogue.display_name]
+	elif best is ChewBlock:
+		text = "[Hold %s] Pick up the chew block" % _interact_key()
 	elif best is LootCrate:
 		var crate := best as LootCrate
 		var key := _interact_key()

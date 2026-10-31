@@ -721,6 +721,30 @@ looking. Three parts again:
   first comes out of Buck Toothington's paws, and the two orbit each other
   and drift toward the room's door.
 
+### Act III, Foam at the Falls
+
+`FoamMission`, in the hamster cage (`HamsterCage` keeps its `burrows` and its
+`falls` now: the drips, the puddle):
+
+- **BURROWS**: a `BurrowMouth` at each of the burrows nearest the way from
+  Tube Town to the falls, sending the Touched up (`climb_out`) while you're
+  near. It listens for `Events.explosion` like Block Castle's pile does: a
+  blast in its mouth caves it in (the tube sinks and squashes, a heap of
+  bedding slumps over it).
+- **DAM**: `ChewBlock`s (a `LootCrate` you hold interact by, like the glowing
+  carrot) are carried over your head (`speed_scale` down while you do) and
+  dropped where you fall when you're knocked down or beaten down (it watches
+  `is_knocked`); the `Dam` takes any carried into its ring, stacks it, and
+  with three stops the drips (`amount_ratio`, then `emitting`) and drains the
+  puddle.
+- **WAKE**: the bedding heaves by the dam, then `release_boss` brings Nibbles
+  up out of it (his own `from_below` arrival).
+- **His end**: `FoamOutro` shrinks him like Brutus and puts a hamster there,
+  spits out a seed-sized `StarfallKernel`, brings out the first two, turns the
+  three round each other, and a `BriarBurst` (tapering, bending vines of
+  cylinders, thorns all up them, rising out of the ground round them) calls
+  up the finale.
+
 ## Tests
 
 `godot --headless --path . -s tests/run_tests.gd` runs:
@@ -739,11 +763,11 @@ looking. Three parts again:
 * **physics tests**: knockdowns (what does and doesn't knock a critter down,
   getting up, staying down when beaten down) and toys that come apart (the
   castle's blocks, the domino run, a block landing on a critter);
-* **Kernel Hunt tests**: the quest line and its records, and the prologue,
-  Act I and Act II played through headless (waves held; carrots pulled, rings
-  lit, Brutus woken and beaten; Wound rogues unwound, stations broken, the
-  castle taken, the Tin Tyrant beaten; the endings), and the ways each is
-  lost. `run_tests.gd -- kernel::act_two` runs just the tests whose names
+* **Kernel Hunt tests**: the quest line and its records, and the prologue
+  and Acts I to III played through headless (waves held; carrots pulled,
+  rings lit, Brutus woken and beaten; Wound rogues unwound, stations broken,
+  the castle taken, the Tin Tyrant beaten; burrows caved in, the falls
+  dammed, Nibbles beaten; the endings), and the ways each is lost. `run_tests.gd -- kernel::act_two` runs just the tests whose names
   match, in the files that do.
 
 `tests/check_scripts.gd` compiles every script. CI

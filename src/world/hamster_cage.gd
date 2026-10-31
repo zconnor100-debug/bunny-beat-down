@@ -53,6 +53,12 @@ const BOWL_COLOURS := [&"pink", &"mint", &"sky", &"lemon", &"lilac"]
 var bowls: Array = []
 ## Where each Tube Town pod and tube stands, for tests: [Vector3 ...].
 var pods: Array = []
+## The burrows dug into the hamster's heaps (_build_burrows): {mouth (on the
+## bedding), out (flat, the way the mouth faces), tube (the cardboard tube)}.
+var burrows: Array = []
+## Water Bottle Falls: {drip (where the drops leave the spout), drips (their
+## GPUParticles3D), puddle (the water they land in), bottle}.
+var falls := {}
 
 
 func _init() -> void:
@@ -247,9 +253,9 @@ func _build_cage_pois() -> void:
 			"bottle":
 				var bottle := CageProps.water_bottle(rng)
 				_prop(bottle, Vector2(at.x, CageFloor.HZ - 10.5), PI, NAN, false)
-				_drips(bottle)
+				var drips := _drips(bottle)
 				var drip: Vector3 = bottle.to_global(bottle.get_meta(&"drip_from"))
-				_puddle(Vector2(drip.x, drip.z))
+				falls = {"drip": drip, "drips": drips, "puddle": _puddle(Vector2(drip.x, drip.z)), "bottle": bottle}
 			"rolls":
 				_build_roll_pile(p)
 			"blocks":
@@ -444,7 +450,7 @@ func _scatter_one(kit: Node3D, c: Vector2, r0: float, r1: float, radius: float, 
 	return null
 
 
-func _water_disc(c: Vector3, r: float) -> void:
+func _water_disc(c: Vector3, r: float) -> MeshInstance3D:
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	var seg := 40
@@ -466,17 +472,18 @@ func _water_disc(c: Vector3, r: float) -> void:
 	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(mi)
 	mi.global_position = c
+	return mi
 
 
-func _puddle(at: Vector2) -> void:
+func _puddle(at: Vector2) -> MeshInstance3D:
 	var h := terrain.height_at(at.x, at.y)
-	_water_disc(Vector3(at.x, h + 0.08, at.y), 5.0)
+	return _water_disc(Vector3(at.x, h + 0.08, at.y), 5.0)
 
 
 ## Drops falling from the bottle's spout onto the bedding.
-func _drips(bottle: Node3D) -> void:
+func _drips(bottle: Node3D) -> GPUParticles3D:
 	if not bottle.has_meta(&"drip_from"):
-		return
+		return null
 	var p := GPUParticles3D.new()
 	p.name = "Drips"
 	p.amount = 6
@@ -496,6 +503,7 @@ func _drips(bottle: Node3D) -> void:
 	p.visibility_aabb = AABB(Vector3(-4, -40, -4), Vector3(8, 44, 8))
 	bottle.add_child(p)
 	p.position = bottle.get_meta(&"drip_from")
+	return p
 
 
 # ---- ground cover and food everywhere ---------------------------------------------------------
@@ -654,6 +662,7 @@ func _build_burrows() -> void:
 			tube.global_position = Vector3(mid.x, terrain.height_at(mouth.x, mouth.y) - 2.6 * 0.45, mid.y)
 			tube.global_basis = Basis(IKMath.from_to(along, Vector3(out.x, 0.0, out.y)))
 			scatter.add_obstacle(mid, 7.0)
+			burrows.append({"mouth": Vector3(mouth.x, terrain.height_at(mouth.x, mouth.y), mouth.y), "out": Vector3(out.x, 0.0, out.y), "tube": tube})
 
 
 func _cage_spot_ok(p: Vector2, radius: float) -> bool:

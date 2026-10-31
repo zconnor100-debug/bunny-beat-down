@@ -4,13 +4,15 @@ extends Node
 ## Warren Gazette's special edition it prints and the Kernel Hunt's page;
 ## with "boss", a Boss Battle won on the island and its special edition;
 ## with "act1", Act I (The Carrot Patch) from the first carrot to the ending;
-## with "act2", Act II (The Clockwork Decree) from the train station to it.
+## with "act2", Act II (The Clockwork Decree) from the train station to it;
+## with "act3", Act III (Foam at the Falls) from Tube Town to it.
 
 var out_dir := "user://kernel"
 var boss := false
 var act1 := false
 var act2 := false
-var movie := false   ## (recorded with Movie Maker: straight to the ending, its frames marked: OUTRO_AT, END_AT; with "act1", Act I's, and KILL_AT; with "act2", Act II's, and TAKEN_AT, LEAP_AT)
+var act3 := false
+var movie := false   ## (recorded with Movie Maker: straight to the ending, its frames marked: OUTRO_AT, END_AT; with "act1", Act I's, and KILL_AT; with "act2", Act II's, and TAKEN_AT, LEAP_AT; with "act3", Act III's, and DAM_AT, WAKE_AT)
 
 
 func _ready() -> void:
@@ -21,6 +23,7 @@ func _ready() -> void:
 	boss = a.has("boss")
 	act1 = a.has("act1")
 	act2 = a.has("act2")
+	act3 = a.has("act3")
 	movie = a.has("movie")
 	DirAccess.make_dir_recursive_absolute(out_dir)
 	DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_DISABLED)
@@ -76,6 +79,8 @@ func _run() -> void:
 			await _act_one_movie()
 		elif act2:
 			await _act_two_movie()
+		elif act3:
+			await _act_three_movie()
 		else:
 			await _ending_movie()
 		get_tree().quit()
@@ -86,6 +91,8 @@ func _run() -> void:
 		await _act_one()
 	elif act2:
 		await _act_two()
+	elif act3:
+		await _act_three()
 	else:
 		await _prologue()
 	await _menu()
@@ -508,9 +515,8 @@ func _act_two_movie() -> void:
 		c.take_damage(DamageInfo.make(1e6, DamageInfo.Kind.BULLET, p, &"carrot_rifle"))
 		p.place_at(c.global_position + Vector3(1.0, 0.0, 0.6))
 		var pull: KeyPull = d._down[c][0] if d._down.has(c) else null
-		while is_instance_valid(pull) and not pull.opened:
-			pull.channel(p, 1.0 / 60.0)
-			await get_tree().physics_frame
+		if is_instance_valid(pull):
+			pull.open(p)   # (straight out: at this speed it'd wind itself back up first, and it's not in the clip)
 	while d.step != ClockworkMission.Step.BREAK:
 		await get_tree().process_frame
 	for s in d.stations:
@@ -535,6 +541,68 @@ func _act_two_movie() -> void:
 		await get_tree().process_frame
 	print("LEAP_AT %d" % Engine.get_frames_drawn())
 	while mm.boss.state != Boss.State.FIGHTING:
+		await get_tree().process_frame
+	await _wait(2.5)
+	var at := mm.boss.get_chest_position() - p.get_eye_position()
+	_look_at(g, mm.boss.get_chest_position(), atan2(at.y, Vector2(at.x, at.z).length()) * 0.8)
+	await _wait(5.0)
+	print("KILL_AT %d" % Engine.get_frames_drawn())
+	mm.boss.take_damage(DamageInfo.make(1e9, DamageInfo.Kind.BULLET, p, &"carrot_sniper"))
+	while d._outro == null:
+		await get_tree().process_frame
+	print("OUTRO_AT %d" % Engine.get_frames_drawn())
+	while mm.phase != MatchManager.Phase.ENDED:
+		await get_tree().process_frame
+	await _wait(3.5)
+	print("END_AT %d" % Engine.get_frames_drawn())
+	KernelHunt.playing = ""
+
+
+## Act III hurried through (time sped up) to the last chew block, then the
+## falls dammed, the bedding heaving and Nibbles bursting up out of it, a few
+## seconds of the fight, him beaten and the ending as it plays, the end screen.
+func _act_three_movie() -> void:
+	KernelHunt.playing = "foam_at_the_falls"
+	var g: Node = await _game()
+	var mm: MatchManager = g.match_manager
+	while mm.phase != MatchManager.Phase.PLAYING:
+		await get_tree().process_frame
+	var d := mm.mission as FoamMission
+	var p := mm.player
+	p.max_health = 100000.0
+	p.health = p.max_health
+	Engine.time_scale = 6.0
+	await _wait(1.0)
+	for b in d.burrows:
+		_beat(mm)
+		Events.explosion.emit(b.global_position + b.out * 1.5, 5.0)
+	while d.step != FoamMission.Step.DAM:
+		await get_tree().process_frame
+	var into := MissionDirector._flat(-d.falls_pos).normalized()
+	for b in d.blocks:
+		_beat(mm)
+		p.place_at(b.global_position + Vector3(1.2, 0.0, 0.8))
+		await _wait(0.2)
+		while b.carrier == null:
+			b.channel(p, 1.0 / 60.0)
+			await get_tree().physics_frame
+		if b == d.blocks.back():
+			# the last one in as it plays: the drips stop, and the bedding heaves
+			Engine.time_scale = 1.0
+			_beat(mm)
+			p.place_at(d._ground_at(d.falls_pos + into * 6.0), atan2(into.x, into.z))
+			_look_at(g, d.falls_pos + Vector3.UP * 6.0, 0.2)
+			print("DAM_AT %d" % Engine.get_frames_drawn())
+		else:
+			p.place_at(d._ground_at(d.falls_pos + into * 4.0))
+		while not b.placed:
+			await get_tree().physics_frame
+	await _wait(1.6)
+	var spot := d._boss_spot()
+	var to := spot - p.get_eye_position()
+	_look_at(g, spot, atan2(to.y, Vector2(to.x, to.z).length()) + 0.15)
+	print("WAKE_AT %d" % Engine.get_frames_drawn())
+	while mm.boss == null or mm.boss.state != Boss.State.FIGHTING:
 		await get_tree().process_frame
 	await _wait(2.5)
 	var at := mm.boss.get_chest_position() - p.get_eye_position()
@@ -717,6 +785,132 @@ func _act_two() -> void:
 	cam.queue_free()
 	KernelHunt.playing = ""
 
+## Act III: from Tube Town to the ending, every part of it.
+func _act_three() -> void:
+	KernelHunt.playing = "foam_at_the_falls"
+	var g: Node = await _game()
+	var mm: MatchManager = g.match_manager
+	while mm.phase != MatchManager.Phase.PLAYING:
+		await get_tree().process_frame
+	var d := mm.mission as FoamMission
+	var p := mm.player
+	p.max_health = 100000.0
+	p.health = p.max_health
+	await _wait(2.5)
+	await _snap("d01_start")
+	await _wait(5.0)   # (the act's card gone)
+	var cam := Camera3D.new()
+	get_tree().root.add_child(cam)
+	cam.fov = 50.0
+	# a burrow, and the Touched coming up out of it
+	var b0: BurrowMouth = d.burrows[0]
+	p.place_at(d._ground_at(b0.global_position + b0.out * 30.0))
+	b0._t = 0.0
+	await _wait(1.0)
+	var side := b0.out.cross(Vector3.UP)
+	cam.global_position = b0.global_position + b0.out * 13.0 + side * 6.0 + Vector3.UP * 5.0
+	cam.look_at(b0.global_position + Vector3.UP * 1.5, Vector3.UP)
+	cam.make_current()
+	g.hud.visible = false
+	await _wait(0.4)
+	await _snap("d02_burrow")
+	# caved in by a grenade
+	Events.explosion.emit(b0.global_position + b0.out * 1.5, 5.0)
+	await _wait(0.4)
+	await _snap("d03_cave_in")
+	await _wait(1.5)
+	await _snap("d04_caved")
+	g.rig.camera.make_current()
+	g.hud.visible = true
+	for b in d.burrows:
+		_beat(mm)
+		Events.explosion.emit(b.global_position + b.out * 1.5, 5.0)
+	while d.step != FoamMission.Step.DAM:
+		await get_tree().process_frame
+	await _wait(1.0)
+	# the falls, the ring, the blocks
+	var into := MissionDirector._flat(-d.falls_pos).normalized()
+	cam.global_position = d.falls_pos + into * 52.0 + into.cross(Vector3.UP) * 14.0 + Vector3.UP * 26.0
+	cam.look_at(d.falls_pos + Vector3.UP * 8.0, Vector3.UP)
+	cam.make_current()
+	g.hud.visible = false
+	await _wait(0.4)
+	await _snap("d05_falls")
+	g.rig.camera.make_current()
+	g.hud.visible = true
+	# carrying one
+	var blk: ChewBlock = d.blocks[0]
+	_beat(mm)
+	p.place_at(blk.global_position + Vector3(1.2, 0.0, 0.8))
+	await _wait(0.3)
+	while blk.carrier == null:
+		blk.channel(p, 1.0 / 60.0)
+		await get_tree().physics_frame
+	var to := d.falls_pos - p.global_position
+	p.place_at(p.global_position, atan2(-to.x, -to.z))
+	_look_at(g, d.falls_pos + Vector3.UP * 4.0, 0.1)
+	await _wait(0.8)
+	await _snap("d06_carrying")
+	for b in d.blocks:
+		_beat(mm)
+		if b.placed:
+			continue
+		if b.carrier == null:
+			p.place_at(b.global_position + Vector3(1.2, 0.0, 0.8))
+			await _wait(0.2)
+			while b.carrier == null:
+				b.channel(p, 1.0 / 60.0)
+				await get_tree().physics_frame
+		p.place_at(d._ground_at(d.falls_pos + into * 4.0))
+		while not b.placed:
+			await get_tree().physics_frame
+		await _wait(0.5)
+		p.place_at(d._ground_at(d.falls_pos + into * 22.0), atan2(into.x, into.z))
+	cam.global_position = d.falls_pos + into * 16.0 + into.cross(Vector3.UP) * 6.0 + Vector3.UP * 6.0
+	cam.look_at(d.falls_pos + Vector3.UP * 1.5, Vector3.UP)
+	cam.make_current()
+	g.hud.visible = false
+	await _wait(0.6)
+	await _snap("d07_dammed")
+	g.rig.camera.make_current()
+	g.hud.visible = true
+	await _wait(1.2)
+	await _snap("d08_heave")
+	while d.step != FoamMission.Step.BOSS:
+		await get_tree().process_frame
+	await _wait(2.0)
+	await _snap("d09_nibbles")
+	# up close as his name comes up
+	for i in 600:
+		var intro := g.find_children("*", "BossIntro", false, false)
+		if not intro.is_empty() and intro[0]._card_shown:
+			break
+		await get_tree().process_frame
+	await _wait(0.8)
+	await _snap("d09b_named")
+	while mm.boss.state != Boss.State.FIGHTING:
+		await get_tree().process_frame
+	await _wait(4.0)
+	_look_at(g, mm.boss.get_chest_position(), 0.15)
+	await _wait(0.5)
+	await _snap("d10_fight")
+	mm.boss.take_damage(DamageInfo.make(1e9, DamageInfo.Kind.BULLET, p, &"carrot_sniper"))
+	while d._outro == null:
+		await get_tree().process_frame
+	var o := d._outro as FoamOutro
+	for shot in [["d11_glow", FoamOutro.GLOW_AT + 0.8], ["d12_shrinking", FoamOutro.SHRINK_AT + 2.0],
+			["d13_little", FoamOutro.SPIT_AT - 0.2], ["d14_spit", FoamOutro.SPIT_AT + 0.8], ["d15_faces", FoamOutro.FACES_AT + 1.5],
+			["d16_kernels", FoamOutro.KERNELS_AT + 3.0], ["d17_briar", FoamOutro.BRIAR_AT + 1.8], ["d18_card", FoamOutro.CARD_AT + 1.4]]:
+		while o.playing and o.t < float(shot[1]):
+			await get_tree().process_frame
+		await _snap(String(shot[0]))
+	while mm.phase != MatchManager.Phase.ENDED:
+		await get_tree().process_frame
+	await _wait(1.5)
+	await _snap("d19_end")
+	cam.queue_free()
+	KernelHunt.playing = ""
+
 ## The menu: the Gazette's special edition, then the Kernel Hunt's page.
 func _menu() -> void:
 	get_tree().change_scene_to_file("res://scenes/main.tscn")
@@ -724,7 +918,7 @@ func _menu() -> void:
 	var menu: Node = get_tree().current_scene
 	menu._open_gazette()
 	await _wait(1.2)
-	var tag := "b" if boss else ("a" if act1 else ("c" if act2 else "k"))
+	var tag := "b" if boss else ("a" if act1 else ("c" if act2 else ("d" if act3 else "k")))
 	await _snap(tag + "11_gazette")
 	menu._close_overlay()
 	if not boss:

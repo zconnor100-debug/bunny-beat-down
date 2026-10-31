@@ -271,6 +271,17 @@
   "toy_beep": [
     "sfx/toy_beep.ogg"
   ],
+  "burrow_scrabble": [
+    "sfx/burrow_scrabble_1.ogg",
+    "sfx/burrow_scrabble_2.ogg"
+  ],
+  "burrow_collapse": [
+    "sfx/burrow_collapse_1.ogg",
+    "sfx/burrow_collapse_2.ogg"
+  ],
+  "water_stop": [
+    "sfx/water_stop.ogg"
+  ],
   "music": {
     "menu": "music/menu_monkeys_spinning_monkeys.mp3",
     "match": [

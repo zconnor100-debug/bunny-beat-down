@@ -20,9 +20,10 @@ hulking monster bunny) on the island, the Tin Tyrant (a wind-up robot) in the
 Toy Box, Nibbles the Rabid in the Hamster Cage. Or play the story: **the
 Kernel Hunt**, player against environment, where you and the Barn Rangers
 hold the Big Red Barn against the Touched, then track the glowing carrots,
-burn the Carrot Patch and wake Brutus, then cross the lake to the toy room,
-unwind the Tin Tyrant's Wound and storm his castle. Ragdolls, real
-limb-popping gore, and floppy physics ears are included.
+burn the Carrot Patch and wake Brutus, cross the lake to the toy room to
+unwind the Tin Tyrant's Wound and storm his castle, then go down into the
+hamster cage to dam Water Bottle Falls. Ragdolls, real limb-popping gore,
+and floppy physics ears are included.
 
 Built in **Godot 4.6** (GDScript, Jolt physics, Forward+).
 
@@ -160,8 +161,8 @@ and the final shot replayed from three angles. There's a
 - **The Kernel Hunt: the story, player against environment** (main menu).
   The Starfall Acorn's light is getting into the Warren's critters: the
   **Touched**, any species, gold-green veins glowing through their fur,
-  silent, coming in waves. Its acts lead to the boss fights; the prologue,
-  Act I and Act II are playable (the rest are on its page, sealed). In the prologue,
+  silent, coming in waves. Its acts lead to the boss fights; the prologue
+  and Acts I to III are playable (the finale is on its page, sealed). In the prologue,
   **Days Since Brutus**, you start on the ground at the Big Red Barn with the **Barn
   Rangers**, seven rogues of the cast at their posts round it, and the
   Touched come out of the Carrot Patch in three waves, then round the sides
@@ -209,6 +210,21 @@ and the final shot replayed from three angles. There's a
   toward the hamster cage. Earns the **Clockwork** beat-down burst.
 
   ![Act II: a Wound rogue with a key in its back, a winding station coming apart, the Warren's flag over Block Castle, and Model No. 7 under the second Kernel](docs/screenshots/kernel_act2.jpg)
+
+  **Act III, Foam at the Falls**, opens once the Decree is done, in the
+  hamster cage. The Kernels pull the rangers down into the bedding, where
+  Nibbles has dug his tunnels toward the toy room. **Cave in his burrows**:
+  the Touched keep coming up out of them, and nothing you can shoot shuts
+  one; a grenade in its mouth does (a crate of them comes down). **Dam
+  Water Bottle Falls**: carry chew blocks over your head, slowly, into the
+  ring under the bottle's spout; get knocked off your feet and you drop it.
+  With three in, the water stops, the bedding heaves, and **Nibbles** comes up
+  for a drink. Beat him and he's a little golden hamster again, cheeks full:
+  he spits out the **third Kernel**, the three find each other in the air,
+  and the Briar comes up through the floor. Earns the **Sunflower seeds**
+  beat-down burst.
+
+  ![Act III: one of the Touched scrabbling up out of a burrow, a chew block carried to the falls, Nibbles the Rabid come up out of the bedding, and the three Kernels as the Briar rises](docs/screenshots/kernel_act3.jpg)
 
 - **Third person with a first-person option** (press **V**): over-the-shoulder
   camera with a shoulder swap, aim-down-sights zoom, recoil kick and trauma

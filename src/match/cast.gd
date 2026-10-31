@@ -261,7 +261,11 @@ const BOSS_LINES := {"bc": BOSS_COMING_LINES, "br": BOSS_RUN_LINES, "bw": BOSS_W
 ## starts; "cs": the Wound seen; "cu": a Wound rogue winding down; "cf": one
 ## freed (said by it); "cw": the stations to break; "cb": one broken; "cc":
 ## the castle to storm; "cl": the eyes on the bookshelf; and at the end
-## (ClockworkOutro) "ob": Model No. 7, and "ok": the two Kernels.
+## (ClockworkOutro) "ob": Model No. 7, and "ok": the two Kernels. Act III
+## (FoamMission): "ft", as it starts; "fb": the Touched up out of a burrow;
+## "fx": one caved in; "fd": the falls to dam; "fp": a block in; "fw": the
+## water stopped; and at the end (FoamOutro) "nb": little Nibbles, and "nk":
+## the three Kernels, and the Briar.
 const KERNEL_LINES := {
 	"kt": ["Nine days without Brutus. Nobody jinx it."],
 	"kw": ["Here they come! Out of the Carrot Patch!", "More of them! Everyone back to the Barn!"],
@@ -291,6 +295,14 @@ const KERNEL_LINES := {
 	"cl": ["Up on the bookshelf! Something's looking at us."],
 	"ob": ["He's... a toy. He's just a toy.", "Model Number Seven. It says so on his foot."],
 	"ok": ["The second Kernel. Look at them, pulling at each other.", "They're both pulling the same way. Toward the hamster cage."],
+	"ft": ["Both of them, pulling. Into the cage, and down."],
+	"fb": ["They're coming up out of the bedding! Burrows!"],
+	"fx": ["That one's caved in!", "Blow the rest of them shut!"],
+	"fd": ["That bottle never runs dry. Dam it, and he'll come up for a drink."],
+	"fp": ["One block in! The water's slowing!", "Stack it high! Keep it coming!"],
+	"fw": ["The water's stopped. And the bedding's moving."],
+	"nb": ["He's... tiny.", "Nibbles? Good boy. Who's a good boy?"],
+	"nk": ["All three of them. Together.", "The Briar! It's coming up through the floor!"],
 }
 ## Grudge points against the director before a bot defies it: its hits on
 ## other bots aren't softened by the director's pacing (and it says so).

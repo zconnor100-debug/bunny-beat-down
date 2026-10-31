@@ -4,7 +4,7 @@ extends TestCase
 ## played through: you and the Barn Rangers at the Big Red Barn, three waves
 ## of the Touched marching on it, the ones in its yard wearing it down, and
 ## the ending (MissionOutro): the tally back at zero, the milestone and the
-## Gazette's special edition. And the Barn falling. Act I and Act II played
+## Gazette's special edition. And the Barn falling. Acts I, II and III played
 ## through too.
 
 const GAME := "res://scenes/game.tscn"
@@ -30,9 +30,12 @@ func test_the_quest_line() -> void:
 		"Act I, The Carrot Patch, open after the prologue")
 	check(KernelHunt.ACTS[2].id == "clockwork_decree" and KernelHunt.ACTS[2].open and KernelHunt.ACTS[2].get("after") == "carrot_patch"
 		and KernelHunt.ACTS[2].get("map") == "toybox", "Act II, The Clockwork Decree, in the toy room, open after Act I")
-	check(KernelHunt.ACTS.slice(3).all(func(a): return not a.get("open", false)), "the rest sealed")
+	check(KernelHunt.ACTS[3].id == "foam_at_the_falls" and KernelHunt.ACTS[3].open and KernelHunt.ACTS[3].get("after") == "clockwork_decree"
+		and KernelHunt.ACTS[3].get("map") == "cage", "Act III, Foam at the Falls, in the hamster cage, open after Act II")
+	check(KernelHunt.ACTS.slice(4).all(func(a): return not a.get("open", false)), "the finale sealed")
 	check(KernelHunt.unlocked("prologue") and not KernelHunt.unlocked("carrot_patch") and not KernelHunt.unlocked("clockwork_decree")
-		and not KernelHunt.unlocked("starfall"), "Act I locked till the Barn's held (and Act II till the Patch is done)")
+		and not KernelHunt.unlocked("foam_at_the_falls") and not KernelHunt.unlocked("starfall"),
+		"Act I locked till the Barn's held (and each act till the one before is done)")
 	check(KernelHunt.WOUND.size() == 4 and KernelHunt.WOUND.all(func(n): return Cast.names().has(n) and not KernelHunt.RANGERS.has(n)),
 		"four Wound rogues, all of the cast, none of them rangers")
 	check(KernelHunt.RANGERS.size() == 7 and KernelHunt.RANGERS.all(func(n): return Cast.names().has(n)), "seven rangers, all of the cast")
@@ -475,6 +478,128 @@ func test_act_two_ends_when_you_go_down() -> void:
 	check(String(d.result(false, d.report())[0]) == "STILL WOUND", "still wound: %s" % d.result(false, d.report())[0])
 	game.queue_free()
 	await wait_frames(5)
+
+## Act III played through, in the hamster cage: the burrows sending the
+## Touched up while you're near, and caved in by blasts; chew blocks carried
+## into the dam (and dropped when you're knocked down); the falls dammed and
+## the bedding heaving; Nibbles up out of it and beaten; and the ending:
+## little Nibbles, the third Kernel, the three together, and the Briar.
+func test_act_three_foam_at_the_falls() -> void:
+	var said := []
+	var hear := func(_c, text): said.append(text)
+	Events.taunt.connect(hear)
+	var game: Node = await _start("foam_at_the_falls")
+	var mm: MatchManager = game.match_manager
+	var d := mm.mission as FoamMission if mm else null
+	check(d != null and d.mission == "foam_at_the_falls" and mm.island.map_id == "cage", "Act III, in the hamster cage")
+	if d == null:
+		Events.taunt.disconnect(hear)
+		game.queue_free()
+		return
+	mm.player.max_health = 1e6
+	mm.player.health = 1e6
+	check(d.rangers.size() == 7 and d.rangers.all(func(r): return r.alive and r.team == 1 and (r.get_node("AIBrain") as AIBrain).escort == mm.player),
+		"the seven rangers, sticking by you")
+	check(mm.boss is HamsterBoss and mm.boss.state == Boss.State.WAITING and mm.boss.max_health < 32000.0, "Nibbles, waiting under the bedding")
+	check(d.burrows.size() >= 2 and d.burrows.all(func(b): return b.open and b.is_in_group(&"objectives")), "his burrows, open (%d)" % d.burrows.size())
+	check(mm.player.inventory.grenades >= FoamMission.GRENADES, "grenades to cave them in with")
+	var bars: Array = game.hud.find_children("*", "", true, false).filter(func(n): return n is MissionBar)
+	await wait_frames(2)
+	check(bars.size() == 1 and bars[0]._name.text == "HIS BURROWS", "the burrows on the HUD: %s" % (bars[0].status() if bars.size() > 0 else ""))
+	Engine.time_scale = 4.0
+	var b0: BurrowMouth = d.burrows[0]
+	mm.player.place_at(d._ground_at(b0.global_position + b0.out * 24.0))
+	b0._t = 0.0
+	await _sim(func(): return not b0.climbed.is_empty(), 2.0)
+	check(not b0.climbed.is_empty() and b0.climbed[0].team == 2, "the Touched come up out of a burrow while you're near")
+	Events.explosion.emit(b0.global_position + b0.out * 30.0, 4.0)
+	check(not b0.caved, "a blast away from its mouth doesn't shut it")
+	for b in d.burrows:
+		Events.explosion.emit(b.global_position + b.out * 1.5, 5.0)
+	check(d.burrows.all(func(b): return b.caved and not b.is_in_group(&"objectives")), "a blast in each mouth caves it in")
+	await _sim(func(): return d.step == FoamMission.Step.DAM, 6.0)
+	await wait_frames(2)
+	check(d.step == FoamMission.Step.DAM and d.dam != null and d.blocks.size() == Dam.NEEDED and bars[0]._name.text == "WATER BOTTLE FALLS",
+		"then: dam the falls (%s)" % bars[0]._name.text)
+	var p := mm.player
+	var pace := p.speed_scale
+	var first: ChewBlock = d.blocks[0]
+	_beat_wave(mm)
+	await _lift(p, first)
+	check(ChewBlock.carried_by(p) == first and p.speed_scale < pace, "picked up: carried overhead, slower (%.2f)" % p.speed_scale)
+	check(not d.blocks[1].channel(d.rangers[0], 0.5), "only you carry them")
+	p.knock_down(Vector3(3, 2, 0))
+	await _sim(func(): return false, 0.2)
+	check(ChewBlock.carried_by(p) == null and first.carrier == null and is_equal_approx(p.speed_scale, pace), "knocked down: dropped")
+	await _sim(func(): return not p.is_knocked(), 4.0)
+	for blk in d.blocks:
+		_beat_wave(mm)
+		await _lift(p, blk)
+		p.place_at(d._ground_at(d.falls_pos + Vector3(2.0, 0.0, 0.0)))
+		await _sim(func(): return blk.placed, 2.0)
+		check(blk.placed, "a block into the dam (%d)" % d.dam.placed)
+		p.place_at(d._ground_at(d.falls_pos + Vector3(0.0, 0.0, -20.0)))
+	check(d.dam.placed == Dam.NEEDED and d.step == FoamMission.Step.WAKE, "the falls are dammed: the bedding heaves")
+	await _sim(func(): return d.step == FoamMission.Step.BOSS, 8.0)
+	check(d.step == FoamMission.Step.BOSS and mm.boss.state != Boss.State.WAITING, "and he comes up out of it")
+	await _sim(func(): return mm.boss.state == Boss.State.FIGHTING, 16.0)
+	mm.boss.take_damage(DamageInfo.make(1e9, DamageInfo.Kind.BULLET, p, &"carrot_sniper"))
+	check(not mm.boss.alive and mm.phase == MatchManager.Phase.PLAYING, "he's down, and it isn't over")
+	await _sim(func(): return d._outro != null, 10.0)
+	var o := d._outro as FoamOutro
+	check(o != null and o.playing and get_viewport().get_camera_3d() == o._cam and not game.hud.visible, "the ending plays, with its own camera")
+	await _sim(func(): return o != null and o.kernel != null, 20.0)
+	check(o != null and o.little != null and o.kernel != null and not mm.boss.visible, "he's little Nibbles, and the third Kernel's out")
+	await _sim(func(): return o != null and o.briar != null, 20.0)
+	check(o != null and o.others.size() == 2 and o.briar != null, "the three together, and the Briar comes up")
+	await _sim(func(): return mm.phase == MatchManager.Phase.ENDED, 40.0)
+	check(mm.phase == MatchManager.Phase.ENDED and mm.winning_team == 1, "done")
+	check(KernelHunt.done("foam_at_the_falls") and Mastery.has("the_third_kernel") and Workshop.owns("kill_fx:seeds"),
+		"on your record: The Third Kernel, and the Sunflower seeds")
+	var ed := WarrenSim.edition()
+	check(ed.get("extra", "") == "kernel" and String(ed.stories[0].title) == "NIBBLES IS A GOOD BOY AGAIN", "the Gazette's special edition")
+	await wait_frames(3)
+	var end_labels: Array = game._end.find_children("*", "Label", true, false).map(func(l): return l.text) if game._end else []
+	check(end_labels.has("ACT III COMPLETE!"), "the end screen: %s" % [end_labels.slice(0, 3)])
+	var heard := said.filter(func(t): return ["ft", "fb", "fx", "fd", "fp", "fw", "nb", "nk"].any(func(k): return (Cast.KERNEL_LINES[k] as Array).has(t)))
+	print("    they said: %s" % [heard])
+	check(heard.has(Cast.KERNEL_LINES.ft[0]) and heard.has(Cast.KERNEL_LINES.fd[0]) and heard.has(Cast.KERNEL_LINES.nb[1]) and heard.has(Cast.KERNEL_LINES.nk[1]),
+		"they talk it through, from the pull to the Briar")
+	Events.taunt.disconnect(hear)
+	game.queue_free()
+	await wait_frames(5)
+
+
+## In Act III, going down yourself ends it too.
+func test_act_three_ends_when_you_go_down() -> void:
+	var game: Node = await _start("foam_at_the_falls")
+	var mm: MatchManager = game.match_manager
+	var d := mm.mission as FoamMission if mm else null
+	if not check(d != null, "Act III"):
+		game.queue_free()
+		return
+	Engine.time_scale = 4.0
+	await _sim(func(): return false, 1.0)
+	var guard := d._spawn_touched(mm.player.global_position + Vector3(8, 0, 0), &"carrot_pistol")
+	mm.player.take_damage(DamageInfo.make(1e9, DamageInfo.Kind.BULLET, guard, &"carrot_rifle"))
+	await _sim(func(): return mm.phase == MatchManager.Phase.ENDED, 5.0)
+	check(mm.phase == MatchManager.Phase.ENDED and mm.winning_team == 2, "you down: it's over")
+	check(String(d.result(false, d.report())[0]) == "THE BURROWS STAY OPEN", "the burrows stay open: %s" % d.result(false, d.report())[0])
+	game.queue_free()
+	await wait_frames(5)
+
+
+## Up to `block` and lift it over your head (if it's lying there to lift).
+func _lift(p: Critter, block: ChewBlock) -> void:
+	if block.placed or block.carrier:
+		return
+	p.place_at(block.global_position + Vector3(1.2, 0.0, 0.8))
+	await _sim(func(): return false, 0.2)
+	var tries := 0
+	while block.carrier == null and tries < 400:
+		block.channel(p, 1.0 / 60.0)
+		await get_tree().physics_frame
+		tries += 1
 
 ## A mission (the prologue, unless it's `id`), loaded and started (everyone at the Barn).
 func _start(id := "prologue") -> Node:

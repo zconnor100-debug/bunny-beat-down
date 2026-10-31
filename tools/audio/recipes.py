@@ -2866,3 +2866,58 @@ def toy_beep(c, v):
     x = mix(0.85, (tone(1318.5, 0.12), 0, 0), (tone(1760.0, 0.17), 0.15, 0), (sparks, 0.33, -14))
     x = bandpass(x, 2200.0, 0.5)   # (the tiny speaker)
     return reverb(B.unit(x), r, decay=0.3, mix_db=-18, predelay=0.005, bright=7000.0, tail=0.15)[: n_of(0.85)]
+
+
+@recipe("burrow_scrabble", variants=2, loud=-15.0, src="synth")
+def burrow_scrabble(c, v):
+    """Something scrabbling up out of a burrow (the Kernel Hunt's Act III:
+    the Touched coming up out of Nibbles's tunnels): quick bursts of claws in
+    dry shavings and dirt, muffled at first and nearer at the end, a dull
+    knock or two of a body in the tunnel (~1.4 s)."""
+    r = c.rng
+    k = [1.0, 1.15][v]
+    bursts = []
+    t0 = 0.0
+    for i in range(5):
+        n = B.grains(r, 0.35, 40, 1400 * k, 5200 * k, glen=(0.002, 0.007), t_tau=0.07)
+        bursts.append((lowpass(n, 1800 + i * 700, 2), t0, -10 + i * 2.0))
+        t0 += r.uniform(0.18, 0.3)
+    knocks = [(B.thump(140 * k, 70 * k, 0.04, 0.09, 0.3), r.uniform(0.2, 0.9), -8) for _ in range(2)]
+    x = mix(1.6, *bursts, *knocks)
+    return reverb(x, r, decay=0.3, mix_db=-18, predelay=0.005, bright=4000.0, tail=0.15)[: n_of(1.5)]
+
+
+@recipe("burrow_collapse", variants=2, loud=-11.0, src="synth")
+def burrow_collapse(c, v):
+    """A heap of bedding caving in over a burrow (Act III: a blast in its
+    mouth): a deep soft whump, then the rush of shavings and dirt sliding
+    down and settling, a scatter of dry patters at the end (~2.2 s)."""
+    r = c.rng
+    k = [1.0, 0.88][v]
+    whump = B.thump(85 * k, 38 * k, 0.09, 0.32, 1.0, partial2=0.3)
+    body = B.lp_burst(r, 1.8, 650 * k, 0.55, attack=0.03)
+    slide = lowpass(B.grains(r, 1.9, 220, 900, 4200, glen=(0.002, 0.009), t_tau=0.5, start=0.12), 3200, 2)
+    patter = B.grains(r, 2.2, 40, 2200, 6000, glen=(0.002, 0.005), t_tau=0.35, start=0.9)
+    x = mix(2.4, (whump, 0, 0), (body, 0.02, -5), (slide, 0.05, -6), (patter, 0.0, -14))
+    return reverb(x, r, decay=0.6, mix_db=-15, predelay=0.01, bright=3500.0, tail=0.3)[: n_of(2.4)]
+
+
+@recipe("water_stop", variants=1, loud=-16.0, src="synth")
+def water_stop(c, v):
+    """Water Bottle Falls dammed (Act III): the drips' last plinks coming
+    slower and slower, a deep gurgle and a glug as the water backs up behind
+    the blocks, then quiet (~2.6 s)."""
+    r = c.rng
+    plinks = []
+    t0 = 0.0
+    gap = 0.12
+    while t0 < 1.4:
+        d = B.droplets(r, 0.12, 1, t_tau=0.01, start=0.0, fmin=900, fmax=1700)
+        plinks.append((d, t0, r.uniform(-4, 0)))
+        t0 += gap
+        gap *= 1.35
+    gurgle = B.squelch(r, 1.4, [(0, 260.0), (0.5, 180.0), (1.0, 320.0), (1.4, 140.0)], q=4.0,
+                       amp_pts=[(0, 0), (0.1, 1), (0.9, 0.7), (1.4, 0)])
+    glug = B.thump(220, 120, 0.05, 0.12, 0.35)
+    x = mix(2.8, *plinks, (gurgle, 0.6, -6), (glug, 1.1, -8), (glug, 1.5, -11))
+    return reverb(x, r, decay=0.5, mix_db=-14, predelay=0.008, bright=4500.0, tail=0.3)[: n_of(2.7)]

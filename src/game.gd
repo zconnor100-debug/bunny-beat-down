@@ -50,6 +50,13 @@ const CLOCKWORK_TIPS := [
 	"The red light sweeping the floor is him, watching from the top of the bookshelf.",
 	"The Tin Tyrant's key is his weak spot, and it's softest while he's winding down. Stay out of the red line his eyes paint.",
 ]
+## Act III's (FoamMission).
+const FOAM_TIPS := [
+	"Nothing you can shoot shuts a burrow. A grenade or a rocket in its mouth caves it in, and the rangers' rockets count too.",
+	"Carrying a chew block you're slow, and if you're knocked off your feet you drop it. Clear the way first.",
+	"Nibbles can't stop for walls: stand in front of something hard and let him run into it.",
+	"Stay out of the foam: it burns, and it slows you down.",
+]
 const CAGE_TIPS := [
 	"Hamster tubes are tunnels: run through Tube Town to cross unseen.",
 	"Water bowls are brimming: swim in, and climb out over the rim.",
@@ -417,7 +424,7 @@ func _build_loading() -> void:
 	if _mode == "teams":
 		tips = TEAM_TIPS
 	elif _mode == "kernel":
-		tips = {"carrot_patch": PATCH_TIPS, "clockwork_decree": CLOCKWORK_TIPS}.get(KernelHunt.playing, KERNEL_TIPS)
+		tips = {"carrot_patch": PATCH_TIPS, "clockwork_decree": CLOCKWORK_TIPS, "foam_at_the_falls": FOAM_TIPS}.get(KernelHunt.playing, KERNEL_TIPS)
 	elif _mode == "boss":
 		tips = BOSS_TIPS + BossLore.rumours(_map)   # (and what the Warren says about its boss)
 	var tip := UITheme.label("Tip: " + tips.pick_random(), 22, Color(UITheme.CREAM, 0.8))

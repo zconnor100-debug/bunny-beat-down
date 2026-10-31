@@ -168,6 +168,9 @@ const BEAT_DOWN_BURSTS := {
 	"cogs": [["cog", [Color(0.86, 0.66, 0.3), Color(0.75, 0.76, 0.8), Color(0.86, 0.2, 0.15)], 10.0, 0.13,
 		{"amount": 10, "speed": Vector2(3.0, 7.5), "spread": 80.0, "lifetime": 1.6}],
 		["chip", [Color(0.95, 0.8, 0.4)], 12.0, 0.05, {"amount": 10, "speed": Vector2(3.0, 8.0), "additive": true, "lifetime": 0.6}]],
+	# (earned in the Kernel Hunt's Act III, out of Nibbles's cheeks: sunflower seeds, striped)
+	"seeds": [["leaf", [Color(0.12, 0.11, 0.1), Color(0.9, 0.88, 0.8), Color(0.3, 0.28, 0.26)], 11.0, 0.12,
+		{"amount": 12, "speed": Vector2(3.0, 7.0), "spread": 75.0, "lifetime": 1.6}]],
 }
 
 

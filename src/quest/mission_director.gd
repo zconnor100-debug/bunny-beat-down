@@ -17,7 +17,8 @@ extends Node
 ## silent. They aren't the cast, so nobody keeps score of them (RivalBook).
 ##
 ## The acts after the prologue build on it (`make`: PatchMission, Act I;
-## ClockworkMission, Act II): the rangers, the Touched and the talk are here,
+## ClockworkMission, Act II; FoamMission, Act III): the rangers, the Touched
+## and the talk are here,
 ## and what an act does its own way it overrides (`setup`, `begin`,
 ## `_process`, the bar on the HUD: `bar_*`, its ending: `play_outro`, its
 ## news: `news`).
@@ -72,8 +73,8 @@ func _init() -> void:
 
 ## The director for mission `id` (KernelHunt.ACTS).
 static func make(id: String) -> MissionDirector:
-	var d: MissionDirector = PatchMission.new() if id == "carrot_patch" else (ClockworkMission.new() if id == "clockwork_decree" \
-		else MissionDirector.new())
+	var d: MissionDirector = {"carrot_patch": PatchMission, "clockwork_decree": ClockworkMission,
+		"foam_at_the_falls": FoamMission}.get(id, MissionDirector).new()
 	d.mission = id if id != "" else "prologue"
 	return d
 
