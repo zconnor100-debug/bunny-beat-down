@@ -201,3 +201,22 @@ func test_a_boss_beaten_is_a_special_edition() -> void:
 	check((later.stories as Array).any(func(s): return s.title == "\"SOMEBODY FIX THE TALLY\"" and String(s.text).begins_with("said Buck Toothington")),
 		"the captain, quoted")
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(WarrenSim.TEST_PHOTO))
+
+
+## A photo taken by night (Old Hoot's, the Finale's) is stretched to print
+## from black to white, not a page of ink; one taken by day is left nearly as
+## it is; one all one shade, alone.
+func test_a_night_photo_prints_as_bright_as_a_day_one() -> void:
+	var night := Image.create(160, 90, false, Image.FORMAT_RGB8)
+	night.fill(Color(0.04, 0.05, 0.08))
+	night.fill_rect(Rect2i(60, 20, 40, 50), Color(0.3, 0.32, 0.36))   # (a pale owl against the dark)
+	var lv := GazettePanel.photo_levels(night)
+	check(lv.x < 0.08 and lv.y > 0.25 and lv.y < 0.4, "the night's range found (%.2f to %.2f)" % [lv.x, lv.y])
+	var day := Image.create(160, 90, false, Image.FORMAT_RGB8)
+	for x in 160:
+		day.fill_rect(Rect2i(x, 0, 1, 90), Color.from_hsv(0.3, 0.2, float(x) / 159.0))
+	var dl := GazettePanel.photo_levels(day)
+	check(dl.x < 0.05 and dl.y > 0.9, "a day's range is most of it (%.2f to %.2f)" % [dl.x, dl.y])
+	var flat := Image.create(64, 36, false, Image.FORMAT_RGB8)
+	flat.fill(Color(0.5, 0.5, 0.5))
+	check(GazettePanel.photo_levels(flat) == Vector2(0.0, 1.0), "all one shade: as it is")

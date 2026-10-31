@@ -113,6 +113,9 @@ func _add_photo(news: Control, ed: Dictionary) -> void:
 	m.shader = HALFTONE
 	m.set_shader_parameter(&"ink", RULE)
 	m.set_shader_parameter(&"paper", PAPER)
+	var levels := photo_levels(img)   # (a photo taken by night is printed as bright as one by day)
+	m.set_shader_parameter(&"lo", levels.x)
+	m.set_shader_parameter(&"hi", levels.y)
 	_photo.material = m
 	news.add_child(_photo)
 	var cap := _text(String(ed.get("caption", "")), 17)
@@ -123,6 +126,25 @@ func _add_photo(news: Control, ed: Dictionary) -> void:
 ## The photo on the front page (tests).
 func photo() -> TextureRect:
 	return _photo
+
+
+## How dark its darkest and how light its lightest are (the luminance a
+## fiftieth of the way in from each end, read off a small copy), so the press
+## stretches it to print from black to white: a night shot isn't a page of ink.
+static func photo_levels(img: Image) -> Vector2:
+	var small := img.duplicate() as Image
+	small.resize(64, 36, Image.INTERPOLATE_BILINEAR)
+	var lum := PackedFloat32Array()
+	for y in small.get_height():
+		for x in small.get_width():
+			var c := small.get_pixel(x, y)
+			lum.append(c.r * 0.299 + c.g * 0.587 + c.b * 0.114)
+	lum.sort()
+	var lo := lum[int(lum.size() * 0.02)]
+	var hi := lum[int(lum.size() * 0.98)]
+	if hi - lo < 0.08:   # (all one shade: leave it be)
+		return Vector2(0.0, 1.0)
+	return Vector2(lo, hi)
 
 
 ## "Wednesday 28 October · 4 matches while you were away · One acorn" (a

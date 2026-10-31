@@ -8,10 +8,13 @@ uniform float dots_across = 150.0;
 uniform vec4 ink : source_color = vec4(0.17, 0.13, 0.09, 1.0);
 uniform vec4 paper : source_color = vec4(0.95, 0.91, 0.82, 1.0);
 uniform float contrast = 1.35;
+uniform float lo = 0.0;      // (its darkest and lightest, stretched to black and white: GazettePanel.photo_levels)
+uniform float hi = 1.0;
 
 void fragment() {
 	vec3 c = texture(TEXTURE, UV).rgb;
 	float l = dot(c, vec3(0.299, 0.587, 0.114));
+	l = clamp((l - lo) / max(hi - lo, 0.05), 0.0, 1.0);
 	l = clamp((l - 0.5) * contrast + 0.55, 0.0, 1.0);
 	float aspect = TEXTURE_PIXEL_SIZE.x / TEXTURE_PIXEL_SIZE.y;   // (height over width)
 	vec2 p = UV * vec2(dots_across, dots_across * aspect);
