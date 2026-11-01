@@ -114,7 +114,13 @@
         "owl_hoot": {"expect": "A vast, deep owl's call, HOO, hoo, HOOOO, falling away at the end, out of an enormous throat, rolling off into a long echo (~3 s).", "when": "Old Hoot's hoot, knocking everyone under her down (and her arrival's, for the camera)."},
         "owl_screech": {"expect": "A harsh, rasping shriek that tears and falls away, air rushing under it (~1.6 s).", "when": "Old Hoot coming down out of the sky: a Snatch or a Talon Rake (or grounded)."},
         "owl_flap": {"expect": "A deep soft whump of air pushed down, feathers rustling at the end of it (~1 s).", "when": "Each beat of Old Hoot's wings as she flies, and as she takes off."},
-        "feather_volley": {"expect": "A great wingbeat and a flurry of big feathers flung off, hissing as they fly (~1.2 s).", "when": "Old Hoot's Feather Volley."}
+        "feather_volley": {"expect": "A great wingbeat and a flurry of big feathers flung off, hissing as they fly (~1.2 s).", "when": "Old Hoot's Feather Volley."},
+        "nut_step": {"expect": "A big, dull, hollow wooden CLONK (a giant block dropped on floorboards), a thud under it and a knock of wooden pegs; no ringing (~1.6 s).", "when": "Each of Crackjaw's footsteps and the stamps of his Quick March."},
+        "nut_clack": {"expect": "A hard, dry wooden CLACK of two lacquered blocks slammed together, a click of teeth (~0.5 s).", "when": "Crackjaw's jaw snapping shut (Crack!), and as he goes over."},
+        "nut_crack": {"expect": "A sharp splintering CRACK, the crunch of a huge shell giving way in a few breaks, pieces clattering off (~1 s).", "when": "Crackjaw's Crack!, and each of his walnuts landing (pitched up)."},
+        "nut_swish": {"expect": "A long heavy WHOOSH of air, a thin metallic sing along a blade, a scrape along the floor (~1.2 s).", "when": "Crackjaw's Sabre Sweep."},
+        "nut_bugle": {"expect": "A giant toy brass bugle, a little out of tune: ta-ta-TAAA, ta-TAAAA, the last note held and wavering (~2.5 s).", "when": "Crackjaw's Present Arms (Double Time, and his arrival for the camera)."},
+        "nut_drum": {"expect": "A toy snare drum roll speeding up and getting louder, then two big beats (~1.5 s).", "when": "Before Crackjaw's Quick March, as the red lane goes down."}
       }
     },
     {

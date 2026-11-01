@@ -11,9 +11,10 @@ extends RefCounted
 ## Kernel Hunt), is in docs/LORE.md. The Briar Heart, the Kernel Hunt's last
 ## boss (its Finale), isn't in a Boss Battle: its story opens in the Finale
 ## (`shown`: on the Bosses page once you've faced it there). Old Hoot, the
-## owl, is the island's other boss, by night (`picked`).
+## owl, is the island's other boss, by night, and Crackjaw, the nutcracker,
+## the Toy Box's other (`picked`).
 
-const IDS := ["brute", "robot", "hamster", "owl"]
+const IDS := ["brute", "robot", "hamster", "owl", "nutcracker"]
 const FINALE := "briar"
 
 const MYTH_TITLE := "The Night the Acorn Fell"
@@ -74,6 +75,19 @@ const BOSSES := {
 			"Caught in Old Hoot's talons? Jump, and keep jumping, and you'll wriggle free.",
 			"Shoot Old Hoot's wings as she dives and she'll come down hard. Then go for the eye."],
 	},
+	"nutcracker": {
+		"name": "Crackjaw", "title": "the Nutcracker General", "map": "toybox", "where": "Toy Box Bash",
+		"epigraph": "Carved to fight the Mouse King. He's decided you'll do.",
+		"chapters": [
+			["The Mantel Guard", "For two hundred Christmases Crackjaw has stood guard on the toy room's mantelpiece: a nutcracker in a red coat and a tall red hat, carved by a toymaker who swore he put a soldier's heart in every one. He was made to fight the Mouse King. The Mouse King never came. He cracked the household's walnuts instead, and waited, and the children named him for the noise his jaw makes."],
+			["The Cannonball", "The night the second piece of the Acorn came in through the window like a cannonball, it hit the mantelpiece first. Crackjaw caught it in his jaws, the way he'd caught ten thousand walnuts, and bit down. A chip of its shell broke off in his mouth before it bounced away into the toy box, and he swallowed it. By morning he stood taller than the bookcase, his painted eyes had begun to glow, and every critter he saw was the Mouse King's army. A bunny in an acorn helmet is a nut."],
+			["Timber!", "He's wood all the way through: carrots barely scratch the lacquer, and that tall hat is mostly hat. When the drum rolls, get out of the red lane: he marches straight down it. Jump his sabre as it comes across the floor. When he bows with his jaw wide, get out from in front of him, and if he misses, shoot him in the mouth. Best of all, shoot his legs. Enough, and he goes over like a felled pine, and while he's down his head is right there."],
+			["Waiting for Orders", "He doesn't sleep. Every night he marches the length of the toy room and back, and stops at the toy box, and salutes it. When the red light sweeps under its lid he stands to attention till it's gone. The Jack-in-the-Box says he isn't guarding the toys from the Tyrant: he's waiting for orders. And under the bedding in the Hamster Cage something has been digging toward the toy room for weeks. Crackjaw has heard it. He thinks the Mouse King is coming at last."],
+		],
+		"rumours": ["When Crackjaw's drum rolls, get out of the red lane: he marches straight down it.",
+			"Shoot Crackjaw's legs and he goes over like a felled pine. Then go for his head.",
+			"Jump Crackjaw's sabre as it sweeps across the floor."],
+	},
 	"briar": {
 		"name": "The Briar Heart", "title": "the Acorn's Roots", "map": "", "where": "Boulder Bluff, by night",
 		"epigraph": "Every match, it closes in. Now you know why.",
@@ -105,6 +119,9 @@ const NEWS := {
 	"owl": {"fell": "OLD HOOT GROUNDED FOR GOOD", "again": "OLD HOOT GROUNDED AGAIN", "where": "out under the stars",
 		"after": "The Warren stayed out past the first hoot last night, for the first time anyone can remember.",
 		"caption": "Old Hoot, down at last."},
+	"nutcracker": {"fell": "CRACKJAW FELLED IN THE TOY ROOM", "again": "CRACKJAW FELLED AGAIN", "where": "into the toy room",
+		"after": "His sabre is back over the mantelpiece. Nobody will say who hung it there.",
+		"caption": "Crackjaw, felled at last."},
 	"briar": {"fell": "THE BRIAR HEART IS STILL", "again": "THE BRIAR HEART STILLED AGAIN", "where": "up Boulder Bluff by night",
 		"after": "There's a new star over the Bluff.",
 		"caption": "The Starfall Acorn, going home."},

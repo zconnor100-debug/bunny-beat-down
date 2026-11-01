@@ -15,6 +15,7 @@ var act2 := false
 var act3 := false
 var finale := false
 var owl := false     ## ("owl": Old Hoot's Boss Battle, by night, instead)
+var nut := false     ## ("nutcracker": Crackjaw's Boss Battle in the Toy Box, instead)
 var epic := false    ## ("epic": shot at the Epic graphics tier, as the game looks on a fast GPU, not High)
 var movie := false   ## (recorded with Movie Maker: straight to the ending, its frames marked: OUTRO_AT, END_AT; with "act1", Act I's, and KILL_AT; with "act2", Act II's, and TAKEN_AT, LEAP_AT; with "act3", Act III's, and DAM_AT, WAKE_AT; with "finale", the Finale's, and BRIAR_AT, SHUT_AT, WAKE_AT, POD_AT, SPLIT_AT, KILL_AT)
 
@@ -30,6 +31,7 @@ func _ready() -> void:
 	act3 = a.has("act3")
 	finale = a.has("finale")
 	owl = a.has("owl")
+	nut = a.has("nutcracker")
 	movie = a.has("movie")
 	epic = a.has("epic")
 	DirAccess.make_dir_recursive_absolute(out_dir)
@@ -92,12 +94,16 @@ func _run() -> void:
 			await _finale_movie()
 		elif owl:
 			await _owl_movie()
+		elif nut:
+			await _nut_movie()
 		else:
 			await _ending_movie()
 		get_tree().quit()
 		return
 	if owl:
 		await _owl()
+	elif nut:
+		await _nut()
 	elif boss:
 		await _boss_news()
 	elif act1:
@@ -529,6 +535,238 @@ func _owl() -> void:
 	await _wait(3.0)
 	await _snap("o12_end")
 	print("END_AT %d" % Engine.get_frames_drawn())
+	settings.set_value(&"mode", "royale", false)
+	settings.set_value(&"boss", "", false)
+
+
+## Crackjaw's Boss Battle in the Toy Box: dropped in, his name, his salute;
+## marching through a toy fort (it comes apart), his sabre swept across the
+## floor, a Crack!, put over by shots on his legs, and down for good.
+func _nut() -> void:
+	PlayerProfile.reset_for_tests()
+	WarrenSim.reset_for_tests()
+	var g: Node = await _nut_battle()
+	var mm: MatchManager = g.match_manager
+	var p := mm.player
+	var b := mm.boss as NutcrackerBoss
+	await _wait(1.6)
+	await _snap("n01_falling_in")
+	for i in 900:
+		var intro := g.find_children("*", "BossIntro", false, false)
+		if not intro.is_empty() and intro[0]._card_shown:
+			break
+		await get_tree().process_frame
+	await _wait(0.8)
+	await _snap("n02_named")
+	await _wait(0.9)
+	await _snap("n03_salute")
+	for i in 1200:
+		if g.find_children("*", "BossIntro", false, false).is_empty():
+			break
+		await get_tree().process_frame
+	_unpause(g)
+	b.thinking = false
+	var cam := Camera3D.new()
+	get_tree().root.add_child(cam)
+	cam.fov = 55.0
+	cam.far = 3000.0
+	# Quick March, through a toy fort (it comes apart under his boots)
+	var fort := _fort_for_a_march(g, b)
+	if fort != Vector3.INF:
+		var dir := Vector3(fort.x - b.global_position.x, 0.0, fort.z - b.global_position.z).normalized()
+		p.place_at(fort + dir * 30.0 + Vector3.UP * 0.5, 0.0)
+		await _wait(0.3)
+		b.start(b._march(p))
+		var side := dir.cross(Vector3.UP)
+		cam.global_position = fort + side * 70.0 - dir * 10.0 + Vector3.UP * 16.0
+		cam.look_at(fort + Vector3.UP * 10.0, Vector3.UP)
+		cam.make_current()
+		g.hud.visible = false
+		await _wait(1.0)
+		await _snap("n04_drum_roll")
+		var near := 0.0
+		while b.action != null and near < 8.0:
+			near += 1.0 / Engine.physics_ticks_per_second
+			if Vector2(b.global_position.x - fort.x, b.global_position.z - fort.z).length() < 6.0:
+				break
+			await get_tree().physics_frame
+		await _wait(0.35)
+		await _snap("n05_march")
+		while b.action != null:
+			await get_tree().process_frame
+	# the Sabre Sweep (the bots in front of him jump it, or don't)
+	var t := _nearest_ally(mm, b.global_position)
+	if t:
+		b.rotation.y = atan2(-(t.global_position.x - b.global_position.x), -(t.global_position.z - b.global_position.z))
+		var fwd := b.forward()
+		t.place_at(b.global_position + fwd * 18.0 + Vector3.UP * 0.5, 0.0)
+		b.start(b._sweep(t))
+		cam.global_position = b.global_position + fwd * 75.0 + fwd.cross(Vector3.UP) * 30.0 + Vector3.UP * 22.0
+		cam.look_at(b.global_position + fwd * 8.0 + Vector3.UP * 9.0, Vector3.UP)
+		cam.make_current()
+		g.hud.visible = false
+		await _wait(1.35)
+		await _snap("n06_sweep")
+		while b.action != null:
+			await get_tree().process_frame
+		# Crack!
+		t = _nearest_ally(mm, b.global_position)
+		if t:
+			t.place_at(b.global_position + fwd * 12.0 + Vector3.UP * 0.5, 0.0)
+		b.start(b._crack())
+		cam.global_position = b.global_position + fwd * 45.0 + fwd.cross(Vector3.UP) * 38.0 + Vector3.UP * 12.0
+		cam.look_at(b.global_position + fwd * 6.0 + Vector3.UP * 12.0, Vector3.UP)
+		await _wait(0.78)
+		await _snap("n07_crack")
+		while b.action != null:
+			await get_tree().process_frame
+	# shot in the legs: TIMBER
+	for i in int(NutcrackerBoss.TOPPLE_AT) + 1:
+		var hit := DamageInfo.make(5.0, DamageInfo.Kind.BULLET, p, &"carrot_rifle")
+		hit.bone_role = &"l_lower_leg"
+		b.take_damage(hit)
+	var w := b.forward()
+	cam.global_position = b.global_position + w * 20.0 + w.cross(Vector3.UP) * 60.0 + Vector3.UP * 14.0
+	cam.look_at(b.global_position + w * 10.0 + Vector3.UP * 6.0, Vector3.UP)
+	cam.make_current()
+	g.hud.visible = false
+	await _wait(0.75)
+	await _snap("n08_teetering")
+	await _wait(1.6)
+	await _snap("n09_timber")
+	# and down for good
+	b.take_damage(DamageInfo.make(1e9, DamageInfo.Kind.BULLET, p, &"carrot_sniper"))
+	g._photo_for_the_gazette(String(BossLore.NEWS["nutcracker"].caption), 1.8)
+	await _wait(1.8)
+	if g._end:
+		g._end.visible = false
+	await _snap("n10_felled")
+	g.rig.camera.make_current()
+	g.hud.visible = true
+	if g._end:
+		g._end.visible = true
+	await _wait(3.0)
+	await _snap("n11_end")
+	var settings: Node = get_tree().root.get_node("Settings")
+	settings.set_value(&"mode", "royale", false)
+	settings.set_value(&"boss", "", false)
+
+
+## A Boss Battle against Crackjaw in the Toy Box, everyone down, and him on
+## his way in (BossIntro's camera on him as he drops).
+func _nut_battle() -> Node:
+	var settings: Node = get_tree().root.get_node("Settings")
+	settings.set_value(&"map", "toybox", false)
+	settings.set_value(&"mode", "boss", false)
+	settings.set_value(&"boss", "nutcracker", false)
+	settings.set_value(&"boss_intro", true, false)
+	settings.set_value(&"seed", 4321, false)
+	var g: Node = await _game()
+	var mm: MatchManager = g.match_manager
+	var p := mm.player
+	p.max_health = 100000.0
+	p.health = p.max_health
+	mm.player_jump()
+	Engine.time_scale = 6.0   # (the drop: quick)
+	var sim := 0.0
+	while mm.phase != MatchManager.Phase.PLAYING and sim < 150.0:
+		p.want_jump = p.state == Critter.State.FREEFALL
+		_unpause(g)
+		await get_tree().physics_frame
+		sim += Engine.time_scale / Engine.physics_ticks_per_second
+	Engine.time_scale = 1.0
+	await _wait(1.0)
+	mm.release_boss()
+	print("NUT_AT %d" % Engine.get_frames_drawn())
+	return g
+
+
+## A toy fort (a BlockPile: a brick tower, a cabin, a block fort) 50-110 m
+## from him with open floor round it, for a march through; INF if none.
+func _fort_for_a_march(g: Node, b: Boss) -> Vector3:
+	var best := Vector3.INF
+	var best_d := INF
+	for pile in g.island.find_children("*", "BlockPile", true, false):
+		var at: Vector3 = (pile as Node3D).global_position
+		var d := Vector2(at.x - b.global_position.x, at.z - b.global_position.z).length()
+		if d < 50.0 or d > 110.0:
+			continue
+		if absf(d - 75.0) < best_d:
+			best_d = absf(d - 75.0)
+			best = at
+	if best == Vector3.INF:   # (none in reach: take him to the nearest)
+		for pile in g.island.find_children("*", "BlockPile", true, false):
+			var at: Vector3 = (pile as Node3D).global_position
+			var d := Vector2(at.x - b.global_position.x, at.z - b.global_position.z).length()
+			if d < best_d:
+				best_d = d
+				best = at
+		if best != Vector3.INF:
+			var away := Vector3(b.global_position.x - best.x, 0.0, b.global_position.z - best.z).normalized()
+			b.global_position = best + away * 70.0
+			b.global_position.y = b.ground_y(b.global_position)
+	return best
+
+
+## Crackjaw's Boss Battle as a film (Movie Maker): his arrival's own
+## cinematic, a camera following him round the fight for half a minute (he
+## does as he likes: the bots are fighting him), then put over by shots on
+## his legs, and down for good. Frames marked NUT_AT, CHASE_AT, TIMBER_AT,
+## KILL_AT, END_AT.
+func _nut_movie() -> void:
+	var g: Node = await _nut_battle()
+	var mm: MatchManager = g.match_manager
+	var p := mm.player
+	var b := mm.boss as NutcrackerBoss
+	for i in 1800:   # (his arrival's own camera, till it's done)
+		if g.find_children("*", "BossIntro", false, false).is_empty() and b.state == Boss.State.FIGHTING:
+			break
+		await get_tree().process_frame
+	print("CHASE_AT %d" % Engine.get_frames_drawn())
+	var cam := Camera3D.new()
+	get_tree().root.add_child(cam)
+	cam.fov = 55.0
+	cam.far = 3000.0
+	cam.make_current()
+	g.hud.visible = false
+	var place := func(snap: bool) -> void:
+		var fwd := Vector3(b.forward().x, 0.0, b.forward().z).normalized()
+		var want := b.global_position + fwd * 62.0 + fwd.cross(Vector3.UP) * 34.0 + Vector3.UP * 20.0
+		cam.global_position = want if snap else cam.global_position.lerp(want, 0.05)
+		cam.look_at(b.global_position + Vector3.UP * 12.0, Vector3.UP)
+	place.call(true)
+	var chase := 0.0
+	while chase < 30.0 and b.alive:
+		place.call(false)
+		_unpause(g)
+		await get_tree().process_frame
+		chase += 1.0 / 30.0
+	print("TIMBER_AT %d" % Engine.get_frames_drawn())
+	while b.action != null and not b.action.interruptible:
+		place.call(false)
+		await get_tree().process_frame
+	for i in int(NutcrackerBoss.TOPPLE_AT) + 1:
+		var hit := DamageInfo.make(5.0, DamageInfo.Kind.BULLET, p, &"carrot_rifle")
+		hit.bone_role = &"r_lower_leg"
+		b.take_damage(hit)
+	for i in 150:   # (over he goes, and lies there)
+		place.call(false)
+		await get_tree().process_frame
+	print("KILL_AT %d" % Engine.get_frames_drawn())
+	if b.alive:
+		b.take_damage(DamageInfo.make(1e9, DamageInfo.Kind.BULLET, p, &"carrot_sniper"))
+	for i in 150:
+		place.call(false)
+		if g._end:
+			g._end.visible = false
+		await get_tree().process_frame
+	g.rig.camera.make_current()
+	g.hud.visible = true
+	if g._end:
+		g._end.visible = true
+	await _wait(3.0)
+	print("END_AT %d" % Engine.get_frames_drawn())
+	var settings: Node = get_tree().root.get_node("Settings")
 	settings.set_value(&"mode", "royale", false)
 	settings.set_value(&"boss", "", false)
 
@@ -1459,10 +1697,10 @@ func _menu() -> void:
 	var menu: Node = get_tree().current_scene
 	menu._open_gazette()
 	await _wait(1.2)
-	var tag := "o" if owl else ("b" if boss else ("a" if act1 else ("c" if act2 else ("d" if act3 else ("e" if finale else "k")))))
+	var tag := "o" if owl else ("n" if nut else ("b" if boss else ("a" if act1 else ("c" if act2 else ("d" if act3 else ("e" if finale else "k"))))))
 	await _snap(tag + "11_gazette")
 	menu._close_overlay()
-	if not (boss or owl):
+	if not (boss or owl or nut):
 		menu._open_quest()
 		await _wait(1.0)
 		await _snap(tag + "12_quest")

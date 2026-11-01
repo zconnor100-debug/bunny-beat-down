@@ -325,6 +325,29 @@
   "feather_volley": [
     "sfx/feather_volley.ogg"
   ],
+  "nut_step": [
+    "sfx/nut_step_1.ogg",
+    "sfx/nut_step_2.ogg",
+    "sfx/nut_step_3.ogg"
+  ],
+  "nut_clack": [
+    "sfx/nut_clack_1.ogg",
+    "sfx/nut_clack_2.ogg"
+  ],
+  "nut_crack": [
+    "sfx/nut_crack_1.ogg",
+    "sfx/nut_crack_2.ogg"
+  ],
+  "nut_swish": [
+    "sfx/nut_swish_1.ogg",
+    "sfx/nut_swish_2.ogg"
+  ],
+  "nut_bugle": [
+    "sfx/nut_bugle.ogg"
+  ],
+  "nut_drum": [
+    "sfx/nut_drum.ogg"
+  ],
   "music": {
     "menu": "music/menu_monkeys_spinning_monkeys.mp3",
     "match": [

@@ -554,7 +554,7 @@ kind of match; a run's stops are always battle royales.
   the air. The rings' and Nibbles's foam's textures are drawn in code, as a
   Boss Battle or a mission loads (`BossFX.warm_up`), not on the first blow:
   the foam's took 0.4 s and hitched the fight on Nibbles's first spit, until
-  each blob was drawn only over the pixels it covers. `BruteBoss`, `RobotBoss`, `HamsterBoss` and `OwlBoss` choose
+  each blob was drawn only over the pixels it covers. `BruteBoss`, `RobotBoss`, `HamsterBoss`, `OwlBoss` and `NutcrackerBoss` choose
   between their moves in `_choose`; `Boss.snapshot`/`restore` let the
   TimeKeeper rewind it. Bots' carrots count for `Boss.BOT_DAMAGE` of yours.
 - **Old Hoot** (`OwlBoss`) flies, so she doesn't walk the navmesh: her own
@@ -577,6 +577,29 @@ kind of match; a run's stops are always battle royales.
   `night` (`WorldLighting.make_night`, the night loop). A map can have more
   than one boss (`BossLore.ids_for_map`; `BossLore.picked` reads Settings
   "boss", the main menu's Boss row; `MatchManager.BOSS_SCRIPTS` by id).
+- **Crackjaw** (`NutcrackerBoss`, the Toy Box's other) is a wooden toy:
+  his arms, legs, jaw and hat are pinned rigid to their bones, and his poses
+  swing his arms only forward and back, on their pegs (out to the side, the
+  coat stretched between arm and body like a bat's wing). His sabre is made
+  in code (`_make_sabre`: a curved blade from `SurfaceTool`, a gold guard)
+  on a `BoneAttachment3D` in his right fist, placed from the bones' rest so
+  it points ahead as he stands; poses turn it from there (shouldered,
+  `CARRY`, whenever he isn't using it). Quick March moves him down a warned
+  lane (`warn_strip`) at `MARCH_SPEED`, its pose a dictionary the action
+  keeps and the tick rewrites in place (an action whose tick refers to the
+  action itself would never be freed), each stride stamping under the boot
+  that lands (`hurt_ring`, and `Events.explosion`, which every `BlockPile`
+  hears: he kicks toy forts apart). The Sabre Sweep's warning is a half-ring
+  (`BossFX.warn_arc`, and a fan of `danger` circles for the bots); the blade
+  hits each critter in front of him as its angle passes theirs, unless
+  they're in the air. Hits on his legs (`LEGS`; yours 1, a bot's 0.15, a
+  blast's 3x) fill `_wobble`, which wears off; past `TOPPLE_AT` he goes over
+  (`_timber`: teetering, a red strip, flat on his face along it, then
+  `vulnerable` for `TOPPLED_FOR` and back up, not again for `STEADY_FOR`).
+  The hat counts 0.75 (`role_scale`), his jaw 3.5x while he's bowed with it
+  open after a Crack!. `MatchManager.BOSS_TIPS` and `BOSS_STUNNED` give each
+  boss its own tip and its call when it's stunned (his: "Shoot his legs!"
+  and "TIMBER!").
 - The models come from `tools/characters/boss_build.py` (recipes in
   `bosses.json`): decimate, orient and scale a download; build a skeleton
   from joints read off `grid` renders, or keep the download's own (rested in
@@ -584,7 +607,10 @@ kind of match; a run's stops are always battle royales.
   islands removed (bone heat finds no solution on a decimated sculpt) and
   copy the weights across; paint into the texture by where each texel sits
   on the body (`paint`: Nibbles's blood and foam, Old Hoot's one glowing
-  pupil: `eyes.only`, Brutus's amber eyes found by their colour); bake the
+  pupil: `eyes.only`, Brutus's amber eyes found by their colour, Crackjaw's
+  painted irises as disks: `mode` "disk"); pin boxes of vertices rigid to a
+  bone (`pin`; with `pin_only`, that bone moves nothing else: Crackjaw's
+  pegged limbs); bake the
   whole download's detail onto the decimated body (`bake_normals`: Cycles,
   selected to active, a tangent-space normal map; `bake_ao`: its ambient
   occlusion multiplied into the colour map) and set a roughness where a

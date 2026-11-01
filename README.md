@@ -18,7 +18,8 @@ Battle** (you and 24 bots against 25, two balloons, no friendly fire), or a
 **Boss Battle**: you and 24 bots against a boss ten critters tall, Brutus (a
 hulking monster bunny) on the island or, by night, Old Hoot (a snowy owl as
 wide as the Big Red Barn, the first boss that flies), the Tin Tyrant (a
-wind-up robot) in the Toy Box, Nibbles the Rabid in the Hamster Cage. Or play the story: **the
+wind-up robot) or Crackjaw (a wooden nutcracker as tall as the bookcase) in
+the Toy Box, Nibbles the Rabid in the Hamster Cage. Or play the story: **the
 Kernel Hunt**, player against environment, where you and the Barn Rangers
 hold the Big Red Barn against the Touched, then track the glowing carrots,
 burn the Carrot Patch and wake Brutus, cross the lake to the toy room to
@@ -85,7 +86,7 @@ and the final shot replayed from three angles. There's a
   |---|---|---|
   | Battle Royale | you against up to 49 bots, everyone for themselves | the last critter standing |
   | Team Battle (25 v 25) | you and 24 bots (the Carrot Crew) against 25 (the Bramble Mob) | the last team standing |
-  | Boss Battle (25 v 1) | you and 24 bots against the map's boss (the island has two: Brutus, or Old Hoot by night) | the boss down, or all 25 of you |
+  | Boss Battle (25 v 1) | you and 24 bots against the map's boss (the island and the Toy Box have two each: Brutus or Old Hoot by night; the Tin Tyrant or Crackjaw) | the boss down, or all 25 of you |
 
   **Team Battle.** Each team rides its own balloon (or plane) down its own
   side of the map and lands there. Your team wears blue name tags you see
@@ -114,7 +115,11 @@ and the final shot replayed from three angles. There's a
   | **Nibbles the Rabid** | Hamster Cage | The cage's own hamster, grown huge and rabid: matted fur, blood round its mouth and paws, foam at the jaw, red eyes. **Frenzied Charge** (head down, flat out, trampling everyone in its path; if it runs into a wall it knocks itself silly and takes double), **Rabid Bite**, **Foam Spit** (puddles that burn and slow you), and enraged, **Burrow** (it dives into the bedding and comes up under you). |
   | **Old Hoot**, the Night Watch | Wildwood Island, by night | A snowy owl fifty metres wing tip to wing tip, a sliver of the Starfall Acorn glowing gold-green in her left eye, and the first boss that flies: she circles the fight up high and comes down out of the dark for it. **Snatch** (a red ring on you, then she drops onto it, carries off whoever's still in it and lets go from high up; caught, jump and keep jumping to wriggle free, or the rest of you shoot her till she lets go), **Talon Rake** (a low pass along a red strip), **Feather Volley**, **Hoot** (everyone in the ring under her is knocked flat), and now and then she **perches** to rest, low and still. Shoot her wings as she dives and she comes down hard, stunned: go for the eye. |
 
+  | **Crackjaw**, the Nutcracker General | Toy Box Bash | A wooden nutcracker as tall as the bookcase, a chip of the Starfall Acorn in him, his painted eyes lit, his limbs swinging rigid on their pegs: every critter is the Mouse King's army, and an acorn helmet is a nut. **Quick March** (a drum roll and a red lane, then down it he comes, each stamp of his boots knocking critters flying and kicking toy forts apart), **Sabre Sweep** (his sabre swung flat across the floor in front of him: jump it), **Crack!** (he bows and snaps his jaw shut on whatever's in front of him; missed, his jaw hangs open, the best place there is to hit him), **Walnut Volley** (each walnut cracking open on its own red ring). Shoot his legs and he wobbles; enough and he goes over like a felled pine, **TIMBER!**, and lies there with his head on the floor. Enraged: Double Time. |
+
   ![Old Hoot: her name card as she lands by night, carrying a critter off over the lake, the sliver of the Acorn glowing in her left eye, and perched in a clearing](docs/screenshots/boss_owl.jpg)
+
+  ![Crackjaw: his name card as he lands in the toy room, marching through a block fort and kicking it apart, bowing for a Crack!, and gone over on his face after shots on his legs](docs/screenshots/boss_nutcracker.jpg)
 
   The bosses are real models (CC-BY, see Credits) given skeletons and
   animated by code: `tools/characters/boss_build.py` welds each download
@@ -132,11 +137,15 @@ and the final shot replayed from three angles. There's a
   wings are on her arms' bones and her talons on her feet's, and she flies
   on her own: velocity, banking into her turns, her whole body pitched into
   a dive (the hitboxes tilt with it), wings beating or held out for a glide.
+  Crackjaw's arms, legs, jaw and hat are pinned rigid to their bones, like a
+  wooden toy's on their pegs, and his sabre is made in code and put in his
+  fist.
 
   **Their arrival is a cinematic** (`BossIntro`, on by default in Settings):
   the camera leaves you to look up from the ground as Brutus or the Tin Tyrant
-  drops out of the sky (or Old Hoot glides in out of the dark, or the bedding
-  heaves where Nibbles is about to burst out), a jolt and a beat of slow
+  drops out of the sky (or Crackjaw, stiff as a board, who salutes once he's
+  down; or Old Hoot glides in out of the dark, or the bedding heaves where
+  Nibbles is about to burst out), a jolt and a beat of slow
   motion as it lands, then up close on
   its face as its name comes up with the line the Warren knows it by, and its
   roar. Then the camera's yours again, turned to face it. Any button skips it.
@@ -146,12 +155,14 @@ and the final shot replayed from three angles. There's a
   reset the tally!"), RUN! when a blow's coming down on them or you, "It's
   stunned! Hit it NOW!", "It's winding down! Shoot the key!", "Aim for the
   head!" ("Shoot her wings when she dives!" for Old Hoot, and "She's got one!
-  Shoot her, she'll let go!"), and the cheer when it goes down.
+  Shoot her, she'll let go!"; "Shoot his legs! He'll go right over!" for
+  Crackjaw, and "TIMBER! Get his head!"), and the cheer when it goes down.
 
   **They have a story.** One midsummer night the Starfall Acorn fell on
   Wildwood and split three ways; whatever ate, wound or drank a piece grew,
   and went wrong (and an owl on the wing that night caught a sliver of it in
-  her eye). Each boss's story is told in four chapters in the Trophy
+  her eye, and a nutcracker on the toy room's mantelpiece bit a chip off
+  it). Each boss's story is told in four chapters in the Trophy
   Room's **Bosses** page, opened by facing it and beating it (the legend, then
   how it happened, then how to beat it, then where it's going). The whole
   story, and the quest line it's building toward, is in [docs/LORE.md](docs/LORE.md).
@@ -159,9 +170,9 @@ and the final shot replayed from three angles. There's a
   **Beat each one for a piece of it**: Brutus's coat (matted grey, torn by
   claw rakes that glow red and beat like a heart), the Tin Tyrant gun skin
   (riveted tin painted like an old toy, a red light sweeping its seams),
-  Nibbles's Rabid froth beat-down burst and Old Hoot's Feathers. Then harder
-  milestones (three of them, then all four; a boss beaten without going
-  down; one on Hard) and the bosses' ladders
+  Nibbles's Rabid froth beat-down burst, Old Hoot's Feathers and Crackjaw's
+  Nutshells. Then harder milestones (three of them, four, then all five; a
+  boss beaten without going down; one on Hard) and the bosses' ladders
   (5/10/25 bosses beaten, 2/5/10 last blows, 25,000/50,000/100,000 damage),
   topped by the Starfall Acorn's gold-green tracers, muzzle flash and reticle.
   The Trophy Room keeps your record against each: faced, beaten, still

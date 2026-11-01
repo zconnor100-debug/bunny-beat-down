@@ -2,12 +2,14 @@ extends TestCase
 ## The bosses' story and what beating them earns: their lore (BossLore), told
 ## a chapter at a time as you face them and beat them; your record against
 ## each (StatBook); a milestone for beating each with a piece of it to keep
-## (the Brutus coat, the Tin Tyrant gun skin, the Rabid froth burst), harder
+## (the Brutus coat, the Tin Tyrant gun skin, the Rabid froth burst, Old
+## Hoot's Feathers and Crackjaw's Nutshells), harder
 ## ones and the bosses' ladders; the Trophy Room's Bosses page; and a boss's
 ## arrival as a cinematic (BossIntro).
 
 const SCRIPTS := {"brute": "res://src/bosses/brute_boss.gd", "robot": "res://src/bosses/robot_boss.gd",
-	"hamster": "res://src/bosses/hamster_boss.gd", "owl": "res://src/bosses/owl_boss.gd"}
+	"hamster": "res://src/bosses/hamster_boss.gd", "owl": "res://src/bosses/owl_boss.gd",
+	"nutcracker": "res://src/bosses/nutcracker_boss.gd"}
 
 
 func before_each() -> void:
@@ -38,6 +40,11 @@ func test_every_boss_has_its_story() -> void:
 	Settings.set_value(&"boss", "owl", false)
 	check(BossLore.picked("island") == "owl" and BossLore.picked("cage") == "hamster" and BossLore.rumours("island")[0].contains("Old Hoot"),
 		"Old Hoot, picked: the island's (not the cage's), her rumours on the loading screen")
+	# and the Toy Box two: the Tin Tyrant, and Crackjaw
+	check(BossLore.picked("toybox") == "robot" and BossLore.ids_for_map("toybox") == ["robot", "nutcracker"], "the Toy Box's: the Tin Tyrant first")
+	Settings.set_value(&"boss", "nutcracker", false)
+	check(BossLore.picked("toybox") == "nutcracker" and BossLore.picked("island") == "brute" and BossLore.rumours("toybox")[0].contains("Crackjaw"),
+		"Crackjaw, picked: the Toy Box's (not the island's), his rumours on the loading screen")
 	Settings.set_value(&"boss", "", false)
 
 
@@ -61,15 +68,18 @@ func test_its_story_opens_a_chapter_at_a_time() -> void:
 func test_beating_each_boss_earns_a_piece_of_it() -> void:
 	check(not Workshop.owns("coat:brutus") and not Workshop.buy("coat:brutus"), "the Brutus coat can't be bought")
 	var fresh := []
-	for pair in [["brute", "coat:brutus"], ["robot", "skin:tin_tyrant"], ["hamster", "kill_fx:froth"], ["owl", "kill_fx:feathers"]]:
+	for pair in [["brute", "coat:brutus"], ["robot", "skin:tin_tyrant"], ["hamster", "kill_fx:froth"], ["owl", "kill_fx:feathers"],
+			["nutcracker", "kill_fx:nutshells"]]:
 		StatBook.note_boss_fought(pair[0])
 		StatBook.note_boss_beaten(pair[0], 400.0, false, false, false)
 		fresh = Mastery.check()
 		check(Workshop.owns(pair[1]) and Workshop.earned_only(pair[1]), "%s beaten: %s" % pair)
 		if pair[0] == "hamster":
 			check(fresh.any(func(m): return m.id == "big_three"), "three of them: The Big Three")
-	check(fresh.any(func(m): return m.id == "big_four"), "all four: The Big Four")
-	check(Mastery.progress("bosses_beaten") == 4 and Mastery.progress("boss_wins") == 4, "four bosses beaten")
+		if pair[0] == "owl":
+			check(fresh.any(func(m): return m.id == "big_four"), "four of them: The Big Four")
+	check(fresh.any(func(m): return m.id == "big_five"), "all five: The Big Five")
+	check(Mastery.progress("bosses_beaten") == 5 and Mastery.progress("boss_wins") == 5, "five bosses beaten")
 	check(not Mastery.has("still_standing") and not Mastery.has("hard_nut"), "not standing, not on Hard: not yet")
 	StatBook.note_boss_beaten("brute", 380.0, true, true, true)
 	fresh = Mastery.check()
@@ -84,7 +94,7 @@ func test_beating_each_boss_earns_a_piece_of_it() -> void:
 	var row: Array = Mastery.ladder_rows(true).filter(func(r): return String(r[0]).begins_with("Titan Tenderizer"))[0]
 	check(row[1] == "Deal 50,000 damage to bosses." and row[2] == "26,000 / 50,000", "big numbers grouped: %s" % [row])
 	check(Mastery.rows().all(func(r): return not String(r[0]).begins_with("Giant Slayer")), "the bosses' milestones aren't on the Milestones page")
-	check(Mastery.rows("brute").size() == 1 and Mastery.rows("owl").size() == 1 and Mastery.rows("*").size() == 4
+	check(Mastery.rows("brute").size() == 1 and Mastery.rows("nutcracker").size() == 1 and Mastery.rows("*").size() == 5
 		and Mastery.ladder_rows(true).size() == 3, "they're on the Bosses page")
 
 

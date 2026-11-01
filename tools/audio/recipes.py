@@ -3155,3 +3155,119 @@ def feather_volley(c, v):
     rustle = B.grains(r, 1.0, 120, 1500, 7000, glen=(0.002, 0.008), t_tau=0.3, start=0.05)
     x = mix(1.4, (beat, 0, 0), (thump, 0, -5), *hiss, (rustle, 0.05, -12))
     return reverb(x, r, decay=0.9, mix_db=-14, predelay=0.015, bright=5000.0, tail=0.25)[: n_of(1.6)]
+
+
+# ---- Crackjaw, the Nutcracker General (the Toy Box's other boss) ----------------------------
+
+@recipe("nut_step", variants=3, loud=-11.0, src="synth")
+def nut_step(c, v):
+    """Crackjaw's boot coming down (a wooden toy ten critters tall): a big,
+    dull, hollow wooden CLONK, like a giant block dropped on the floorboards,
+    the floor thudding under it and his joints knocking on their pegs; short
+    modes, no ring (~1.6 s)."""
+    r = c.rng
+    k = [1.0, 0.93, 1.07][v]
+    clonk = B.struck(r, [(118 * k, 0.07, 1.0), (131 * k, 0.055, 0.6), (262 * k, 0.04, 0.5), (395 * k, 0.03, 0.38),
+                         (610 * k, 0.02, 0.28), (980 * k, 0.012, 0.16), (1650 * k, 0.007, 0.1)], 0.6, exc_ms=2.5, exc_lp=5000.0)
+    thud = B.kick(60 * k, 30 * k, 0.1, 0.4, 1.4, attack=0.002, drive=1.4)
+    body = B.lowbody(r, 0.8, 50, 400, 0.15, attack=0.003, slope=-4.0)
+    pegs = B.struck(r, [(720 * k, 0.018, 1.0), (1180 * k, 0.011, 0.5), (2300 * k, 0.006, 0.3)], 0.15)
+    rattle = B.grains(r, 0.6, 20, 900, 3500, glen=(0.003, 0.01), t_tau=0.1, start=0.04)
+    x = mix(1.6, (clonk, 0, 0), (thud, 0, -3), (body, 0, -6), (pegs, 0.09, -9), (rattle, 0.02, -15))
+    x = saturate(highpass(x, 28, 2), 1.3)
+    return reverb(x, r, decay=1.0, mix_db=-13, predelay=0.02, bright=3000.0, tail=0.3)[: n_of(1.8)]
+
+
+@recipe("nut_clack", variants=2, loud=-12.0, src="synth")
+def nut_clack(c, v):
+    """Crackjaw's jaw snapping shut: a hard, dry wooden CLACK, two lacquered
+    blocks slammed together, a click of teeth, the lever behind it knocking
+    back (~0.6 s)."""
+    r = c.rng
+    k = [1.0, 0.9][v]
+    clack = B.struck(r, [(520 * k, 0.026, 1.0), (585 * k, 0.022, 0.7), (1240 * k, 0.016, 0.55), (1900 * k, 0.011, 0.4),
+                         (2900 * k, 0.007, 0.25), (4300 * k, 0.004, 0.12)], 0.25, exc_ms=0.8, exc_lp=12000.0)
+    click = B.crack(r, 0.002, 4000)
+    body = B.kick(150 * k, 90 * k, 0.03, 0.08, 0.3, drive=1.3)
+    lever = B.struck(r, [(880 * k, 0.014, 1.0), (1400 * k, 0.009, 0.5)], 0.1)
+    x = mix(0.6, (clack, 0, 0), (click, 0, -8), (body, 0, -6), (lever, 0.07, -12))
+    return reverb(x, r, decay=0.6, mix_db=-15, predelay=0.01, bright=5000.0, tail=0.15)[: n_of(0.7)]
+
+
+@recipe("nut_crack", variants=2, loud=-11.0, src="synth")
+def nut_crack(c, v):
+    """A walnut the size of a hay bale cracking open (Crackjaw's Crack!, his
+    walnuts landing): a sharp splintering CRACK, the crunch of shell giving
+    way in two or three breaks, and pieces of it clattering off (~1.2 s)."""
+    r = c.rng
+    k = [1.0, 0.88][v]
+    snap = B.snap(r, 2600 * k, 0.8, 0.004, 0.06)
+    knock = B.struck(r, [(340 * k, 0.03, 1.0), (760 * k, 0.02, 0.6), (1500 * k, 0.012, 0.4)], 0.2)
+    breaks = [(B.lowbody(r, 0.12, 300, 3500, 0.025, attack=0.0005), 0.012 + 0.03 * i, -3 - 3 * i) for i in range(3)]
+    crunch = B.grains(r, 0.4, 60, 700, 5000, glen=(0.002, 0.008), t_tau=0.06, start=0.0)
+    bits = B.grains(r, 1.0, 26, 1200, 4500, glen=(0.004, 0.012), t_tau=0.3, start=0.12)
+    thud = B.kick(90 * k, 50 * k, 0.04, 0.12, 0.4, drive=1.4)
+    x = mix(1.2, (snap, 0, 0), (knock, 0, -3), *breaks, (crunch, 0, -6), (bits, 0, -12), (thud, 0, -5))
+    x = saturate(x, 1.4)
+    return reverb(x, r, decay=0.7, mix_db=-14, predelay=0.012, bright=5000.0, tail=0.2)[: n_of(1.3)]
+
+
+@recipe("nut_swish", variants=2, loud=-13.0, src="synth")
+def nut_swish(c, v):
+    """Crackjaw's sabre swung flat across the floor: a long, heavy WHOOSH of
+    air (ten metres of steel), a thin metallic sing along the blade, and the
+    tip scraping the floorboards as it passes (~1.1 s)."""
+    r = c.rng
+    k = [1.0, 0.9][v]
+    air = B.whoosh(r, 1.0, 380 * k, 1500 * k, q=1.3, peak=0.45)
+    air2 = B.whoosh(r, 0.9, 900 * k, 3600 * k, q=2.0, peak=0.5)
+    n = n_of(1.0)
+    sing = sine(glide(n, 2200.0 * k, 1900.0 * k, 0.6), n) * env_pts(n, [(0, 0), (0.15, 0.5), (0.5, 1.0), (1.0, 0)])
+    scrape = B.grains(r, 0.6, 90, 1500, 6000, glen=(0.002, 0.006), t_tau=0.25, start=0.3)
+    x = mix(1.1, (air, 0, 0), (air2, 0.05, -5), (sing, 0.1, -22), (scrape, 0, -16))
+    return reverb(x, r, decay=0.8, mix_db=-14, predelay=0.015, bright=6000.0, tail=0.2)[: n_of(1.2)]
+
+
+@recipe("nut_bugle", variants=1, loud=-13.0, src="synth")
+def nut_bugle(c, v):
+    """Crackjaw's call to arms (his arrival, and Double Time): a toy
+    soldier's brass bugle, giant and a little out of tune, ta-ta-TAAA,
+    ta-TAAAA, the last note held and wavering (~2.4 s)."""
+    r = c.rng
+    notes = [(0.0, 0.16, 67), (0.2, 0.16, 72), (0.4, 0.5, 76), (0.98, 0.16, 72), (1.18, 1.05, 79)]   # (G, C, E; C, G)
+    x = np.zeros(n_of(2.5))
+    for t0, d, m in notes:
+        n = n_of(d + 0.08)
+        f = midi_hz(m) * 0.5 * (1.0 + 0.004 * np.sin(2 * np.pi * 5.5 * times(n)) * np.clip(times(n) / 0.3, 0, 1))
+        tone = saw_bl(f, n, max_h=24)
+        tone = bandpass(tone, 1100.0, 0.7) + 0.4 * bandpass(tone, 2400.0, 1.0) + 0.3 * lowpass(tone, 600.0, 2)
+        env = env_pts(n, [(0, 0), (0.03, 1.0), (d * 0.6, 0.85), (d, 0.7), (d + 0.08, 0)])
+        s = B.unit(tone) * env
+        i0 = n_of(t0)
+        x[i0: i0 + len(s)] += s[: len(x) - i0]
+    x = saturate(x, 1.6)
+    breath = B.lowbody(r, 2.4, 800, 4000, 0.8, attack=0.02) * 0.04
+    x[: len(breath)] += breath[: len(x)]
+    return reverb(x, r, decay=1.6, mix_db=-10, predelay=0.03, bright=4000.0, tail=0.6)[: n_of(3.0)]
+
+
+@recipe("nut_drum", variants=1, loud=-13.0, src="synth")
+def nut_drum(c, v):
+    """The drum roll before Crackjaw's Quick March: a toy snare rattling
+    faster and louder, and two big beats to step off on (~1.4 s)."""
+    r = c.rng
+    x = np.zeros(n_of(1.6))
+    t, gap = 0.0, 0.11
+    hits = []
+    while t < 0.95:
+        hits.append((t, 0.35 + 0.65 * t / 0.95))
+        t += gap
+        gap = max(0.045, gap * 0.9)
+    hits += [(1.02, 1.0), (1.22, 1.0)]
+    for t0, a in hits:
+        snare = B.lowbody(r, 0.12, 900, 6500, 0.03, attack=0.0004)
+        skin = B.kick(220, 160, 0.01, 0.04, 0.1, drive=1.2)
+        s = mix(0.14, (snare, 0, 0), (skin, 0, -5)) * a
+        i0 = n_of(t0)
+        x[i0: i0 + len(s)] += s[: len(x) - i0]
+    return reverb(x, r, decay=0.9, mix_db=-12, predelay=0.02, bright=5000.0, tail=0.3)[: n_of(1.7)]

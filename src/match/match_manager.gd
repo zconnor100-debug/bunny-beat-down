@@ -129,7 +129,12 @@ const BOSSES := {"island": "res://src/bosses/brute_boss.gd", "cage": "res://src/
 ## Every boss a Boss Battle can be against, by its id (a map can have more
 ## than one: Old Hoot's the island's too, by night; BossLore.picked chooses).
 const BOSS_SCRIPTS := {"brute": "res://src/bosses/brute_boss.gd", "robot": "res://src/bosses/robot_boss.gd",
-	"hamster": "res://src/bosses/hamster_boss.gd", "owl": "res://src/bosses/owl_boss.gd"}
+	"hamster": "res://src/bosses/hamster_boss.gd", "owl": "res://src/bosses/owl_boss.gd",
+	"nutcracker": "res://src/bosses/nutcracker_boss.gd"}
+## A boss's own tip (where to aim: Cast.BOSS_LINES key) and its call when
+## it's stunned, by Boss.id ("bw.1" and "bw.0" for the rest).
+const BOSS_TIPS := {"owl": "bo.0", "nutcracker": "bl.0"}
+const BOSS_STUNNED := {"robot": "bk", "nutcracker": "bt.0"}
 ## A Team Battle's second balloon (theirs: yours is `dropship`).
 var enemy_ship: Dropship
 ## A Boss Battle's boss, and how long after everyone's down it turns up.
@@ -1817,7 +1822,7 @@ func _boss_banter() -> void:
 		return
 	var stunned := boss.vulnerable()
 	if stunned and not _boss_was.get("stunned", false):
-		_boss_shout("bk" if boss.id == "robot" else "bw.0")
+		_boss_shout(BOSS_STUNNED.get(boss.id, "bw.0"))
 	if boss.enraged and not _boss_was.get("enraged", false):
 		_boss_shout("be")
 	var holding: bool = boss.has_method("holding") and boss.holding() != null   # (Old Hoot, carrying one off)
@@ -1870,8 +1875,9 @@ func _boss_shout(what: String, who: Critter = null, now := false) -> bool:
 	if who == null:
 		return false
 	var said := {}
-	if what == "tip":   # (where to aim: Old Hoot's, her wings)
-		said = Cast.say("bo.0", Cast.BOSS_OWL_LINES[0]) if boss and boss.id == "owl" else Cast.say("bw.1", Cast.BOSS_WEAK_LINES[1])
+	if what == "tip":   # (where to aim: Old Hoot's, her wings; Crackjaw's, his legs)
+		var tip: String = BOSS_TIPS.get(boss.id, "bw.1") if boss else "bw.1"
+		said = Cast.say(tip, Cast.BOSS_LINES[tip.get_slice(".", 0)][int(tip.get_slice(".", 1))])
 	elif what == "bk":
 		said = Cast.say("bk", Cast.BOSS_KEY_LINE)
 	elif kind == "bn":

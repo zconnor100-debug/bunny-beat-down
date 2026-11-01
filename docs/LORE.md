@@ -145,6 +145,46 @@ turns, her body pitched into a dive. The Snatch, the Talon Rake, the Feather
 Volley, the Hoot, and a perch now and then; grounded by shots on her wings
 mid-dive. Beat her for **the Feathers** beat-down burst.
 
+### Crackjaw, the Nutcracker General (Toy Box Bash)
+
+*Carved to fight the Mouse King. He's decided you'll do.*
+
+Not one of the Kernel's giants either: he bit a chip off the second piece on
+its way past. The Toy Box's other boss (a Boss Battle's pick there).
+
+1. **The Mantel Guard.** Two hundred Christmases on the toy room's
+   mantelpiece: a nutcracker in a red coat and a tall red hat, carved by a
+   toymaker who swore he put a soldier's heart in every one. He was made to
+   fight the Mouse King. The Mouse King never came; he cracked the walnuts
+   and waited, and the children named him for the noise his jaw makes.
+2. **The Cannonball.** The second piece of the Acorn came through the window
+   like a cannonball and hit the mantelpiece first. He caught it in his jaws
+   the way he'd caught ten thousand walnuts and bit down: a chip of its shell
+   broke off in his mouth before it bounced away into the toy box, and he
+   swallowed it. By morning he was taller than the bookcase, his painted eyes
+   glowed, and every critter he saw was the Mouse King's army. A bunny in an
+   acorn helmet is a nut.
+3. **Timber!** Wood all the way through (carrots barely scratch the lacquer,
+   and the hat is mostly hat). When the drum rolls, get out of the red lane;
+   jump his sabre as it sweeps the floor; when he bows with his jaw wide, get
+   out from in front, and if he misses, shoot him in the mouth. Best of all,
+   shoot his legs: he goes over like a felled pine, and his head's right there.
+4. **Waiting for Orders.** Every night he marches the toy room and stops at
+   the toy box to salute it, and stands to attention when the red light
+   sweeps under its lid: the Jack-in-the-Box says he's waiting for orders.
+   And under the bedding in the Hamster Cage something has been digging
+   toward the toy room for weeks. He's heard it. *He thinks the Mouse King is
+   coming at last.*
+
+In the game: the Cracxus festivus model (Brian Trepanier, CC BY 4.0, who
+made Brutus's too), rigged with his arms, legs, jaw and hat pinned rigid to
+their bones, a wooden toy's pegs (`NutcrackerBoss`), his painted irises
+glowing ice blue (red when he's angry), a cavalry sabre made in code in his
+fist. Quick March (a drum roll, then down a red lane, his boots kicking toy
+forts apart), the Sabre Sweep (jump it), Crack!, the Walnut Volley, Present
+Arms, and Timber! (shoot his legs). Beat him for **the Nutshells** beat-down
+burst.
+
 ### The Briar Heart, the Acorn's Roots (Boulder Bluff, by night)
 
 *Every match, it closes in. Now you know why.*

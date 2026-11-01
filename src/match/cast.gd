@@ -237,11 +237,12 @@ const GANG_LINES := {"gspot": GANG_SPOT_LINES, "grush": GANG_RUSH_LINES, "gr": T
 ## yell to run from a blow coming down, call out a stunned boss (the Tin
 ## Tyrant's key when it winds down), and cheer it going down. Old Hoot has
 ## her own tip ("bo": shoot her wings) and a yell when she's carrying one
-## off ("bh").
+## off ("bh"); Crackjaw his ("bl": shoot his legs) and a yell when he goes
+## over ("bt").
 const BOSS_COMING_LINES := ["Here it comes! Spread out!", "That's... that is BIG."]
 const BOSS_NAME_LINES := {"brute": "It's Brutus! Somebody reset the tally!", "robot": "The Tin Tyrant! Who opened the lid?!",
 	"hamster": "It's Nibbles! Don't touch the foam!", "briar": "The Briar's got a HEART. And it's BEATING.",
-	"owl": "It's Old Hoot! And we're still out past the first hoot!"}
+	"owl": "It's Old Hoot! And we're still out past the first hoot!", "nutcracker": "It's Crackjaw! Mind your acorns!"}
 const BOSS_RUN_LINES := ["RUN!", "Out of the red! MOVE!"]
 const BOSS_WEAK_LINES := ["It's stunned! Hit it NOW!", "Aim for the head!"]
 const BOSS_KEY_LINE := "It's winding down! Shoot the key!"
@@ -249,10 +250,12 @@ const BOSS_RAGE_LINES := ["Uh oh. Now it's ANGRY."]
 const BOSS_DOWN_LINES := ["It's down! We DID it!", "Who's the big one NOW?!"]
 const BOSS_OWL_LINES := ["Shoot her wings when she dives!"]
 const BOSS_HELD_LINES := ["She's got one! Shoot her, she'll let go!"]
+const BOSS_NUT_LINES := ["Shoot his legs! He'll go right over!"]
+const BOSS_TIMBER_LINES := ["TIMBER! Get his head!"]
 ## The boss lines picked at random, by the key prefix they're picked with
 ## (the name lines are "bn.<boss id>", the key line "bk").
 const BOSS_LINES := {"bc": BOSS_COMING_LINES, "br": BOSS_RUN_LINES, "bw": BOSS_WEAK_LINES, "be": BOSS_RAGE_LINES,
-	"bd": BOSS_DOWN_LINES, "bo": BOSS_OWL_LINES, "bh": BOSS_HELD_LINES}
+	"bd": BOSS_DOWN_LINES, "bo": BOSS_OWL_LINES, "bh": BOSS_HELD_LINES, "bl": BOSS_NUT_LINES, "bt": BOSS_TIMBER_LINES}
 ## The Kernel Hunt (KernelHunt, a mission's MissionDirector): the rogues on
 ## your side, by the key prefix they're picked with. "kt": the tally, as the
 ## mission starts; "kw": a wave coming; "ks": the first sight of the Touched;

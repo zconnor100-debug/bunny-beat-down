@@ -181,6 +181,11 @@ const BEAT_DOWN_BURSTS := {
 		{"amount": 14, "speed": Vector2(2.0, 5.0), "spread": 80.0, "damping": 2.2, "lifetime": 2.6}],
 		["blob", [Color(0.8, 1.0, 0.34)], -0.3, 0.05, {"amount": 6, "speed": Vector2(1.0, 3.0), "spread": 90.0, "additive": true,
 		"lifetime": 1.0}]],
+	# (earned by felling Crackjaw: cracked walnut shell flying, and a glint of his gold braid)
+	"nutshells": [["chip", [Color(0.5, 0.33, 0.17), Color(0.66, 0.47, 0.27), Color(0.36, 0.22, 0.11)], 11.0, 0.13,
+		{"amount": 12, "speed": Vector2(3.0, 7.0), "spread": 80.0, "lifetime": 1.6}],
+		["blob", [Color(1.0, 0.82, 0.35)], -0.4, 0.05, {"amount": 6, "speed": Vector2(1.0, 3.5), "spread": 90.0, "additive": true,
+		"lifetime": 0.9}]],
 }
 
 

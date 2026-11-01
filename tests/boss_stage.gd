@@ -3,12 +3,15 @@ extends Node3D
 ## then caught in the middle of what they do (tests/capture_bosses.gd).
 
 const SCRIPTS := {"brute": "res://src/bosses/brute_boss.gd", "robot": "res://src/bosses/robot_boss.gd",
-	"hamster": "res://src/bosses/hamster_boss.gd"}
+	"hamster": "res://src/bosses/hamster_boss.gd", "nutcracker": "res://src/bosses/nutcracker_boss.gd"}
 ## Each boss's moves to catch, and how far into each (seconds).
 const MOVES := {
 	"brute": [["_pound", 0.85], ["_pound", 1.2], ["_toss_pose", 1.35], ["_gobble_pose", 1.5], ["_roar_action", 1.0], ["_death_action", 3.0]],
 	"robot": [["_clamp", 0.8], ["_barrage_pose", 1.0], ["_wind_down", 3.0], ["_roar_action", 0.8], ["_death_action", 2.4]],
 	"hamster": [["_bite_pose", 0.45], ["_charge_pose", 1.2], ["_spit_pose", 0.6], ["_roar_action", 1.0], ["_death_action", 2.6]],
+	"nutcracker": [["_march_pose", 1.5], ["_march_pose", 1.72], ["_sweep_pose", 0.75], ["_sweep_pose", 1.05], ["_sweep_pose", 1.3],
+		["_sweep_pose", 1.55], ["_crack", 0.8], ["_walnuts_pose", 0.72], ["_roar_action", 1.0], ["_timber", 0.8], ["_timber", 2.4],
+		["_death_action", 2.6]],
 }
 
 var out_dir := "user://bosses"
@@ -58,6 +61,9 @@ func _run() -> void:
 	bun.place_at(Vector3(7, 0, 9), PI * 0.8)
 	bun.team = 2   # (on the bosses' side: nothing they do hurts it)
 	for id in ids:
+		# (the one with moves aimed along the ground at you: you in front of
+		# it, so it faces the camera as it does them)
+		bun.global_position = Vector3(-12, 0, -24) if id == "nutcracker" else Vector3(7, 0, 9)
 		var boss: Boss = (load(SCRIPTS[id]) as GDScript).new()
 		boss.thinking = false
 		add_child(boss)
@@ -104,7 +110,9 @@ func _run() -> void:
 				cam.fov = 60.0
 			Engine.time_scale = was
 			k += 1
+			boss._cancel_action()   # (or a march goes on moving it after it's put back)
 			boss.global_position = Vector3.ZERO
+			boss.rotation.y = PI * 0.15
 			boss.state = Boss.State.FIGHTING
 			boss.alive = true
 			boss.set_physics_process(true)
@@ -130,6 +138,12 @@ func _make(boss: Boss, fn: String) -> BossAction:
 			return boss._charge(bun)
 		"_spit_pose":
 			return boss._spit(bun)
+		"_march_pose":
+			return boss._march(bun)
+		"_sweep_pose":
+			return boss._sweep(bun)
+		"_walnuts_pose":
+			return boss._walnuts(bun)
 	return boss.call(fn) as BossAction
 
 

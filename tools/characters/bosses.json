@@ -225,5 +225,61 @@
       {"l_upper_arm": [50, 0, 0], "r_upper_arm": [50, 0, 0], "head": [0, 70, 0]},
       {"l_foot": [50, 0, 0], "r_foot": [50, 0, 0], "tail": [30, 0, 0], "jaw": [20, 0, 0]}
     ]
+  },
+  "nutcracker": {
+    "src": "boss_nutcracker",
+    "uid": "b28a9fd8e44b4da696baac8a79af9772",
+    "display_name": "Crackjaw",
+    "yaw_deg": -90,
+    "max_tris": 60000,
+    "bake_normals": 2048,
+    "bake_ao": 0.5,
+    "roughness": 0.42,
+    "head_top": 0.8,
+    "joints": {
+      "hips": {"head": [0, 0.0, 0.33], "tail": [0, 0.0, 0.42], "parent": null},
+      "spine": {"head": [0, 0.0, 0.42], "tail": [0, 0.005, 0.5], "parent": "hips"},
+      "chest": {"head": [0, 0.005, 0.5], "tail": [0, 0.01, 0.62], "parent": "spine"},
+      "neck": {"head": [0.008, 0.01, 0.62], "tail": [0.008, 0.01, 0.665], "parent": "chest"},
+      "head": {"head": [0.008, 0.01, 0.665], "tail": [0.008, 0.01, 0.8], "parent": "neck"},
+      "hat": {"head": [0.008, 0.01, 0.8], "tail": [0.008, 0.01, 0.97], "parent": "head"},
+      "jaw": {"head": [0.008, 0.02, 0.648], "tail": [0.008, -0.09, 0.535], "parent": "head"},
+      "l_shoulder": {"head": [0.03, 0.02, 0.6], "tail": [0.12, 0.027, 0.6], "parent": "chest"},
+      "l_upper_arm": {"head": [0.13, 0.027, 0.6], "tail": [0.132, 0.027, 0.47], "parent": "l_shoulder"},
+      "l_lower_arm": {"head": [0.132, 0.027, 0.47], "tail": [0.132, 0.027, 0.35], "parent": "l_upper_arm"},
+      "l_hand": {"head": [0.132, 0.027, 0.35], "tail": [0.13, 0.027, 0.285], "parent": "l_lower_arm"},
+      "l_upper_leg": {"head": [0.048, 0.0, 0.34], "tail": [0.048, 0.0, 0.19], "parent": "hips"},
+      "l_lower_leg": {"head": [0.048, 0.0, 0.19], "tail": [0.048, 0.01, 0.05], "parent": "l_upper_leg"},
+      "l_foot": {"head": [0.048, 0.01, 0.05], "tail": [0.048, -0.085, 0.02], "parent": "l_lower_leg"}
+    },
+    "pin": {
+      "jaw": [[[-0.022, -0.13, 0.53], [0.044, -0.045, 0.641]]],
+      "head": [[[-0.2, -0.2, 0.665], [0.2, 0.2, 0.8]]],
+      "hat": [[[-0.2, -0.2, 0.8], [0.2, 0.2, 1.01]]],
+      "l_upper_arm": [[[0.098, -0.2, 0.47], [0.2, 0.2, 0.64]]],
+      "l_lower_arm": [[[0.102, -0.2, 0.352], [0.2, 0.2, 0.47]]],
+      "l_hand": [[[0.1, -0.2, 0.25], [0.2, 0.2, 0.352]]],
+      "r_upper_arm": [[[-0.2, -0.2, 0.47], [-0.098, 0.2, 0.64]]],
+      "r_lower_arm": [[[-0.2, -0.2, 0.352], [-0.102, 0.2, 0.47]]],
+      "r_hand": [[[-0.2, -0.2, 0.25], [-0.1, 0.2, 0.352]]],
+      "l_upper_leg": [[[0.0, -0.2, 0.19], [0.098, 0.2, 0.345]]],
+      "l_lower_leg": [[[0.0, -0.2, -0.01], [0.098, 0.2, 0.19]]],
+      "r_upper_leg": [[[-0.098, -0.2, 0.19], [0.0, 0.2, 0.345]]],
+      "r_lower_leg": [[[-0.098, -0.2, -0.01], [0.0, 0.2, 0.19]]]
+    },
+    "pin_only": ["jaw", "hat", "l_shoulder", "r_shoulder", "l_upper_arm", "l_lower_arm", "l_hand", "r_upper_arm", "r_lower_arm",
+      "r_hand", "l_upper_leg", "l_lower_leg", "l_foot", "r_upper_leg", "r_lower_leg", "r_foot"],
+    "eyes": [[0.05, -0.057, 0.705], [-0.032, -0.067, 0.705]],
+    "eye_r": 0.013,
+    "mouth": [0.008, -0.065, 0.645],
+    "paint": {
+      "seed": 7,
+      "eyes": {"mode": "disk", "radius": 0.0135, "color": [0.78, 0.9, 1.0]}
+    },
+    "test_poses": [
+      {"jaw": [35, 0, 0], "head": [0, 30, 0], "hat": [-20, 0, 0]},
+      {"l_upper_arm": [-90, 0, 0], "r_upper_arm": [0, 0, -60], "l_lower_arm": [-40, 0, 0]},
+      {"l_upper_leg": [-40, 0, 0], "l_lower_leg": [50, 0, 0], "r_upper_leg": [25, 0, 0], "spine": [15, 0, 0]}
+    ]
   }
 }

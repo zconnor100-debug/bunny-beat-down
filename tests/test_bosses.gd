@@ -6,12 +6,15 @@ extends TestCase
 ## boss going down for good. Old Hoot, the one that flies: circling up high,
 ## carrying a critter off and dropping it (and wriggled free of), grounded by
 ## shots on her wings as she dives, her hoot knocking everyone under her
-## down. Then a whole Boss Battle on each map, and against Old Hoot by night.
+## down. Crackjaw, the nutcracker: shot in the legs he goes over (and gets
+## up again), and his sabre passes under whoever jumps it. Then a whole Boss
+## Battle on each map, against Old Hoot by night, and against Crackjaw.
 
 const TEST_DEF := "res://data/critters/test_critter.tres"
 const BUN := "res://data/critters/bun.tres"
 const SCRIPTS := {"brute": "res://src/bosses/brute_boss.gd", "robot": "res://src/bosses/robot_boss.gd",
-	"hamster": "res://src/bosses/hamster_boss.gd", "owl": "res://src/bosses/owl_boss.gd"}
+	"hamster": "res://src/bosses/hamster_boss.gd", "owl": "res://src/bosses/owl_boss.gd",
+	"nutcracker": "res://src/bosses/nutcracker_boss.gd"}
 const GAME := "res://scenes/game.tscn"
 
 
@@ -255,16 +258,17 @@ func test_every_boss_does_all_its_moves() -> void:
 		var moves: Array = {"brute": ["_pound", "_toss", "_leap", "_gobble", "_roar_action"],
 			"robot": ["_clamp", "_lasers", "_barrage", "_wind_down", "_roar_action"],
 			"hamster": ["_bite", "_charge", "_spit", "_burrow", "_roar_action"],
-			"owl": ["_snatch", "_rake", "_volley", "_roar_action", "_perch"]}[id]
+			"owl": ["_snatch", "_rake", "_volley", "_roar_action", "_perch"],
+			"nutcracker": ["_march", "_sweep", "_crack", "_walnuts", "_roar_action"]}[id]
 		for m in moves:
 			b.global_position = Vector3.ZERO
 			if b is OwlBoss:   # (up where she flies)
 				b._air = true
 				b.global_position = Vector3(0, OwlBoss.CRUISE, 40)
-			victim.global_position = Vector3(0, 0.1, -50 if m not in ["_gobble", "_bite"] else -9)
+			victim.global_position = Vector3(0, 0.1, {"_gobble": -9, "_bite": -9, "_crack": -12, "_sweep": -15}.get(m, -50))
 			victim.velocity = Vector3.ZERO
 			await wait_physics(3)
-			var a: BossAction = b.call(m, victim) if m not in ["_pound", "_clamp", "_wind_down", "_roar_action"] else b.call(m)
+			var a: BossAction = b.call(m, victim) if m not in ["_pound", "_clamp", "_wind_down", "_roar_action", "_crack"] else b.call(m)
 			check(a != null, "%s: %s makes an action" % [id, m])
 			if a == null:
 				continue
@@ -392,6 +396,96 @@ func test_old_hoots_hoot_knocks_them_down() -> void:
 	check(not (far.is_knocked() or far.visual.knocked), "not who's out of the ring")
 
 
+## Shot in the legs enough, Crackjaw teeters and goes over the way he's
+## facing: flattening whoever's under him, then lying there with his head on
+## the floor, taking double, till he gets back up. Not again straight away.
+func test_shooting_crackjaws_legs_puts_him_over() -> void:
+	var b: NutcrackerBoss = _boss("nutcracker")
+	var you := spawn_critter(TEST_DEF, Vector3(60, 0.1, 20))
+	you.team = 1
+	you.is_player = true
+	var under := spawn_critter(TEST_DEF, Vector3(0, 0.1, -12))   # (he faces -Z: where he'll land)
+	under.team = 1
+	under.max_health = 1000.0
+	under.health = 1000.0
+	await wait_physics(5)
+	var head_up := b.bone_point(&"head", 0.5).y
+	for i in int(NutcrackerBoss.TOPPLE_AT) - 1:
+		var shot := DamageInfo.make(10.0, DamageInfo.Kind.BULLET, you, &"carrot_rifle")
+		shot.bone_role = &"l_lower_leg" if i % 2 == 0 else &"r_upper_leg"
+		b.take_damage(shot)
+	check(b.action == null, "a few hits on his legs only wobble him")
+	var arm_shot := DamageInfo.make(10.0, DamageInfo.Kind.BULLET, you, &"carrot_rifle")
+	arm_shot.bone_role = &"l_upper_arm"
+	b.take_damage(arm_shot)
+	check(b.action == null, "a hit elsewhere doesn't count")
+	var last := DamageInfo.make(10.0, DamageInfo.Kind.BULLET, you, &"carrot_rifle")
+	last.bone_role = &"r_foot"
+	b.take_damage(last)
+	check(b.action != null and b.action.name == &"timber", "enough on his legs: TIMBER (%s)" % (b.action.name if b.action else "nothing"))
+	await _until(func(): return b.vulnerable(), 3.0)
+	await wait_physics(10)
+	check(b.toppled() and b.bone_point(&"head", 0.5).y < head_up * 0.35, "down flat, his head low (%.1f m, was %.1f)" % [
+		b.bone_point(&"head", 0.5).y, head_up])
+	check(under.health < under.max_health, "whoever was where he landed was flattened")
+	var hp := b.health
+	var head_shot := DamageInfo.make(100.0, DamageInfo.Kind.BULLET, you, &"carrot_rifle")
+	head_shot.bone_role = &"head"
+	b.take_damage(head_shot)
+	check(hp - b.health > 100.0 * b.armor * 1.8 * 1.9, "a shot on his head counts double while he's down (%.0f)" % (hp - b.health))
+	await _until(func(): return b.action == null, NutcrackerBoss.TOPPLED_FOR + 4.0)
+	await wait_physics(5)
+	check(b.action == null and not b.vulnerable() and b.bone_point(&"head", 0.5).y > head_up * 0.9, "and back on his feet")
+	for i in int(NutcrackerBoss.TOPPLE_AT) + 2:
+		var shot := DamageInfo.make(10.0, DamageInfo.Kind.BULLET, you, &"carrot_rifle")
+		shot.bone_role = &"l_lower_leg"
+		b.take_damage(shot)
+	check(b.action == null, "not straight back over")
+
+
+## Beaten while he's flat on his face, he stays down (not up on his feet
+## first, to fall over backwards).
+func test_crackjaw_beaten_while_hes_down_stays_down() -> void:
+	var b: NutcrackerBoss = _boss("nutcracker")
+	var you := spawn_critter(TEST_DEF, Vector3(60, 0.1, 20))
+	you.team = 1
+	you.is_player = true
+	await wait_physics(5)
+	var head_up := b.bone_point(&"head", 0.5).y
+	b._topple()
+	await _until(func(): return b.toppled(), 4.0)
+	await wait_physics(5)
+	check(b.toppled(), "down on his face")
+	b.take_damage(DamageInfo.make(1e9, DamageInfo.Kind.BULLET, you, &"carrot_sniper"))
+	var highest := 0.0
+	for i in 150:
+		highest = maxf(highest, b.bone_point(&"head", 0.5).y)
+		await wait_physics(1)
+	check(not b.alive and highest < head_up * 0.35, "beaten there, his head stays low (at most %.1f m, standing %.1f)" % [highest, head_up])
+
+
+## His sabre sweeps the floor in front of him: whoever's on the ground in its
+## way goes flying; whoever's in the air as it passes is missed.
+func test_jumping_crackjaws_sabre() -> void:
+	var b: NutcrackerBoss = _boss("nutcracker")
+	var grounded := spawn_critter(TEST_DEF, Vector3(-8, 0.1, -14))
+	var jumper := spawn_critter(TEST_DEF, Vector3(8, 4.0, -14))
+	var behind := spawn_critter(TEST_DEF, Vector3(0, 0.1, 14))
+	for c in [grounded, jumper, behind]:
+		c.team = 1
+		c.max_health = 1000.0
+		c.health = 1000.0
+	await wait_physics(5)
+	b.start(b._sweep(grounded))
+	while b.action != null:
+		jumper.global_position = Vector3(8, 4.0, -14)   # (up in the air the whole time)
+		jumper.velocity = Vector3.ZERO
+		await wait_physics(1)
+	check(grounded.health < grounded.max_health, "on the ground in front of him: swept")
+	check(jumper.health == jumper.max_health, "in the air as it passed: missed")
+	check(behind.health == behind.max_health, "behind him: out of its reach")
+
+
 func _until(done: Callable, seconds: float) -> void:
 	var t := 0.0
 	while t < seconds and not done.call():
@@ -406,6 +500,7 @@ func test_boss_battles() -> void:
 	for map in ["island", "cage", "toybox"]:
 		await _boss_battle(map)
 	await _boss_battle("island", "owl")
+	await _boss_battle("toybox", "nutcracker")
 
 
 func _boss_battle(map: String, boss_id := "") -> void:
@@ -427,7 +522,7 @@ func _boss_battle(map: String, boss_id := "") -> void:
 		t += get_process_delta_time()
 	var mm: MatchManager = game.match_manager
 	check(mm != null and mm.mode == "boss", "%s: a Boss Battle" % map)
-	check(["ring", "disc", "strip", "foam"].all(func(k): return BossFX._tex.has(k)),
+	check(["ring", "disc", "strip", "foam", "arc"].all(func(k): return BossFX._tex.has(k)),
 		"%s: its warnings' textures made while it loaded, not on its first blow (%s)" % [map, BossFX._tex.keys()])
 	if mm == null:
 		game.queue_free()

@@ -287,7 +287,7 @@ def render_views(name, bones=None):
 ROLES = ["hips", "spine", "chest", "neck", "head", "jaw",
          "l_shoulder", "l_upper_arm", "l_lower_arm", "l_hand", "r_shoulder", "r_upper_arm", "r_lower_arm", "r_hand",
          "l_upper_leg", "l_lower_leg", "l_foot", "r_upper_leg", "r_lower_leg", "r_foot",
-         "l_ear", "l_ear_tip", "r_ear", "r_ear_tip", "tail", "key", "l_claw_a", "l_claw_b", "r_claw_a", "r_claw_b"]
+         "l_ear", "l_ear_tip", "r_ear", "r_ear_tip", "tail", "key", "l_claw_a", "l_claw_b", "r_claw_a", "r_claw_b", "hat"]
 
 
 def mirror(j):
@@ -409,16 +409,38 @@ def build_auto_rig(body):
             body.vertex_groups[names[nearest[k]]].add([int(i)], 1.0, "REPLACE")
     # strict regions: the recipe can pin vertices in a box to one bone (a jaw, a key)
     co = coords(body)
+    pinned = {}
     for name, boxes in CFG.get("pin", {}).items():
         sel = np.zeros(len(co), dtype=bool)
         for bx in boxes:
             lo, hi = np.array(bx[0]), np.array(bx[1])
             sel |= np.all((co >= lo) & (co <= hi), axis=1)
+        pinned[name] = sel
         idx = [int(i) for i in np.nonzero(sel)[0]]
         for vg in body.vertex_groups:
             vg.remove(idx)
         body.vertex_groups[name].add(idx, 1.0, "REPLACE")
         log("pinned %d vertices to %s" % (len(idx), name))
+    # and "pin_only" bones move nothing but their own boxes (a wooden toy's
+    # limbs turn on their pegs, rigid, without dragging the coat along): what
+    # they had elsewhere goes to the nearest other bone
+    only = CFG.get("pin_only", [])
+    if only:
+        for name in only:
+            keep = pinned.get(name, np.zeros(len(co), dtype=bool))
+            if name in body.vertex_groups:
+                body.vertex_groups[name].remove([int(i) for i in np.nonzero(~keep)[0]])
+        names = [b.name for b in arm.data.bones if b.use_deform]
+        W = weights_matrix(body, names)
+        miss = np.nonzero(W.sum(axis=1) < 1e-4)[0]
+        others = [n for n in names if n not in only]
+        if len(miss):
+            segs = [(np.array(arm.data.bones[n].head_local), np.array(arm.data.bones[n].tail_local)) for n in others]
+            dist = np.stack([seg_dist(co[miss], a, b) for a, b in segs], axis=1)
+            nearest = np.argmin(dist, axis=1)
+            for k, i in enumerate(miss):
+                body.vertex_groups[others[nearest[k]]].add([int(i)], 1.0, "REPLACE")
+        log("pin_only: %d bones kept to their boxes, %d vertices given to the nearest other bone" % (len(only), len(miss)))
     return arm
 
 

@@ -1,7 +1,8 @@
 class_name BossFX
 ## The bosses' effects (Boss): a red ring on the ground where a blow is about
-## to land, filling up as it comes (and a strip for a charge), the shockwave
-## and dust when it does, the Tin Tyrant's eye beams, Nibbles's foam. Like FX,
+## to land, filling up as it comes (a strip for a charge, a half-ring for
+## Crackjaw's sabre), the shockwave and dust when it does, the Tin Tyrant's
+## eye beams, Nibbles's foam. Like FX,
 ## nothing without an FX node in the tree (tests, menus).
 
 const WARN := Color(1.0, 0.16, 0.06)
@@ -14,7 +15,7 @@ static var _tex: Dictionary = {}
 ## Make the warnings' and the foam's textures now (while a match with a boss
 ## or a mission in it loads), not on the first blow or spit in the fight.
 static func warm_up() -> void:
-	for kind in ["ring", "disc", "strip", "foam"]:
+	for kind in ["ring", "disc", "strip", "foam", "arc"]:
 		_texture(kind)
 
 
@@ -59,6 +60,37 @@ static func warn_strip(from: Vector3, to: Vector3, width: float, seconds: float,
 	var tw := root.create_tween()
 	tw.tween_interval(maxf(seconds, 0.05))
 	tw.tween_property(strip, "modulate:a", 0.0, 0.3)
+	tw.tween_callback(root.queue_free)
+	return root
+
+
+## A red half-ring on the ground in front of `pos` (facing `fwd`: from its
+## right, through ahead, to its left), `radius` across, filling out from
+## `pos` over `seconds` (a sabre's sweep: Crackjaw), then gone.
+static func warn_arc(pos: Vector3, fwd: Vector3, radius: float, seconds: float, color := WARN) -> Node3D:
+	if FX.instance == null:
+		return null
+	fwd.y = 0.0
+	if fwd.length() < 0.01:
+		return null
+	var root := Node3D.new()
+	root.name = "BossWarning"
+	FX.instance.add_child(root)
+	root.global_position = pos
+	root.global_basis = Basis(Vector3.UP, atan2(fwd.x, fwd.z))   # (its +Z ahead)
+	var rim := _decal(_texture("arc"), Vector3(radius * 2.0, DEPTH, radius), color)
+	rim.position.z = radius * 0.5
+	root.add_child(rim)
+	var fill := _decal(_texture("arc"), Vector3(0.1, DEPTH, 0.05), Color(color, 0.6))
+	root.add_child(fill)
+	var grow := func(k: float):
+		if is_instance_valid(fill):
+			fill.size = Vector3(maxf(radius * 2.0 * k, 0.1), DEPTH, maxf(radius * k, 0.05))
+			fill.position.z = radius * k * 0.5
+	var tw := root.create_tween()
+	tw.tween_method(grow, 0.0, 1.0, maxf(seconds, 0.05))
+	tw.tween_property(rim, "modulate:a", 0.0, 0.3)
+	tw.parallel().tween_property(fill, "modulate:a", 0.0, 0.3)
 	tw.tween_callback(root.queue_free)
 	return root
 
@@ -233,12 +265,13 @@ static func _decal(tex: Texture2D, size: Vector3, color: Color) -> Decal:
 
 ## The warnings' textures: "ring" (a bright rim over a faint fill), "disc"
 ## (soft-edged), "strip" (edged, with chevrons pointing up the texture: the
-## strip's +Z) and "foam" (frothy blobs).
+## strip's +Z), "arc" (half a ring: its straight edge along the bottom, the
+## decal's -Z, its round edge toward +Z) and "foam" (frothy blobs).
 static func _texture(kind: String) -> Texture2D:
 	if _tex.has(kind):
 		return _tex[kind]
 	var w := 64 if kind == "strip" else 256
-	var h := 256
+	var h := 128 if kind == "arc" else 256
 	var img := Image.create(w, h, false, Image.FORMAT_RGBA8)
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 7
@@ -274,6 +307,9 @@ static func _texture(kind: String) -> Texture2D:
 					a = edge * clampf((1.0 - absf(p.y)) * 30.0, 0.0, 1.0)
 				"foam":
 					a = froth[y * w + x] * clampf((1.0 - p.length()) * 5.0, 0.0, 1.0)
+				"arc":
+					var r := Vector2(p.x, (1.0 - p.y) * 0.5).length()   # (from the middle of its bottom edge)
+					a = clampf((1.0 - r) * 40.0, 0.0, 1.0) * (1.0 if r > 0.92 else 0.2) * clampf((r - 0.08) * 30.0, 0.0, 1.0)
 			img.set_pixel(x, y, Color(a, a, a, a))   # (premultiplied: the emission, which ignores alpha, is dark where it's clear)
 	img.generate_mipmaps()
 	var t := ImageTexture.create_from_image(img)
