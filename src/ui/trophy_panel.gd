@@ -121,7 +121,7 @@ func _milestones(rows := Mastery.rows(), what := "Milestone", takes := "What it 
 # ---- the bosses ---------------------------------------------------------------------------------
 
 ## The Bosses page: the Warren's story of how the giants came, a button for
-## each boss, and the boss picked.
+## each boss (by name: where it lives is on its page), and the boss picked.
 func _bosses_page() -> VBoxContainer:
 	var page := VBoxContainer.new()
 	page.add_theme_constant_override("separation", 8)
@@ -130,15 +130,16 @@ func _bosses_page() -> VBoxContainer:
 	myth.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	myth.custom_minimum_size = Vector2(1140, 0)
 	page.add_child(myth)
-	var pick := HBoxContainer.new()
-	pick.add_theme_constant_override("separation", 14)
+	var pick := HFlowContainer.new()   # (it wraps if they don't all fit on one line)
+	pick.add_theme_constant_override("h_separation", 14)
+	pick.add_theme_constant_override("v_separation", 10)
 	page.add_child(pick)
 	var body := VBoxContainer.new()
 	body.add_theme_constant_override("separation", 6)
 	page.add_child(body)
 	for id in BossLore.shown():
 		var b: Dictionary = BossLore.of(id)
-		pick.add_child(UITheme.button("%s (%s)" % [b.name, b.where], func(): _show_boss(body, id)))
+		pick.add_child(UITheme.button(String(b.name), func(): _show_boss(body, id)))   # (where it lives: on its page)
 	_show_boss(body, BossLore.IDS[0])
 	return page
 
@@ -160,7 +161,7 @@ func _show_boss(body: VBoxContainer, id: String) -> void:
 		c.queue_free()
 	var b: Dictionary = BossLore.of(id)
 	body.add_child(UITheme.label("%s, %s" % [String(b.name).to_upper(), b.title], 30, UITheme.CREAM, true))
-	body.add_child(UITheme.label("   •   ".join(boss_record(id).map(func(r): return "%s %s" % r)), 19, UITheme.CARROT_LIGHT))
+	body.add_child(UITheme.label("   •   ".join([String(b.where)] + boss_record(id).map(func(r): return "%s %s" % r)), 19, UITheme.CARROT_LIGHT))
 	var chapters := HBoxContainer.new()
 	chapters.add_theme_constant_override("separation", 10)
 	body.add_child(chapters)

@@ -11,10 +11,10 @@ extends RefCounted
 ## Kernel Hunt), is in docs/LORE.md. The Briar Heart, the Kernel Hunt's last
 ## boss (its Finale), isn't in a Boss Battle: its story opens in the Finale
 ## (`shown`: on the Bosses page once you've faced it there). Old Hoot, the
-## owl, is the island's other boss, by night, and Crackjaw, the nutcracker,
-## the Toy Box's other (`picked`).
+## owl, is the island's other boss, by night, Crackjaw, the nutcracker, the
+## Toy Box's other, and Noodle, the ferret, the Hamster Cage's (`picked`).
 
-const IDS := ["brute", "robot", "hamster", "owl", "nutcracker"]
+const IDS := ["brute", "robot", "hamster", "owl", "nutcracker", "ferret"]
 const FINALE := "briar"
 
 const MYTH_TITLE := "The Night the Acorn Fell"
@@ -88,6 +88,19 @@ const BOSSES := {
 			"Shoot Crackjaw's legs and he goes over like a felled pine. Then go for his head.",
 			"Jump Crackjaw's sabre as it sweeps across the floor."],
 	},
+	"ferret": {
+		"name": "Noodle", "title": "the Burrow Hunter", "map": "cage", "where": "the Hamster Cage",
+		"epigraph": "Every kit knows how the rhyme ends.",
+		"chapters": [
+			["The Old Rhyme", "The kits of the Warren have a skipping rhyme about the long, slinking things the big folk used to send down rabbit holes. Round and round the burrow, they sing, faster and faster, and on the last word everyone jumps. Noodle is the House's ferret: sable brown, a black bandit's mask, a thief of socks. She has never seen a rabbit in her life. She was bred for two thousand years to go down a hole after one."],
+			["Nibbles's Larder", "When Nibbles started digging toward the toy room, Noodle found his tunnels, the way ferrets find every hole there is. At the end of the deepest was his larder: cheekful after cheekful of sunflower seeds, every one soaked in water from the bottle that never runs dry. Ferrets steal. She stole the lot, stashed it, and ate her stash. By morning the tunnels fitted her, and she was as long as the Big Wheel is wide."],
+			["Pop!", "She won't come at you across the open. She digs in (stay out from behind her) and goes under, and a music box plays the rhyme under the bedding as she comes: on POP! she bursts up out of the red ring. Up out of her hole she stops to look round. Bop her on the nose, hard enough, and she sees stars. When she dances, hopping sideways with her back arched, keep off her landings: dancing tires her out, and she sleeps like the dead. Just don't be close when she wakes."],
+			["Finders Keepers", "Ferrets stash. Noodle's stash is at the bottom of Nibbles's deepest tunnel, and the Warren's bravest have seen it: every sock gone from the House this year, a thimble, three keys, the remote, and seeds enough for a sunflower field. And at the very bottom, under all of it, something small and gold-green that hums. She curls round it when she sleeps. Old Mother Clover says the Acorn didn't take all of itself home. \"Finders keepers,\" she says. \"Ask the ferret.\""],
+		],
+		"rumours": ["Hear a music box under the bedding? That's Noodle coming. Get out of the red ring before POP!",
+			"Bop Noodle on the nose while she's up out of her hole, and she'll see stars.",
+			"After her war dance Noodle sleeps like the dead. Hit her, then get clear before she wakes."],
+	},
 	"briar": {
 		"name": "The Briar Heart", "title": "the Acorn's Roots", "map": "", "where": "Boulder Bluff, by night",
 		"epigraph": "Every match, it closes in. Now you know why.",
@@ -122,6 +135,9 @@ const NEWS := {
 	"nutcracker": {"fell": "CRACKJAW FELLED IN THE TOY ROOM", "again": "CRACKJAW FELLED AGAIN", "where": "into the toy room",
 		"after": "His sabre is back over the mantelpiece. Nobody will say who hung it there.",
 		"caption": "Crackjaw, felled at last."},
+	"ferret": {"fell": "NOODLE BOPPED FOR GOOD", "again": "NOODLE BOPPED AGAIN", "where": "into the Hamster Cage",
+		"after": "Somebody has started giving back the socks.",
+		"caption": "Noodle, out for the count."},
 	"briar": {"fell": "THE BRIAR HEART IS STILL", "again": "THE BRIAR HEART STILLED AGAIN", "where": "up Boulder Bluff by night",
 		"after": "There's a new star over the Bluff.",
 		"caption": "The Starfall Acorn, going home."},

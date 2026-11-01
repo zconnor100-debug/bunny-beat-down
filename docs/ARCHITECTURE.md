@@ -600,6 +600,29 @@ kind of match; a run's stops are always battle royales.
   open after a Crack!. `MatchManager.BOSS_TIPS` and `BOSS_STUNNED` give each
   boss its own tip and its call when it's stunned (his: "Shoot his legs!"
   and "TIMBER!").
+- **Noodle** (`FerretBoss`, the Hamster Cage's other) is long and low: her
+  recipe's `head_top` is where her skull reaches reared up on her hind legs
+  (`REARED`), so she's ten critters tall standing up and about five on all
+  fours, 44 m nose to tail. Pop Goes the Weasel is one `BossAction` with its
+  whole timeline worked out up front from the music box's rhyme
+  (`ferret_tune`: its POP! `TUNE_POP` seconds in; `ferret_tune_short`,
+  `SHORT_POP`): she digs in (`_spray`: a cone behind her), goes under
+  (`_go_under`: the model hidden, her hitboxes and solid body off,
+  `take_damage` ignored), follows whoever she's after under the bedding
+  (dust and `Events.explosion` over her as she goes), commits `WARN_AT`
+  before the pop (`_commit_pop`: a red ring a little ahead of them, or on
+  the mouth of a hamster's burrow if one's within `BURROW_NEAR`:
+  `HamsterCage.burrows`) and gets there by the POP! however far it is. Up
+  out of the hole (`POPPED`: upright from the hips, the root sunk) her head
+  counts 3x (`role_scale`), and hits on it (yours 1, a bot's 0.15, a
+  blast's 3x) past `WHACK_AT` cancel the rest: `_dizzy_action`. The War
+  Dance's hops each pick their spot as they leave (`_hop_spot`, zigzagging
+  in) and land on their own `warn` ring; then `_asleep` (`vulnerable`, her
+  eyes dark: `_tend_eyes`) and `_poof`: a `hurt_ring`, a musk cloud that
+  stings like Nibbles's foam (`_tend_musk`) and a `danger` entry for its
+  whole life, so the bots keep out of it. `_die` notes how she fell
+  (`_fell_from`: popped or flopped) before the actions are cancelled, so
+  her death starts from that pose instead of snapping back onto her feet.
 - The models come from `tools/characters/boss_build.py` (recipes in
   `bosses.json`): decimate, orient and scale a download; build a skeleton
   from joints read off `grid` renders, or keep the download's own (rested in
@@ -608,9 +631,17 @@ kind of match; a run's stops are always battle royales.
   copy the weights across; paint into the texture by where each texel sits
   on the body (`paint`: Nibbles's blood and foam, Old Hoot's one glowing
   pupil: `eyes.only`, Brutus's amber eyes found by their colour, Crackjaw's
-  painted irises as disks: `mode` "disk"); pin boxes of vertices rigid to a
+  painted irises as disks: `mode` "disk", Noodle's two eyes painted from
+  the same texels: `eyes.shared`); pin boxes of vertices rigid to a
   bone (`pin`; with `pin_only`, that bone moves nothing else: Crackjaw's
-  pegged limbs); bake the
+  pegged limbs); split a mouth modelled just parted along its lips
+  (`split_mouth`: in a box, each vertex goes wholly to the jaw or the head
+  by which side of the slit it's nearer along the skin, `mouth_sides`, a
+  Dijkstra over the mesh's edges) and pin whole loose parts by a point on
+  each (`pin_parts`: Noodle's teeth and tongue; `loose_to`: every other
+  loose part, her eyeballs and whiskers, to one bone); move a download that
+  isn't in the middle of its bounds over (`nudge`), and render a long
+  beast's grid wider and from above too (`view_span`, `view_top`); bake the
   whole download's detail onto the decimated body (`bake_normals`: Cycles,
   selected to active, a tangent-space normal map; `bake_ao`: its ambient
   occlusion multiplied into the colour map) and set a roughness where a

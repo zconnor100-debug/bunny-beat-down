@@ -15,7 +15,7 @@ const MAP_NAMES := {"island": "Island", "cage": "Hamster Cage", "toybox": "Toy B
 const MODE_NAMES := {"royale": "Battle Royale", "teams": "Team Battle (25 v 25)", "boss": "Boss Battle (25 v 1)",
 	"kernel": "The Kernel Hunt"}
 const BOSS_NAMES := {"brute": "Brutus", "hamster": "Nibbles the Rabid", "robot": "the Tin Tyrant", "owl": "Old Hoot, by night",
-	"nutcracker": "Crackjaw the Nutcracker"}
+	"nutcracker": "Crackjaw the Nutcracker", "ferret": "Noodle the Burrow Hunter"}
 const TEAM_TIPS := [
 	"Team Battle: blue tags are your team. Friendly fire is off, so let rip.",
 	"The bots that jump with you are your squad: they stick by you.",

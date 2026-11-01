@@ -185,7 +185,7 @@ def finish(x, spec):
         assert len(x) / SR <= MAX_LOOP_S + 1e-6, spec["key"]
         return dsp.normalize(x, spec["loud"], ceiling_db=-1.0)
     x = dsp.trim(x, -50.0, keep_head=True, tail=0.03)
-    x = x[: dsp.n_of(MAX_ONESHOT_S)]
+    x = x[: dsp.n_of(spec.get("max_s") or MAX_ONESHOT_S)]
     x = dsp.highpass(x, 35, 2)  # strip DC / sub-sonic rumble (inaudible, eats headroom)
     x = dsp.fade(x, 0.0015, 0.03)
     return dsp.normalize(x, spec["loud"], ceiling_db=-1.0)

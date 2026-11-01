@@ -23,8 +23,9 @@ static func soft_blob() -> Texture2D:
 	return _cache["blob"]
 
 
-## A white particle shape (for tinting): "heart", "leaf" or "chip" (a
-## confetti square), drawn by its signed distance with a soft edge.
+## A white particle shape (for tinting): "heart", "cog", "star", "leaf",
+## "zee" (a Z: something asleep) or "chip" (a confetti square), drawn by its
+## signed distance with a soft edge.
 static func shape(kind: String) -> Texture2D:
 	if _cache.has("shape_" + kind):
 		return _cache["shape_" + kind]
@@ -57,6 +58,13 @@ static func shape(kind: String) -> Texture2D:
 					d = q.length() - 0.9 + absf(p.y) * 0.25
 					if absf(p.x) < 0.04 and absf(p.y) < 0.75:
 						d = maxf(d, 0.02)
+				"zee":
+					# a Z (something asleep): a bar along the top and the
+					# bottom, and the stroke down between them
+					var top := _seg_dist(p, Vector2(-0.6, 0.62), Vector2(0.6, 0.62))
+					var bottom := _seg_dist(p, Vector2(-0.6, -0.62), Vector2(0.6, -0.62))
+					var slash := _seg_dist(p, Vector2(0.6, 0.62), Vector2(-0.6, -0.62))
+					d = minf(minf(top, bottom), slash) - 0.13
 				_:
 					d = maxf(absf(p.x) - 0.75, absf(p.y) - 0.45)
 			var alpha := clampf(0.5 - d * 18.0, 0.0, 1.0)
@@ -189,6 +197,13 @@ static func scorch() -> Texture2D:
 	var tex := ImageTexture.create_from_image(img)
 	_cache["scorch"] = tex
 	return tex
+
+
+## How far `p` is from the segment `a`-`b`.
+static func _seg_dist(p: Vector2, a: Vector2, b: Vector2) -> float:
+	var ab := b - a
+	var k := clampf((p - a).dot(ab) / maxf(ab.length_squared(), 1e-9), 0.0, 1.0)
+	return p.distance_to(a + ab * k)
 
 
 static func _disc(img: Image, center: Vector2, radius: float, color: Color, alpha: float) -> void:

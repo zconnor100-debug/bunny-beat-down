@@ -92,6 +92,7 @@ var _eyes: Array[MeshInstance3D] = []
 var _eye_mat: StandardMaterial3D
 var _eye_skin: Array[StandardMaterial3D] = []   # (eyes that glow in its skin: their mask)
 var _built := false
+var _hittable := false              # (its hitboxes on: _set_hittable)
 
 
 func _init() -> void:
@@ -280,10 +281,16 @@ func _update_bones() -> void:
 
 
 func _set_hittable(on: bool) -> void:
+	_hittable = on
 	for area in hitboxes.values():
 		(area as Area3D).collision_layer = Layers.HITBOXES if on else 0
 	for body in _solids:
 		(body as CollisionObject3D).collision_layer = Layers.CRITTERS if on else 0
+
+
+## Whether a carrot can hit it right now (not down a hole, not down for good).
+func hittable() -> bool:
+	return _hittable
 
 
 ## A world point on `role`'s bone (`along`: 0 its head … 1 its tip).

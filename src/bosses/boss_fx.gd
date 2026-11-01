@@ -249,6 +249,39 @@ static func foam(pos: Vector3, radius: float, seconds: float) -> Node3D:
 	return root
 
 
+## A cloud of musk hanging over `pos` for `seconds` (Noodle, startled
+## awake): big yellow-green puffs rolling slowly up and out, a stain on the
+## ground under them, then thinning away.
+static func musk(pos: Vector3, radius: float, seconds: float) -> Node3D:
+	if FX.instance == null:
+		return null
+	var root := Node3D.new()
+	root.name = "Musk"
+	FX.instance.add_child(root)
+	root.global_position = pos
+	var d := _decal(_texture("disc"), Vector3(radius * 2.2, 20.0, radius * 2.2), Color(0.72, 0.78, 0.3, 0.7))
+	root.add_child(d)
+	var puffs: GPUParticles3D = FX.instance._make_particles({"amount": 36, "lifetime": 3.2, "speed": Vector2(0.4, 1.6),
+		"spread": 40.0, "gravity": -0.25, "size": radius * 0.55, "scale": Vector2(0.6, 1.4), "color": Color(0.78, 0.8, 0.36, 0.34),
+		"fade": true, "damping": 0.3, "aabb": radius * 1.5 + 12.0}, false)
+	puffs.one_shot = false
+	var pm := (puffs.process_material as ParticleProcessMaterial).duplicate() as ParticleProcessMaterial
+	pm.emission_shape = ParticleProcessMaterial.EMISSION_SHAPE_SPHERE
+	pm.emission_sphere_radius = radius * 0.7
+	puffs.process_material = pm
+	puffs.rotation.x = PI * 0.5   # (its particles start off along -Z: turned to drift up)
+	root.add_child(puffs)
+	puffs.position.y = radius * 0.25
+	puffs.emitting = true
+	var tw := root.create_tween()
+	tw.tween_interval(maxf(seconds - 1.5, 0.1))
+	tw.tween_callback(func(): puffs.emitting = false)
+	tw.tween_property(d, "modulate:a", 0.0, 1.5)
+	tw.tween_interval(2.0)
+	tw.tween_callback(root.queue_free)
+	return root
+
+
 static func _decal(tex: Texture2D, size: Vector3, color: Color) -> Decal:
 	var d := Decal.new()
 	d.texture_albedo = tex

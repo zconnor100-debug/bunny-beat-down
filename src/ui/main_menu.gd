@@ -6,11 +6,12 @@ const GAME_SCENE := "res://scenes/game.tscn"
 ## [settings value, name in the menu]
 const MAPS := [["island", "Wildwood Island"], ["cage", "Hamster Cage"], ["toybox", "Toy Box Bash"]]
 const MODES := [["royale", "Battle Royale"], ["teams", "Team Battle (25 v 25)"], ["boss", "Boss Battle (25 v 1)"]]
-## A Boss Battle's boss, in a line (BossLore's ids: the island and the Toy Box have two).
+## A Boss Battle's boss, in a line (BossLore's ids: every map has two).
 const MODE_BOSSES := {"brute": "Brutus, a bunny the size of a house", "hamster": "Nibbles the Rabid, the cage's own hamster gone huge and mad",
 	"robot": "the Tin Tyrant, a wind-up robot ten critters tall",
 	"owl": "Old Hoot, a snowy owl as wide as the Big Red Barn, by night: she flies",
-	"nutcracker": "Crackjaw, a wooden nutcracker as tall as the bookcase: he marches"}
+	"nutcracker": "Crackjaw, a wooden nutcracker as tall as the bookcase: he marches",
+	"ferret": "Noodle, the House's ferret, as long as the Big Wheel is wide: she pops up under you"}
 
 var _ui: Control
 var _menu: VBoxContainer

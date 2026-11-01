@@ -127,14 +127,15 @@ const TEAM_NAMES := ["", "the Carrot Crew", "the Bramble Mob"]
 const BOSSES := {"island": "res://src/bosses/brute_boss.gd", "cage": "res://src/bosses/hamster_boss.gd",
 	"toybox": "res://src/bosses/robot_boss.gd"}
 ## Every boss a Boss Battle can be against, by its id (a map can have more
-## than one: Old Hoot's the island's too, by night; BossLore.picked chooses).
+## than one: Old Hoot's the island's too, by night, Crackjaw the Toy Box's and
+## Noodle the cage's; BossLore.picked chooses).
 const BOSS_SCRIPTS := {"brute": "res://src/bosses/brute_boss.gd", "robot": "res://src/bosses/robot_boss.gd",
 	"hamster": "res://src/bosses/hamster_boss.gd", "owl": "res://src/bosses/owl_boss.gd",
-	"nutcracker": "res://src/bosses/nutcracker_boss.gd"}
+	"nutcracker": "res://src/bosses/nutcracker_boss.gd", "ferret": "res://src/bosses/ferret_boss.gd"}
 ## A boss's own tip (where to aim: Cast.BOSS_LINES key) and its call when
 ## it's stunned, by Boss.id ("bw.1" and "bw.0" for the rest).
-const BOSS_TIPS := {"owl": "bo.0", "nutcracker": "bl.0"}
-const BOSS_STUNNED := {"robot": "bk", "nutcracker": "bt.0"}
+const BOSS_TIPS := {"owl": "bo.0", "nutcracker": "bl.0", "ferret": "bp.0"}
+const BOSS_STUNNED := {"robot": "bk", "nutcracker": "bt.0", "ferret": "bz.0"}
 ## A Team Battle's second balloon (theirs: yours is `dropship`).
 var enemy_ship: Dropship
 ## A Boss Battle's boss, and how long after everyone's down it turns up.
@@ -1875,7 +1876,7 @@ func _boss_shout(what: String, who: Critter = null, now := false) -> bool:
 	if who == null:
 		return false
 	var said := {}
-	if what == "tip":   # (where to aim: Old Hoot's, her wings; Crackjaw's, his legs)
+	if what == "tip":   # (where to aim: Old Hoot's, her wings; Crackjaw's, his legs; Noodle's, her nose)
 		var tip: String = BOSS_TIPS.get(boss.id, "bw.1") if boss else "bw.1"
 		said = Cast.say(tip, Cast.BOSS_LINES[tip.get_slice(".", 0)][int(tip.get_slice(".", 1))])
 	elif what == "bk":

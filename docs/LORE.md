@@ -185,6 +185,48 @@ forts apart), the Sabre Sweep (jump it), Crack!, the Walnut Volley, Present
 Arms, and Timber! (shoot his legs). Beat him for **the Nutshells** beat-down
 burst.
 
+### Noodle, the Burrow Hunter (the Hamster Cage)
+
+*Every kit knows how the rhyme ends.*
+
+Not one of the Kernel's giants either: she ate Nibbles's larder, every seed
+of it soaked in water from his bottle. The Hamster Cage's other boss (a Boss
+Battle's pick there).
+
+1. **The Old Rhyme.** The Warren's kits have a skipping rhyme about the long,
+   slinking things the big folk sent down rabbit holes: round and round the
+   burrow, faster and faster, and on the last word everyone jumps. Noodle is
+   the House's ferret, sable brown with a black bandit's mask, a thief of
+   socks, who has never seen a rabbit and was bred for two thousand years to
+   go down a hole after one.
+2. **Nibbles's Larder.** She found the tunnels Nibbles dug toward the toy
+   room, and at the end of the deepest his larder: cheekful after cheekful of
+   sunflower seeds, every one soaked in water from the bottle that never runs
+   dry. She stole the lot, stashed it and ate her stash, and by morning she
+   was as long as the Big Wheel is wide.
+3. **Pop!** She digs in (stay out from behind her) and goes under, and a
+   music box plays the rhyme under the bedding as she comes: on POP! she
+   bursts up out of the red ring. Up out of her hole she stops to look round:
+   bop her on the nose, hard enough, and she sees stars. Her war dance tires
+   her out, and she sleeps like the dead. Don't be close when she wakes.
+4. **Finders Keepers.** Her stash, at the bottom of Nibbles's deepest tunnel:
+   every sock gone from the House this year, a thimble, three keys, the
+   remote, seeds enough for a sunflower field, and at the very bottom
+   something small and gold-green that hums, that she curls round when she
+   sleeps. *Old Mother Clover says the Acorn didn't take all of itself home.
+   "Finders keepers. Ask the ferret."*
+
+In the game: the Ferret model (SDPM Esare, CC BY 4.0), rigged with a two-part
+tail, her mouth split along its lips so it opens on her fangs and tongue
+(`FerretBoss`), her painted eyes glowing violet (hot pink when she's angry,
+dark while she's asleep or under the bedding). Long and low: ten critters
+tall only reared up on her hind legs. Pop Goes the Weasel (a music box's
+rhyme under the bedding; out of the hamster's burrows when one's near;
+bopped on the nose while she's up, she's seeing stars), the Bedding Spray
+as she digs in, the Weasel War Dance (ending in a dead sleep and a poof of
+musk), the Lunge, and the Bottle-Brush. Beat her for **the Finders Keepers**
+beat-down burst.
+
 ### The Briar Heart, the Acorn's Roots (Boulder Bluff, by night)
 
 *Every match, it closes in. Now you know why.*

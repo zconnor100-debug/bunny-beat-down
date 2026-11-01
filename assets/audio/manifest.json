@@ -348,6 +348,29 @@
   "nut_drum": [
     "sfx/nut_drum.ogg"
   ],
+  "ferret_tune": [
+    "sfx/ferret_tune.ogg"
+  ],
+  "ferret_tune_short": [
+    "sfx/ferret_tune_short.ogg"
+  ],
+  "ferret_dook": [
+    "sfx/ferret_dook_1.ogg",
+    "sfx/ferret_dook_2.ogg"
+  ],
+  "ferret_hiss": [
+    "sfx/ferret_hiss_1.ogg",
+    "sfx/ferret_hiss_2.ogg"
+  ],
+  "ferret_snore": [
+    "sfx/ferret_snore.ogg"
+  ],
+  "ferret_dig": [
+    "sfx/ferret_dig.ogg"
+  ],
+  "ferret_poof": [
+    "sfx/ferret_poof.ogg"
+  ],
   "music": {
     "menu": "music/menu_monkeys_spinning_monkeys.mp3",
     "match": [

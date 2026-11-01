@@ -3,13 +3,13 @@ extends TestCase
 ## a chapter at a time as you face them and beat them; your record against
 ## each (StatBook); a milestone for beating each with a piece of it to keep
 ## (the Brutus coat, the Tin Tyrant gun skin, the Rabid froth burst, Old
-## Hoot's Feathers and Crackjaw's Nutshells), harder
+## Hoot's Feathers, Crackjaw's Nutshells and Noodle's Finders Keepers), harder
 ## ones and the bosses' ladders; the Trophy Room's Bosses page; and a boss's
 ## arrival as a cinematic (BossIntro).
 
 const SCRIPTS := {"brute": "res://src/bosses/brute_boss.gd", "robot": "res://src/bosses/robot_boss.gd",
 	"hamster": "res://src/bosses/hamster_boss.gd", "owl": "res://src/bosses/owl_boss.gd",
-	"nutcracker": "res://src/bosses/nutcracker_boss.gd"}
+	"nutcracker": "res://src/bosses/nutcracker_boss.gd", "ferret": "res://src/bosses/ferret_boss.gd"}
 
 
 func before_each() -> void:
@@ -45,6 +45,11 @@ func test_every_boss_has_its_story() -> void:
 	Settings.set_value(&"boss", "nutcracker", false)
 	check(BossLore.picked("toybox") == "nutcracker" and BossLore.picked("island") == "brute" and BossLore.rumours("toybox")[0].contains("Crackjaw"),
 		"Crackjaw, picked: the Toy Box's (not the island's), his rumours on the loading screen")
+	# and the Hamster Cage two: Nibbles, and Noodle
+	check(BossLore.ids_for_map("cage") == ["hamster", "ferret"], "the cage's: Nibbles first")
+	Settings.set_value(&"boss", "ferret", false)
+	check(BossLore.picked("cage") == "ferret" and BossLore.picked("toybox") == "robot" and BossLore.rumours("cage")[0].contains("Noodle"),
+		"Noodle, picked: the cage's (not the Toy Box's), her rumours on the loading screen")
 	Settings.set_value(&"boss", "", false)
 
 
@@ -69,7 +74,7 @@ func test_beating_each_boss_earns_a_piece_of_it() -> void:
 	check(not Workshop.owns("coat:brutus") and not Workshop.buy("coat:brutus"), "the Brutus coat can't be bought")
 	var fresh := []
 	for pair in [["brute", "coat:brutus"], ["robot", "skin:tin_tyrant"], ["hamster", "kill_fx:froth"], ["owl", "kill_fx:feathers"],
-			["nutcracker", "kill_fx:nutshells"]]:
+			["nutcracker", "kill_fx:nutshells"], ["ferret", "kill_fx:stash"]]:
 		StatBook.note_boss_fought(pair[0])
 		StatBook.note_boss_beaten(pair[0], 400.0, false, false, false)
 		fresh = Mastery.check()
@@ -78,8 +83,10 @@ func test_beating_each_boss_earns_a_piece_of_it() -> void:
 			check(fresh.any(func(m): return m.id == "big_three"), "three of them: The Big Three")
 		if pair[0] == "owl":
 			check(fresh.any(func(m): return m.id == "big_four"), "four of them: The Big Four")
-	check(fresh.any(func(m): return m.id == "big_five"), "all five: The Big Five")
-	check(Mastery.progress("bosses_beaten") == 5 and Mastery.progress("boss_wins") == 5, "five bosses beaten")
+		if pair[0] == "nutcracker":
+			check(fresh.any(func(m): return m.id == "big_five"), "five of them: The Big Five")
+	check(fresh.any(func(m): return m.id == "big_six"), "all six: The Big Six")
+	check(Mastery.progress("bosses_beaten") == 6 and Mastery.progress("boss_wins") == 6, "six bosses beaten")
 	check(not Mastery.has("still_standing") and not Mastery.has("hard_nut"), "not standing, not on Hard: not yet")
 	StatBook.note_boss_beaten("brute", 380.0, true, true, true)
 	fresh = Mastery.check()
@@ -94,7 +101,7 @@ func test_beating_each_boss_earns_a_piece_of_it() -> void:
 	var row: Array = Mastery.ladder_rows(true).filter(func(r): return String(r[0]).begins_with("Titan Tenderizer"))[0]
 	check(row[1] == "Deal 50,000 damage to bosses." and row[2] == "26,000 / 50,000", "big numbers grouped: %s" % [row])
 	check(Mastery.rows().all(func(r): return not String(r[0]).begins_with("Giant Slayer")), "the bosses' milestones aren't on the Milestones page")
-	check(Mastery.rows("brute").size() == 1 and Mastery.rows("nutcracker").size() == 1 and Mastery.rows("*").size() == 5
+	check(Mastery.rows("brute").size() == 1 and Mastery.rows("nutcracker").size() == 1 and Mastery.rows("*").size() == 6
 		and Mastery.ladder_rows(true).size() == 3, "they're on the Bosses page")
 
 

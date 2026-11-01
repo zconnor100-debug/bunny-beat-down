@@ -1,5 +1,5 @@
 {
-  "_doc": "One recipe per boss for tools/characters/boss_build.py. Coordinates are in the normalized model (Blender axes: x = its left, -y = its front, z = up; 1.0 = the top of its bounds), read off grid.png. joints: bones made from scratch (left side; mirror() makes the right), skinned by bone heat. rig 'own': the download's own skeleton, roles naming its bones. head_top: the top of the skull (ears excluded), which the game sets at Boss.HEIGHT.",
+  "_doc": "One recipe per boss for tools/characters/boss_build.py. Coordinates are in the normalized model (Blender axes: x = its left, -y = its front, z = up; 1.0 = the top of its bounds), read off grid.png. joints: bones made from scratch (left side; mirror() makes the right), skinned by bone heat. rig 'own': the download's own skeleton, roles naming its bones. head_top: the top of the skull (ears excluded), which the game sets at Boss.HEIGHT (a beast on all fours, Noodle: where it reaches reared up on its hind legs).",
   "brute": {
     "src": "boss_brute",
     "uid": "5441e25956174b1fa6f09cf7317c3eb3",
@@ -280,6 +280,51 @@
       {"jaw": [35, 0, 0], "head": [0, 30, 0], "hat": [-20, 0, 0]},
       {"l_upper_arm": [-90, 0, 0], "r_upper_arm": [0, 0, -60], "l_lower_arm": [-40, 0, 0]},
       {"l_upper_leg": [-40, 0, 0], "l_lower_leg": [50, 0, 0], "r_upper_leg": [25, 0, 0], "spine": [15, 0, 0]}
+    ]
+  },
+  "ferret": {
+    "src": "boss_ferret",
+    "uid": "a5c717c20b08461aa1d9ce462f3e019e",
+    "display_name": "Noodle the Burrow Hunter",
+    "yaw_deg": -86.2,
+    "nudge": [0.14, 0.0],
+    "max_tris": 60000,
+    "head_top": 1.45,
+    "view_span": 1.4,
+    "view_top": true,
+    "joints": {
+      "hips": {"head": [0, 0.62, 0.55], "tail": [0, 0.28, 0.64], "parent": null},
+      "spine": {"head": [0, 0.28, 0.64], "tail": [0, -0.12, 0.62], "parent": "hips"},
+      "chest": {"head": [0, -0.12, 0.62], "tail": [0, -0.5, 0.5], "parent": "spine"},
+      "neck": {"head": [0, -0.5, 0.5], "tail": [-0.03, -0.88, 0.67], "parent": "chest"},
+      "head": {"head": [-0.03, -0.88, 0.67], "tail": [-0.055, -1.31, 0.68], "parent": "neck"},
+      "jaw": {"head": [-0.055, -1.1, 0.625], "tail": [-0.055, -1.28, 0.595], "parent": "head"},
+      "l_ear": {"head": [0.06, -0.98, 0.8], "tail": [0.15, -0.94, 0.875], "parent": "head"},
+      "r_ear": {"head": [-0.17, -0.98, 0.8], "tail": [-0.26, -0.94, 0.875], "parent": "head"},
+      "l_upper_arm": {"head": [0.12, -0.47, 0.47], "tail": [0.16, -0.34, 0.25], "parent": "chest"},
+      "l_lower_arm": {"head": [0.16, -0.34, 0.25], "tail": [0.17, -0.33, 0.07], "parent": "l_upper_arm"},
+      "l_hand": {"head": [0.17, -0.33, 0.07], "tail": [0.18, -0.52, 0.01], "parent": "l_lower_arm"},
+      "l_upper_leg": {"head": [0.15, 0.44, 0.52], "tail": [0.18, 0.23, 0.29], "parent": "hips"},
+      "l_lower_leg": {"head": [0.18, 0.23, 0.29], "tail": [0.19, 0.53, 0.1], "parent": "l_upper_leg"},
+      "l_foot": {"head": [0.19, 0.53, 0.1], "tail": [0.19, 0.13, 0.01], "parent": "l_lower_leg"},
+      "tail": {"head": [0, 0.78, 0.43], "tail": [0.09, 1.1, 0.08], "parent": "hips"},
+      "tail_tip": {"head": [0.09, 1.1, 0.08], "tail": [0.46, 1.18, 0.05], "parent": "tail"}
+    },
+    "split_mouth": {"box": [[-0.18, -1.335, 0.5], [0.07, -1.1, 0.7]], "upper_from": 0.665, "lower_below": 0.6},
+    "pin_parts": {"head": [[-0.05, -1.262, 0.672]], "jaw": [[-0.05, -1.262, 0.628], [-0.05, -1.11, 0.65]]},
+    "loose_to": "head",
+    "eyes": [[0.04, -1.18, 0.758], [-0.15, -1.18, 0.758]],
+    "eye_r": 0.016,
+    "mouth": [-0.055, -1.28, 0.63],
+    "paint": {
+      "seed": 5,
+      "eyes": {"search": 0.03, "dark": 0.1, "color": [0.62, 0.3, 0.88], "shared": true}
+    },
+    "test_poses": [
+      {"jaw": [35, 0, 0], "head": [0, 0, 30], "l_ear": [0, 0, 30]},
+      {"l_upper_arm": [-50, 0, 0], "l_lower_arm": [60, 0, 0], "r_upper_arm": [40, 0, 0]},
+      {"l_upper_leg": [-40, 0, 0], "l_lower_leg": [40, 0, 0], "tail": [0, 0, 40], "tail_tip": [0, 0, 40]},
+      {"spine": [20, 0, 0], "chest": [20, 0, 0], "neck": [-20, 0, 0]}
     ]
   }
 }

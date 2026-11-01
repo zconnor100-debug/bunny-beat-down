@@ -16,6 +16,7 @@ var act3 := false
 var finale := false
 var owl := false     ## ("owl": Old Hoot's Boss Battle, by night, instead)
 var nut := false     ## ("nutcracker": Crackjaw's Boss Battle in the Toy Box, instead)
+var ferret := false  ## ("ferret": Noodle's Boss Battle in the Hamster Cage, instead)
 var epic := false    ## ("epic": shot at the Epic graphics tier, as the game looks on a fast GPU, not High)
 var movie := false   ## (recorded with Movie Maker: straight to the ending, its frames marked: OUTRO_AT, END_AT; with "act1", Act I's, and KILL_AT; with "act2", Act II's, and TAKEN_AT, LEAP_AT; with "act3", Act III's, and DAM_AT, WAKE_AT; with "finale", the Finale's, and BRIAR_AT, SHUT_AT, WAKE_AT, POD_AT, SPLIT_AT, KILL_AT)
 
@@ -32,6 +33,7 @@ func _ready() -> void:
 	finale = a.has("finale")
 	owl = a.has("owl")
 	nut = a.has("nutcracker")
+	ferret = a.has("ferret")
 	movie = a.has("movie")
 	epic = a.has("epic")
 	DirAccess.make_dir_recursive_absolute(out_dir)
@@ -96,6 +98,8 @@ func _run() -> void:
 			await _owl_movie()
 		elif nut:
 			await _nut_movie()
+		elif ferret:
+			await _ferret_movie()
 		else:
 			await _ending_movie()
 		get_tree().quit()
@@ -104,6 +108,8 @@ func _run() -> void:
 		await _owl()
 	elif nut:
 		await _nut()
+	elif ferret:
+		await _ferret()
 	elif boss:
 		await _boss_news()
 	elif act1:
@@ -752,6 +758,286 @@ func _nut_movie() -> void:
 	for i in 150:   # (over he goes, and lies there)
 		place.call(false)
 		await get_tree().process_frame
+	print("KILL_AT %d" % Engine.get_frames_drawn())
+	if b.alive:
+		b.take_damage(DamageInfo.make(1e9, DamageInfo.Kind.BULLET, p, &"carrot_sniper"))
+	for i in 150:
+		place.call(false)
+		if g._end:
+			g._end.visible = false
+		await get_tree().process_frame
+	g.rig.camera.make_current()
+	g.hud.visible = true
+	if g._end:
+		g._end.visible = true
+	await _wait(3.0)
+	print("END_AT %d" % Engine.get_frames_drawn())
+	var settings: Node = get_tree().root.get_node("Settings")
+	settings.set_value(&"mode", "royale", false)
+	settings.set_value(&"boss", "", false)
+
+
+## Noodle's Boss Battle in the Hamster Cage: the bedding heaving to the
+## music box, her name as she rears up out of it; Pop Goes the Weasel (the
+## ring going down, up out of her hole), bopped on the nose till she sees
+## stars; the War Dance (a hop), asleep after it, the poof of musk as she
+## wakes; a Lunge; and down for good.
+func _ferret() -> void:
+	PlayerProfile.reset_for_tests()
+	WarrenSim.reset_for_tests()
+	var g: Node = await _ferret_battle()
+	var mm: MatchManager = g.match_manager
+	var p := mm.player
+	var b := mm.boss as FerretBoss
+	await _wait(1.6)
+	await _snap("f01_heaving")
+	for i in 900:
+		var intro := g.find_children("*", "BossIntro", false, false)
+		if not intro.is_empty() and intro[0]._card_shown:
+			break
+		await get_tree().process_frame
+	await _wait(0.6)
+	await _snap("f02_named")
+	for i in 1200:
+		if g.find_children("*", "BossIntro", false, false).is_empty() and b.action == null:
+			break
+		await get_tree().process_frame
+	_unpause(g)
+	b.thinking = false
+	var cam := Camera3D.new()
+	get_tree().root.add_child(cam)
+	cam.fov = 55.0
+	cam.far = 3000.0
+	g.hud.visible = false
+	# Pop Goes the Weasel, under you: the ring going down, then up out of her hole
+	# (out on open bedding, clear of the Big Wheel and the rest, for a clear view)
+	var open := _open_spot(g)
+	b.global_position = open + Vector3(-50.0, 0.0, 0.0)
+	b.global_position.y = b.ground_y(b.global_position)
+	b.rotation.y = -PI * 0.5   # (facing +X)
+	p.place_at(open + Vector3(40.0, 0.5, 0.0), 0.0)
+	await _wait(0.3)
+	b.start(b._pop_goes(p))
+	var ring := Vector3.INF
+	for i in 600:
+		if not b.danger.is_empty() and b._under:
+			ring = b.danger.back()[0]
+			break
+		await get_tree().physics_frame
+	if ring != Vector3.INF:
+		var side := Vector3(ring.x - b.global_position.x, 0.0, ring.z - b.global_position.z).normalized().cross(Vector3.UP)
+		cam.global_position = ring + side * 70.0 + Vector3.UP * 14.0
+		cam.look_at(ring + Vector3.UP * 9.0, Vector3.UP)
+		cam.make_current()
+		await _wait(0.6)
+		await _snap("f03_ring")
+		while not b._popped:
+			await get_tree().physics_frame
+		await _wait(0.45)
+		await _snap("f04_popped")
+		# bopped on the nose till she sees stars
+		for i in int(FerretBoss.WHACK_AT) + 1:
+			var bop := DamageInfo.make(5.0, DamageInfo.Kind.BULLET, p, &"carrot_rifle")
+			bop.bone_role = &"head"
+			b.take_damage(bop)
+		await _wait(1.6)
+		await _snap("f05_dizzy")
+	while b.action != null:
+		await get_tree().process_frame
+	# the War Dance at a bot, a hop in mid-air, asleep after it, and the poof as she wakes
+	var t := _nearest_ally(mm, b.global_position)
+	if t:
+		b.global_position = open + Vector3(-40.0, 0.0, 0.0)
+		b.global_position.y = b.ground_y(b.global_position)
+		b.rotation.y = -PI * 0.5
+		var fwd := b.forward()
+		t.place_at(b.global_position + fwd * 70.0 + Vector3.UP * 0.5, 0.0)
+		b.start(b._dance(t))
+		cam.global_position = b.global_position + fwd * 35.0 + fwd.cross(Vector3.UP) * 85.0 + Vector3.UP * 18.0
+		cam.look_at(b.global_position + fwd * 35.0 + Vector3.UP * 10.0, Vector3.UP)
+		cam.make_current()
+		await _wait(0.8 + 0.62 * 1.5)
+		await _snap("f06_hop")
+		while not b._asleep:
+			await get_tree().physics_frame
+		var at := b.global_position
+		var s2 := b.forward().cross(Vector3.UP)
+		cam.global_position = at + s2 * 48.0 + b.forward() * 20.0 + Vector3.UP * 14.0
+		cam.look_at(at + Vector3.UP * 4.0, Vector3.UP)
+		await _wait(1.2)
+		await _snap("f07_asleep")
+		while b._asleep:
+			await get_tree().physics_frame
+		await _wait(0.6)
+		await _snap("f08_poof")
+	while b.action != null:
+		await get_tree().process_frame
+	# a Lunge
+	t = _nearest_ally(mm, b.global_position)
+	if t:
+		b.global_position = open + Vector3(-20.0, 0.0, 0.0)
+		b.global_position.y = b.ground_y(b.global_position)
+		b.rotation.y = -PI * 0.5
+		var fwd := b.forward()
+		t.place_at(b.global_position + fwd * 30.0 + Vector3.UP * 0.5, 0.0)
+		b.start(b._bite(t))
+		cam.global_position = b.global_position + fwd * 55.0 + fwd.cross(Vector3.UP) * 42.0 + Vector3.UP * 10.0
+		cam.look_at(b.global_position + fwd * 22.0 + Vector3.UP * 9.0, Vector3.UP)
+		cam.make_current()
+		await _wait(0.66)
+		await _snap("f09_lunge")
+		while b.action != null:
+			await get_tree().process_frame
+	# and down for good
+	var w := b.forward()
+	cam.global_position = b.global_position + w * 30.0 + w.cross(Vector3.UP) * 55.0 + Vector3.UP * 16.0
+	cam.look_at(b.global_position + Vector3.UP * 6.0, Vector3.UP)
+	b.take_damage(DamageInfo.make(1e9, DamageInfo.Kind.BULLET, p, &"carrot_sniper"))
+	g._photo_for_the_gazette(String(BossLore.NEWS["ferret"].caption), 1.8)
+	await _wait(2.2)
+	if g._end:
+		g._end.visible = false
+	await _snap("f10_felled")
+	g.rig.camera.make_current()
+	g.hud.visible = true
+	if g._end:
+		g._end.visible = true
+	await _wait(3.0)
+	await _snap("f11_end")
+	var settings: Node = get_tree().root.get_node("Settings")
+	settings.set_value(&"mode", "royale", false)
+	settings.set_value(&"boss", "", false)
+
+
+## The most open bedding in the map: as far from every landmark as it gets
+## (on dry ground, well inside its walls), for a clear view of a boss.
+func _open_spot(g: Node) -> Vector3:
+	var isl: Island = g.island
+	var r := isl.play_bounds().grow(-90.0)
+	var best := Vector3.ZERO
+	var best_c := -INF
+	for i in 24:
+		for j in 18:
+			var q := Vector2(lerpf(r.position.x, r.end.x, (i + 0.5) / 24.0), lerpf(r.position.y, r.end.y, (j + 0.5) / 18.0))
+			var h := isl.terrain.height_at(q.x, q.y)
+			if isl.water_level_at(Vector3(q.x, h, q.y)) > h - 0.3:
+				continue
+			var c := INF
+			for poi in isl.pois:
+				c = minf(c, q.distance_to(poi.center) - float(poi.radius))
+			if c > best_c:
+				best_c = c
+				best = Vector3(q.x, h, q.y)
+	return best
+
+
+## A Boss Battle against Noodle in the Hamster Cage, everyone down, and her
+## on her way in (BossIntro's camera on the bedding heaving).
+func _ferret_battle() -> Node:
+	var settings: Node = get_tree().root.get_node("Settings")
+	settings.set_value(&"map", "cage", false)
+	settings.set_value(&"mode", "boss", false)
+	settings.set_value(&"boss", "ferret", false)
+	settings.set_value(&"boss_intro", true, false)
+	settings.set_value(&"seed", 4321, false)
+	var g: Node = await _game()
+	var mm: MatchManager = g.match_manager
+	var p := mm.player
+	p.max_health = 100000.0
+	p.health = p.max_health
+	mm.player_jump()
+	Engine.time_scale = 6.0   # (the drop: quick)
+	var sim := 0.0
+	while mm.phase != MatchManager.Phase.PLAYING and sim < 150.0:
+		p.want_jump = p.state == Critter.State.FREEFALL
+		_unpause(g)
+		await get_tree().physics_frame
+		sim += Engine.time_scale / Engine.physics_ticks_per_second
+	Engine.time_scale = 1.0
+	await _wait(1.0)
+	mm.release_boss()
+	print("FERRET_AT %d" % Engine.get_frames_drawn())
+	return g
+
+
+## Noodle's Boss Battle as a film (Movie Maker): her arrival's own
+## cinematic (the music box under the bedding, POP!), a camera following her
+## round the fight for twenty seconds (she does as she likes), then Pop Goes
+## the Weasel under you, bopped on the nose till she sees stars, the War
+## Dance at a bot and her nap after it, and down for good. Frames marked
+## FERRET_AT, CHASE_AT, POP_AT, DANCE_AT, KILL_AT, END_AT.
+func _ferret_movie() -> void:
+	var g: Node = await _ferret_battle()
+	var mm: MatchManager = g.match_manager
+	var p := mm.player
+	var b := mm.boss as FerretBoss
+	for i in 1800:   # (her arrival's own camera, till it's done)
+		if g.find_children("*", "BossIntro", false, false).is_empty() and b.state == Boss.State.FIGHTING:
+			break
+		await get_tree().process_frame
+	print("CHASE_AT %d" % Engine.get_frames_drawn())
+	var cam := Camera3D.new()
+	get_tree().root.add_child(cam)
+	cam.fov = 55.0
+	cam.far = 3000.0
+	cam.make_current()
+	g.hud.visible = false
+	var follow := {"at": b.global_position}
+	var place := func(snap: bool) -> void:
+		var here := b.global_position if not b._under else (follow.at as Vector3).lerp(b.global_position, 0.04)
+		follow.at = here
+		var fwd := Vector3(b.forward().x, 0.0, b.forward().z).normalized()
+		var want := here + fwd * 70.0 + fwd.cross(Vector3.UP) * 38.0 + Vector3.UP * 20.0
+		cam.global_position = want if snap else cam.global_position.lerp(want, 0.05)
+		cam.look_at(here + Vector3.UP * 9.0, Vector3.UP)
+	place.call(true)
+	var chase := 0.0
+	while chase < 20.0 and b.alive:
+		place.call(false)
+		_unpause(g)
+		await get_tree().process_frame
+		chase += 1.0 / 30.0
+	while b.action != null and not b.action.interruptible:
+		place.call(false)
+		await get_tree().process_frame
+	# Pop Goes the Weasel, under you: watched from beside you
+	print("POP_AT %d" % Engine.get_frames_drawn())
+	b.thinking = false
+	b._cancel_action()
+	p.place_at(_open_spot(g) + Vector3.UP * 0.5, 0.0)
+	b.start(b._pop_goes(p))
+	var pops := 0
+	var was_popped := false
+	var bopped := false
+	while b.action != null and b.alive:
+		var to := Vector3(p.global_position.x - b.global_position.x, 0.0, p.global_position.z - b.global_position.z)
+		var side := to.normalized().cross(Vector3.UP) if to.length() > 1.0 else Vector3.RIGHT
+		var want := p.global_position - to.normalized() * 30.0 + side * 55.0 + Vector3.UP * 14.0 if to.length() > 1.0 \
+			else p.global_position + side * 60.0 + Vector3.UP * 14.0
+		cam.global_position = cam.global_position.lerp(want, 0.04)
+		cam.look_at(p.global_position.lerp(b.global_position, 0.5) + Vector3.UP * 9.0, Vector3.UP)
+		if b._popped and not was_popped:
+			pops += 1
+		was_popped = b._popped
+		if pops == 2 and b._popped and not bopped:   # (her second time up: bopped on the nose)
+			bopped = true
+			for i in int(FerretBoss.WHACK_AT) + 1:
+				var bop := DamageInfo.make(5.0, DamageInfo.Kind.BULLET, p, &"carrot_rifle")
+				bop.bone_role = &"head"
+				b.take_damage(bop)
+		_unpause(g)
+		await get_tree().process_frame
+	# the War Dance at a bot, and her nap after it
+	print("DANCE_AT %d" % Engine.get_frames_drawn())
+	var t := _nearest_ally(mm, b.global_position)
+	if t:
+		b.rotation.y = atan2(-(t.global_position.x - b.global_position.x), -(t.global_position.z - b.global_position.z))
+		t.place_at(b.global_position + b.forward() * 75.0 + Vector3.UP * 0.5, 0.0)
+		b.start(b._dance(t))
+		while b.action != null and b.alive:
+			place.call(false)
+			_unpause(g)
+			await get_tree().process_frame
 	print("KILL_AT %d" % Engine.get_frames_drawn())
 	if b.alive:
 		b.take_damage(DamageInfo.make(1e9, DamageInfo.Kind.BULLET, p, &"carrot_sniper"))
@@ -1697,10 +1983,10 @@ func _menu() -> void:
 	var menu: Node = get_tree().current_scene
 	menu._open_gazette()
 	await _wait(1.2)
-	var tag := "o" if owl else ("n" if nut else ("b" if boss else ("a" if act1 else ("c" if act2 else ("d" if act3 else ("e" if finale else "k"))))))
+	var tag := "o" if owl else ("n" if nut else ("f" if ferret else ("b" if boss else ("a" if act1 else ("c" if act2 else ("d" if act3 else ("e" if finale else "k")))))))
 	await _snap(tag + "11_gazette")
 	menu._close_overlay()
-	if not (boss or owl or nut):
+	if not (boss or owl or nut or ferret):
 		menu._open_quest()
 		await _wait(1.0)
 		await _snap(tag + "12_quest")

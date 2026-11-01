@@ -1072,7 +1072,8 @@ func _dodge() -> bool:
 
 
 ## Fight the boss: from range (its blows are short), circling it, aiming at
-## its head if we're any good (or its chest with a rocket), firing in bursts.
+## its head if we're any good (or its chest with a rocket), firing in bursts
+## (and not at all while it's down a hole: Boss.hittable).
 func _fight_boss(delta: float) -> void:
 	var b := boss
 	if b == null or not is_instance_valid(b) or not b.alive:
@@ -1110,6 +1111,9 @@ func _fight_boss(delta: float) -> void:
 		var move := (out * radial + out.cross(Vector3.UP) * _orbit * 0.8).normalized()
 		me.move_input = _stick_toward(me.global_position + move * 10.0)
 		me.want_sprint = dist < BOSS_RANGE.x * 0.7
+	if not b.hittable():   # (down a hole: nothing to shoot at, so they keep their distance and hold fire)
+		me.want_fire = false
+		return
 	# --- aim (turn-rate limited, a little off, by skill)
 	if _aim_err == Vector3.ZERO or randf() < 0.02:
 		_aim_err = _random_aim_error(eye.distance_to(aim_at)) * 0.6

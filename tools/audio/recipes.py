@@ -38,9 +38,10 @@ from dsp import (SR, additive, bandpass, bell, bp_gain, causal_hp, circ_compress
 RECIPES = []
 
 
-def recipe(key, variants=1, loud=-14.0, src="mixed", loop=False):
+def recipe(key, variants=1, loud=-14.0, src="mixed", loop=False, max_s=None):
+    # (max_s: a one-shot longer than build_audio.MAX_ONESHOT_S, say a tune)
     def deco(fn):
-        entry = dict(key=key, variants=variants, loud=loud, src=src, loop=loop, fn=fn)
+        entry = dict(key=key, variants=variants, loud=loud, src=src, loop=loop, fn=fn, max_s=max_s)
         # re-registering a key replaces it in place (recipes_wip_*.py overrides)
         for i, r in enumerate(RECIPES):
             if r["key"] == key:
@@ -3271,3 +3272,131 @@ def nut_drum(c, v):
         i0 = n_of(t0)
         x[i0: i0 + len(s)] += s[: len(x) - i0]
     return reverb(x, r, decay=0.9, mix_db=-12, predelay=0.02, bright=5000.0, tail=0.3)[: n_of(1.7)]
+
+
+# ---- Noodle, the Burrow Hunter (the Hamster Cage's other boss) ------------------------------
+
+# "Pop Goes the Weasel" (a traditional rhyme, 19th century), in C, 6/8: (MIDI note, eighths).
+_WEASEL_LINE = [(72, 2), (72, 1), (74, 2), (74, 1), (76, 1), (79, 1), (76, 1), (72, 3)]   # all a-round the mul-ber-ry bush
+_WEASEL_POP = [(81, 3), (74, 2), (77, 1), (76, 3), (72, 3)]                            # POP! goes the wea-sel
+_WEASEL_EIGHTH = 1.0 / 9.6   # (a dotted quarter at 192 a minute: FerretBoss.TUNE_POP, SHORT_POP)
+
+
+def _music_box(r, notes):
+    """A music box playing `notes` ([(MIDI, eighths)]): each a steel comb
+    tine plucked by a pin (a clear tone, a quick inharmonic ping over it, the
+    pin's tick), each a hair out of true; the first note of _WEASEL_POP
+    (the POP!) louder, with a cork pop and a jack-in-the-box spring under it.
+    Heard from under the bedding: muffled a little, and echoing."""
+    total = sum(e for _, e in notes) * _WEASEL_EIGHTH + 1.6
+    x = np.zeros(n_of(total))
+    t = 0.0
+    pop = len(notes) - len(_WEASEL_POP)
+    for i, (m, eighths) in enumerate(notes):
+        f = midi_hz(m) * 2 ** (r.uniform(-7, 7) / 1200.0)
+        tine = bell(f, 1.2, partials=((1, 1.0, 1.0), (2.0, 0.05, 0.45), (5.4, 0.2, 0.12), (8.9, 0.07, 0.06)), tau=0.5,
+                    attack=0.0012)
+        tick = B.crack(r, 0.0015, 5200.0) * 0.12
+        a = 2.2 if i == pop else 1.0
+        i0 = n_of(t)
+        for s, g in ((tine, a), (tick, a)):
+            x[i0: i0 + len(s)] += s[: len(x) - i0] * g
+        if i == pop:
+            for s, g in ((B.cork_pop(r, 240.0, 820.0, 0.18), 2.0), (B.boing(330.0, 0.5, wobble=0.16, rate=21.0, tau=0.16), 1.0)):
+                x[i0: i0 + len(s)] += s[: len(x) - i0] * g
+        t += eighths * _WEASEL_EIGHTH
+    x = lowpass(x, 5200.0, 2)
+    return reverb(x, r, decay=1.3, mix_db=-9, predelay=0.03, bright=3500.0, tail=0.5)[: n_of(total)]
+
+
+@recipe("ferret_tune", variants=1, loud=-15.0, src="synth", max_s=4.6)
+def ferret_tune(c, v):
+    """Noodle going under (Pop Goes the Weasel, and her arrival): a music box
+    tinkling the old rhyme under the bedding, twice round, all around the
+    mulberry bush, and then POP! (2.5 s in: a cork pop and a spring) goes the
+    weasel (~4.4 s)."""
+    return _music_box(c.rng, _WEASEL_LINE + _WEASEL_LINE + _WEASEL_POP)
+
+
+@recipe("ferret_tune_short", variants=1, loud=-15.0, src="synth")
+def ferret_tune_short(c, v):
+    """The same rhyme, once round, for her next pop: POP! 1.25 s in (~2.9 s)."""
+    return _music_box(c.rng, _WEASEL_LINE + _WEASEL_POP)[: n_of(2.95)]
+
+
+@recipe("ferret_dook", variants=2, loud=-12.0, src="synth")
+def ferret_dook(c, v):
+    """A ferret dooking (Noodle, giant: her War Dance, walking about): the
+    happy, clucking chatter, dook-dook-dook-dook, out of a throat as long as a
+    hay wagon (~0.9 s)."""
+    r = c.rng
+    starts = [0.0, 0.12, 0.23, 0.35, 0.46] if v == 0 else [0.0, 0.11, 0.22, 0.31, 0.43, 0.52]
+    f0s = [r.uniform(150.0, 190.0) for _ in starts]
+    x = B.chitter(r, starts, f0s, dur=0.08, vowels=("u", "oo"), click_db=-7.0, scale=0.75, tilt=1.4, breath=0.25,
+                  hoarse=0.5, drive=1.6, fmax=3200.0)
+    x = saturate(highpass(x, 60, 2), 1.3)
+    return reverb(x, r, decay=0.9, mix_db=-13, predelay=0.02, bright=3000.0, tail=0.3)[: n_of(1.2)]
+
+
+@recipe("ferret_hiss", variants=2, loud=-11.5, src="synth")
+def ferret_hiss(c, v):
+    """Noodle hissing (her lunge, her Bottle-Brush): a sharp, spitting hiss
+    the size of a steam engine's, and the scream of an angry ferret torn
+    through it (~1.2 s)."""
+    r = c.rng
+    k = [1.0, 0.88][v]
+    n = n_of(1.1)
+    hiss = B.unit(bandpass(white(n, r), 2600.0 * k, 0.55)) * env_pts(n, [(0, 0), (0.02, 1), (0.6, 0.75), (1.1, 0)])
+    spit = B.burst(r, 0.12, 3800.0, 0.8, 0.02)
+    cry = B.critter_voice(r, 0.9, [(0, 520 * k), (0.1, 780 * k), (0.45, 660 * k), (0.9, 380 * k)], [(0, "i"), (0.35, "ae"), (0.9, "a")],
+                          scale=0.7, tilt=1.15, sub_pts=[(0, 0.4), (0.9, 0.8)], breath=0.4, hoarse=1.0, drive=2.6, fmax=5200.0,
+                          amp_pts=[(0, 0), (0.05, 1), (0.6, 0.7), (0.9, 0)])
+    x = mix(1.2, (hiss, 0, 0), (spit, 0, -4), (cry, 0.08, -5))
+    x = saturate(highpass(x, 80, 2), 1.5)
+    return reverb(x, r, decay=1.0, mix_db=-12, predelay=0.02, bright=5000.0, tail=0.3)[: n_of(1.5)]
+
+
+@recipe("ferret_snore", variants=1, loud=-14.0, src="synth")
+def ferret_snore(c, v):
+    """Noodle asleep after her War Dance: a long, rattling snore in through
+    the nose, and a whistling puff of a breath out (~2.4 s)."""
+    r = c.rng
+    draw = B.critter_voice(r, 1.15, [(0, 58), (0.5, 72), (1.15, 56)], [(0, "aw"), (1.15, "o")], scale=0.5, tilt=1.7,
+                           fry_pts=[(0, 0.85), (1.15, 0.7)], trill=(31.0, [(0, 0.5), (0.6, 0.7), (1.15, 0.4)]), breath=0.6,
+                           hoarse=0.8, drive=1.4, fmax=1800.0, amp_pts=[(0, 0), (0.25, 1), (0.9, 0.85), (1.15, 0)])
+    out = B.exhale(r, 0.9, lp=1300.0, tau=0.2)
+    whistle = B.whistle([(0, 1900.0), (0.6, 1500.0)], 0.6, [(0, 0), (0.1, 1), (0.5, 0.6), (0.6, 0)], harm=0.02)
+    x = mix(2.5, (draw, 0, 0), (out, 1.4, -4), (whistle, 1.45, -22))
+    return reverb(x, r, decay=0.7, mix_db=-16, predelay=0.01, bright=2500.0, tail=0.2)[: n_of(2.6)]
+
+
+@recipe("ferret_dig", variants=1, loud=-13.0, src="synth")
+def ferret_dig(c, v):
+    """Noodle digging in (Pop Goes the Weasel): her front paws going like mad,
+    scrabbling through wood shavings and flinging them back, faster and
+    faster (~1.3 s)."""
+    r = c.rng
+    layers = []
+    t, gap = 0.0, 0.13
+    while t < 1.05:
+        layers.append((B.lowbody(r, 0.14, 180.0, 2200.0, 0.035, attack=0.002), t, -4))
+        layers.append((B.grains(r, 0.22, 26, 900.0, 6000.0, glen=(0.002, 0.01), t_tau=0.05), t + 0.01, -2))
+        t += gap
+        gap = max(0.08, gap * 0.94)
+    n = n_of(1.3)
+    sand = B.unit(bandpass(colored(n, r, -1.0), 3200.0, 0.6)) * env_pts(n, [(0, 0), (0.1, 1), (1.0, 0.8), (1.3, 0)])
+    x = mix(1.3, *layers, (sand, 0, -14))
+    return reverb(x, r, decay=0.6, mix_db=-15, predelay=0.01, bright=5000.0, tail=0.2)[: n_of(1.5)]
+
+
+@recipe("ferret_poof", variants=1, loud=-12.5, src="synth")
+def ferret_poof(c, v):
+    """Noodle startled awake: a soft, fat PFFFT of musk let go all at once, a
+    low thump of air under it and a fizzing hiss as it spreads (~1.4 s)."""
+    r = c.rng
+    puff = B.lp_burst(r, 0.6, 200.0, 0.14, attack=0.01)
+    pff = B.whoosh(r, 1.2, 1500.0, 320.0, q=0.8, peak=0.12)
+    n = n_of(1.4)
+    fizz = B.unit(highpass(colored(n, r, -1.0), 2400.0, 2)) * env_pts(n, [(0, 0), (0.15, 1), (1.4, 0)]) ** 2
+    x = mix(1.4, (puff, 0, 0), (pff, 0, -3), (fizz, 0.05, -15))
+    return reverb(x, r, decay=0.9, mix_db=-13, predelay=0.02, bright=3000.0, tail=0.3)[: n_of(1.6)]

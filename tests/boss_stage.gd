@@ -3,8 +3,10 @@ extends Node3D
 ## then caught in the middle of what they do (tests/capture_bosses.gd).
 
 const SCRIPTS := {"brute": "res://src/bosses/brute_boss.gd", "robot": "res://src/bosses/robot_boss.gd",
-	"hamster": "res://src/bosses/hamster_boss.gd", "nutcracker": "res://src/bosses/nutcracker_boss.gd"}
-## Each boss's moves to catch, and how far into each (seconds).
+	"hamster": "res://src/bosses/hamster_boss.gd", "nutcracker": "res://src/bosses/nutcracker_boss.gd",
+	"ferret": "res://src/bosses/ferret_boss.gd"}
+## Each boss's moves to catch, how far into each (seconds), and where the
+## bunny they're aimed at stands for it (if not where it stood).
 const MOVES := {
 	"brute": [["_pound", 0.85], ["_pound", 1.2], ["_toss_pose", 1.35], ["_gobble_pose", 1.5], ["_roar_action", 1.0], ["_death_action", 3.0]],
 	"robot": [["_clamp", 0.8], ["_barrage_pose", 1.0], ["_wind_down", 3.0], ["_roar_action", 0.8], ["_death_action", 2.4]],
@@ -12,6 +14,10 @@ const MOVES := {
 	"nutcracker": [["_march_pose", 1.5], ["_march_pose", 1.72], ["_sweep_pose", 0.75], ["_sweep_pose", 1.05], ["_sweep_pose", 1.3],
 		["_sweep_pose", 1.55], ["_crack", 0.8], ["_walnuts_pose", 0.72], ["_roar_action", 1.0], ["_timber", 0.8], ["_timber", 2.4],
 		["_death_action", 2.6]],
+	"ferret": [["_bite_pose", 0.5, Vector3(-13.6, 0, -26.7)], ["_bite_pose", 0.78, Vector3(-13.6, 0, -26.7)],
+		["_pop_goes_pose", 0.45, Vector3(0, 0, 3)], ["_pop_goes_pose", 3.75, Vector3(-13.6, 0, -26.7)],
+		["_dance_pose", 0.8, Vector3(40, 0, -10)], ["_dance_pose", 1.1, Vector3(40, 0, -10)], ["_dance_pose", 4.9, Vector3(40, 0, -10)],
+		["_roar_action", 1.0], ["_dizzy_action", 2.0], ["_death_action", 2.4]],
 }
 
 var out_dir := "user://bosses"
@@ -81,9 +87,11 @@ func _run() -> void:
 		await _settle(4)
 		_save("boss_%s_front" % id)
 		var k := 0
+		var bun_at := bun.global_position
 		for m in MOVES.get(id, []):
 			boss._cancel_action()
 			boss.danger.clear()
+			bun.global_position = m[2] if m.size() > 2 else bun_at
 			var a: BossAction = _make(boss, String(m[0]))
 			if a == null:
 				continue
@@ -96,7 +104,8 @@ func _run() -> void:
 			boss.thinking = false
 			var was := Engine.time_scale
 			Engine.time_scale = 0.0   # (hold the pose for the shot)
-			_shoot(Vector3(-30, 12, -34), Vector3(0, 10, 0), "")
+			var at := Vector3(boss.global_position.x, 0.0, boss.global_position.z)   # (wherever the move took it)
+			_shoot(at + Vector3(-30, 12, -34), at + Vector3(0, 10, 0), "")
 			await _settle(3)
 			_save("boss_%s_move%d_%s" % [id, k, String(m[0]).trim_prefix("_")])
 			if faces:   # (up close on its face: its eyes where they should be, in the pose)
@@ -144,6 +153,10 @@ func _make(boss: Boss, fn: String) -> BossAction:
 			return boss._sweep(bun)
 		"_walnuts_pose":
 			return boss._walnuts(bun)
+		"_pop_goes_pose":
+			return boss._pop_goes(bun)
+		"_dance_pose":
+			return boss._dance(bun)
 	return boss.call(fn) as BossAction
 
 

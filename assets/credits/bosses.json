@@ -67,5 +67,19 @@
       "assets/bosses/nutcracker/nutcracker.glb",
       "assets/bosses/nutcracker/eyes.png"
     ]
+  },
+  {
+    "asset": "Ferret",
+    "author": "SDPM Esare (sdpm)",
+    "author_url": "https://sketchfab.com/sdpm",
+    "source_url": "https://sketchfab.com/3d-models/ferret-a5c717c20b08461aa1d9ce462f3e019e",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "changes": "Re-oriented, straightened and rescaled; given a skeleton (22 bones: a two-part tail, ears and a jaw) skinned by bone heat on a voxel-remeshed copy (tools/characters/boss_build.py), her mouth split along its lips so her jaw opens it (teeth and tongue pinned to the jaw and the head) and her eyes and whiskers pinned to her head; her painted eyes masked (eyes.png) to glow violet; colour texture re-encoded as JPEG",
+    "used_for": "Noodle, the Burrow Hunter, the Hamster Cage's other boss (Boss Battle)",
+    "files": [
+      "assets/bosses/ferret/ferret.glb",
+      "assets/bosses/ferret/eyes.png"
+    ]
   }
 ]

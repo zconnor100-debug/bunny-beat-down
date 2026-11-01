@@ -7,14 +7,18 @@ extends TestCase
 ## carrying a critter off and dropping it (and wriggled free of), grounded by
 ## shots on her wings as she dives, her hoot knocking everyone under her
 ## down. Crackjaw, the nutcracker: shot in the legs he goes over (and gets
-## up again), and his sabre passes under whoever jumps it. Then a whole Boss
-## Battle on each map, against Old Hoot by night, and against Crackjaw.
+## up again), and his sabre passes under whoever jumps it. Noodle, the
+## ferret: she goes under and pops up out of a red ring (a burrow's, if
+## one's near), bopped on the nose she sees stars, she dances herself to
+## sleep and wakes in a poof of musk, and beaten mid-pop or asleep she stays
+## down. Then a whole Boss Battle on each map, against Old Hoot by night,
+## Crackjaw and Noodle.
 
 const TEST_DEF := "res://data/critters/test_critter.tres"
 const BUN := "res://data/critters/bun.tres"
 const SCRIPTS := {"brute": "res://src/bosses/brute_boss.gd", "robot": "res://src/bosses/robot_boss.gd",
 	"hamster": "res://src/bosses/hamster_boss.gd", "owl": "res://src/bosses/owl_boss.gd",
-	"nutcracker": "res://src/bosses/nutcracker_boss.gd"}
+	"nutcracker": "res://src/bosses/nutcracker_boss.gd", "ferret": "res://src/bosses/ferret_boss.gd"}
 const GAME := "res://scenes/game.tscn"
 
 
@@ -47,6 +51,12 @@ func test_every_boss_is_ten_critters_tall_and_hittable_all_over() -> void:
 	for id in SCRIPTS:
 		var b := _boss(id)
 		await wait_physics(3)
+		if b is FerretBoss:   # (long and low: she's ten critters tall reared up on her hind legs)
+			b.set_physics_process(false)
+			b.poser.clear()
+			b.poser.add_pose(FerretBoss.REARED)
+			b.poser.apply()
+			b._update_bones()
 		var skull := b.bone_point(&"head", 1.0).y - b.global_position.y
 		check(absf(skull / critter_h - 10.0) < 1.5, "%s: its skull is ten critters up (%.1f m, a critter %.2f m: x%.1f)" % [id, skull, critter_h, skull / critter_h])
 		for role in [&"head", &"l_upper_leg", &"r_upper_leg"]:
@@ -235,6 +245,35 @@ func test_bots_get_out_from_under_a_blow_and_fight_the_boss() -> void:
 	check(brain.mode == AIBrain.Mode.BOSS, "fighting it as a boss (mode %s)" % AIBrain.Mode.keys()[brain.mode])
 
 
+## While a boss can't be hit (down a hole), the bots hold their fire.
+func test_bots_hold_fire_while_a_boss_is_down_a_hole() -> void:
+	var b := _boss("hamster", Vector3(0, 0, 0))
+	await wait_physics(3)
+	var c := spawn_critter(TEST_DEF, Vector3(0, 0.1, -60))
+	c.team = 1
+	var brain := AIBrain.new()
+	brain.name = "AIBrain"
+	brain.skill = 0.95
+	c.add_child(brain)
+	var gun := WeaponInstance.new(WeaponDB.get_weapon(&"carrot_rifle"), 0)
+	c.give_weapon(gun)
+	c.inventory.ammo[gun.data.ammo_type] = 400
+	AIBrain.boss = b
+	b._set_hittable(false)
+	var fired := false
+	for i in 180:
+		await wait_physics(1)
+		fired = fired or c.want_fire
+	check(not b.hittable() and not fired, "down a hole: the bot holds its fire")
+	b._set_hittable(true)
+	var hp := b.health
+	for i in 60:
+		await wait_physics(10)
+		if b.health < hp:
+			break
+	check(b.hittable() and b.health < hp, "up again: it shoots (%.0f)" % (hp - b.health))
+
+
 func test_rewind_puts_a_boss_back() -> void:
 	var b := _boss("hamster")
 	await wait_physics(3)
@@ -259,13 +298,15 @@ func test_every_boss_does_all_its_moves() -> void:
 			"robot": ["_clamp", "_lasers", "_barrage", "_wind_down", "_roar_action"],
 			"hamster": ["_bite", "_charge", "_spit", "_burrow", "_roar_action"],
 			"owl": ["_snatch", "_rake", "_volley", "_roar_action", "_perch"],
-			"nutcracker": ["_march", "_sweep", "_crack", "_walnuts", "_roar_action"]}[id]
+			"nutcracker": ["_march", "_sweep", "_crack", "_walnuts", "_roar_action"],
+			"ferret": ["_bite", "_pop_goes", "_dance", "_roar_action"]}[id]
 		for m in moves:
 			b.global_position = Vector3.ZERO
 			if b is OwlBoss:   # (up where she flies)
 				b._air = true
 				b.global_position = Vector3(0, OwlBoss.CRUISE, 40)
-			victim.global_position = Vector3(0, 0.1, {"_gobble": -9, "_bite": -9, "_crack": -12, "_sweep": -15}.get(m, -50))
+			var near: float = {"_gobble": -9, "_bite": -25 if b is FerretBoss else -9, "_crack": -12, "_sweep": -15}.get(m, -50)
+			victim.global_position = Vector3(0, 0.1, near)
 			victim.velocity = Vector3.ZERO
 			await wait_physics(3)
 			var a: BossAction = b.call(m, victim) if m not in ["_pound", "_clamp", "_wind_down", "_roar_action", "_crack"] else b.call(m)
@@ -486,6 +527,170 @@ func test_jumping_crackjaws_sabre() -> void:
 	check(behind.health == behind.max_health, "behind him: out of its reach")
 
 
+## Pop Goes the Weasel: she digs in and goes under (nothing there to see or
+## to hit), a red ring goes down under whoever she's after before she comes
+## up, and whoever's still in it when she does goes flying. Up out of her
+## hole her nose counts three times over, and bopped on it enough she's
+## seeing stars: out of her hole and down, taking double, till she gets up.
+func test_noodle_pops_up_under_you_and_a_bop_on_the_nose_puts_her_down() -> void:
+	var b: FerretBoss = _boss("ferret")
+	var you := spawn_critter(TEST_DEF, Vector3(30, 0.1, 60))
+	you.team = 1
+	you.is_player = true
+	var victim := spawn_critter(TEST_DEF, Vector3(0, 0.1, -80))
+	victim.team = 1
+	victim.max_health = 1000.0
+	victim.health = 1000.0
+	await wait_physics(5)
+	b.start(b._pop_goes(victim))
+	await _until(func(): return b._under, 3.0)
+	check(b._under and not b.model.visible and (b.hitboxes[&"head"] as Area3D).collision_layer == 0, "she's gone under: nothing to see or hit")
+	var hp := b.health
+	b.take_damage(DamageInfo.make(500.0, DamageInfo.Kind.EXPLOSION, you, &"carrot_rocket_launcher"))
+	check(b.health == hp, "a blast over her does nothing down there")
+	var ringed := func() -> bool:
+		return b.danger.any(func(d): return Vector2(d[0].x - victim.global_position.x, d[0].z - victim.global_position.z).length() < 8.0)
+	await _until(ringed, 4.0)
+	check(b._under and ringed.call(), "a red ring under whoever she's after, before she comes up")
+	await _until(func(): return b._popped, 3.0)
+	check(b._popped and b.model.visible and victim.health < victim.max_health, "POP! up under them, and they took it (%.0f)" % victim.health)
+	check(Vector2(b.global_position.x, b.global_position.z + 80.0).length() < 6.0, "she came up where the ring was")
+	# her nose, up out of the hole
+	hp = b.health
+	var body := DamageInfo.make(20.0, DamageInfo.Kind.BULLET, you, &"carrot_rifle")
+	body.bone_role = &"chest"
+	b.take_damage(body)
+	var chest := hp - b.health
+	var bops := 0.0
+	hp = b.health
+	b.take_damage(_bop(you))
+	bops += 1.0
+	check(hp - b.health > chest * 2.8, "up out of her hole, her nose counts three times over (%.0f vs %.0f)" % [hp - b.health, chest])
+	while bops < FerretBoss.WHACK_AT - 1.0:
+		b.take_damage(_bop(you))
+		bops += 1.0
+	check(b.action != null and b.action.name == &"popgoes", "a few bops only make her flinch")
+	b.take_damage(_bop(you))
+	check(b.action != null and b.action.name == &"dizzy" and b.vulnerable() and not b._popped, "bopped enough: seeing stars (%s)" % (
+		b.action.name if b.action else &""))
+	await wait_physics(45)
+	check(b.bone_point(&"head", 0.5).y < 9.0, "out of her hole and flat on the bedding (her head %.1f m up)" % b.bone_point(&"head", 0.5).y)
+	await _until(func(): return b.action == null, FerretBoss.DIZZY_FOR + 3.0)
+	check(b.action == null and not b.vulnerable() and not b._dizzy and b.bone_point(&"head", 0.5).y > 9.0, "and back on her feet")
+
+
+func _bop(by: Critter) -> DamageInfo:
+	var d := DamageInfo.make(20.0, DamageInfo.Kind.BULLET, by, &"carrot_rifle")
+	d.bone_role = &"head"
+	return d
+
+
+## Where she comes up: out of the mouth of a hamster's burrow, if there's one
+## near where she'd come up (HamsterCage.burrows), or out of the bedding.
+func test_noodle_comes_up_out_of_a_burrow_if_ones_near() -> void:
+	var b: FerretBoss = _boss("ferret")
+	var mm := FakeMatch.new()
+	var isl := FakeIsland.new()
+	isl.burrows = [{"mouth": Vector3(40, 0, 10), "out": Vector3.RIGHT}, {"mouth": Vector3(-200, 0, 0), "out": Vector3.LEFT}]
+	mm.island = isl
+	b.match_manager = mm
+	check(b._burrow_near(Vector3(50, 0, 14)) == Vector3(40, 0, 10), "a burrow's mouth 11 m off: out of that")
+	check(b._burrow_near(Vector3(100, 0, 0)) == Vector3.INF, "none near: out of the bedding")
+	b.match_manager = null
+	mm.free()
+	isl.free()
+
+
+class FakeIsland extends Node:
+	var burrows: Array = []
+
+
+class FakeMatch extends Node:
+	var island: Node
+
+
+## The War Dance: hops at you, each landing on its own red ring; then she's
+## danced out and asleep (taking double, her eyes shut), and wakes in a poof
+## of musk that knocks back whoever's close and hangs there, stinging.
+func test_noodle_dances_herself_to_sleep_and_wakes_up_musky() -> void:
+	var b: FerretBoss = _boss("ferret")
+	var you := spawn_critter(TEST_DEF, Vector3(60, 0.1, 90))
+	you.team = 1
+	you.is_player = true
+	var victim := spawn_critter(TEST_DEF, Vector3(0, 0.1, -60))
+	victim.team = 1
+	victim.max_health = 2000.0
+	victim.health = 2000.0
+	await wait_physics(5)
+	b.start(b._dance(victim))
+	await _until(func(): return not b.danger.is_empty(), 2.0)
+	check(not b.danger.is_empty(), "a red ring where her first hop lands")
+	await _until(func(): return b._asleep, 9.0)
+	await wait_physics(2)
+	check(b._asleep and b.vulnerable(), "danced out: asleep")
+	check(b.global_position.distance_to(Vector3.ZERO) > 30.0, "she hopped over toward them (%.0f m)" % b.global_position.length())
+	check(victim.health < victim.max_health, "her landings hurt whoever she was after (%.0f)" % victim.health)
+	check(not b._eye_skin.is_empty() and b._eye_skin.all(func(m): return m.emission_energy_multiplier == 0.0), "her eyes shut")
+	var hp := b.health
+	var hit := DamageInfo.make(30.0, DamageInfo.Kind.BULLET, you, &"carrot_rifle")
+	hit.bone_role = &"chest"
+	b.take_damage(hit)
+	check_near(hp - b.health, 30.0 * Boss.VULNERABLE, 0.5, "a hit counts double while she sleeps")
+	var side := b.global_basis.x
+	var close := spawn_critter(TEST_DEF, b.global_position + side * 11.0 + Vector3.UP * 0.1)
+	close.team = 1
+	close.max_health = 1000.0
+	close.health = 1000.0
+	await _until(func(): return not b._asleep, FerretBoss.SLEEP_FOR + 1.0)
+	await wait_physics(5)
+	check(not b._asleep and close.health < close.max_health, "awake, in a poof that caught whoever was close (%.0f)" % close.health)
+	check(b._clouds.size() == 1 and b.danger.any(func(d): return float(d[1]) == FerretBoss.MUSK_R), "and the musk hangs there (the bots keep out)")
+	var late := spawn_critter(TEST_DEF, (b._clouds[0][0] as Vector3) + side * 12.0 + Vector3.UP * 0.1)
+	late.team = 1
+	await wait_physics(80)
+	check(late.health < 100.0, "standing in it stings (%.0f)" % late.health)
+
+
+## Beaten while she's stood up out of a hole, she slumps out of it (not out
+## onto her feet first); beaten asleep, she just doesn't wake.
+func test_noodle_beaten_mid_pop_or_asleep_stays_down() -> void:
+	for how in ["popped", "asleep"]:
+		var b: FerretBoss = _boss("ferret")
+		var you := spawn_critter(TEST_DEF, Vector3(60, 0.1, 60))
+		you.team = 1
+		you.is_player = true
+		var victim := spawn_critter(TEST_DEF, Vector3(0, 0.1, -60))
+		victim.team = 1
+		victim.max_health = 5000.0
+		victim.health = 5000.0
+		await wait_physics(5)
+		if how == "popped":
+			b.start(b._pop_goes(victim))
+			await _until(func(): return b._popped, 6.0)
+		else:
+			b.start(b._dance(victim))
+			await _until(func(): return b._asleep, 9.0)
+		await wait_physics(15)
+		var was := b.bone_point(&"head", 0.5).y
+		b.take_damage(DamageInfo.make(1e9, DamageInfo.Kind.BULLET, you, &"carrot_sniper"))
+		check(not b.alive, "%s: beaten" % how)
+		await wait_physics(3)
+		if how == "popped":
+			check(b.bone_point(&"hips", 0.0).y < b.global_position.y, "popped: still down her hole as she goes (her hips %.1f m)" %
+				(b.bone_point(&"hips", 0.0).y - b.global_position.y))
+		var highest := 0.0
+		for i in 160:
+			highest = maxf(highest, b.bone_point(&"head", 0.5).y)
+			await wait_physics(1)
+		check(b.bone_point(&"head", 0.5).y < 9.0, "%s: down on the bedding (her head %.1f m up)" % [how, b.bone_point(&"head", 0.5).y])
+		if how == "asleep":
+			check(highest < was + 1.5, "asleep: she never woke up first (her head at most %.1f m, %.1f m asleep)" % [highest, was])
+		b.queue_free()
+		you.queue_free()
+		victim.queue_free()
+		await wait_physics(3)
+
+
 func _until(done: Callable, seconds: float) -> void:
 	var t := 0.0
 	while t < seconds and not done.call():
@@ -501,6 +706,7 @@ func test_boss_battles() -> void:
 		await _boss_battle(map)
 	await _boss_battle("island", "owl")
 	await _boss_battle("toybox", "nutcracker")
+	await _boss_battle("cage", "ferret")
 
 
 func _boss_battle(map: String, boss_id := "") -> void:
@@ -566,6 +772,10 @@ func _boss_battle(map: String, boss_id := "") -> void:
 		var won := [false]
 		mm.finished.connect(func(_w, _p): won[0] = true)
 		var beaten: float = StatBook.boss(mm.boss.id).beaten
+		var waited := 0.0
+		while mm.boss is FerretBoss and (mm.boss as FerretBoss)._under and waited < 30.0:   # (down a hole, Noodle can't be hit)
+			await get_tree().physics_frame
+			waited += Engine.time_scale / Engine.physics_ticks_per_second
 		mm.boss.take_damage(DamageInfo.make(1e9, DamageInfo.Kind.BULLET, mm.player, &"carrot_sniper"))
 		check(won[0] and mm.winning_team == 1 and mm.phase == MatchManager.Phase.ENDED, "%s: it fell, and your side won" % map)
 		check(StatBook.boss(mm.boss.id).beaten == beaten + 1.0, "%s: beaten, on your record" % map)

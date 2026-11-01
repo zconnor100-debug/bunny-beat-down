@@ -186,6 +186,14 @@ const BEAT_DOWN_BURSTS := {
 		{"amount": 12, "speed": Vector2(3.0, 7.0), "spread": 80.0, "lifetime": 1.6}],
 		["blob", [Color(1.0, 0.82, 0.35)], -0.4, 0.05, {"amount": 6, "speed": Vector2(1.0, 3.5), "spread": 90.0, "additive": true,
 		"lifetime": 0.9}]],
+	# (earned by beating Noodle: her stash flying, buttons and bottle caps, scraps of odd socks, and a
+	# glint of something gold-green)
+	"stash": [["blob", [Color(0.86, 0.2, 0.18), Color(0.22, 0.46, 0.86), Color(0.96, 0.8, 0.2)], 11.0, 0.11,
+		{"amount": 10, "speed": Vector2(3.0, 7.0), "spread": 80.0, "lifetime": 1.6}],
+		["chip", [Color(0.94, 0.92, 0.86), Color(0.5, 0.62, 0.36), Color(0.78, 0.6, 0.3)], 10.0, 0.1,
+		{"amount": 9, "speed": Vector2(2.5, 6.0), "spread": 85.0, "damping": 1.6, "lifetime": 1.8}],
+		["blob", [Color(0.8, 1.0, 0.34)], -0.3, 0.05, {"amount": 4, "speed": Vector2(1.0, 3.0), "spread": 90.0, "additive": true,
+		"lifetime": 1.0}]],
 }
 
 
@@ -306,7 +314,8 @@ func _make_particles(cfg: Dictionary, one_shot: bool) -> GPUParticles3D:
 
 
 func _process_material(cfg: Dictionary) -> ParticleProcessMaterial:
-	var key := str(cfg.get("speed"), cfg.get("spread"), cfg.get("gravity"), cfg.get("scale"), cfg.get("color"), cfg.get("fade"), cfg.get("damping", 0.0))
+	var key := str(cfg.get("speed"), cfg.get("spread"), cfg.get("gravity"), cfg.get("scale"), cfg.get("color"), cfg.get("fade"), cfg.get("damping", 0.0),
+		cfg.get("upright", false))
 	if _process_mats.has(key):
 		return _process_mats[key]
 	var m := ParticleProcessMaterial.new()
@@ -321,8 +330,9 @@ func _process_material(cfg: Dictionary) -> ParticleProcessMaterial:
 	m.scale_max = sc.y
 	m.damping_min = cfg.get("damping", 0.0)
 	m.damping_max = cfg.get("damping", 0.0) * 1.3
-	m.angle_min = -180.0
-	m.angle_max = 180.0
+	var spin := 0.0 if cfg.get("upright", false) else 180.0   # (upright: a letter, kept the right way up)
+	m.angle_min = -spin
+	m.angle_max = spin
 	var col: Color = cfg.get("color", Color.WHITE)
 	m.color = col
 	if cfg.get("fade", false):

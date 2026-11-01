@@ -189,8 +189,11 @@ def normalize():
     if CFG.get("centre") == "feet":   # (arms held out in front don't count)
         feet = P[P[:, 2] < lo[2] + 0.06 * (hi[2] - lo[2])]
         cx, cy = (feet[:, 0].min() + feet[:, 0].max()) / 2, (feet[:, 1].min() + feet[:, 1].max()) / 2
-    T = (Matrix.Scale(1.0 / float(hi[2] - lo[2]), 4) @ Matrix.Rotation(yaw, 4, "Z")
-         @ Matrix.Translation((-cx, -cy, -lo[2])))
+    # (and "nudge": moved over afterwards, in the units it's scaled to: a body
+    # that isn't in the middle of its bounds, a tail curled off to one side)
+    nudge = CFG.get("nudge", [0.0, 0.0])
+    T = (Matrix.Translation((nudge[0], nudge[1], 0.0)) @ Matrix.Scale(1.0 / float(hi[2] - lo[2]), 4)
+         @ Matrix.Rotation(yaw, 4, "Z") @ Matrix.Translation((-cx, -cy, -lo[2])))
     for o in ([arm] if arm else []) + [body]:
         o.matrix_world = T @ o.matrix_world
         select_only([o], o)
@@ -271,15 +274,24 @@ def render_to(path):
 
 
 def render_views(name, bones=None):
-    """Front + side renders (CACHE/<name>_front.png, _side.png) and the bones
-    (CACHE/<name>_bones.json) for tools/characters/boss_grid.py to put on a grid."""
+    """Front + side renders (CACHE/<name>_front.png, _side.png), one from
+    above too when the recipe asks ("view_top": a beast on all fours), and
+    the bones (CACHE/<name>_bones.json) for tools/characters/boss_grid.py to
+    put on a grid. The views reach the recipe's "view_span" either side of
+    the middle (0.6 unless it says: a long beast needs more)."""
+    span = float(CFG.get("view_span", 0.6))
     setup_render(900, 900)
-    cam = ortho_camera((0, -5, 0.55), (math.radians(90), 0, 0), 1.2)
+    cam = ortho_camera((0, -5, span - 0.05), (math.radians(90), 0, 0), span * 2.0)
     render_to(os.path.join(CACHE, name + "_front.png"))
-    cam.location, cam.rotation_euler = (5, 0, 0.55), (math.radians(90), 0, math.radians(90))
+    cam.location, cam.rotation_euler = (5, 0, span - 0.05), (math.radians(90), 0, math.radians(90))
     render_to(os.path.join(CACHE, name + "_side.png"))
+    if CFG.get("view_top"):
+        cam.location, cam.rotation_euler = (0, 0, 5), (0, 0, math.radians(90))   # (image right: its back; up: its right)
+        render_to(os.path.join(CACHE, name + "_top.png"))
     with open(os.path.join(CACHE, name + "_bones.json"), "w") as f:
         json.dump(bones or {}, f)
+    with open(os.path.join(CACHE, name + "_view.json"), "w") as f:
+        json.dump({"span": span, "top": bool(CFG.get("view_top"))}, f)
     log("rendered", name)
 
 
@@ -287,7 +299,8 @@ def render_views(name, bones=None):
 ROLES = ["hips", "spine", "chest", "neck", "head", "jaw",
          "l_shoulder", "l_upper_arm", "l_lower_arm", "l_hand", "r_shoulder", "r_upper_arm", "r_lower_arm", "r_hand",
          "l_upper_leg", "l_lower_leg", "l_foot", "r_upper_leg", "r_lower_leg", "r_foot",
-         "l_ear", "l_ear_tip", "r_ear", "r_ear_tip", "tail", "key", "l_claw_a", "l_claw_b", "r_claw_a", "r_claw_b", "hat"]
+         "l_ear", "l_ear_tip", "r_ear", "r_ear_tip", "tail", "tail_tip", "key", "l_claw_a", "l_claw_b", "r_claw_a", "r_claw_b",
+         "hat"]
 
 
 def mirror(j):
@@ -421,6 +434,56 @@ def build_auto_rig(body):
             vg.remove(idx)
         body.vertex_groups[name].add(idx, 1.0, "REPLACE")
         log("pinned %d vertices to %s" % (len(idx), name))
+    # a mouth modelled just parted ("split_mouth"): in its box, each vertex
+    # goes wholly to the jaw or the head by which side of the slit it's on
+    # (nearer, along the skin, to the box's bottom or its top: a path
+    # between the lips has to go round a corner of the mouth), so the jaw
+    # opens it instead of stretching the chin
+    sm = CFG.get("split_mouth")
+    part = mesh_parts(body) if (sm or CFG.get("pin_parts") or CFG.get("loose_to")) else None
+    main = np.bincount(part).argmax() if part is not None else -1
+    if sm:
+        lo, hi = np.array(sm["box"][0]), np.array(sm["box"][1])
+        inside = np.all((co >= lo) & (co <= hi), axis=1) & (part == main)   # (its teeth and tongue: pin_parts)
+        side = mouth_sides(body, co, inside, float(sm["upper_from"]), float(sm["lower_below"]))
+        for name, want in ((sm.get("upper", "head"), 1), (sm.get("lower", "jaw"), 2)):
+            sel = side == want
+            pinned[name] = pinned.get(name, np.zeros(len(co), dtype=bool)) | sel
+            idx = [int(i) for i in np.nonzero(sel)[0]]
+            for vg in body.vertex_groups:
+                vg.remove(idx)
+            body.vertex_groups[name].add(idx, 1.0, "REPLACE")
+            log("split_mouth: %d vertices to %s" % (len(idx), name))
+    # whole loose parts, by a point on each ("pin_parts": its teeth to the jaw
+    # or the head, its tongue), and every other loose part ("loose_to": its
+    # eyeballs, its whiskers) to one bone: bone heat never saw them (the
+    # proxy keeps only the body) and the nearest face can be the wrong side
+    # of a mouth
+    if CFG.get("pin_parts") or CFG.get("loose_to"):
+        claimed = np.zeros(len(co), dtype=bool)
+        for name, seeds in CFG.get("pin_parts", {}).items():
+            sel = np.zeros(len(co), dtype=bool)
+            for s in seeds:
+                near = int(np.argmin(np.linalg.norm(co - np.array(s), axis=1)))
+                if part[near] == main:
+                    raise SystemExit("pin_parts %s: %s is on the body, not a loose part" % (name, s))
+                sel |= part == part[near]
+            claimed |= sel
+            pinned[name] = pinned.get(name, np.zeros(len(co), dtype=bool)) | sel
+            idx = [int(i) for i in np.nonzero(sel)[0]]
+            for vg in body.vertex_groups:
+                vg.remove(idx)
+            body.vertex_groups[name].add(idx, 1.0, "REPLACE")
+            log("pinned %d loose vertices to %s" % (len(idx), name))
+        if CFG.get("loose_to"):
+            name = CFG["loose_to"]
+            sel = (part != main) & ~claimed
+            pinned[name] = pinned.get(name, np.zeros(len(co), dtype=bool)) | sel
+            idx = [int(i) for i in np.nonzero(sel)[0]]
+            for vg in body.vertex_groups:
+                vg.remove(idx)
+            body.vertex_groups[name].add(idx, 1.0, "REPLACE")
+            log("gave %d vertices of %d other loose parts to %s" % (len(idx), len(set(part[sel].tolist())), name))
     # and "pin_only" bones move nothing but their own boxes (a wooden toy's
     # limbs turn on their pegs, rigid, without dragging the coat along): what
     # they had elsewhere goes to the nearest other bone
@@ -562,6 +625,8 @@ def paint_texture(body):
                 dark = valid & (np.linalg.norm(pos - g, axis=2) < eyes.get("search", 0.08)) & (lum < eyes.get("dark", 0.12))
             if dark.sum() < 30:
                 log("eyes: nothing dark near", g.round(3).tolist())
+                if eyes.get("shared"):   # (both eyes painted from the same texels: the other one found them)
+                    EYES_FOUND.append([round(float(x), 4) for x in g])
                 continue
             EYES_FOUND.append([round(float(x), 4) for x in pos[dark].mean(axis=0)])
             mask = np.maximum(mask, dark.astype(np.float32))
@@ -621,6 +686,61 @@ def reencode_textures(body, max_tex=2048):
         bpy.data.images.remove(img)
         jpg.name = name
         jpg.filepath_raw = ""
+
+
+def mesh_parts(o):
+    """Which loose part (connected by edges) each vertex is in: an array of part numbers."""
+    n = len(o.data.vertices)
+    ev = np.empty(len(o.data.edges) * 2, dtype=np.int64)
+    o.data.edges.foreach_get("vertices", ev)
+    up = np.arange(n)
+
+    def find(i):
+        while up[i] != i:
+            up[i] = up[up[i]]
+            i = up[i]
+        return i
+    for a, b in ev.reshape(-1, 2):
+        ra, rb = find(a), find(b)
+        if ra != rb:
+            up[max(ra, rb)] = min(ra, rb)
+    return np.array([find(i) for i in range(n)])
+
+
+def mouth_sides(o, co, inside, upper_from, lower_below):
+    """split_mouth: for the vertices `inside` its box, 1 if the skin path to
+    one at or above `upper_from` is shorter than to one below `lower_below`
+    (the head's side of the slit), 2 if not (the jaw's); 0 outside the box
+    or out of reach. Dijkstra over the edges, inside the box only."""
+    import heapq
+    ev = np.empty(len(o.data.edges) * 2, dtype=np.int64)
+    o.data.edges.foreach_get("vertices", ev)
+    nbr = {}
+    for a, b in ev.reshape(-1, 2):
+        if inside[a] and inside[b]:
+            d = float(np.linalg.norm(co[a] - co[b]))
+            nbr.setdefault(int(a), []).append((int(b), d))
+            nbr.setdefault(int(b), []).append((int(a), d))
+    side = np.zeros(len(co), dtype=np.int8)
+    dist = {}
+    heap = []
+    for i in np.nonzero(inside)[0]:
+        s = 1 if co[i][2] >= upper_from else (2 if co[i][2] < lower_below else 0)
+        if s:
+            dist[int(i)] = 0.0
+            side[i] = s
+            heap.append((0.0, int(i), s))
+    heapq.heapify(heap)
+    while heap:
+        d, i, s = heapq.heappop(heap)
+        if d > dist.get(i, 1e9) or side[i] != s:
+            continue
+        for j, w in nbr.get(i, []):
+            if d + w < dist.get(j, 1e9):
+                dist[j] = d + w
+                side[j] = s
+                heapq.heappush(heap, (d + w, j, s))
+    return side
 
 
 def seg_dist(P, a, b):
@@ -788,7 +908,8 @@ def poses():
     for old in glob.glob(os.path.join(CACHE, "pose_*.png")):
         os.remove(old)
     setup_render(600, 600)
-    ortho_camera((3.2, -3.2, 2.15), (math.radians(70), 0, math.radians(45)), 1.3)   # (aimed at the middle of it)
+    ortho_camera((3.2, -3.2, 2.15), (math.radians(70), 0, math.radians(45)),
+                 1.3 * float(CFG.get("view_span", 0.6)) / 0.6)   # (aimed at the middle of it)
     for k, pose in enumerate([{}] + tests):
         for pb in arm.pose.bones:
             pb.rotation_mode = "XYZ"
