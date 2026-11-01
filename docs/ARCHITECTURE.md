@@ -275,7 +275,13 @@ hooks: `Island` gained `play_bounds()`, `map_color()`, `tune_lighting()`, a
   against the glass, with a lagoon and a winter corner in the biome map's
   slots, gravel ramps up to the bowls' rims (`ramp()`), sand-bath and trail
   splats, and `cage_floor.gdshader`, which recolours a wood-shaving scan pale
-  and blends in pebbles, snow and sand.
+  and blends in pebbles, snow and sand. Each layer is sampled only where its
+  weight isn't nought (most of the floor is bedding alone): on a laptop's
+  graphics chip, sampling every layer everywhere made the floor the costliest
+  thing on screen. The branches' lookups use `textureGrad` with derivatives
+  taken before them, where every pixel of the quad still runs, so the mip
+  level stays right along a layer's edge. `toy_floor.gdshader` does the same
+  (the rug, the oak and the quilt, and of a quilt patch only its own fabric).
 - **`CageKit extends Building`**: the toys reuse the buildings' merged-mesh
   boxes, logs, cones and prisms (each one its own collider) and add lathes
   with concave collision (bowls, tubs, domes), rings of panels (Habitrail
@@ -286,8 +292,10 @@ hooks: `Island` gained `play_bounds()`, `map_color()`, `tune_lighting()`, a
 - **Water** is per-cell for the lagoon (like the island's swamp) plus a disc
   per bowl; `water_level_at()` answers both, so swimming just works.
 - **`CageRoom`** is scenery: the glass (four solid panes with a frost shader
-  near the fridge), the room around the tank, and the open fridge with its
-  cold light, mist particles that roll over the wall and snowfall.
+  near the fridge, taking no shadows: on clear glass they don't show, and
+  filtering them across panes that fill the screen cost as much as the
+  tank), the room around the tank, and the open fridge with its cold light,
+  mist particles that roll over the wall and snowfall.
 - The **toy plane** is a `Dropship` variant whose route is clipped to the
   tank's rectangle, under the rim of the glass.
 

@@ -28,50 +28,72 @@ void vertex() {
 	world_pos = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
 }
 
-vec3 soft(sampler2D tex, vec2 uv) {
-	return mix(textureLod(tex, uv, 9.0).rgb, texture(tex, uv).rgb, detail);
-}
-
 float hash(vec2 p) {
 	return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
 }
 
+// (Each layer is sampled only where it shows, and of a quilt patch only its
+// own fabric: the floor covers most of the screen, and sampling every layer
+// everywhere made it the costliest thing on screen on a weaker GPU. The
+// lookups inside the branches take their mip level from derivatives found up
+// here, where every pixel still runs, so the layers' edges don't shimmer.)
 void fragment() {
 	vec2 p = world_pos.xz;
+	vec2 dx = dFdx(p);
+	vec2 dy = dFdy(p);
 	vec2 cuv = (p + terrain_size * 0.5) / terrain_size;
 	vec4 ctl = texture(control_map, cuv);
 	vec3 bio = texture(biome_map, cuv).rgb;
 	float macro = texture(macro_noise, p / 140.0).r;
-
-	// oak floorboards, scuffed here and there
-	vec3 alb = soft(oak_albedo, p / oak_tile) * mix(1.0, 0.86, ctl.r * 0.6);
-	vec3 nrm = texture(oak_normal, p / oak_tile).rgb;
-	float rgh = mix(0.35, 0.6, ctl.r);
-
-	// the play rug
 	vec2 ruv = (p - rug_rect.xy) / rug_rect.zw;
 	float in_rug = step(0.0, ruv.x) * step(ruv.x, 1.0) * step(0.0, ruv.y) * step(ruv.y, 1.0);
-	vec3 weave = texture(weave_normal, p / 3.0).rgb;
-	vec3 mat = texture(playmat, ruv).rgb * mix(0.92, 1.04, texture(plaid_albedo, p / 3.0).g);
-	alb = mix(alb, mat, in_rug);
-	nrm = mix(nrm, weave, in_rug);
-	rgh = mix(rgh, 0.95, in_rug);
+	float w_quilt = smoothstep(0.2, 0.45, bio.g);
+	vec3 weave = vec3(0.5, 0.5, 1.0);
+	if (in_rug > 0.0 || w_quilt > 0.0) {
+		weave = textureGrad(weave_normal, p / 3.0, dx / 3.0, dy / 3.0).rgb;
+	}
+
+	vec3 alb = vec3(0.0);
+	vec3 nrm = vec3(0.5, 0.5, 1.0);
+	float rgh = 0.95;
+	if (w_quilt < 1.0) {   // (under the quilt, the floor doesn't show)
+		if (in_rug > 0.0) {
+			// the play rug
+			alb = textureGrad(playmat, ruv, dx / rug_rect.zw, dy / rug_rect.zw).rgb
+				* mix(0.92, 1.04, textureGrad(plaid_albedo, p / 3.0, dx / 3.0, dy / 3.0).g);
+			nrm = weave;
+			rgh = 0.95;
+		} else {
+			// oak floorboards, scuffed here and there
+			vec2 ouv = p / oak_tile;
+			vec2 ox = dx / oak_tile;
+			vec2 oy = dy / oak_tile;
+			alb = mix(textureLod(oak_albedo, ouv, 9.0).rgb, textureGrad(oak_albedo, ouv, ox, oy).rgb, detail) * mix(1.0, 0.86, ctl.r * 0.6);
+			nrm = textureGrad(oak_normal, ouv, ox, oy).rgb;
+			rgh = mix(0.35, 0.6, ctl.r);
+		}
+	}
 
 	// the quilt over the pillow hills: patchwork squares with darker seams
-	float w_quilt = smoothstep(0.2, 0.45, bio.g);
-	vec2 cell = floor(p / patch_size);
-	vec2 f = fract(p / patch_size);
-	float pick = hash(cell);
-	vec3 gingham = soft(gingham_albedo, p / 9.0);
-	vec3 plaid = soft(plaid_albedo, p / 9.0);
-	vec3 tint = pick < 0.33 ? vec3(1.0) : (pick < 0.66 ? vec3(0.75, 0.85, 1.15) : vec3(1.15, 1.05, 0.7));
-	vec3 quilt = pick < 0.45 ? gingham : plaid * tint;
-	float seam = 1.0 - smoothstep(0.0, 0.025, min(min(f.x, 1.0 - f.x), min(f.y, 1.0 - f.y)));
-	quilt *= mix(1.0, 0.6, seam);
-	alb = mix(alb, quilt, w_quilt);
-	nrm = mix(nrm, weave, w_quilt);
-	rgh = mix(rgh, 0.95, w_quilt);
-	alb *= mix(1.0, 0.85, ctl.b * w_quilt);
+	if (w_quilt > 0.0) {
+		vec2 cell = floor(p / patch_size);
+		vec2 f = fract(p / patch_size);
+		float pick = hash(cell);
+		vec2 quv = p / 9.0;
+		vec3 quilt;
+		if (pick < 0.45) {
+			quilt = mix(textureLod(gingham_albedo, quv, 9.0).rgb, textureGrad(gingham_albedo, quv, dx / 9.0, dy / 9.0).rgb, detail);
+		} else {
+			vec3 tint = pick < 0.66 ? vec3(0.75, 0.85, 1.15) : vec3(1.15, 1.05, 0.7);
+			quilt = mix(textureLod(plaid_albedo, quv, 9.0).rgb, textureGrad(plaid_albedo, quv, dx / 9.0, dy / 9.0).rgb, detail) * tint;
+		}
+		float seam = 1.0 - smoothstep(0.0, 0.025, min(min(f.x, 1.0 - f.x), min(f.y, 1.0 - f.y)));
+		quilt *= mix(1.0, 0.6, seam);
+		alb = mix(alb, quilt, w_quilt);
+		nrm = mix(nrm, weave, w_quilt);
+		rgh = mix(rgh, 0.95, w_quilt);
+		alb *= mix(1.0, 0.85, ctl.b * w_quilt);
+	}
 
 	// the spill: darker, glossy wet wood
 	float wet = smoothstep(0.25, 0.55, bio.r) * smoothstep(spill_level + 0.35, spill_level - 0.05, world_pos.y);

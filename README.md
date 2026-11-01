@@ -865,6 +865,21 @@ The full write-up is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
   the same views: 31% fewer triangles on the island, 31% on the Hamster
   Cage, 79% on Toy Box Bash, and a third to two thirds fewer shadow
   triangles.
+- **Fast on a laptop's graphics chip, measured on one.** On a weak GPU (a
+  Ryzen's built-in Radeon, `--gpu-index 1`) the same bench (`quick` for
+  fewer frames, `shots=<dir>` to keep each view's picture for a before and
+  after) and its breakdown, now in GPU time per kind of thing and per screen
+  effect, found the Hamster Cage's floor the costliest thing on screen: its
+  shader sampled the sand, gravel and snow everywhere, even under plain
+  bedding. Each layer is sampled only where it shows now (its mip level
+  from derivatives taken before the branches, so the edges don't shimmer),
+  the Toy Box floor's too, a picture that matches the old one pixel for
+  pixel; the tank's glass takes no shadows (on clear glass they don't
+  show), and the water's screen copy no longer builds the mipmaps it never
+  read. Low drops the bloom and two of the four shadow cascades, and a
+  laptop's built-in graphics starts at Low the first time the game runs. On
+  that GPU at Low, a Hamster Cage frame takes 29% less time to draw and a
+  Toy Box frame 26% less.
 - **Tests that play the game.** A headless suite of 177 tests covers:
   - the IK maths, hitboxes, ragdolls and dismemberment, and how critters
     carry themselves (never frozen, guns carried low but shooting from the
@@ -948,8 +963,10 @@ desktop launcher and a menu entry; right-click it → "Update Bunny Beat Down"
 (on the GNOME desktop under Scripts) to update (`tools/installer/`).
 
 **Graphics and screens.** Settings has five quality tiers (Low to **Epic**:
-screen-space reflections from Ultra; volumetric light shafts, finer LODs,
-denser foliage and ultra-soft shadows on Epic), a choice of anti-aliasing
+Low is light, without bloom and with half the shadow passes, and a
+laptop's built-in graphics starts there; screen-space reflections from
+Ultra; volumetric light shafts, finer LODs, denser foliage and ultra-soft
+shadows on Epic), a choice of anti-aliasing
 (FXAA, SMAA, TAA, MSAA up to 8× with SMAA, FSR 2 native AA), resolution
 scaling (FSR 2 Quality/Balanced/Performance or 150% supersampling), window
 mode, V-Sync and a frame-rate cap. For wide screens: the **screen shape**

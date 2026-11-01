@@ -2,7 +2,7 @@ extends SceneTree
 ## Frame cost of each map from fixed viewpoints: GPU and CPU time, triangles
 ## and draw calls (the camera views and shadow passes apart). Needs a GPU
 ## window; vsync is off so the times are the real cost.
-##   godot --path . -s tests/perf_bench.gd -- <out.json> [island,cage,toybox] [quality] [lod_threshold] [breakdown]
+##   godot --path . -s tests/perf_bench.gd -- <out.json> [island,cage,toybox] [quality] [lod_threshold] [breakdown] [quick] [shots=<dir>]
 
 
 func _initialize() -> void:
@@ -22,5 +22,9 @@ func _start() -> void:
 	if a.size() > 3:
 		stage.lod_threshold = float(a[3])
 	stage.breakdown = "breakdown" in a
+	stage.quick = "quick" in a
+	for x in a:
+		if x.begins_with("shots="):
+			stage.shots = x.trim_prefix("shots=")
 	root.add_child(stage)
 	current_scene = stage

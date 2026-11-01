@@ -116,10 +116,11 @@ func build(quality: int) -> void:
 	sun.light_energy = 1.25
 	sun.shadow_enabled = true
 	sun.shadow_blur = 1.0
-	sun.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS
+	# (Low: two cascades instead of four, the near one longer: half the shadow passes)
+	sun.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS if quality <= 0 else DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS
 	sun.directional_shadow_max_distance = [80.0, 140.0, 220.0, 320.0, 420.0][clampi(quality, 0, 4)]
 	sun.light_volumetric_fog_energy = 1.4   # (Epic's light shafts)
-	sun.directional_shadow_split_1 = 0.05
+	sun.directional_shadow_split_1 = 0.2 if quality <= 0 else 0.05
 	sun.directional_shadow_split_2 = 0.16
 	sun.directional_shadow_split_3 = 0.42
 	# (a wide sun disc means noisy PCSS penumbras without TAA to smooth them)

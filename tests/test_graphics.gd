@@ -1,8 +1,9 @@
 extends TestCase
 ## Graphics options (Graphics, Settings): each anti-aliasing and upscaling
-## choice sets the view up as it says, Auto follows the quality tier, a
-## super-ultrawide screen can be kept from stretching, and the settings screen
-## offers all of it.
+## choice sets the view up as it says, Auto follows the quality tier, Low is
+## light (no bloom, two shadow cascades), a laptop's graphics chip starts at
+## Low, a super-ultrawide screen can be kept from stretching, and the
+## settings screen offers all of it.
 
 const KEYS := [&"quality", &"anti_aliasing", &"upscaling", &"widescreen_fov", &"hud_width", &"screen_shape"]
 var _was := {}
@@ -16,6 +17,29 @@ func before_each() -> void:
 func after_each() -> void:
 	for k in KEYS:
 		Settings.set_value(k, _was[k], false)
+
+
+## Low drops the bloom and halves the shadow passes (two cascades, the near
+## one longer); every other tier keeps both.
+func test_low_is_light() -> void:
+	for t in Graphics.TIER_NAMES.size():
+		Settings.set_value(&"quality", t, false)
+		var light := WorldLighting.new()
+		add_child(light)
+		light.build(t)
+		var low := t == Graphics.Tier.LOW
+		check(light.env.glow_enabled == (not low), "%s: bloom %s" % [Graphics.TIER_NAMES[t], "off" if low else "on"])
+		check(light.sun.directional_shadow_mode == (DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS if low
+			else DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS), "%s: %d shadow cascades" % [Graphics.TIER_NAMES[t], 2 if low else 4])
+		light.free()
+
+
+## The first time it runs, a graphics chip built into the processor starts at
+## Low; a graphics card, at the usual High.
+func test_a_laptop_chip_starts_at_low() -> void:
+	check(Settings.first_quality(RenderingDevice.DEVICE_TYPE_INTEGRATED_GPU) == Graphics.Tier.LOW, "built-in graphics: Low")
+	check(Settings.first_quality(RenderingDevice.DEVICE_TYPE_DISCRETE_GPU) == int(Settings.DEFAULTS["quality"]), "a graphics card: High")
+	check(Settings.first_quality(RenderingDevice.DEVICE_TYPE_OTHER) == int(Settings.DEFAULTS["quality"]), "anything else: High")
 
 
 func test_anti_aliasing_and_upscaling_set_up_the_view() -> void:

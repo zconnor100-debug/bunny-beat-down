@@ -5,7 +5,7 @@ render_mode blend_mix, cull_back, depth_draw_always, diffuse_burley, specular_sc
 
 uniform sampler2D normal_a : hint_normal, filter_linear_mipmap, repeat_enable;
 uniform sampler2D depth_texture : hint_depth_texture, filter_linear_mipmap;
-uniform sampler2D screen_texture : hint_screen_texture, filter_linear_mipmap;
+uniform sampler2D screen_texture : hint_screen_texture, filter_linear;   // (read at its own size: mipmaps would only cost a blur pass)
 uniform vec3 shallow_color : source_color = vec3(0.32, 0.55, 0.5);
 uniform vec3 deep_color : source_color = vec3(0.04, 0.17, 0.22);
 uniform vec3 foam_color : source_color = vec3(0.92, 0.95, 0.93);

@@ -1,8 +1,10 @@
 // The hamster tank's glass walls: nearly clear, brighter at grazing angles
 // (so you can tell where the wall is), a few faint smudges, and frost that
-// creeps up the panes near the open fridge.
+// creeps up the panes near the open fridge. (It takes no shadows: on clear
+// glass they don't show, and filtering them across panes that fill the
+// screen cost as much as the rest of the tank.)
 shader_type spatial;
-render_mode blend_mix, cull_disabled, depth_draw_never, diffuse_burley, specular_schlick_ggx;
+render_mode blend_mix, cull_disabled, depth_draw_never, diffuse_burley, specular_schlick_ggx, shadows_disabled;
 
 uniform vec3 tint : source_color = vec3(0.86, 0.95, 1.0);
 uniform float base_alpha = 0.03;

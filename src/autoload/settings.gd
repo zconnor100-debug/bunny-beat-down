@@ -90,6 +90,7 @@ func set_value(key: StringName, value: Variant, save := true) -> void:
 func load_settings() -> void:
 	var cfg := ConfigFile.new()
 	if cfg.load(path) != OK:
+		_first_run_defaults()
 		return
 	for key in DEFAULTS:
 		if cfg.has_section_key("settings", key):
@@ -97,6 +98,19 @@ func load_settings() -> void:
 			# ignore values whose type no longer matches (old/hand-edited files)
 			if typeof(v) == typeof(DEFAULTS[key]) or (DEFAULTS[key] is float and v is int):
 				_values[key] = v
+
+
+## The first time the game runs on a computer (no settings saved yet): on a
+## graphics chip built into the processor (most laptops'), it starts at Low,
+## where it plays smoothly, instead of High.
+func _first_run_defaults() -> void:
+	if not is_test_run():
+		_values["quality"] = first_quality(RenderingServer.get_video_adapter_type())
+
+
+## The quality to start at on a graphics adapter of `kind` (RenderingDevice.DeviceType).
+static func first_quality(kind: int) -> int:
+	return 0 if kind == RenderingDevice.DEVICE_TYPE_INTEGRATED_GPU else int(DEFAULTS["quality"])
 
 
 func save_settings() -> void:

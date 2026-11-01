@@ -144,6 +144,9 @@ static func apply_environment(env: Environment) -> void:
 	env.volumetric_fog_ambient_inject = 0.15
 	env.volumetric_fog_sky_affect = 0.0
 	env.glow_intensity = 0.42 if t >= Tier.EPIC else 0.35
+	# (Low: no bloom. On a laptop's graphics chip it costs as much as the
+	# shadows, and it's the first thing to go for a smoother game)
+	env.glow_enabled = t >= Tier.MEDIUM
 
 
 ## The window, the screen shape, V-Sync and frame cap (not in automated runs:
