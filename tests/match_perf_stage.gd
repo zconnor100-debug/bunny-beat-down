@@ -7,7 +7,10 @@ extends Node
 ## second, not an average.) split_* splits the average frame: the game's code
 ## in physics ticks and in the frame, what was deferred to after each (the
 ## skeletons' poses, freed nodes), the physics engine (Jolt's step, after each
-## tick), and the rendering (CPU side, after the frame's code).
+## tick), and the rendering (CPU side, after the frame's code). Of the
+## rendering: render_cpu_ms is RenderingServer's own drawing of the view,
+## setup_ms its updating the scene first (everything that moved, the
+## skeletons); objects, draws_view and draws_shadow what it drew.
 ## With "breakdown" (the 6th argument) it also times the game's code script by
 ## script: each script's nodes run in a band of priorities of their own, with a
 ## marker node before each band, so the time from one marker to the next is
@@ -45,6 +48,9 @@ var _band_names: Array = []
 var _band_mark := {true: [-1, 0], false: [-1, 0]}   ## physics? -> [the last marker passed, when]
 var _band_ms := {}         ## phase -> "physics:<script>" / "frame:<script>" -> usec
 var _draw_t := 0           ## (breakdown) when RenderingServer began drawing this frame
+var _drawn_t := 0          ## (breakdown) when it finished
+var _after := ""           ## (breakdown) the last mark passed after the frame's code (timers, tweens)
+var _after_t := 0
 var _counts := {}          ## phase -> kind -> [sum, samples]: how many of each engine node there were
 var _count_t := 0
 
@@ -81,6 +87,10 @@ class Edge extends Node:
 		stage.edge("p_end" if last else "p_start")
 		if last:
 			stage.edge.call_deferred("p_flushed")
+			if stage.breakdown and not stage._threaded:   # (marks in what the tree does after the frame: its timers, its tweens)
+				get_tree().create_timer(0.0, true, false, true).timeout.connect(stage.after_frame.bind("timers"))
+				var tw := create_tween()
+				tw.tween_callback(stage.after_frame.bind("tweens"))
 
 	func _physics_process(_delta: float) -> void:
 		stage.edge("ph_end" if last else "ph_start")
@@ -90,6 +100,9 @@ class Edge extends Node:
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	# (the real cost of a frame: V-Sync held it to the screen's 144 Hz, and its
+	# wait counted as drawing. The settings' vsync is left alone in test runs.)
+	DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_DISABLED)
 	var a := OS.get_cmdline_user_args()
 	if a.size() > 0:
 		out_path = a[0]
@@ -118,21 +131,45 @@ func _ready() -> void:
 	_run.call_deferred()
 
 
-## (breakdown) The render bucket split: waiting on the last frames (sync,
-## from the frame's code to RenderingServer starting to draw), drawing (its
-## CPU side: culling, skeletons, particles, the command lists), and after it.
+## (breakdown) The render bucket split: from the frame's code to
+## RenderingServer starting to draw (render_sync), drawing (its CPU side:
+## culling, skeletons, particles, the command lists: render_draw), and after
+## it till the next tick or frame (after_draw: the main loop, input). And
+## render_sync split by where the tree is after the frame (SceneTree.process
+## goes on: the moved nodes' transforms told, the freed nodes deleted, its
+## timers, its tweens, the transforms again and its idle callbacks): to its
+## timers (sync_flush), to its tweens (sync_timers), and on to the drawing
+## (sync_rest: the last of the tree's and the main loop's, the navigation
+## maps', RenderingServer's sync).
 func _pre_draw() -> void:
 	_draw_t = Time.get_ticks_usec()
 	if _phase != "" and _mark == "p_flushed":
 		var b: Dictionary = _split.get_or_add(_phase, {})
 		b["render_sync"] = int(b.get("render_sync", 0)) + _draw_t - _mark_t
+		if _after_t > 0:
+			b["sync_rest"] = int(b.get("sync_rest", 0)) + _draw_t - _after_t
+	_after = ""
+	_after_t = 0
 
 
 func _post_draw() -> void:
+	var now := Time.get_ticks_usec()
 	if _phase != "" and _draw_t > 0:
 		var b: Dictionary = _split.get_or_add(_phase, {})
-		b["render_draw"] = int(b.get("render_draw", 0)) + Time.get_ticks_usec() - _draw_t
+		b["render_draw"] = int(b.get("render_draw", 0)) + now - _draw_t
 	_draw_t = 0
+	_drawn_t = now
+
+
+## (breakdown) The tree's timers or tweens reached, after the frame's code.
+func after_frame(what: String) -> void:
+	var now := Time.get_ticks_usec()
+	if _phase != "" and _mark == "p_flushed":
+		var b: Dictionary = _split.get_or_add(_phase, {})
+		var key := "sync_flush" if what == "timers" else ("sync_timers" if _after == "timers" else "sync_flush")
+		b[key] = int(b.get(key, 0)) + now - (_after_t if _after_t > 0 else _mark_t)
+		_after = what
+		_after_t = now
 
 
 ## (breakdown) How many of the engine's own busy nodes there are (once a second).
@@ -203,6 +240,11 @@ func band(index: int, physics: bool) -> void:
 
 func edge(what: String) -> void:
 	var now := Time.get_ticks_usec()
+	if _drawn_t > 0 and (what == "ph_start" or what == "p_start"):   # (breakdown: the drawing done, on to the next tick or frame)
+		if _phase != "":
+			var bd: Dictionary = _split.get_or_add(_phase, {})
+			bd["after_draw"] = int(bd.get("after_draw", 0)) + now - _drawn_t
+		_drawn_t = 0
 	if breakdown:
 		match what:
 			"ph_start":
@@ -244,12 +286,17 @@ func _process(_delta: float) -> void:
 	if _last > 0:
 		var vp := get_viewport().get_viewport_rid()
 		var asked := not _threaded
+		var info := func(type: int, what: int) -> float: return float(get_viewport().get_render_info(type, what)) if asked else 0.0
 		_rows.append([_phase, (now - _last) / 1000.0, Performance.get_monitor(Performance.TIME_PROCESS) * 1000.0,
 			Performance.get_monitor(Performance.TIME_PHYSICS_PROCESS) * 1000.0, RenderingServer.viewport_get_measured_render_time_cpu(vp) if asked else 0.0,
 			RenderingServer.viewport_get_measured_render_time_gpu(vp) if asked else 0.0,
 			Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME) if asked else 0.0,
 			get_tree().get_nodes_in_group(&"critters").filter(func(c): return c.alive).size(),
-			Performance.get_monitor(Performance.TIME_NAVIGATION_PROCESS) * 1000.0])
+			Performance.get_monitor(Performance.TIME_NAVIGATION_PROCESS) * 1000.0,
+			RenderingServer.get_frame_setup_time_cpu() if asked else 0.0,
+			info.call(Viewport.RENDER_INFO_TYPE_VISIBLE, Viewport.RENDER_INFO_OBJECTS_IN_FRAME),
+			info.call(Viewport.RENDER_INFO_TYPE_VISIBLE, Viewport.RENDER_INFO_DRAW_CALLS_IN_FRAME),
+			info.call(Viewport.RENDER_INFO_TYPE_SHADOW, Viewport.RENDER_INFO_DRAW_CALLS_IN_FRAME)])
 		if (now - _last) / 1000.0 > 50.0:
 			_spikes.append([_phase, snappedf((now - _phase_t) / 1e6, 0.01), snappedf((now - _last) / 1000.0, 0.1)])
 	_last = now
@@ -262,7 +309,7 @@ func _run() -> void:
 	settings.set_value(&"mode", mode, false)
 	settings.set_value(&"seed", 4321, false)
 	settings.set_value(&"opponents", opponents, false)
-	settings.set_value(&"vsync", 0, false)
+	settings.set_value(&"vsync", 1, false)   # (Off: Graphics.VSYNC_NAMES)
 	settings.set_value(&"max_fps", 0, false)
 	seed(4321)   # (the bots' choices: where they land, who they go for; runs still drift apart, fights are chaotic)
 	var t0 := Time.get_ticks_msec()
@@ -333,7 +380,8 @@ func _write() -> void:
 		out.phases[ph] = {"frames": n, "fps": 1000.0 / avg.call(1), "ms_p50": frames[n / 2], "ms_p95": frames[int(n * 0.95)],
 			"ms_p99": frames[mini(n - 1, int(n * 0.99))], "ms_worst": frames[n - 1], "frames_over_33ms": frames.filter(func(f): return f > 33.3).size(),
 			"process_ms": avg.call(2), "physics_ms": avg.call(3), "render_cpu_ms": avg.call(4), "render_gpu_ms": avg.call(5),
-			"draw_calls": avg.call(6), "alive": avg.call(7), "navigation_ms": avg.call(8)}
+			"draw_calls": avg.call(6), "alive": avg.call(7), "navigation_ms": avg.call(8),
+			"setup_ms": avg.call(9), "objects": avg.call(10), "draws_view": avg.call(11), "draws_shadow": avg.call(12)}
 		var b: Dictionary = _split.get(ph, {})
 		for k in b:
 			out.phases[ph]["split_" + k] = b[k] / 1000.0 / n

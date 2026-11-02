@@ -420,7 +420,10 @@ def build_auto_rig(body):
         nearest = np.argmin(dist, axis=1)
         for k, i in enumerate(miss):
             body.vertex_groups[names[nearest[k]]].add([int(i)], 1.0, "REPLACE")
-    # strict regions: the recipe can pin vertices in a box to one bone (a jaw, a key)
+    # strict regions: the recipe can pin vertices in a box to one bone (a jaw, a key),
+    # and ("pin_round": bone -> radius) only those of them that near the bone's own
+    # line: a sleeve's, not the coat flaring out in front of it and behind it in the
+    # same box (pinned to the arm, the coat swung out with it in great sheets)
     co = coords(body)
     pinned = {}
     for name, boxes in CFG.get("pin", {}).items():
@@ -428,6 +431,15 @@ def build_auto_rig(body):
         for bx in boxes:
             lo, hi = np.array(bx[0]), np.array(bx[1])
             sel |= np.all((co >= lo) & (co <= hi), axis=1)
+        rad = CFG.get("pin_round", {}).get(name)
+        if rad:
+            b = arm.data.bones[name]
+            a, t = np.array(b.head_local), np.array(b.tail_local)
+            d = (t - a) / max(np.linalg.norm(t - a), 1e-9)
+            rel = co - a
+            off = np.linalg.norm(rel - np.outer(rel @ d, d), axis=1)
+            log("pin_round %s: %d of %d in its boxes within %.3f of its line" % (name, int((sel & (off <= rad)).sum()), int(sel.sum()), rad))
+            sel &= off <= float(rad)
         pinned[name] = sel
         idx = [int(i) for i in np.nonzero(sel)[0]]
         for vg in body.vertex_groups:
@@ -505,6 +517,81 @@ def build_auto_rig(body):
                 body.vertex_groups[others[nearest[k]]].add([int(i)], 1.0, "REPLACE")
         log("pin_only: %d bones kept to their boxes, %d vertices given to the nearest other bone" % (len(only), len(miss)))
     return arm
+
+
+def rip_limbs(body, arm):
+    """Each "rip" chain of bones (an arm: its upper and lower arm and hand) cut
+    free of the rest of the mesh. A wooden toy's limbs are pieces of their own,
+    turning on pegs; a sleeve modelled fused to the coat beside it dragged a
+    sheet of coat along whenever the arm swung, however its weights were
+    split. The faces between the two go to the body; the cut gives each side
+    its own vertices along it (the body's copies of the arm's take the body's
+    weights), and both openings are capped, each cap's corners textured like
+    the cloth beside them."""
+    import bmesh
+    bm = bmesh.new()
+    bm.from_mesh(body.data)
+    dl = bm.verts.layers.deform.verify()
+    uv = bm.loops.layers.uv.active
+    gi = {vg.name: vg.index for vg in body.vertex_groups}
+    only = set(CFG.get("pin_only", []))
+    names = [b.name for b in arm.data.bones if b.use_deform]
+    for chain in CFG["rip"]:
+        ids = {gi[n] for n in chain if n in gi}
+        own = set()
+        for f in bm.faces:
+            if all(sum(w for g, w in v[dl].items() if g in ids) > 0.5 for v in f.verts):
+                own.add(f)
+        was_open = {e for e in bm.edges if e.is_boundary}
+        cut = [e for e in bm.edges if any(f in own for f in e.link_faces) and any(f not in own for f in e.link_faces)]
+        bmesh.ops.split_edges(bm, edges=cut)
+        # still joined at a corner (a vertex shared, not an edge): the limb's faces get a vertex of their own there
+        corners = 0
+        for v in list(bm.verts):
+            fs = list(v.link_faces)
+            if any(f in own for f in fs) and any(f not in own for f in fs):
+                copies = [bmesh.utils.face_vert_separate(f, v) for f in fs if f in own]
+                if len(copies) > 1:
+                    bmesh.ops.pointmerge(bm, verts=copies, merge_co=v.co)
+                corners += 1
+        # the body's side of the cut: its copies of the limb's vertices are the body's
+        others = [n for n in names if n not in only and n in gi and gi[n] not in ids]
+        segs = [(np.array(arm.data.bones[n].head_local), np.array(arm.data.bones[n].tail_local)) for n in others]
+        moved = 0
+        for v in bm.verts:
+            if not v.link_faces or all(f in own for f in v.link_faces):
+                continue
+            dv = v[dl]
+            mine = [g for g in dv.keys() if g in ids]
+            if not mine:
+                continue
+            for g in mine:
+                del dv[g]
+            if sum(dv.values()) < 1e-4:
+                p = np.array([tuple(v.co)])
+                near = int(np.argmin([seg_dist(p, a, b)[0] for a, b in segs]))
+                dv[gi[others[near]]] = 1.0
+            moved += 1
+        # and both openings capped
+        opened = [e for e in bm.edges if e.is_boundary and e not in was_open]
+        before = set(bm.faces)
+        bmesh.ops.holes_fill(bm, edges=opened, sides=0)
+        caps = [f for f in bm.faces if f not in before]
+        for f in caps:   # (one colour each: the middle of the biggest face beside it, in the texture)
+            nbr = [g for e in f.edges for g in e.link_faces if g is not f and g not in caps]
+            if not nbr:
+                continue
+            big = max(nbr, key=lambda g: g.calc_area())
+            f.material_index = big.material_index
+            if uv is not None:
+                mid = sum((lp[uv].uv for lp in big.loops), start=big.loops[0][uv].uv * 0.0) / len(big.loops)
+                for lp in f.loops:
+                    lp[uv].uv = mid
+        log("rip %s: %d faces cut free along %d edges (%d corners), %d body vertices given back, %d caps" % (
+            chain[0], len(own), len(cut), corners, moved, len(caps)))
+    bm.to_mesh(body.data)
+    body.data.update()
+    bm.free()
 
 
 def clean_own_rig(body, arm):
@@ -834,6 +921,8 @@ def build():
     else:
         arm = build_auto_rig(body)
         roles = {r: r for r in ROLES if r in arm.data.bones}
+    if CFG.get("rip"):
+        rip_limbs(body, arm)
     select_only([body], body)
     bpy.ops.object.vertex_group_limit_total(group_select_mode="ALL", limit=4)
     bpy.ops.object.vertex_group_normalize_all(group_select_mode="ALL", lock_active=False)

@@ -28,10 +28,12 @@ stage frames every shot for a phone, and the same cut makes the phone one:
 
     python3 tools/make_hunt_trailer.py --cut arsenal /tmp/arsenal_tall /tmp/arsenal/lines docs/trailer_arsenal_phone
 
-"Boss Battles" is 16:9 like "Your Arsenal", a recording a map at a time
-("boss island", "boss toybox", "boss cage"); the stage prints SHOUT
-<rogue>|<line id>|<game line key> for each line, and those are cut from the
-rogues' voice banks:
+"Boss Battles" is 16:9 like "Your Arsenal", a recording a boss at a time
+into its own folder: island/ ("boss island": Brutus), owl/ ("boss island
+owl": Old Hoot), toybox/ ("boss toybox"), crackjaw/ ("boss toybox
+nutcracker"), cage/ ("boss cage": Nibbles, and the ending), noodle/ ("boss
+cage ferret"); the stage prints SHOUT <rogue>|<line id>|<game line key> for
+each line, and those are cut from the rogues' voice banks:
 
     grep -h SHOUT /tmp/boss/*/log.txt | sed 's/^SHOUT //' | xargs -d '\n' python3 tools/voices/say.py --from-bank /tmp/boss/lines
     python3 tools/make_hunt_trailer.py --cut boss /tmp/boss /tmp/boss/lines docs/trailer_bosses
@@ -82,15 +84,21 @@ BOSS_EDIT = [
     ("island", "meadow", 0.0, 3.6),
     ("island", "arrival", 0.5, 6.9),
     ("island", "pound", 0.0, 3.6),
+    ("owl", "owl_arrival", 1.0, 6.6),
+    ("owl", "snatch", 0.8, 5.0),
     ("toybox", "toy_wide", 0.0, 1.5),
-    ("toybox", "tyrant", 0.4, 5.9),
-    ("toybox", "lasers", 0.0, 3.8),
-    ("toybox", "key", 0.0, 3.4),
-    ("cage", "nibbles", 0.3, 5.6),
-    ("cage", "charge", 0.0, 4.6),
+    ("toybox", "tyrant", 0.4, 5.4),
+    ("toybox", "lasers", 0.0, 3.4),
+    ("crackjaw", "crackjaw", 0.5, 5.0),
+    ("crackjaw", "march", 0.3, 4.2),
+    ("crackjaw", "timber", 0.4, 3.6),
+    ("cage", "nibbles", 0.3, 5.0),
+    ("cage", "charge", 0.4, 6.0),
+    ("noodle", "noodle", 1.2, 5.6),
+    ("noodle", "pop", 2.6, 5.2),
     ("cage", "down", 0.0, 3.8),
     ("cage", "reward", 0.0, 3.5),
-    ("cage", "card", 0.0, 4.2),
+    ("cage", "card", 0.0, 4.6),
 ]
 CUTS = {"hunt": (EDIT, MUSIC), "arsenal": (ARSENAL_EDIT, ARSENAL_MUSIC), "boss": (BOSS_EDIT, BOSS_MUSIC)}
 # The cuts whose game sound and music duck under each line (a boss's landing

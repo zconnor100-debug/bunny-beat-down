@@ -26,18 +26,18 @@
     "hat": "hat"
   },
   "radii": {
-    "hips": 0.1013,
-    "spine": 0.0859,
-    "chest": 0.0984,
-    "neck": 0.1031,
-    "head": 0.1075,
+    "hips": 0.1028,
+    "spine": 0.0861,
+    "chest": 0.1002,
+    "neck": 0.1013,
+    "head": 0.1068,
     "jaw": 0.0453,
-    "l_upper_arm": 0.0375,
-    "l_lower_arm": 0.031,
+    "l_upper_arm": 0.0374,
+    "l_lower_arm": 0.0309,
     "l_hand": 0.0322,
-    "r_upper_arm": 0.0673,
-    "r_lower_arm": 0.0604,
-    "r_hand": 0.0622,
+    "r_upper_arm": 0.0373,
+    "r_lower_arm": 0.0308,
+    "r_hand": 0.0325,
     "l_upper_leg": 0.0511,
     "l_lower_leg": 0.0512,
     "r_upper_leg": 0.0419,
@@ -98,22 +98,22 @@
     "r_shoulder": [
       -0.12,
       0.6,
-      -0.027
+      0.013
     ],
     "r_upper_arm": [
       -0.132,
       0.47,
-      -0.027
+      0.013
     ],
     "r_lower_arm": [
       -0.132,
       0.35,
-      -0.027
+      0.013
     ],
     "r_hand": [
       -0.13,
       0.285,
-      -0.027
+      0.013
     ],
     "l_upper_leg": [
       0.048,
@@ -170,6 +170,6 @@
     0.065
   ],
   "eye_mask": "eyes.png",
-  "tris": 58790,
+  "tris": 59366,
   "notes": "Facing +Z (glTF/Godot), +Y up, 1 unit tall to the top of its bounds (the game scales it); feet on y = 0, centred. eyes/mouth are in those units, before any posing."
 }

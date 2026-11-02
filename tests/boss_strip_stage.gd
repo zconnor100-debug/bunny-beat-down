@@ -18,6 +18,7 @@ var bun_at := Vector3(0, 0, 60)   ## where the bun it goes for stands (to one si
 var dist := 1.0             ## how far back the camera stands (a tall boss: further)
 var hold := 0.0             ## seconds stood still after the walk, before its moves
 var air := 0.0              ## a flier (Old Hoot) starts up in the air, this high (a death out of the sky)
+var aim := -1.0             ## the camera at this height, looking level at the boss there (a close look at its middle)
 var cam: Camera3D
 var bun: Critter
 
@@ -156,6 +157,10 @@ func _aim(boss: Boss) -> void:
 			cam.global_position = at + (-fwd * 75.0 + left * 20.0 + Vector3.UP * 12.0) * dist
 		_:
 			cam.global_position = at + (left * 58.0 + Vector3.UP * 7.0) * dist
+	if aim >= 0.0:
+		cam.global_position.y = aim
+		cam.look_at(at + Vector3.UP * aim, Vector3.UP)
+		return
 	cam.look_at(at + Vector3.UP * 8.0 * dist, Vector3.UP)
 
 

@@ -824,11 +824,10 @@ prologue's island seed, its rangers and waves; `note_result`, `done`,
 - **The renderer stays on the main thread** (`rendering/driver/threads/thread_model`
   Safe), measured, not assumed. On its own thread (`--render-thread separate`)
   the CPU side of drawing runs alongside the game's code instead of after it:
-  `tests/perf_match.gd` (island Battle Royale, 49 bots) went from 110 to 143
-  fps in the fighting on the development PC, and from 61 to 104–114 on a
-  slow-processor stand-in (pinned to 4 cores, each shared with a busy loop),
-  the frame's rendering share on the main thread falling from 8 ms to under
-  3. But Godot 4.6.2's separate render thread finishes its RenderingDevice
+  `tests/perf_match.gd` (island Battle Royale, 49 bots, V-Sync off) went
+  from about 180 fps to 320–360 at Low on the development PC, where the
+  processor is what holds it back, and from 147–150 to 155–160 at High,
+  where the graphics card is. But Godot 4.6.2's separate render thread finishes its RenderingDevice
   from the main thread on quit ("finalize can only be called from the render
   thread", upstream issues #119000 and #124799): every quit crashes on NVIDIA
   (AMD's driver lets it go), and every match logged render-thread errors the
@@ -838,7 +837,24 @@ prologue's island seed, its rangers and waves; `note_result`, `done`,
   of its log. The stage doesn't ask RenderingServer for its timings or draw
   calls when the renderer has a thread of its own (each question would wait
   on the render thread and undo the overlap being measured), and it records
-  the match's load time (`load_s`).
+  the match's load time (`load_s`). It turns V-Sync off itself: test runs
+  leave the settings' V-Sync alone, and held to a 144 Hz screen every run
+  read about 141 fps, the wait for the screen counted as drawing.
+- **What's measured, frame by frame** (`perf_match.gd ... breakdown`, V-Sync
+  off, Low, the development PC: 5–7 ms a frame mid-fight): the game's code
+  in physics ticks (the critters, the bots' brains) and in the frame, the
+  skeletons' poses (`frame_deferred`), Jolt, and RenderingServer's drawing,
+  its own share (`render_cpu_ms`, `setup_ms`) and the rest, split further by
+  marks in what the tree does after the frame (`sync_flush`: transforms told
+  and freed nodes deleted; its timers and tweens; `sync_rest`) and after the
+  drawing (`after_draw`). Shadows and foliage aren't where it goes. Two cuts
+  that are: `FX._unseen` drops a burst too small to see from the camera (its
+  particles under a pixel) or short-lived, small and out of view (a match's
+  bursts are mostly bots' muzzles and hits, two thirds off screen, half of
+  them 200 m off; particle systems alive mid-fight went from about 120 to
+  under 15), and a critter out of view is posed every fourth frame
+  (`CritterVisual.POSE_UNSEEN`). Together, at Low: 154–156 fps to 177–184
+  through the landings, about +10% in the fighting.
 - **The rangers' lines** are `Cast.KERNEL_LINES` (`kt`, `kw`, `ks`, `ky`, `kb`,
   `kg`, `kc`, `kd`, `kr`; Act I's `pt`, `pc`, `pp`, `pf`, `pl`, `pd`, `pw`,
   `pb`, `pk`), voiced for every rogue like every other line, said by the

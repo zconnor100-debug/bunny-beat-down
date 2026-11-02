@@ -85,10 +85,12 @@ var _interpolate := true
 ## Posing (the animator, the springs, the ragdoll, then the skin) is the
 ## dearest thing a critter does each frame, so the skeleton is advanced from
 ## here: not while the critter can't be seen (riding in the balloon), every
-## frame up close, every other frame further off and every third beyond that
-## (or behind the camera). The critters take turns.
+## frame up close, every other frame further off and every third beyond that,
+## every fourth out of view (behind the camera or off to the side). The
+## critters take turns.
 const POSE_FULL := 30.0
 const POSE_HALF := 70.0
+const POSE_UNSEEN := 4
 var _pose_dt := 0.0
 var _pose_wait := 0
 
@@ -184,11 +186,13 @@ func _advance_pose(delta: float) -> void:
 	if _pose_wait > 0:
 		return
 	_pose_wait = _pose_interval()
-	skeleton.advance(minf(_pose_dt, 0.1))
+	skeleton.advance(minf(_pose_dt, 0.15))
 	_pose_dt = 0.0
 
 
-## Frames from one pose to the next: 1 up close (or with no camera to judge by).
+## Frames from one pose to the next: 1 up close (or with no camera to judge
+## by), 2 or 3 further off, POSE_UNSEEN out of view (behind the camera or off
+## to the side: nobody sees its pose, only its hitboxes go by it).
 func _pose_interval() -> int:
 	var cam := get_viewport().get_camera_3d()
 	if cam == null:
@@ -197,7 +201,10 @@ func _pose_interval() -> int:
 	var d := cam.global_position.distance_to(at)
 	if d < POSE_FULL:
 		return 1
-	return 3 if d > POSE_HALF or cam.is_position_behind(at) else 2
+	var eye := rig.world_eye_height if rig else 0.85
+	if not (cam.is_position_in_frustum(at + Vector3.UP * 0.3) or cam.is_position_in_frustum(at + Vector3.UP * eye)):
+		return POSE_UNSEEN
+	return 3 if d > POSE_HALF else 2
 
 
 ## The KillCam's replay runs with the match paused, this node too: meanwhile

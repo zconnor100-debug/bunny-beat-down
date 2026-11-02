@@ -285,9 +285,12 @@ func _flash(pos: Vector3, radius: float) -> void:
 	tw.tween_callback(light.queue_free)
 
 
+## A one-shot burst at `pos` (null: not worth one, _unseen).
 func _burst(pos: Vector3, dir: Vector3, cfg: Dictionary) -> GPUParticles3D:
 	if KillCam.recording and not KillCam.instance.playing:
 		KillCam.instance.note_fx(pos, dir, cfg)
+	if _unseen(pos, cfg):
+		return null
 	var p := _make_particles(cfg, true)
 	add_child(p)
 	p.global_position = pos
@@ -299,6 +302,28 @@ func _burst(pos: Vector3, dir: Vector3, cfg: Dictionary) -> GPUParticles3D:
 	# the muzzle's few-particle flecks were piling up in their thousands)
 	Despawner.after(p, p.lifetime * 1.5 + 0.5, func(m: Node): m.queue_free())
 	return p
+
+
+## A burst nobody would see: its particles under a pixel from the camera,
+## or short-lived, small, out of view and not close by (a match's bursts are
+## mostly bots' muzzles and hits, a third of them on screen and half of them
+## 200 m off; each one a particle system for the renderer to run, every
+## frame, till it's done). Smoke and blasts that hang about are kept off
+## screen: you could turn and see them.
+func _unseen(pos: Vector3, cfg: Dictionary) -> bool:
+	var vp := get_viewport()
+	var cam := vp.get_camera_3d() if vp else null
+	if cam == null:
+		return false
+	var d := cam.global_position.distance_to(pos)
+	var size: float = cfg.get("size", 0.1)
+	var rect := vp.get_visible_rect()
+	var px := size * 1.5 / maxf(d, 0.01) * rect.size.y / (2.0 * tan(deg_to_rad(cam.fov) * 0.5)) if cam.projection == Camera3D.PROJECTION_PERSPECTIVE else 99.0
+	if px < 1.0:
+		return true
+	if float(cfg.get("lifetime", 1.0)) > 2.0 or size > 0.3 or d < float(cfg.get("aabb", 6.0)) * 2.0:
+		return false
+	return cam.is_position_behind(pos) or not rect.grow(rect.size.x * 0.15).has_point(cam.unproject_position(pos))
 
 
 func _make_particles(cfg: Dictionary, one_shot: bool) -> GPUParticles3D:

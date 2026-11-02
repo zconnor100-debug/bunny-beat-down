@@ -32,13 +32,16 @@ real limb-popping gore, and floppy physics ears are included.
 
 Built in **Godot 4.6** (GDScript, Jolt physics, Forward+).
 
-▶ **[Boss Battles](docs/trailer_bosses.mp4)**, 49 seconds in 1080p (with
-sound): one night a star fell on Wildwood, and it wasn't a star. Each boss
-arrives the way the game plays it, dropping out of the sky (or bursting out
-of the bedding) under its name card: Brutus's ground pound, the Tin Tyrant's
-eye lasers and wind-down, Nibbles's charge into a wall and its fall, the
-rogues on your side shouting their in-game lines in their own voices, and Bun
-in the pieces you keep.
+▶ **[Boss Battles](docs/trailer_bosses.mp4)**, 74 seconds in 1080p (with
+sound): one night a star fell on Wildwood, and it wasn't a star. All six
+bosses arrive the way the game plays them, dropping out of the sky (or
+bursting out of the bedding) under their name cards: Brutus's ground pound,
+Old Hoot gliding in across the moon and carrying one of you off, the Tin
+Tyrant's eye lasers, Crackjaw's Quick March and his fall like a felled pine,
+Nibbles galloping into a wall and sitting there dazed, Noodle popping up out
+of the bedding under a crowd, and Nibbles's fall, the rogues on your side
+shouting their in-game lines in their own voices, and Bun in the pieces you
+keep.
 
 ▶ **[The Hunt](docs/trailer_hunt_phone.mp4)**, a 33-second phone trailer (with
 sound): Bun is the quarry of a hunting party across all three maps, every
@@ -1136,10 +1139,11 @@ further back and in behind Bun, one speech bubble at a time). Their music: "Bush
 "Voxel Revolution", by Kevin MacLeod.
 
 "Boss Battles" (`tests/trailer_boss_stage.gd`, `--cut boss`) is the real
-game on each map with the bots' own brains fighting the boss: the stage
+game, a boss at a time, with the bots' own brains fighting it: the stage
 lands it in a clearing in front of a crowd, the game's own `BossIntro` films
-its arrival, and the stage cues its moves (the pound, the boulder, the
-lasers, the wind-down, the charge) and the shots. The rogues' shouts are the
+its arrival, and the stage cues its moves (the pound, the snatch, the
+lasers, the march and Timber!, the charge, the pop) and the shots, the few
+each big move is aimed at held still for it. The rogues' shouts are the
 game's boss lines, cut from their voice banks (`say.py --from-bank`, each
 rogue the stage printed on a SHOUT line). Its music: "Volatile Reaction" by
 Kevin MacLeod, the Boss Battles' own.

@@ -1,16 +1,20 @@
 extends "res://tests/trailer_hunt_stage.gd"
 ## "Boss Battles", a 16:9 trailer: the Warren's legend in two lines, then each
-## map's boss arriving the way the game plays it (BossIntro: the fall, the
-## slam, its name and the line the Warren knows it by) and what it does:
-## Brutus's ground pound and boulder, the Tin Tyrant's eye lasers and its
-## wind-down (shoot the key), Nibbles's charge into a wall, and its fall; then
-## Bun in the pieces you keep (the Brutus coat, the Tin Tyrant gun skin, the
+## boss arriving the way the game plays it (BossIntro: the fall, the slam,
+## its name and the line the Warren knows it by) and what it does: Brutus's
+## ground pound and boulder, Old Hoot by night dropping out of the dark and
+## carrying one off, the Tin Tyrant's eye lasers and its wind-down (shoot the
+## key), Crackjaw's Quick March and Timber!, Nibbles's galloping charge into
+## a wall, Noodle popping up under one of them, and Nibbles's fall; then Bun
+## in the pieces you keep (the Brutus coat, the Tin Tyrant gun skin, the
 ## Rabid froth) and the card. The rogues round it shout the game's own boss
 ## lines (Cast.BOSS_LINES) in their own voices, laid in by the cut: the stage
 ## prints LINE <id> <frame> and SHOUT <rogue> <id> <key>, and the clips come
 ## from the voice banks (tools/voices/say.py --from-bank). Everything else is
-## the real game: the bots fight it with their own brains. Recorded a map at a
-## time ("boss island|toybox|cage", tests/capture_trailer.gd) and cut by
+## the real game: the bots fight it with their own brains (but the few each
+## big move's aimed at: they hold still for it). Recorded a boss at a time
+## ("boss island|toybox|cage", and each map's other boss with "owl",
+## "nutcracker" or "ferret" after it: tests/capture_trailer.gd) and cut by
 ## tools/make_hunt_trailer.py --cut boss.
 
 ## Where each boss lands: the Carrot Patch (where Brutus ate the glowing
@@ -20,13 +24,20 @@ const WHERE := {"island": "Carrot Patch", "toybox": "Block Castle", "cage": "San
 const GUNS := [&"carrot_rifle", &"carrot_lmg", &"carrot_smg", &"carrot_shotgun", &"carrot_rifle", &"carrot_rocket_launcher"]
 
 var boss: Boss
+var second := ""              ## the map's other boss, recorded on its own: "owl", "nutcracker", "ferret" ("": its first)
 var _land := Vector3.ZERO     # (where it lands)
 var _fwd := Vector3.FORWARD   # (flat: from there toward the crowd and Bun)
 var _crowd: Array = []        # (the bots in the shots, fighting it)
 
 
 func _ready() -> void:
-	get_tree().root.get_node("Settings").set_value(&"mode", "boss", false)
+	var a := OS.get_cmdline_user_args()
+	for id in ["owl", "nutcracker", "ferret"]:
+		if a.has(id):
+			second = id
+	var settings: Node = get_tree().root.get_node("Settings")
+	settings.set_value(&"mode", "boss", false)
+	settings.set_value(&"boss", second, false)
 	BossIntro.skippable = false
 	super()
 
@@ -198,9 +209,31 @@ func _do(a: BossAction) -> void:
 		boss.start(a)
 
 
+## A few of the crowd put down round `spot`, facing where it landed, and held
+## still for what comes at them (their brains off: they'd get out of the red).
+func _knot(from: int, to: int, spot: Vector3, spread := 4.0) -> Array:
+	var knot: Array = _crowd.filter(func(c): return c.alive).slice(from, to)
+	for c: Critter in knot:
+		var at := spot + Vector3(_rng.randf_range(-spread, spread), 0.0, _rng.randf_range(-spread, spread))
+		_place(c, at, _yaw_to(_land - at))
+		_hold(c)
+	return knot
+
+
+func _hold(c: Critter) -> void:
+	var brain: Node = c.get_node_or_null("AIBrain")
+	if brain:
+		brain.process_mode = Node.PROCESS_MODE_DISABLED
+	c.move_input = Vector2.ZERO
+	c.want_fire = false
+
+
 # ---- Wildwood Island: Brutus ----------------------------------------------------------------------
 
 func _island() -> void:
+	if second == "owl":
+		await _owl()
+		return
 	await _set_up()
 	# 1. the legend, over the meadow and the crowd looking out to where it'll land
 	_begin("meadow")
@@ -256,6 +289,9 @@ func _island() -> void:
 # ---- Toy Box Bash: the Tin Tyrant -------------------------------------------------------------------
 
 func _toybox() -> void:
+	if second == "nutcracker":
+		await _crackjaw()
+		return
 	await _set_up()
 	_begin("toy_wide")
 	var low := _cam_spot(_land, _land + Vector3.UP * 30.0, 0.2, 72.0, 3.0)
@@ -272,7 +308,7 @@ func _toybox() -> void:
 	var target: Critter = knot[2] if knot.size() > 2 else bun
 	cam.global_position = _cam_spot(spot, boss.get_eye_position(), _angle_of(spot - _land) + 0.35, 13.0, 3.0)
 	_begin("lasers")
-	_say("EVERY MAP HAS ONE", "Brutus  ·  the Tin Tyrant  ·  Nibbles", 2.4)
+	_say("EVERY MAP HAS TWO", "", 2.0)
 	_do(boss.call("_lasers", target))
 	await _for(0.6)
 	_shout(knot[0] if not knot.is_empty() else null, "br.1", Cast.BOSS_RUN_LINES[1], 2.0)
@@ -333,6 +369,9 @@ func _toybox() -> void:
 # ---- the Hamster Cage: Nibbles --------------------------------------------------------------------
 
 func _cage() -> void:
+	if second == "ferret":
+		await _noodle()
+		return
 	await _set_up()
 	await _arrival("nibbles")
 	_let_them_fight()
@@ -354,7 +393,7 @@ func _cage() -> void:
 	_begin("charge")
 	_do(boss.call("_charge", target))
 	var stunned_said := false
-	await _for(4.6, func():
+	await _for(6.4, func():   # (the gallop, the crash, and sat there dazed, washing its face)
 		cam.look_at(boss.get_chest_position(), Vector3.UP)
 		_wobble(0.5)
 		if boss.vulnerable() and not stunned_said:
@@ -417,8 +456,9 @@ func _cage() -> void:
 	_title_box.modulate.a = 0.0
 	_slam_title("BOSS BATTLES")
 	await _for(0.8)
-	var lines := [_label("Brutus  ·  the Tin Tyrant  ·  Nibbles the Rabid", 62, UITheme.CREAM),
-		_label("Twenty-five of you. One of it. Every map has its own.", 42, UITheme.CARROT_LIGHT),
+	var lines := [_label("Brutus  ·  Old Hoot  ·  the Tin Tyrant", 54, UITheme.CREAM),
+		_label("Crackjaw  ·  Nibbles the Rabid  ·  Noodle", 54, UITheme.CREAM),
+		_label("Twenty-five of you. One of it. Every map has two.", 42, UITheme.CARROT_LIGHT),
 		_label("FREE TO PLAY  ·  github.com/zconnor100-debug/bunny-beat-down", 38, UITheme.CREAM)]
 	for i in lines.size():
 		var l: Label = lines[i]
@@ -426,6 +466,117 @@ func _cage() -> void:
 		l.modulate.a = 0.0
 		l.create_tween().set_ignore_time_scale(true).tween_property(l, "modulate:a", 1.0, 0.3).set_delay(i * 0.35)
 	await _for(3.4)
+	_end()
+
+
+# ---- Wildwood Island by night: Old Hoot ------------------------------------------------------------
+
+func _owl() -> void:
+	await _set_up()
+	await _arrival("owl_arrival")
+	_let_them_fight()
+	# up off her perch, and down out of the dark on a knot of them: one's carried off
+	var owl := boss as OwlBoss
+	var spot := _open_spot(_land + _fwd.rotated(Vector3.UP, 0.4) * 44.0, 10.0, true)
+	var knot := _knot(0, 5, spot)
+	var target: Critter = knot[0] if not knot.is_empty() else bun
+	_do(boss.call("_take_off"))
+	await _for(1.9)
+	var from := _cam_spot(spot, spot + Vector3.UP * 24.0, _angle_of(spot - _land) + 0.7, 24.0, 2.0)
+	cam.global_position = from
+	_begin("snatch")
+	_do(boss.call("_snatch", target))
+	var held_said := false
+	await _for(5.0, func():
+		var prey: Vector3 = target.global_position if is_instance_valid(target) else spot
+		cam.look_at(boss.get_chest_position().lerp(prey, 0.35), Vector3.UP)
+		_wobble(0.6)
+		if not held_said and owl.holding():
+			held_said = true
+			_shout(_nearest_to(cam.global_position, target), "bh.0", Cast.BOSS_HELD_LINES[0], 2.4))
+	_end()
+
+
+# ---- Toy Box Bash: Crackjaw -------------------------------------------------------------------------
+
+func _crackjaw() -> void:
+	await _set_up()
+	await _arrival("crackjaw")
+	_let_them_fight()
+	# the Quick March: a drum roll, a red lane, and down it through a line of
+	# them, every stamp of his boots knocking them flying (the rest of the
+	# crowd on the far side of the lane, out of the camera's way)
+	boss.global_position = _land
+	var lane := _fwd
+	var across := lane.cross(Vector3.UP)   # (the camera's side of the lane)
+	var line: Array = _crowd.filter(func(c): return c.alive).slice(0, 6)
+	for i in line.size():
+		var at := _land + lane * (26.0 + i * 8.0) + across * _rng.randf_range(-4.0, 4.0)
+		_place(line[i], at, _yaw_to(_land - at))
+		_hold(line[i])
+	for c: Critter in _crowd:
+		if c.alive and not line.has(c):
+			var at := _land + lane * _rng.randf_range(8.0, 70.0) - across * _rng.randf_range(24.0, 42.0)
+			_place(c, at, _yaw_to(_land - at))
+	var target: Critter = line[line.size() - 1] if not line.is_empty() else bun
+	boss.rotation.y = _yaw_to(lane)
+	var mid := _land + lane * 40.0
+	cam.global_position = _cam_spot(mid, mid + Vector3.UP * 8.0, _angle_of(across), 30.0, 5.0)
+	var watch := func():
+		cam.look_at(boss.global_position + Vector3.UP * 9.0, Vector3.UP)
+		_wobble(0.6)
+	_begin("march")
+	_do(boss.call("_march", target))
+	await _for(0.6, watch)
+	_shout(line[0] if not line.is_empty() else null, "br.1", Cast.BOSS_RUN_LINES[1], 2.0)
+	await _for(3.6, watch)
+	_end()
+	# Timber!: his legs shot out from under him, over he goes like a felled
+	# pine (forward, the way he's facing), slowed down as he falls
+	await _for(0.2)
+	boss.action = null
+	var feet := boss.global_position
+	var lands := feet + Vector3(boss.forward().x, 0.0, boss.forward().z).normalized() * Boss.HEIGHT * 0.62
+	var fall_mid := feet.lerp(lands, 0.5)
+	var square := Vector3(boss.forward().x, 0.0, boss.forward().z).normalized().cross(Vector3.UP)
+	cam.global_position = _cam_spot(fall_mid, fall_mid + Vector3.UP * 10.0, _angle_of(square), 40.0, 4.0)
+	var t0 := _t
+	var follow := func():   # (on his chest as he teeters, down to the floor with him)
+		var k := clampf((_t - t0 - 0.9) / 0.9, 0.0, 1.0)
+		cam.look_at(boss.get_chest_position().lerp(fall_mid + Vector3.UP * 3.0, k * 0.6), Vector3.UP)
+		_wobble(0.4)
+	_begin("timber")
+	_do(boss.call("_timber"))
+	await _for(0.95, follow)
+	await _slowmo(0.4, 0.5, follow)
+	_shout(_nearest_to(cam.global_position), "bt.0", Cast.BOSS_TIMBER_LINES[0], 2.2)
+	await _for(1.6, follow)
+	_end()
+
+
+# ---- the Hamster Cage: Noodle ----------------------------------------------------------------------
+
+func _noodle() -> void:
+	await _set_up()
+	await _arrival("noodle")
+	_let_them_fight()
+	# Pop Goes the Weasel: down she goes, a music box tinkling under the
+	# bedding, and POP! up she comes under one of them
+	var spot := _open_spot(_land + _fwd.rotated(Vector3.UP, -0.5) * 42.0, 12.0)
+	var knot := _knot(0, 5, spot, 5.0)
+	var target: Critter = knot[0] if not knot.is_empty() else bun
+	cam.global_position = _cam_spot(spot, spot + Vector3.UP * 8.0, _angle_of(spot - _land) + 0.9, 30.0, 3.0)
+	_begin("pop")
+	_do(boss.call("_pop_goes", target))
+	var t0 := _t
+	await _for(5.2, func():
+		var k := clampf((_t - t0 - 2.8) / 0.8, 0.0, 1.0)   # (on the knot till she's up, then on her)
+		cam.look_at(spot.lerp(boss.get_chest_position(), k) + Vector3.UP * 3.0, Vector3.UP)
+		_wobble(0.5))
+	_shout(_nearest_to(cam.global_position, target), "bp.0", Cast.BOSS_POP_LINES[0], 2.4)
+	await _for(1.4, func():
+		cam.look_at(boss.get_chest_position(), Vector3.UP)
+		_wobble(0.5))
 	_end()
 
 
