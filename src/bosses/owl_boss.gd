@@ -7,11 +7,14 @@ extends Boss
 ## bones). The first boss that flies: she circles the fight up high and comes
 ## down out of the dark for it.
 ##   Snatch: a red ring on whoever she's after, then she drops out of the sky
-##     onto it, carries off whoever's still in it and lets go from high up.
-##     Caught, jump and keep jumping to wriggle free; hit her enough and she
-##     lets go.
+##     onto it, carries off whoever's still in it and lets go from high up (a
+##     bot dropped from up there doesn't get up again). Caught, jump and keep
+##     jumping to wriggle free; hit her enough and she lets go (the bots'
+##     shots hardly loosen her grip; enraged, she isn't letting go for them
+##     at all, and you have to wriggle harder).
 ##   Talon Rake: a low pass along a red strip, talons out.
-##   Feather Volley: hovering, a flurry of feathers onto red rings.
+##   Feather Volley: hovering, a flurry of feathers onto red rings: on
+##     whoever she's after and on everyone round it.
 ##   Hoot: she puffs up and hoots, and everyone in the ring below her is
 ##     knocked off their feet.
 ##   Perch: now and then she comes down to rest, low and still: go for the
@@ -31,19 +34,37 @@ const CRUISE_SPEED := 24.0          ## m/s
 const ORBIT := 72.0                 ## metres round whoever she's after she circles at
 const FLAP := 1.6                   ## wingbeats a second, cruising
 const SNATCH_R := 9.0               ## her talons' reach at the bottom of a dive
-const DROP_FROM := 30.0             ## how high she lets go of what she's caught
+const DROP_FROM := 38.0             ## how high she lets go of what she's caught
 const RAKE_LEN := 80.0
 const RAKE_W := 10.0
 const HOOT_R := 34.0
 const FEATHER_R := 5.0
+const VOLLEY_SPREAD := 36.0         ## her feathers come down on whoever's this near whoever she's after, too
 const PERCH_R := 18.0               ## her wingbeats as she lands or takes off: everyone this near is blown back
 const PERCH_FOR := 5.5              ## seconds she rests when she perches
-const REST := 2.4                   ## seconds' cruising between two of her moves
+const REST := 1.6                   ## seconds' cruising between two of her moves
 const GROUND_AT := 7.0              ## hits on her wings in one dive that bring her down (yours count 1, a bot's 0.15)
 const GROUNDED_FOR := 5.5
-const LET_GO_AT := 9.0              ## hits while she's carrying someone that make her let go (yours count 1, a bot's 0.15)
-const STRUGGLES := 4                ## jumps that wriggle you free of her talons
+const LET_GO_AT := 9.0              ## hits while she's carrying someone that make her let go (yours count 1, a bot's 0.08; enraged, only yours)
+const STRUGGLES := 4                ## jumps that wriggle you free of her talons (enraged, ENRAGED_STRUGGLES)
+const ENRAGED_STRUGGLES := 6
 const WINGS := [&"l_upper_arm", &"l_lower_arm", &"l_hand", &"r_upper_arm", &"r_lower_arm", &"r_hand"]
+## Dead: flat on her front, her wings down from her shoulders to the ground
+## and splayed out flat across it from the elbow, her head on its side and
+## her tail laid out behind her. Her whole pose (her flying and perching pose
+## has faded out from under it by then), with her body tipped DEAD_PITCH onto
+## her front (the model's own lean makes up the rest). Worked out offline by
+## forward kinematics: her belly on the ground; her wings (raised in a V as
+## the model stands, their feathers trailing back from the bones) turned
+## down, swept out and twisted so the feathers lie level, trailing back; the
+## beak turned aside out of the dirt.
+const DEAD_PITCH := -1.04
+const DEAD := {&"spine": Vector3(-3, 0, 0), &"chest": Vector3(11, 0, 0), &"neck": Vector3(-4, 0, 0), &"head": Vector3(-8, 70, 22),
+	&"jaw": Vector3(12, 0, 0), &"l_upper_arm": Vector3(-56, -25, -72), &"r_upper_arm": Vector3(-56, 25, 72),
+	&"l_lower_arm": Vector3(-2, 51, -7), &"r_lower_arm": Vector3(-2, -51, 7), &"l_hand": Vector3(2, 15, 11), &"r_hand": Vector3(2, -15, -11),
+	&"tail": Vector3(-54, 0, 0), &"l_upper_leg": Vector3(31, 0, 0), &"r_upper_leg": Vector3(31, 0, 0),
+	&"l_lower_leg": Vector3(18, 0, 0), &"r_lower_leg": Vector3(18, 0, 0), &"l_foot": Vector3(10, 0, 0), &"r_foot": Vector3(10, 0, 0),
+	&"root": Vector3(0, -0.012, 0.02)}
 
 var night := true                   ## (game.gd: her battle's by night)
 var _air := false                   # flying (not perched, not down)
@@ -78,6 +99,7 @@ var _look_goal := Vector3.INF       # (where her head's snapped round to: held t
 var _look_next := 0.0
 var _fade_pose := {}                # (a move cut off: its pose, fading out instead of snapping away)
 var _fade_t := 1.0
+var _body_w := 1.0                  # (her flying and perching pose's share: down dead, it fades out from under her)
 
 
 func _init() -> void:
@@ -246,7 +268,7 @@ func _animate(delta: float) -> void:
 	if _air and alive and floor(was / TAU) != floor(_flap / TAU):
 		Audio.play_at(&"owl_flap", get_chest_position(), -4.0, 0.12, {"max_distance": 260.0, "unit_size": 30.0})
 	poser.clear()
-	poser.add_pose(_body_pose(), 1.0)
+	poser.add_pose(_body_pose(), _body_w)
 	var aw := action.weight() if action else 0.0
 	poser.add_pose(_perched_pose(), 1.0 - aw)
 	_look_at_target(delta, 1.0 - aw)
@@ -303,7 +325,7 @@ func _tilt(delta: float) -> void:
 	_air_k = lerpf(_air_k, 1.0 if _air else 0.0, clampf(delta * 2.5, 0.0, 1.0))
 	var fly := _air_k * (1.0 - _talons * 0.8)
 	var want := -0.62 * fly + _climb * 0.6 * _air_k + _dive_pitch + _dead_pitch
-	_pitch = lerpf(_pitch, want, clampf(delta * 3.0, 0.0, 1.0))
+	_pitch = lerpf(_pitch, want, clampf(delta * (3.0 if alive else 5.0), 0.0, 1.0))   # (dead: she flops down onto her front)
 	if not _air:
 		_bank = lerpf(_bank, 0.0, clampf(delta * 3.0, 0.0, 1.0))
 	if model:
@@ -365,7 +387,7 @@ func _action_done(a: BossAction) -> void:
 	if a.name == &"death":
 		# down for good: she keeps the last of her fall, and stops
 		poser.clear()
-		poser.add_pose(_body_pose(), 1.0)
+		poser.add_pose(_body_pose(), _body_w)
 		poser.add_pose(a.keys.back()[1] if not a.keys.is_empty() else {}, 1.0)
 		poser.apply()
 		_update_bones()
@@ -384,10 +406,10 @@ func _action_done(a: BossAction) -> void:
 # ---- Snatch -----------------------------------------------------------------------------------------
 
 func _snatch(t: Critter) -> BossAction:
-	cooldown(&"snatch", 12.0)
+	cooldown(&"snatch", 10.0)
 	var line_up := 1.1
 	var dive := 1.3
-	var climb := 2.4
+	var climb := 2.8
 	var a := BossAction.new(&"snatch", line_up + dive + climb)
 	# where she'll strike: her prey, followed while she lines up (shared by the
 	# action's lambdas), then fixed, and the ring shown, as she dives
@@ -427,7 +449,7 @@ func _snatch(t: Critter) -> BossAction:
 		# up and away with whatever she's caught
 		if away == Vector3.ZERO:
 			away = Vector3(forward().x, 0.0, forward().z).normalized()
-			_vel = away * 14.0 + Vector3.UP * 12.0
+			_vel = away * 12.0 + Vector3.UP * 16.0
 			_dive_end()
 		_glide = 0.0
 		_flap_rate = 3.2
@@ -490,7 +512,7 @@ func _carry() -> void:
 	if _held.is_player and _held.want_jump:   # (its physics is hers while she has it: the jump waits for us)
 		_held.want_jump = false
 		_struggles += 1
-		if _struggles >= STRUGGLES:
+		if _struggles >= (ENRAGED_STRUGGLES if enraged else STRUGGLES):
 			Events.headline.emit("You wriggled free!")
 			_let_go()
 
@@ -515,7 +537,8 @@ func _let_go() -> void:
 
 
 ## Everyone she's dropped, till they land: the harder, the worse (into
-## water, nothing). A bot from high up doesn't get up again; you do.
+## water, nothing). A bot from high up doesn't get up again, whatever the
+## difficulty (a long fall's a long fall); you do.
 func _tend_dropped(delta: float) -> void:
 	for d in _dropped.duplicate():
 		var c := d[0] as Critter
@@ -533,6 +556,8 @@ func _tend_dropped(delta: float) -> void:
 		var amount := (speed - 10.0) * (2.0 if c.is_player else 5.5)
 		if c.is_player:
 			amount = minf(amount, 45.0)
+		else:
+			amount /= maxf(damage_scale, 0.01)   # (hurt() scales it by the difficulty: undone)
 		hurt(c, amount, Vector3(c.velocity.x, 0.0, c.velocity.z).normalized(), 4.0, 5.0, &"drop", DamageInfo.Kind.FALL, 0.4)
 		BossFX.dust(c.global_position, 3.0)
 
@@ -540,7 +565,7 @@ func _tend_dropped(delta: float) -> void:
 # ---- Talon Rake -------------------------------------------------------------------------------------
 
 func _rake(t: Critter) -> BossAction:
-	cooldown(&"rake", 10.0)
+	cooldown(&"rake", 9.0)
 	var mid := t.global_position
 	mid.y = _surface_y(mid)
 	var along := Vector3(mid.x - global_position.x, 0.0, mid.z - global_position.z)
@@ -584,7 +609,7 @@ func _rake(t: Critter) -> BossAction:
 				if hit.has(c) or absf(c.global_position.y - claws.y) > 7.0:
 					continue
 				hit[c] = true
-				hurt(c, 70.0, along, 12.0, 6.0, &"rake", DamageInfo.Kind.MELEE, 0.8)
+				hurt(c, 80.0, along, 12.0, 6.0, &"rake", DamageInfo.Kind.MELEE, 0.8)
 			return
 		# and back up
 		_dive_end()
@@ -598,9 +623,11 @@ func _rake(t: Critter) -> BossAction:
 
 # ---- Feather Volley ---------------------------------------------------------------------------------
 
+## Hovering, a flurry of feathers: two on whoever she's after, the rest on
+## those round it, the nearest first (a crowd scatters, or pays for it).
 func _volley(t: Critter) -> BossAction:
-	cooldown(&"volley", 8.0)
-	var n := 10 if enraged else 8
+	cooldown(&"volley", 7.0)
+	var n := 16 if enraged else 12
 	var a := BossAction.new(&"volley", 2.2)
 	a.flow = true
 	a.key(0.0, {}).key(0.45, {&"l_upper_arm": Vector3(0, 0, 35), &"r_upper_arm": Vector3(0, 0, -35), &"chest": Vector3(-8, 0, 0)})
@@ -612,13 +639,21 @@ func _volley(t: Critter) -> BossAction:
 	a.on(0.7, func():
 		Audio.play_at(&"feather_volley", get_chest_position(), 6.0, 0.05, {"max_distance": 500.0, "unit_size": 35.0}))
 	a.on(0.8, func():
-		var aim := t.global_position if is_instance_valid(t) and t.alive else _ground_below() + forward() * 30.0
-		var lead := t.velocity * 1.0 if is_instance_valid(t) else Vector3.ZERO
+		var prey := is_instance_valid(t) and t.alive
+		var aim := t.global_position if prey else _ground_below() + forward() * 30.0
+		var lead := t.velocity * 1.0 if prey else Vector3.ZERO
+		var round_it: Array = foes_near(aim, VOLLEY_SPREAD).filter(func(c): return c != t)
+		round_it.sort_custom(func(x, y): return x.global_position.distance_squared_to(aim) < y.global_position.distance_squared_to(aim))
 		for i in n:
 			var at := aim + Vector3(lead.x, 0.0, lead.z) * (0.5 if i == 0 else 1.0)
-			if i > 0:
+			if i >= 2 and not round_it.is_empty():   # (one each on those round it, where they're going; round again)
+				var c: Critter = round_it[(i - 2) % round_it.size()]
+				at = c.global_position + Vector3(c.velocity.x, 0.0, c.velocity.z) * 0.8
+				if i - 2 >= round_it.size():
+					at += Vector3(randf_range(-1, 1), 0.0, randf_range(-1, 1)).normalized() * randf_range(3.0, 7.0)
+			elif i > 0:
 				at += Vector3(randf_range(-1, 1), 0.0, randf_range(-1, 1)).normalized() * randf_range(4.0, 12.0)
-			_feather(at, 0.85 + 0.08 * i))
+			_feather(at, 0.85 + 0.06 * i))
 	return a
 
 
@@ -646,7 +681,7 @@ func _feather(at: Vector3, flight: float) -> void:
 	var tw := f.create_tween()
 	tw.tween_method(arc, 0.0, 1.0, flight)
 	tw.tween_callback(func():
-		hurt_ring(at, FEATHER_R, 45.0, 15.0, 6.0, 4.0, &"feathers", false)
+		hurt_ring(at, FEATHER_R, 50.0, 18.0, 6.0, 4.0, &"feathers", false)
 		BossFX.dust(at, 3.5, Color(0.6, 0.62, 0.66, 0.6))
 		Audio.play_at(&"carrot_impact_dirt", at, 2.0, 0.1, {"max_distance": 200.0})
 		f.global_position = at + Vector3.UP * 2.2)   # (stuck in the ground, quill first)
@@ -719,7 +754,7 @@ func _roar_action() -> BossAction:
 # ---- Perch, and off again ---------------------------------------------------------------------------
 
 func _perch(t: Critter) -> BossAction:
-	cooldown(&"perch", 30.0)
+	cooldown(&"perch", 36.0)
 	var spot := _perch_spot(t)
 	var down := 2.2
 	var a := BossAction.new(&"perch", down + 0.8)
@@ -801,15 +836,16 @@ func take_damage(info: DamageInfo) -> void:
 	if not alive or health >= before:
 		return
 	var by := info.attacker as Critter
-	var count := (1.0 if by and by.is_player else 0.15) * (3.0 if info.kind == DamageInfo.Kind.EXPLOSION else 1.0)
-	if _held:   # (hit hard enough, she lets go)
-		_carry_hits += count
+	var mine := by != null and by.is_player
+	var blast := 3.0 if info.kind == DamageInfo.Kind.EXPLOSION else 1.0
+	if _held:   # (hit hard enough, she lets go: the bots' shots hardly loosen her grip, and once she's enraged not at all)
+		_carry_hits += (1.0 if mine else (0.0 if enraged else 0.08)) * blast
 		if _carry_hits >= LET_GO_AT:
 			if _held.is_player:
 				Events.headline.emit("She let go of you!")
 			_let_go()
 	if _diving and info.bone_role in WINGS:
-		_dive_hits += count
+		_dive_hits += (1.0 if mine else 0.15) * blast
 		if _dive_hits >= GROUND_AT and _air and (action == null or action.interruptible):
 			_ground()
 
@@ -926,30 +962,44 @@ func _after_entrance() -> void:
 		start(_roar_action())
 
 
-## Down: out of the sky if she's up there, wings limp, and she lies where
-## she falls.
+## Down: out of the sky if she's up there, her wings beating feebly as she
+## falls (or over off her feet where she stands), and she hits the ground
+## flat on her front, wings flung out across it, and lies there splayed
+## (DEAD), her head on its side. From the moment she hits, her flying and
+## perching pose fades out from under her: the keys from then on are all of
+## her pose.
 func _death_action() -> BossAction:
 	_let_go()
+	_dive_end()
 	var a := BossAction.new(&"death", 3.4)
 	a.blend_out = 0.0
 	a.interruptible = false
 	a.flow = true
 	a.key(0.0, {}).key(1.0, {&"head": Vector3(-30, 0, 0), &"l_upper_arm": Vector3(0, 0, 40), &"r_upper_arm": Vector3(0, 0, -40)})
-	a.layer = func(time: float) -> Dictionary:   # (her wings beating feebly as she goes down, then still)
-		var w := clampf(1.0 - time / 1.5, 0.0, 1.0)
+	var st := {"down": -1.0, "act": weakref(a)}   # (when she hit the ground, on the action's clock; the action, not kept alive by its own tick)
+	a.layer = func(time: float) -> Dictionary:
+		var down: float = st.down
+		if down < 0.0:   # (her wings beating feebly as she goes down)
+			var w := clampf(1.0 - time / 1.5, 0.0, 1.0)
+			var f := sin(time * TAU * 2.2)
+			return {&"l_upper_arm": Vector3(0, 0, 24.0 * f) * w, &"r_upper_arm": Vector3(0, 0, -24.0 * f) * w,
+				&"l_lower_arm": Vector3(0, 0, 12.0 * sin(time * TAU * 2.2 - 0.7)) * w, &"r_lower_arm": Vector3(0, 0, -12.0 * sin(time * TAU * 2.2 - 0.7)) * w,
+				&"head": Vector3(0, 8.0 * sin(time * 3.0), 0) * w}
+		# (down: a last shudder through her wingtips and tail, then still)
+		var u := time - down
+		var w := smoothstep(0.35, 0.5, u) * clampf(1.0 - (u - 0.5) / 0.9, 0.0, 1.0)
 		if w <= 0.0:
 			return {}
-		var f := sin(time * TAU * 2.2)
-		return {&"l_upper_arm": Vector3(0, 0, 24.0 * f) * w, &"r_upper_arm": Vector3(0, 0, -24.0 * f) * w,
-			&"l_lower_arm": Vector3(0, 0, 12.0 * sin(time * TAU * 2.2 - 0.7)) * w, &"r_lower_arm": Vector3(0, 0, -12.0 * sin(time * TAU * 2.2 - 0.7)) * w,
-			&"head": Vector3(0, 8.0 * sin(time * 3.0), 0) * w}
-	a.key(3.0, {&"spine": Vector3(20, 0, 0), &"neck": Vector3(30, 0, 0), &"head": Vector3(35, 55, 0), &"l_upper_arm": Vector3(0, 0, 40),
-		&"r_upper_arm": Vector3(0, 0, -40), &"tail": Vector3(-15, 0, 0)})
-	var down := false
+		var f := sin(u * TAU * 3.2)
+		return {&"l_hand": Vector3(0, 0, -7.0 * f) * w, &"r_hand": Vector3(0, 0, 7.0 * f) * w,
+			&"l_lower_arm": Vector3(0, 0, -3.0 * sin(u * TAU * 3.2 - 0.8)) * w, &"r_lower_arm": Vector3(0, 0, 3.0 * sin(u * TAU * 3.2 - 0.8)) * w,
+			&"tail": Vector3(5.0 * f, 0, 0) * w}
 	var spin := randf_range(-1.0, 1.0)
-	a.tick = func(_time: float, delta: float):
+	a.tick = func(time: float, delta: float):
 		_flap_rate = 0.0
-		if down:
+		var down: float = st.down
+		if down >= 0.0:
+			_body_w = 1.0 - smoothstep(0.0, 0.35, time - down)
 			return
 		_vel = Vector3(_vel.x * 0.985, _vel.y - 36.0 * delta, _vel.z * 0.985)
 		var p := global_position + _vel * delta
@@ -957,10 +1007,17 @@ func _death_action() -> BossAction:
 		_bank += spin * delta
 		if p.y <= g + 0.1:
 			p.y = g
-			down = true
+			st.down = time
 			_air = false
 			_vel = Vector3.ZERO
-			_dead_pitch = -0.45
+			_dead_pitch = DEAD_PITCH
+			# (from wherever her fall had her: flung flat, then still)
+			var act: BossAction = (st.act as WeakRef).get_ref()
+			if act:
+				var now := act.pose()
+				act.keys = act.keys.filter(func(k): return float(k[0]) < time)
+				act.key(time, now).key(time + 0.8, DEAD)
+				act.length = maxf(act.length, time + 1.5)
 			BossFX.shockwave(p, PERCH_R * 1.5)
 			BossFX.dust(p, PERCH_R * 1.8)
 			Events.explosion.emit(p, 16.0)

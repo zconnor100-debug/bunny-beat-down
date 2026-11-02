@@ -17,6 +17,7 @@ var walk := 0.0             ## seconds of walking at the bun first
 var bun_at := Vector3(0, 0, 60)   ## where the bun it goes for stands (to one side: it turns)
 var dist := 1.0             ## how far back the camera stands (a tall boss: further)
 var hold := 0.0             ## seconds stood still after the walk, before its moves
+var air := 0.0              ## a flier (Old Hoot) starts up in the air, this high (a death out of the sky)
 var cam: Camera3D
 var bun: Critter
 
@@ -70,6 +71,10 @@ func _run() -> void:
 	boss.state = Boss.State.FIGHTING
 	boss.visible = true
 	boss._set_hittable(true)
+	if air > 0.0 and boss is OwlBoss:   # (flying, up there)
+		(boss as OwlBoss)._air = true
+		(boss as OwlBoss)._air_k = 1.0
+		boss.global_position.y = air
 	await _frames(10)
 	var shot := 0
 	if walk > 0.0:

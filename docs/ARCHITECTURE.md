@@ -821,6 +821,24 @@ prologue's island seed, its rangers and waves; `note_result`, `done`,
   still on solid, unmoving ground skips `move_and_slide` for up to
   `Critter.STILL_TICKS`; `Audio.play_at` doesn't start a sound past its own
   `max_distance` from the listener.
+- **The renderer stays on the main thread** (`rendering/driver/threads/thread_model`
+  Safe), measured, not assumed. On its own thread (`--render-thread separate`)
+  the CPU side of drawing runs alongside the game's code instead of after it:
+  `tests/perf_match.gd` (island Battle Royale, 49 bots) went from 110 to 143
+  fps in the fighting on the development PC, and from 61 to 104–114 on a
+  slow-processor stand-in (pinned to 4 cores, each shared with a busy loop),
+  the frame's rendering share on the main thread falling from 8 ms to under
+  3. But Godot 4.6.2's separate render thread finishes its RenderingDevice
+  from the main thread on quit ("finalize can only be called from the render
+  thread", upstream issues #119000 and #124799): every quit crashes on NVIDIA
+  (AMD's driver lets it go), and every match logged render-thread errors the
+  main thread never does (particles drawn after they were freed, textures
+  updated from emptied images). Recheck on a newer Godot: run perf_match with
+  `--render-thread separate` and look for `finalize` and the crash at the end
+  of its log. The stage doesn't ask RenderingServer for its timings or draw
+  calls when the renderer has a thread of its own (each question would wait
+  on the render thread and undo the overlap being measured), and it records
+  the match's load time (`load_s`).
 - **The rangers' lines** are `Cast.KERNEL_LINES` (`kt`, `kw`, `ks`, `ky`, `kb`,
   `kg`, `kc`, `kd`, `kr`; Act I's `pt`, `pc`, `pp`, `pf`, `pl`, `pd`, `pw`,
   `pb`, `pk`), voiced for every rogue like every other line, said by the

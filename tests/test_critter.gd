@@ -105,8 +105,8 @@ func test_a_squirrels_tail_goes_with_its_ragdoll() -> void:
 
 
 func test_a_squirrels_eyes_sit_in_its_sockets() -> void:
-	# (its left socket's higher than its right: each eyeball goes in its own,
-	# not one mirrored off the other, which left the left socket showing)
+	# (each eyeball goes in its own socket, up under the brow: +x is its left,
+	# it faces +Z. Its left one sat low, the top of the socket showing over it)
 	var c := spawn_critter("res://data/critters/squirrel.tres", Vector3(0, 0.1, 0))
 	await wait_physics(2)
 	var spec: Dictionary = c.visual.rig.data["eye_bulge"]
@@ -132,8 +132,10 @@ func test_a_squirrels_eyes_sit_in_its_sockets() -> void:
 		var goal := Vector3(t[0], t[1], t[2])
 		check(mid.distance_to(goal) < 0.003, "the %s eyeball's in its socket (%s, wanted %s)" % [side, mid, goal])
 	if mids.size() == 2:
-		var hi: float = (mids["-x"][0] / mids["-x"][1]).y - (mids["+x"][0] / mids["+x"][1]).y
-		check(hi > 0.01, "the left one sits higher, the way its socket does (%.3f m)" % hi)
+		var left: Vector3 = mids["+x"][0] / mids["+x"][1]
+		var right: Vector3 = mids["-x"][0] / mids["-x"][1]
+		check(absf(left.y - right.y) < 0.004 and left.y > 0.648,
+			"the left one's up under its brow, level with the right (%.3f, %.3f)" % [left.y, right.y])
 
 
 func test_dismember_spawns_gib_and_hides_limb() -> void:

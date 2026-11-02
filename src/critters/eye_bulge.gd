@@ -4,7 +4,9 @@ extends RefCounted
 ## head, above its eye sockets, so the sockets read as dark holes. rig.json
 ## "eye_bulge": {"material": the eyeballs' material, "to": [x, y, z] where the
 ## eyeball on the +x side goes (the other mirrored), or {"+x": [x, y, z],
-## "-x": [x, y, z]} for each its own (sockets that aren't level), or "out":
+## "-x": [x, y, z]} for each its own (sockets that aren't alike; +x is the
+## critter's own left: it faces +Z, so straight on it's the one on your
+## right), or "out":
 ## how far to move each one out from between the eyes and forward; "scale":
 ## how much bigger}. Each eyeball (one per side) moves and grows about its own
 ## middle; the meshes are built once per model and shared.

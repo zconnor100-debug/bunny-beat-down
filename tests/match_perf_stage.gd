@@ -13,6 +13,11 @@ extends Node
 ## marker node before each band, so the time from one marker to the next is
 ## that script's (scripts_* in each phase: CPU ms per second of play, physics
 ## ticks and frames; "unscripted" is the engine's own nodes at priority 0).
+## With the renderer on a thread of its own (`--render-thread separate`) it
+## doesn't ask RenderingServer for its timings or draw calls (each question
+## waits for the render thread to catch up, undoing the overlap being
+## measured): split_render is then the main thread handing a frame over and
+## waiting for the one before.
 
 const LANDING := 20.0   ## seconds measured after you land...
 const PLAY := 40.0      ## ...and after that
@@ -23,6 +28,8 @@ var map := "island"
 var quality := 4
 var opponents := 49
 var _rows: Array = []
+var _threaded := false     ## the renderer on a thread of its own (its timings aren't asked for)
+var _load_s := 0.0         ## seconds from the scene change to the match leaving LOADING
 var _phase := ""
 var _last := 0
 var _split := {}      ## phase -> bucket -> usec
@@ -95,9 +102,11 @@ func _ready() -> void:
 	if a.size() > 4:
 		opponents = int(a[4])
 	breakdown = "breakdown" in a
+	_threaded = not RenderingServer.is_on_render_thread()
 	if breakdown:
-		RenderingServer.frame_pre_draw.connect(_pre_draw)
-		RenderingServer.frame_post_draw.connect(_post_draw)
+		if not _threaded:   # (on its own thread, post_draw comes a frame late: no split of the drawing)
+			RenderingServer.frame_pre_draw.connect(_pre_draw)
+			RenderingServer.frame_post_draw.connect(_post_draw)
 		get_tree().node_added.connect(_band_node)
 		for n in get_tree().root.find_children("*", "", true, false):
 			_band_node(n)
@@ -234,9 +243,11 @@ func _process(_delta: float) -> void:
 		_count_nodes()
 	if _last > 0:
 		var vp := get_viewport().get_viewport_rid()
+		var asked := not _threaded
 		_rows.append([_phase, (now - _last) / 1000.0, Performance.get_monitor(Performance.TIME_PROCESS) * 1000.0,
-			Performance.get_monitor(Performance.TIME_PHYSICS_PROCESS) * 1000.0, RenderingServer.viewport_get_measured_render_time_cpu(vp),
-			RenderingServer.viewport_get_measured_render_time_gpu(vp), Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME),
+			Performance.get_monitor(Performance.TIME_PHYSICS_PROCESS) * 1000.0, RenderingServer.viewport_get_measured_render_time_cpu(vp) if asked else 0.0,
+			RenderingServer.viewport_get_measured_render_time_gpu(vp) if asked else 0.0,
+			Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME) if asked else 0.0,
 			get_tree().get_nodes_in_group(&"critters").filter(func(c): return c.alive).size(),
 			Performance.get_monitor(Performance.TIME_NAVIGATION_PROCESS) * 1000.0])
 		if (now - _last) / 1000.0 > 50.0:
@@ -254,11 +265,14 @@ func _run() -> void:
 	settings.set_value(&"vsync", 0, false)
 	settings.set_value(&"max_fps", 0, false)
 	seed(4321)   # (the bots' choices: where they land, who they go for; runs still drift apart, fights are chaotic)
+	var t0 := Time.get_ticks_msec()
 	get_tree().change_scene_to_file("res://scenes/game.tscn")
 	var g: Node = null
 	while g == null or g.get("match_manager") == null or g.match_manager.phase == MatchManager.Phase.LOADING:
 		await get_tree().process_frame
 		g = get_tree().current_scene
+	_load_s = (Time.get_ticks_msec() - t0) / 1000.0
+	print("PERF loaded in %.2f s (renderer on %s)" % [_load_s, "its own thread" if _threaded else "the main thread"])
 	var mm: MatchManager = g.match_manager
 	var p := mm.player
 	if Island.current:
@@ -307,7 +321,7 @@ func _seconds(s: float) -> void:
 
 func _write() -> void:
 	var out := {"mode": mode, "map": map, "quality": quality, "size": [get_viewport().size.x, get_viewport().size.y],
-		"nav_polygons": _nav_polygons, "spikes": _spikes, "phases": {}}
+		"render_thread": "separate" if _threaded else "main", "load_s": _load_s, "nav_polygons": _nav_polygons, "spikes": _spikes, "phases": {}}
 	for ph in ["balloon", "landing", "play"]:
 		var rows := _rows.filter(func(r): return r[0] == ph)
 		if rows.is_empty():
