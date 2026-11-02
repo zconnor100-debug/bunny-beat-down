@@ -8,6 +8,11 @@ extends Node
 ## in physics ticks and in the frame, what was deferred to after each (the
 ## skeletons' poses, freed nodes), the physics engine (Jolt's step, after each
 ## tick), and the rendering (CPU side, after the frame's code).
+## With "breakdown" (the 6th argument) it also times the game's code script by
+## script: each script's nodes run in a band of priorities of their own, with a
+## marker node before each band, so the time from one marker to the next is
+## that script's (scripts_* in each phase: CPU ms per second of play, physics
+## ticks and frames; "unscripted" is the engine's own nodes at priority 0).
 
 const LANDING := 20.0   ## seconds measured after you land...
 const PLAY := 40.0      ## ...and after that
@@ -27,6 +32,32 @@ var _nav_polygons := 0
 var _spikes: Array = []    ## [phase, seconds into it, ms] for frames over 50 ms
 var _phase_t := 0
 var _jump_t := 0
+var breakdown := false
+var _bands := {}           ## script -> band index (its nodes' priority: 2 * index + 3)
+var _band_names: Array = []
+var _band_mark := {true: [-1, 0], false: [-1, 0]}   ## physics? -> [the last marker passed, when]
+var _band_ms := {}         ## phase -> "physics:<script>" / "frame:<script>" -> usec
+var _draw_t := 0           ## (breakdown) when RenderingServer began drawing this frame
+var _counts := {}          ## phase -> kind -> [sum, samples]: how many of each engine node there were
+var _count_t := 0
+
+
+## A breakdown marker: the start of band `index` (its scripts' nodes run
+## right after it, at the next priority up).
+class Band extends Node:
+	var stage: Node
+	var index := 0
+
+	func _ready() -> void:
+		process_mode = Node.PROCESS_MODE_ALWAYS
+		process_priority = 2 * index + 2
+		process_physics_priority = process_priority
+
+	func _process(_delta: float) -> void:
+		stage.band(index, false)
+
+	func _physics_process(_delta: float) -> void:
+		stage.band(index, true)
 
 
 ## The first (or last) thing to run in each physics tick and each frame.
@@ -63,6 +94,13 @@ func _ready() -> void:
 		quality = int(a[3])
 	if a.size() > 4:
 		opponents = int(a[4])
+	breakdown = "breakdown" in a
+	if breakdown:
+		RenderingServer.frame_pre_draw.connect(_pre_draw)
+		RenderingServer.frame_post_draw.connect(_post_draw)
+		get_tree().node_added.connect(_band_node)
+		for n in get_tree().root.find_children("*", "", true, false):
+			_band_node(n)
 	for last in [false, true]:
 		var e := Edge.new()
 		e.stage = self
@@ -71,8 +109,100 @@ func _ready() -> void:
 	_run.call_deferred()
 
 
+## (breakdown) The render bucket split: waiting on the last frames (sync,
+## from the frame's code to RenderingServer starting to draw), drawing (its
+## CPU side: culling, skeletons, particles, the command lists), and after it.
+func _pre_draw() -> void:
+	_draw_t = Time.get_ticks_usec()
+	if _phase != "" and _mark == "p_flushed":
+		var b: Dictionary = _split.get_or_add(_phase, {})
+		b["render_sync"] = int(b.get("render_sync", 0)) + _draw_t - _mark_t
+
+
+func _post_draw() -> void:
+	if _phase != "" and _draw_t > 0:
+		var b: Dictionary = _split.get_or_add(_phase, {})
+		b["render_draw"] = int(b.get("render_draw", 0)) + Time.get_ticks_usec() - _draw_t
+	_draw_t = 0
+
+
+## (breakdown) How many of the engine's own busy nodes there are (once a second).
+func _count_nodes() -> void:
+	var c := {}
+	for n in get_tree().root.find_children("*", "", true, false):
+		var k := ""
+		if n is AudioStreamPlayer3D:
+			k = "audio3d_playing" if (n as AudioStreamPlayer3D).playing else "audio3d_idle"
+		elif n is GPUParticles3D:
+			k = "particles"
+		elif n is OmniLight3D or n is SpotLight3D:
+			k = "lights"
+		elif n is PhysicalBone3D:
+			k = "physical_bones"
+		elif n is RigidBody3D:
+			k = "rigid_bodies"
+		elif n is Area3D:
+			k = "areas"
+		elif n is Skeleton3D:
+			k = "skeletons"
+		elif n is Decal:
+			k = "decals"
+		elif n is MeshInstance3D:
+			k = "meshes"
+		if k != "":
+			c[k] = int(c.get(k, 0)) + 1
+	var ph: Dictionary = _counts.get_or_add(_phase, {})
+	for k in c:
+		var e: Array = ph.get_or_add(k, [0, 0])
+		e[0] += c[k]
+		e[1] += 1
+
+
+## Puts a scripted node in its script's band (a new band, and its marker,
+## for a script not seen yet).
+func _band_node(n: Node) -> void:
+	if n is Band or n is Edge or n == self:
+		return
+	var sc: Script = n.get_script()
+	if sc == null or not (n.has_method("_process") or n.has_method("_physics_process")):
+		return
+	var key := sc.resource_path.get_file().get_basename() if sc.resource_path != "" else String(sc.get_global_name())
+	if key == "":
+		key = str(sc)
+	if not _bands.has(key):
+		_bands[key] = _band_names.size()
+		_band_names.append(key)
+		var m := Band.new()
+		m.stage = self
+		m.index = _bands[key]
+		add_child.call_deferred(m)
+	n.process_priority = 2 * int(_bands[key]) + 3
+	n.process_physics_priority = n.process_priority
+
+
+## Band marker `index` passed: the time since the marker before goes to the
+## band before (or, since the tick's or frame's first edge, to "unscripted").
+func band(index: int, physics: bool) -> void:
+	var now := Time.get_ticks_usec()
+	var last: Array = _band_mark[physics]
+	if _phase != "" and int(last[0]) >= -1 and int(last[1]) > 0 and index > int(last[0]):
+		var key := ("physics:" if physics else "frame:") + ("unscripted" if int(last[0]) < 0 else String(_band_names[int(last[0])]))
+		var b: Dictionary = _band_ms.get_or_add(_phase, {})
+		b[key] = int(b.get(key, 0)) + now - int(last[1])
+	_band_mark[physics] = [index, now]
+
+
 func edge(what: String) -> void:
 	var now := Time.get_ticks_usec()
+	if breakdown:
+		match what:
+			"ph_start":
+				_band_mark[true] = [-1, now]
+			"p_start":
+				_band_mark[false] = [-1, now]
+			"ph_end", "p_end":
+				band(1_000_000, what == "ph_end")
+				_band_mark[what == "ph_end"] = [-2, 0]
 	if _phase != "" and _mark != "":
 		var bucket := ""
 		match [_mark, what]:
@@ -99,6 +229,9 @@ func _process(_delta: float) -> void:
 	if _phase == "":
 		return
 	var now := Time.get_ticks_usec()
+	if breakdown and now - _count_t > 1_000_000:
+		_count_t = now
+		_count_nodes()
 	if _last > 0:
 		var vp := get_viewport().get_viewport_rid()
 		_rows.append([_phase, (now - _last) / 1000.0, Performance.get_monitor(Performance.TIME_PROCESS) * 1000.0,
@@ -152,6 +285,16 @@ func _run() -> void:
 	_phase_t = Time.get_ticks_usec()
 	await _seconds(PLAY)
 	_phase = ""
+	if breakdown:   # (the busiest kinds of particles left at the end, by parent and settings)
+		var by := {}
+		for n in get_tree().root.find_children("*", "GPUParticles3D", true, false):
+			var gp := n as GPUParticles3D
+			var k := "%s/%s one_shot=%s emitting=%s amount=%d" % [String(gp.get_parent().name).left(18), String(gp.name).left(18), gp.one_shot, gp.emitting, gp.amount]
+			by[k] = int(by.get(k, 0)) + 1
+		var keys := by.keys()
+		keys.sort_custom(func(x, y): return by[x] > by[y])
+		for k in keys.slice(0, 12):
+			print("PARTICLES %5d  %s" % [by[k], k])
 	_write()
 	get_tree().quit()
 
@@ -180,6 +323,20 @@ func _write() -> void:
 		var b: Dictionary = _split.get(ph, {})
 		for k in b:
 			out.phases[ph]["split_" + k] = b[k] / 1000.0 / n
+		if breakdown:
+			var secs: float = frames.reduce(func(acc, f): return acc + f, 0.0) / 1000.0
+			var bm: Dictionary = _band_ms.get(ph, {})
+			var keys := bm.keys()
+			keys.sort_custom(func(x, y): return bm[x] > bm[y])
+			var per_s := {}
+			for k in keys:
+				per_s[k] = snappedf(bm[k] / 1000.0 / secs, 0.01)
+			out.phases[ph]["scripts_ms_per_s"] = per_s
+			var counts := {}
+			for k in _counts.get(ph, {}):
+				var e: Array = _counts[ph][k]
+				counts[k] = snappedf(float(e[0]) / maxf(e[1], 1), 0.1)
+			out.phases[ph]["nodes"] = counts
 	var f := FileAccess.open(out_path, FileAccess.WRITE)
 	f.store_string(JSON.stringify(out, "  "))
 	f.close()

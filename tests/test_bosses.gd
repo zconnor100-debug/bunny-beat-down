@@ -603,10 +603,65 @@ func test_noodle_comes_up_out_of_a_burrow_if_ones_near() -> void:
 
 class FakeIsland extends Node:
 	var burrows: Array = []
+	var habitrail: Array = []
 
 
 class FakeMatch extends Node:
 	var island: Node
+
+
+## Tube Town (HamsterCage.habitrail): going by under it she sets it rattling
+## on its connectors (not every frame), a burrow's roll too, and it settles
+## back; coming up under a tube she knocks it clean off them, flying, and it
+## comes down on the bedding. A burrow's roll she just comes up out of.
+func test_noodle_rattles_tube_town_and_knocks_it_loose() -> void:
+	var b: FerretBoss = _boss("ferret")
+	var rng := RandomNumberGenerator.new()
+	var tube := CageProps.tube(rng, &"teal", CageProps.TOWN_TUBE)   # (along z, through (0, 0, -60))
+	add_child(tube)
+	tube.global_position = Vector3(0, 0, -60)
+	var half := CageProps.TOWN_TUBE * 0.5
+	var pc := Habitrail.piece(tube, &"tube", Vector3(0, 0, -60 - half), Vector3(0, 0, -60 + half), CageProps.TUBE_R + CageProps.TUBE_WALL)
+	var roll := CageProps.roll(rng, 12.0)
+	add_child(roll)
+	roll.global_position = Vector3(60, 0, 0)
+	var burrow := Habitrail.piece(roll, &"burrow", roll.global_position, roll.global_position, 2.6)
+	var isl := FakeIsland.new()
+	isl.habitrail = [pc, burrow]
+	var mm := FakeMatch.new()
+	mm.island = isl
+	b.match_manager = mm
+	var victim := spawn_critter(TEST_DEF, Vector3(0, 0.6, -60))   # (hiding in the tube)
+	victim.team = 1
+	victim.max_health = 1000.0
+	victim.health = 1000.0
+	await wait_physics(3)
+	var look: Node3D = tube.get_node("Mesh")
+	b._rattle_near(Vector3(14, 0, -60))
+	check(int(pc.get("rattled", 0)) == 1, "going by under it, the tube rattles")
+	await wait_physics(4)
+	check(look.has_meta(&"rest") and not look.transform.is_equal_approx(look.get_meta(&"rest")), "it jumps about on its connectors")
+	b._rattle_near(Vector3(14, 0, -60))
+	check(int(pc.get("rattled", 0)) == 1, "(not again straight away)")
+	b._rattle_near(Vector3(60, 0, 10))
+	check(int(burrow.get("rattled", 0)) == 1, "a burrow's roll rattles too")
+	await wait_physics(40)
+	check(look.transform.is_equal_approx(look.get_meta(&"rest")), "and settles back where it was")
+	b._pop_up(Vector3(0, 0, -60), victim)
+	await wait_physics(2)
+	check(pc.loose and not is_instance_valid(tube), "coming up under the tube, she knocks it off its connectors")
+	var flying: Array = get_children().filter(func(c): return c is ToyBlock.Loose)
+	check(flying.size() == 1 and (flying[0] as RigidBody3D).linear_velocity.y > 8.0, "it goes flying (%.1f m/s up)" %
+		((flying[0] as RigidBody3D).linear_velocity.y if flying.size() == 1 else 0.0))
+	check(victim.health < victim.max_health, "and whoever was in it goes flying too (%.0f)" % victim.health)
+	await wait_physics(240)
+	check(flying.size() == 1 and (flying[0] as Node3D).global_position.y < 8.0, "it comes down on the bedding")
+	b._pop_up(Vector3(60, 0, 0))
+	await wait_physics(2)
+	check(not burrow.loose and is_instance_valid(roll), "a burrow's roll stays put (she comes up out of it)")
+	b.match_manager = null
+	mm.free()
+	isl.free()
 
 
 ## The War Dance: hops at you, each landing on its own red ring; then she's

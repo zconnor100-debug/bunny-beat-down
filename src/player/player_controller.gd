@@ -35,6 +35,8 @@ var rig: CameraRig
 var match_manager: Node            ## (the match: calling your arsenal in)
 var enabled := true
 var _focus: Node = null
+var _focus_t := 0.0                  # (till it looks again for what's in front of you: FOCUS_EVERY)
+const FOCUS_EVERY := 0.08
 var _hint := ""
 var _jump_buffer := 0.0
 var stance := Stance.STAND
@@ -203,10 +205,13 @@ func _physics_process(delta: float) -> void:
 	critter.aim_point = rig.aim_point(critter.visual.hitbox_rids)
 	_update_grenade()
 	_update_flare()
-	_update_focus()
+	_focus_t -= delta
+	if _focus_t <= 0.0 or (_focus != null and not is_instance_valid(_focus)):   # (a dozen times a second: every pickup and crate is a lot to look over)
+		_focus_t = FOCUS_EVERY
+		_update_focus()
 	# treasure chests: keep unlocking while interact (X on a pad) is held
 	var holding := Input.is_action_pressed(&"interact")
-	if _focus is LootCrate and is_instance_valid(_focus) and holding:
+	if is_instance_valid(_focus) and _focus is LootCrate and holding:
 		var crate := _focus as LootCrate
 		if crate.open_time > 0.0 and crate.channel(critter, delta):
 			_focus = null
@@ -444,7 +449,9 @@ func _update_focus() -> void:
 	var eye := critter.get_eye_position()
 	var fwd := -rig.camera.global_basis.z
 	for group in [&"pickups", &"crates", &"shrines", &"glow_carrots"]:
-		for n in get_tree().get_nodes_in_group(group):
+		var nodes: Array = Pickup.near(eye, INTERACT_RANGE * critter.visual.rig.world_scale + 2.0) if group == &"pickups" \
+			else get_tree().get_nodes_in_group(group)   # (pickups: just the squares round you, Pickup.CELL)
+		for n in nodes:
 			var n3 := n as Node3D
 			if n3 == null:
 				continue

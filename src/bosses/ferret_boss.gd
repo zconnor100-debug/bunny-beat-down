@@ -19,6 +19,10 @@ extends Boss
 ##   Lunge: up close she coils back and strikes along a red strip, jaws
 ##     first, and shakes whatever she catches.
 ## Enraged: more pops, quicker hops, a quicker lunge.
+## Under the bedding she sets Tube Town rattling as she goes by, and coming
+## up under one of its tubes or pods she knocks it flying (Habitrail). She
+## moves like a ferret: bounding front end first, stretched out long in the
+## air, coiling up like a snake to sleep, every move flowing into the next.
 
 const POP_R := 12.0                 ## her coming up out of the ground: everyone in this ring goes flying
 const POPS := 3                     ## times she comes up, per Pop Goes the Weasel (enraged: POPS_ENRAGED)
@@ -31,6 +35,8 @@ const DOWN := 0.45                  ## seconds diving back down
 const WARN_AT := 1.1                ## how long before a pop its ring shows (it's where she's headed, from then: < SHORT_POP)
 const TRAVEL := 30.0                ## m/s under the bedding, following whoever she's after
 const BURROW_NEAR := 18.0           ## a burrow's mouth this near where she'd come up: she comes up out of it
+const RATTLE_R := 24.0              ## Tube Town (or a burrow's roll) this near her as she goes by under the bedding rattles
+const KNOCK_LOOSE := 6.0            ## a Tube Town pod or tube this near where she comes up gets knocked clean off its connectors
 const WHACK_AT := 8.0               ## hits on her head while she's up (yours count 1, a bot's 0.15, a blast's 3x) that bop her
 const DIZZY_FOR := 5.0
 const SPRAY_LEN := 34.0             ## the bedding she flings back as she digs in: a cone behind her
@@ -39,7 +45,12 @@ const HOP_R := 11.0                 ## a War Dance hop landing
 const HOPS := 4
 const HOPS_ENRAGED := 6
 const HOP_LEN := 24.0               ## metres a hop takes her, at most
+const HOP_TIME := 0.74              ## seconds a hop takes, front paws off to hind paws down (enraged: HOP_TIME_ENRAGED)
+const HOP_TIME_ENRAGED := 0.6
+const HOP_UP := 0.5                 ## how high a hop takes her (model units: about 9 m)
+const LIE_DOWN := 0.8               ## seconds from her last hop to down flat on her belly, asleep (then she coils up)
 const SLEEP_FOR := 5.0              ## seconds she sleeps after the dance
+const WAKE := 1.35                  ## seconds from waking with a start to up and shaking herself
 const MUSK_R := 16.0
 const MUSK_DPS := 14.0
 const MUSK_SECONDS := 7.0
@@ -62,14 +73,78 @@ const REARED := {&"root": Vector3(0, -0.11, 0), &"hips": Vector3(-40, 0, 0), &"c
 	&"l_upper_leg": Vector3(38, 0, 0), &"r_upper_leg": Vector3(38, 0, 0), &"tail": Vector3(32, 0, 0), &"neck": Vector3(20, 0, 0),
 	&"head": Vector3(24, 0, 0), &"jaw": Vector3(38, 0, 0), &"l_upper_arm": Vector3(40, 0, 0), &"r_upper_arm": Vector3(40, 0, 0),
 	&"l_lower_arm": Vector3(-40, 0, 0), &"r_lower_arm": Vector3(-40, 0, 0), &"l_ear": Vector3(-20, 0, 0), &"r_ear": Vector3(-20, 0, 0)}
-## The War Dance: back arched high, head up, mouth open, tail up.
-const ARCH := {&"hips": Vector3(-20, 0, 0), &"chest": Vector3(34, 0, 0), &"neck": Vector3(-14, 0, 0), &"head": Vector3(-12, 0, 0),
-	&"jaw": Vector3(34, 0, 0), &"tail": Vector3(40, 0, 0), &"l_upper_arm": Vector3(-14, 0, 0), &"r_upper_arm": Vector3(-14, 0, 0),
-	&"l_upper_leg": Vector3(20, 0, 0), &"r_upper_leg": Vector3(20, 0, 0), &"root": Vector3(0, 0.05, 0)}
-## Out cold on her right side (asleep after the dance, dizzy, beaten).
-const FLOPPED := {&"root": Vector3(0, -0.28, 0), &"hips": Vector3(0, 0, 82), &"spine": Vector3(0, 10, 0), &"chest": Vector3(0, 12, 0),
-	&"neck": Vector3(0, 10, 6), &"head": Vector3(-6, 8, 6), &"l_upper_arm": Vector3(-25, 0, 0), &"r_upper_arm": Vector3(-35, 0, 0),
-	&"l_upper_leg": Vector3(20, 0, 0), &"r_upper_leg": Vector3(30, 0, 0), &"tail": Vector3(8, 0, -80)}   # (her tail rolled back flat)
+## The War Dance's wind-up: back arched high, head up, mouth open, tail up,
+## all four paws down.
+const ARCH := {&"hips": Vector3(-16, 0, 0), &"spine": Vector3(10, 0, 0), &"chest": Vector3(22, 0, 0), &"neck": Vector3(-22, 0, 0),
+	&"head": Vector3(-8, 0, 0), &"jaw": Vector3(30, 0, 0), &"tail": Vector3(75, 0, 0), &"l_upper_arm": Vector3(-2, 0, 0),
+	&"r_upper_arm": Vector3(-2, 0, 0), &"l_upper_leg": Vector3(16, 0, 0), &"r_upper_leg": Vector3(16, 0, 0), &"root": Vector3(0, -0.045, 0)}
+
+# Lying down she's long and flat, a tube on the bedding (never humped up like
+# an inchworm), and asleep she coils up like a snake: on her belly, curved
+# round sideways, nose toward her tail and her tail round toward her nose.
+
+## Danced out: sinking low and long like a snake, her back flat again, head
+## forward, panting.
+const TIRED := {&"hips": Vector3(8, 0, -4), &"spine": Vector3(2, 0, 0), &"chest": Vector3(-16, 0, 0), &"neck": Vector3(2, 0, 0),
+	&"head": Vector3(4, 0, 0), &"jaw": Vector3(20, 0, 0), &"l_ear": Vector3(-15, 0, 0), &"r_ear": Vector3(-15, 0, 0), &"tail": Vector3(22, 0, 0),
+	&"l_upper_arm": Vector3(24, 0, 0), &"r_upper_arm": Vector3(24, 0, 0), &"l_lower_arm": Vector3(-44, 0, 0), &"r_lower_arm": Vector3(-44, 0, 0),
+	&"l_hand": Vector3(22, 0, 0), &"r_hand": Vector3(22, 0, 0), &"l_upper_leg": Vector3(-22, 0, 0), &"r_upper_leg": Vector3(-22, 0, 0),
+	&"l_lower_leg": Vector3(28, 0, 0), &"r_lower_leg": Vector3(28, 0, 0), &"l_foot": Vector3(-6, 0, 0), &"r_foot": Vector3(-6, 0, 0),
+	&"long": Vector3(0.04, 0, 0), &"root": Vector3(0, -0.08, 0)}
+## Front end down first (her forelegs folding under her), her back end
+## following it down a beat behind: no hump, a slope.
+const BOW := {&"hips": Vector3(8, 0, -2), &"spine": Vector3(2, 0, 0), &"chest": Vector3(-6, 0, 0), &"neck": Vector3(-6, 0, 0),
+	&"head": Vector3(2, 0, 0), &"jaw": Vector3(12, 0, 0), &"l_ear": Vector3(-10, 0, 0), &"r_ear": Vector3(-10, 0, 0), &"tail": Vector3(30, 0, 0),
+	&"l_upper_arm": Vector3(46, 0, 0), &"r_upper_arm": Vector3(46, 0, 0), &"l_lower_arm": Vector3(-82, 0, 0), &"r_lower_arm": Vector3(-82, 0, 0),
+	&"l_hand": Vector3(40, 0, 0), &"r_hand": Vector3(40, 0, 0), &"l_upper_leg": Vector3(-34, 0, 0), &"r_upper_leg": Vector3(-34, 0, 0),
+	&"l_lower_leg": Vector3(48, 0, 0), &"r_lower_leg": Vector3(48, 0, 0), &"l_foot": Vector3(-14, 0, 0), &"r_foot": Vector3(-14, 0, 0),
+	&"long": Vector3(0.06, 0, 0), &"root": Vector3(0, -0.16, 0)}
+## Then her back end: flat out on her belly, long, all four folded under her.
+const BELLY := {&"neck": Vector3(4, 0, 0), &"head": Vector3(4, 0, 0), &"jaw": Vector3(6, 0, 0), &"tail": Vector3(40, 0, 0),
+	&"tail_tip": Vector3(6, 0, 0), &"l_upper_arm": Vector3(50, 0, 0), &"r_upper_arm": Vector3(50, 0, 0), &"l_lower_arm": Vector3(-84, 0, 0),
+	&"r_lower_arm": Vector3(-84, 0, 0), &"l_hand": Vector3(40, 0, 0), &"r_hand": Vector3(40, 0, 0), &"l_upper_leg": Vector3(-46, 0, 0),
+	&"r_upper_leg": Vector3(-46, 0, 0), &"l_lower_leg": Vector3(78, 0, 0), &"r_lower_leg": Vector3(78, 0, 0), &"l_foot": Vector3(-30, 0, 0),
+	&"r_foot": Vector3(-30, 0, 0), &"long": Vector3(0.06, 0, 0), &"root": Vector3(0, -0.3, 0)}
+## Asleep: coiled round on the bedding like a snake, chin down.
+const COIL := {&"spine": Vector3(0, 44, 0), &"chest": Vector3(0, 48, 0), &"neck": Vector3(4, 50, 0), &"head": Vector3(6, 45, 0),
+	&"jaw": Vector3(2, 0, 0), &"tail": Vector3(40, -90, 0), &"tail_tip": Vector3(6, -80, 0), &"l_ear": Vector3(-10, 0, 0),
+	&"r_ear": Vector3(-10, 0, 0), &"l_upper_arm": Vector3(50, 0, 0), &"r_upper_arm": Vector3(50, 0, 0), &"l_lower_arm": Vector3(-84, 0, 0),
+	&"r_lower_arm": Vector3(-84, 0, 0), &"l_hand": Vector3(40, 0, 0), &"r_hand": Vector3(40, 0, 0), &"l_upper_leg": Vector3(-46, 0, 0),
+	&"r_upper_leg": Vector3(-46, 0, 0), &"l_lower_leg": Vector3(78, 0, 0), &"r_lower_leg": Vector3(78, 0, 0), &"l_foot": Vector3(-30, 0, 0),
+	&"r_foot": Vector3(-30, 0, 0), &"long": Vector3(0.06, 0, 0), &"root": Vector3(0, -0.3, 0)}
+## Woken with a start: her head jerks up out of her coil, ears flat back.
+const STARTLED := {&"spine": Vector3(0, 36, 0), &"chest": Vector3(0, 36, 0), &"neck": Vector3(-24, 30, 0), &"head": Vector3(-14, 26, 0),
+	&"jaw": Vector3(26, 0, 0), &"tail": Vector3(40, -72, 0), &"tail_tip": Vector3(6, -60, 0), &"l_ear": Vector3(-30, 0, 0),
+	&"r_ear": Vector3(-30, 0, 0), &"l_upper_arm": Vector3(50, 0, 0), &"r_upper_arm": Vector3(50, 0, 0), &"l_lower_arm": Vector3(-84, 0, 0),
+	&"r_lower_arm": Vector3(-84, 0, 0), &"l_hand": Vector3(40, 0, 0), &"r_hand": Vector3(40, 0, 0), &"l_upper_leg": Vector3(-46, 0, 0),
+	&"r_upper_leg": Vector3(-46, 0, 0), &"l_lower_leg": Vector3(78, 0, 0), &"r_lower_leg": Vector3(78, 0, 0), &"l_foot": Vector3(-30, 0, 0),
+	&"r_foot": Vector3(-30, 0, 0), &"long": Vector3(0.04, 0, 0), &"root": Vector3(0, -0.28, 0)}
+## Getting up front end first: her forelegs straight, her back end still down,
+## the last of the curl coming out of her.
+const RISE := {&"hips": Vector3(-12, 0, 0), &"spine": Vector3(0, 14, 0), &"chest": Vector3(0, 14, 0), &"neck": Vector3(-10, 8, 0),
+	&"head": Vector3(-4, 6, 0), &"jaw": Vector3(14, 0, 0), &"tail": Vector3(30, -24, 0), &"l_upper_arm": Vector3(-4, 0, 0),
+	&"r_upper_arm": Vector3(-4, 0, 0), &"l_upper_leg": Vector3(-46, 0, 0), &"r_upper_leg": Vector3(-46, 0, 0), &"l_lower_leg": Vector3(78, 0, 0),
+	&"r_lower_leg": Vector3(78, 0, 0), &"l_foot": Vector3(-30, 0, 0), &"r_foot": Vector3(-30, 0, 0), &"long": Vector3(0.02, 0, 0),
+	&"root": Vector3(0, -0.16, 0)}
+## Bopped silly: tumbling forward out of her hole...
+const TOPPLE := {&"root": Vector3(0, -0.6, 0), &"hips": Vector3(-40, 0, -8), &"neck": Vector3(6, 10, 0), &"head": Vector3(10, 14, -10),
+	&"jaw": Vector3(24, 0, 0), &"l_upper_arm": Vector3(-60, 0, 0), &"r_upper_arm": Vector3(-60, 0, 0), &"l_lower_arm": Vector3(10, 0, 0),
+	&"r_lower_arm": Vector3(10, 0, 0), &"tail": Vector3(30, 0, 0), &"long": Vector3(0.06, 0, 0)}
+## ...and splatted flat on her belly, all four legs out, wiggly as a dropped
+## noodle, her cheek on the bedding and her tongue out.
+const SPLAT := {&"root": Vector3(0, -0.31, 0), &"hips": Vector3(2, 0, 0), &"spine": Vector3(0, 16, 0), &"chest": Vector3(2, -12, 0),
+	&"neck": Vector3(4, 14, 0), &"head": Vector3(4, 10, 34), &"jaw": Vector3(24, 0, 0), &"l_upper_arm": Vector3(-72, 0, 22),
+	&"r_upper_arm": Vector3(-68, 0, -20), &"l_lower_arm": Vector3(6, 0, 0), &"r_lower_arm": Vector3(6, 0, 0), &"l_hand": Vector3(16, 0, 0),
+	&"r_hand": Vector3(16, 0, 0), &"l_upper_leg": Vector3(84, 0, 16), &"r_upper_leg": Vector3(80, 0, -14), &"l_lower_leg": Vector3(-34, 0, 0),
+	&"r_lower_leg": Vector3(-34, 0, 0), &"l_foot": Vector3(70, 0, 0), &"r_foot": Vector3(70, 0, 0), &"tail": Vector3(42, -10, 0),
+	&"tail_tip": Vector3(6, 14, 0), &"long": Vector3(0.1, 0, 0)}
+## Beaten: limp, half over on her side, legs out, head on its cheek.
+const GONE := {&"root": Vector3(0, -0.3, 0), &"hips": Vector3(2, 0, 26), &"spine": Vector3(0, 14, 0), &"chest": Vector3(2, -14, 0),
+	&"neck": Vector3(4, 18, 0), &"head": Vector3(6, 12, 44), &"jaw": Vector3(34, 0, 0), &"l_upper_arm": Vector3(-50, 0, 40),
+	&"r_upper_arm": Vector3(-72, 0, -6), &"l_lower_arm": Vector3(-12, 0, 0), &"r_lower_arm": Vector3(6, 0, 0), &"l_upper_leg": Vector3(64, 0, 36),
+	&"r_upper_leg": Vector3(84, 0, -8), &"l_lower_leg": Vector3(-8, 0, 0), &"r_lower_leg": Vector3(-34, 0, 0), &"l_foot": Vector3(36, 0, 0),
+	&"r_foot": Vector3(70, 0, 0), &"tail": Vector3(40, -14, 0), &"tail_tip": Vector3(6, 20, 0), &"long": Vector3(0.1, 0, 0)}
+
 
 var _under := false                 # down in the ground (Pop Goes the Weasel): not there to hit
 var _popped := false                # stood up out of a hole: bop her on the nose
@@ -79,7 +154,10 @@ var _dizzy := false                 # bopped, and seeing stars
 var _clouds: Array = []             # [centre, radius, until]: her musk
 var _musk_t := 0.0
 var _dook_t := 4.0                  # (a chatter now and then, walking)
-var _fell_from := &""               # (beaten while &"popped" up out of a hole, or &"flopped" asleep or dizzy)
+var _fell_from := &""               # (beaten while &"popped" up out of a hole, &"asleep" flat out, &"coiled" up asleep, or &"dizzy")
+var _coiled := false                # (asleep, and coiled up now)
+var _turn := 0.0                    # (how fast she's turning, rad/s, smoothed: she bends into it)
+var _last_yaw := 0.0
 
 
 func _init() -> void:
@@ -95,6 +173,7 @@ func _init() -> void:
 	weak_spots = {&"head": 2.0, &"jaw": 2.0}
 	limb_scale = 0.7
 	solid_roles = [&"hips", &"spine", &"chest", &"neck"]
+	blend_from_pose = true   # (each move flows on from wherever she was)
 
 
 func stride() -> float:
@@ -141,6 +220,10 @@ func _footstep() -> void:
 
 
 func _physics_process(delta: float) -> void:
+	var dyaw := wrapf(rotation.y - _last_yaw, -PI, PI)
+	if delta > 0.0 and absf(dyaw) < 0.5:   # (not a pop out of a hole, already facing her prey)
+		_turn = lerpf(_turn, dyaw / delta, IKMath.damp(6.0, delta))
+	_last_yaw = rotation.y
 	super(delta)
 	_tend_musk(delta)
 	if alive and state == State.FIGHTING and action == null and _speed > 3.0:
@@ -187,12 +270,20 @@ func walk_pose(phase: float, amount: float) -> Dictionary:
 
 
 ## Never still: her nose going, her ears turning, her tail swaying, and a
-## breath through the whole long length of her.
+## breath through the whole long length of her. (Asleep, seeing stars or
+## beaten, what moves her is the move's own layer.)
 func idle_pose(t: float) -> Dictionary:
+	if _asleep or _dizzy or not alive:
+		return {}
 	var sniff := sin(t * 19.0) * maxf(0.0, sin(t * 0.8))
-	return {&"head": Vector3(2.5 * sniff, 0, 0), &"chest": Vector3(2.0 * sin(t * 1.6), 0, 0), &"spine": Vector3(-1.5 * sin(t * 1.6), 0, 0),
+	# turning, she bends all along into the turn (her head leading, her tail
+	# following round), and never stops weaving a little as she goes
+	var bend := clampf(_turn * 6.0, -16.0, 16.0)
+	var weave := 3.0 * sin(t * 2.3) * clampf(_speed / maxf(walk_speed, 0.1), 0.0, 1.0)
+	return {&"head": Vector3(2.5 * sniff, bend + weave, 0), &"neck": Vector3(0, bend + weave * 0.7, 0),
+		&"chest": Vector3(2.0 * sin(t * 1.6), bend + weave * 0.3, 0), &"spine": Vector3(-1.5 * sin(t * 1.6), bend * 0.8 - weave * 0.3, 0),
 		&"l_ear": Vector3(0, 0, 6.0 * sin(t * 0.7)), &"r_ear": Vector3(0, 0, -6.0 * sin(t * 0.9)),
-		&"tail": Vector3(0, 9.0 * sin(t * 1.1), 0), &"tail_tip": Vector3(0, 14.0 * sin(t * 1.1 - 0.8), 0)}
+		&"tail": Vector3(0, 9.0 * sin(t * 1.1) - bend * 1.6 - weave, 0), &"tail_tip": Vector3(0, 14.0 * sin(t * 1.1 - 0.8) - bend - weave, 0)}
 
 
 # ---- choosing --------------------------------------------------------------------------------
@@ -225,6 +316,7 @@ func _pop_goes(t: Critter) -> BossAction:
 	var a := BossAction.new(&"popgoes", pops[n - 1] + up + out)
 	a.interruptible = false
 	a.blend_out = 0.5
+	a.flow = true
 	var dig := {&"hips": Vector3(28, 0, 0), &"chest": Vector3(12, 0, 0), &"head": Vector3(22, 0, 0), &"tail": Vector3(45, 0, 0),
 		&"l_upper_arm": Vector3(-50, 0, 0), &"r_upper_arm": Vector3(20, 0, 0)}
 	var dig2 := dig.duplicate()
@@ -242,7 +334,7 @@ func _pop_goes(t: Critter) -> BossAction:
 			a.key(p + up + DOWN, UNDER)
 	a.key(a.length, {})
 	# where she's going, and where she'll come up (decided WARN_AT before: then the ring)
-	var st := {"who": t, "spot": Vector3.INF, "at": 0.0, "trail": 0.0, "rumble": 0.0, "pop": 0}
+	var st := {"who": t, "spot": Vector3.INF, "at": 0.0, "trail": 0.0, "rumble": 0.0, "shake": 0.0, "pop": 0}
 	a.on(0.15, func(): Audio.play_at(&"ferret_dig", global_position, 6.0, 0.05, {"max_distance": 500.0, "unit_size": 35.0}))
 	for k in 2:
 		a.on(0.3 + 0.32 * k, func(): _spray())
@@ -298,6 +390,10 @@ func _pop_goes(t: Critter) -> BossAction:
 		if float(st.rumble) <= 0.0:
 			st.rumble = 0.35
 			Events.explosion.emit(global_position, 7.0)
+		st.shake = float(st.shake) - delta
+		if float(st.shake) <= 0.0:
+			st.shake = 0.15
+			_rattle_near(global_position)
 	a.data["cancel"] = func(): _surface()
 	return a
 
@@ -357,6 +453,25 @@ func _burrow_near(at: Vector3) -> Vector3:
 	return best
 
 
+## Tube Town's pods and tubes and the burrows' rolls (HamsterCage.habitrail:
+## Habitrail pieces), if she's in the Hamster Cage.
+func _habitrail() -> Array:
+	var isl: Node = match_manager.island if match_manager and "island" in match_manager else null
+	return isl.get("habitrail") if isl and "habitrail" in isl else []
+
+
+## Going by under Tube Town (or landing a hop by it): whatever's near rattles
+## on its connectors, harder the nearer she is (each piece every half second
+## at most), bedding puffing out from under it. You hear her coming.
+func _rattle_near(p: Vector3) -> void:
+	for pc in Habitrail.near(_habitrail(), p, RATTLE_R):
+		if _clock - float(pc.get("shook_at", -10.0)) < 0.5:
+			continue
+		pc["shook_at"] = _clock
+		Habitrail.rattle(pc, clampf(1.0 - Habitrail.distance(pc, p) / RATTLE_R, 0.3, 1.0))
+		BossFX.dust(Habitrail.middle(pc), float(pc.r) + 4.0, Color(BEDDING, 0.7))
+
+
 ## Who's next, after `last`: someone else near if there's anyone (she pops
 ## up all over), or whoever's nearest.
 func _next_victim(last: Critter) -> Critter:
@@ -389,6 +504,20 @@ func _pop_up(at: Vector3, who: Critter = null) -> void:
 	BossFX.chips(at + Vector3.UP * 2.0, 2.6, BEDDING)
 	Events.explosion.emit(at, POP_R)
 	Audio.play_at(&"boss_stomp", at, 2.0, 0.05, {"max_distance": 600.0, "unit_size": 40.0})
+	# up under Tube Town: what's over her goes flying, the rest jumps
+	var knocked := false
+	for pc in Habitrail.near(_habitrail(), at, KNOCK_LOOSE):
+		var flung := Habitrail.loosen(pc, at - forward() * 10.0, 22.0 if pc.kind == &"tube" else 17.0)   # (up and on over her head)
+		if flung:
+			knocked = true
+			for solid in _solids:   # (it's thrown clear of her, not shoved off her by her own bulk)
+				if is_instance_valid(solid):
+					flung.add_collision_exception_with(solid)
+	for pc in Habitrail.near(_habitrail(), at, RATTLE_R):
+		pc["shook_at"] = _clock
+		Habitrail.rattle(pc, 1.0)
+	if knocked:   # (ferrets love a tube)
+		Audio.play_at(&"ferret_dook", mouth_position(), 6.0, 0.05, {"max_distance": 600.0, "unit_size": 40.0})
 
 
 ## Digging in: the bedding she flings back behind her stings whoever's there
@@ -417,39 +546,48 @@ func _bop() -> void:
 
 
 func _dizzy_action() -> BossAction:
-	var a := BossAction.new(&"dizzy", 0.5 + DIZZY_FOR + 1.0)
+	var down := 0.5 + DIZZY_FOR          # (she starts getting up)
+	var a := BossAction.new(&"dizzy", down + WAKE)
 	a.interruptible = false
 	a.blend_in = 0.0
-	var wob := FLOPPED.duplicate()
-	wob[&"head"] = (FLOPPED[&"head"] as Vector3) + Vector3(0, 0, 14)
-	wob[&"jaw"] = Vector3(28, 0, 0)
-	var wob2 := FLOPPED.duplicate()
-	wob2[&"head"] = (FLOPPED[&"head"] as Vector3) + Vector3(0, 0, -10)
-	wob2[&"jaw"] = Vector3(18, 0, 0)
-	a.key(0.0, POPPED).key(0.5, FLOPPED)
-	var k := 0
-	var tt := 0.5
-	while tt < 0.5 + DIZZY_FOR - 0.4:
-		tt += 0.6
-		a.key(tt, wob if k % 2 == 0 else wob2)
-		k += 1
-	a.key(0.5 + DIZZY_FOR, FLOPPED).key(a.length, {})
+	a.flow = true
+	var wobble := _plus(POPPED, {&"hips": Vector3(0, 0, -12), &"head": Vector3(0, 25, -15), &"jaw": Vector3(18, 0, 0),
+		&"l_upper_arm": Vector3(-20, 0, 10), &"r_upper_arm": Vector3(10, 0, -10)})
+	var up := _plus(BELLY, {&"neck": Vector3(-24, 0, 0), &"head": Vector3(-14, 0, 0), &"jaw": Vector3(20, 0, 0),
+		&"l_ear": Vector3(-30, 0, 0), &"r_ear": Vector3(-30, 0, 0)})
+	a.key(0.0, POPPED).key(0.16, wobble).key(0.36, TOPPLE).key(0.58, _plus(SPLAT, {&"root": Vector3(0, -0.02, 0), &"long": Vector3(0.03, 0, 0)}))
+	a.key(0.8, SPLAT).key(down - 0.3, SPLAT).key(down + 0.15, up).key(down + 0.45, RISE).key(down + 0.75, {}).key(a.length, {})
 	_dizzy = true
-	vulnerable_until = _clock + 0.5 + DIZZY_FOR
+	vulnerable_until = _clock + down
 	vulnerable_k = VULNERABLE
 	Events.announce.emit("NOODLE IS SEEING STARS!", "Bopped right on the nose. Hit her while she's down!")
 	Audio.play_at(&"ferret_hiss", mouth_position(), 4.0, 0.1, {"max_distance": 500.0, "unit_size": 35.0})
-	a.on(0.5, func():
+	a.on(0.58, func():
 		BossFX.dust(global_position, 20.0)
 		Events.explosion.emit(global_position, 14.0)
 		Audio.play_at(&"body_fall", global_position, 8.0, 0.0, {"max_distance": 600.0, "unit_size": 45.0}))
 	var st := {"stars": 0.0}
 	a.tick = func(time: float, delta: float):
 		st.stars = float(st.stars) - delta
-		if time > 0.5 and time < 0.5 + DIZZY_FOR and float(st.stars) <= 0.0:
+		if time > 0.5 and time < down and float(st.stars) <= 0.0:
 			st.stars = 0.45
 			_stars()
-	a.on(0.5 + DIZZY_FOR, func(): _dizzy = false)
+	# dazed: her head lolling round and round, her paws paddling at nothing,
+	# a wiggle running down her; then up, and a shake
+	a.layer = func(time: float) -> Dictionary:
+		if time > down + 0.7:
+			return _shake(time - down - 0.7)
+		var w := clampf(minf(time - 0.6, down - 0.2 - time) / 0.4, 0.0, 1.0)
+		if w <= 0.0:
+			return {}
+		var r := TAU * 0.8 * time
+		var p := TAU * 1.3 * time
+		return {&"head": Vector3(-6.0 * sin(r), 10.0 * cos(r), 8.0 * sin(r)) * w, &"neck": Vector3(-3.0 * sin(r - 0.5), 5.0 * cos(r - 0.5), 0) * w,
+			&"chest": Vector3(0, 6.0 * sin(r * 0.5 - 1.0), 0) * w, &"spine": Vector3(0, -5.0 * sin(r * 0.5 - 1.8), 0) * w,
+			&"l_upper_arm": Vector3(16.0 * sin(p), 0, 0) * w, &"r_upper_arm": Vector3(12.0 * sin(p + 2.0), 0, 0) * w,
+			&"l_upper_leg": Vector3(12.0 * sin(p + 1.0), 0, 0) * w, &"r_upper_leg": Vector3(10.0 * sin(p + 3.0), 0, 0) * w,
+			&"tail_tip": Vector3(0, 18.0 * sin(r * 0.7), 0) * w}
+	a.on(down, func(): _dizzy = false)
 	a.data["cancel"] = func(): _dizzy = false
 	return a
 
@@ -479,35 +617,38 @@ func take_damage(info: DamageInfo) -> void:
 # ---- Weasel War Dance ----------------------------------------------------------------------------
 
 ## Back arched, mouth open, dooking, she hops sideways at whoever she's
-## after, each landing on its own red ring; then she's danced herself out
-## and sleeps like the dead (hit her!), and wakes with a poof of musk.
+## after, each landing on its own red ring, bounding like a ferret: front end
+## up and off first, hind legs driving after, and front paws down first. Then
+## she's danced herself out: down on her front end, then her back end, over
+## onto her side, curled up, and sleeping like the dead (hit her!), breathing
+## slow and twitching as she dreams. She wakes with a start and a poof of
+## musk, and gets up front end first and shakes herself.
 func _dance(t: Critter) -> BossAction:
 	cooldown(&"dance", 24.0)
 	var n := HOPS_ENRAGED if enraged else HOPS
-	var hop := 0.5 if enraged else 0.62
+	var hop := HOP_TIME_ENRAGED if enraged else HOP_TIME
 	var wind := 0.8
-	var flop := 0.6
-	var sleep_at := wind + n * hop + flop
-	var wake := 0.9
-	var a := BossAction.new(&"dance", sleep_at + SLEEP_FOR + wake)
+	var down_at := wind + n * hop        # (her last hop's hind paws down)
+	var sleep_at := down_at + LIE_DOWN   # (down on her belly, eyes shut: then over onto her side)
+	var wake_at := sleep_at + SLEEP_FOR
+	var a := BossAction.new(&"dance", wake_at + WAKE)
 	a.interruptible = false
-	a.key(0.0, {}).key(wind, ARCH)
+	a.flow = true
+	var hp := _hop_poses()
+	a.key(0.0, {}).key(wind * 0.6, ARCH).key(wind, hp.gather)
 	for i in n:
-		var air := ARCH.duplicate()
-		air[&"root"] = Vector3(0, 0.12, 0)
-		air[&"l_upper_arm"] = Vector3(-40, 0, 0)
-		air[&"r_upper_arm"] = Vector3(-40, 0, 0)
-		air[&"l_upper_leg"] = Vector3(45, 0, 0)
-		air[&"r_upper_leg"] = Vector3(45, 0, 0)
-		air[&"hips"] = (ARCH[&"hips"] as Vector3) + Vector3(0, 0, 14.0 if i % 2 == 0 else -14.0)
-		a.key(wind + i * hop + hop * 0.5, air).key(wind + (i + 1) * hop, ARCH)
-	var drowsy := FLOPPED.duplicate()
-	drowsy[&"jaw"] = Vector3(10, 0, 0)
-	var stir := FLOPPED.duplicate()
-	stir[&"head"] = (FLOPPED[&"head"] as Vector3) + Vector3(-18, 0, -10)
-	stir[&"l_ear"] = Vector3(-25, 0, 0)
-	stir[&"r_ear"] = Vector3(-25, 0, 0)
-	a.key(sleep_at, FLOPPED).key(sleep_at + SLEEP_FOR - 0.7, drowsy).key(sleep_at + SLEEP_FOR, stir).key(a.length, {})
+		var t0 := wind + i * hop
+		var side := 1.0 if i % 2 == 0 else -1.0   # (her body twisting with each sideways hop, her head tossing)
+		a.key(t0 + hop * 0.18, hp.lift).key(t0 + hop * 0.36, hp.push)
+		a.key(t0 + hop * 0.56, _plus(hp.apex, {&"hips": Vector3(0, 0, 10.0 * side), &"head": Vector3(0, -14.0 * side, 0)}))
+		a.key(t0 + hop * 0.74, _plus(hp.reach, {&"hips": Vector3(0, 0, 4.0 * side)})).key(t0 + hop * 0.86, hp.touch)
+		a.key(t0 + hop, hp.gather if i < n - 1 else _plus(TIRED, {&"root": Vector3(0, 0.05, 0)}))
+	# danced out: front end down first, then her back end, flat, and she coils up
+	var half := _plus(BELLY, {&"neck": Vector3(0, 40, 0), &"head": Vector3(0, 36, 0), &"chest": Vector3(0, 20, 0), &"spine": Vector3(0, 8, 0),
+		&"tail": Vector3(0, -30, 0)})
+	a.key(down_at + 0.3, TIRED).key(down_at + 0.55, BOW).key(down_at + LIE_DOWN, BELLY).key(down_at + 1.2, half).key(down_at + 1.65, COIL).key(wake_at - 0.05, COIL)
+	# startled awake: head up, then her front end, then her back end, and a shake
+	a.key(wake_at + 0.12, STARTLED).key(wake_at + 0.45, RISE).key(wake_at + 0.75, {}).key(a.length, {})
 	var st := {"from": global_position, "to": global_position, "side": 1.0 if randf() < 0.5 else -1.0, "z": 0.0, "hop": -1}
 	a.on(0.0, func(): Audio.play_at(&"ferret_dook", mouth_position(), 6.0, 0.05, {"max_distance": 600.0, "unit_size": 40.0}))
 	for i in n:
@@ -518,43 +659,58 @@ func _dance(t: Critter) -> BossAction:
 			st.side = -float(st.side)
 			var spot := _hop_spot(t, float(st.side))
 			st.to = spot
-			warn(spot, HOP_R, hop))
-		a.on(t0 + hop, func():
+			warn(spot, HOP_R, hop * 0.88))
+		a.on(t0 + hop * 0.88, func():   # (her front paws down: the ring's hit)
 			var at: Vector3 = st.to
 			hurt_ring(at, HOP_R, 65.0 if enraged else 55.0, 15.0, 12.0, 9.0, &"dance")
+			_rattle_near(at)
 			BossFX.shockwave(at, HOP_R)
 			Events.explosion.emit(at, HOP_R)
 			Audio.play_at(&"boss_stomp", at, -2.0, 0.1, {"max_distance": 500.0, "unit_size": 35.0})
 			if i % 2 == 1:
 				Audio.play_at(&"ferret_dook", mouth_position(), 4.0, 0.08, {"max_distance": 500.0, "unit_size": 35.0}))
-	a.on(sleep_at - 0.2, func():
+	a.on(down_at, func():   # (danced out: from here till she's awake, hit her)
+		vulnerable_until = _clock + LIE_DOWN + SLEEP_FOR
+		vulnerable_k = VULNERABLE)
+	a.on(down_at + 0.55, func(): BossFX.dust(global_position + forward() * 14.0, 12.0))
+	a.on(down_at + LIE_DOWN - 0.1, func():
 		Audio.play_at(&"body_fall", global_position, 8.0, 0.0, {"max_distance": 600.0, "unit_size": 45.0})
 		BossFX.dust(global_position, 22.0))
 	a.on(sleep_at, func():
 		_asleep = true
-		vulnerable_until = _clock + SLEEP_FOR
-		vulnerable_k = VULNERABLE
 		Events.announce.emit("NOODLE IS ASLEEP!", "She's danced herself out. Hit her, and get clear before she wakes!")
 		Audio.play_at(&"ferret_snore", mouth_position(), 4.0, 0.0, {"max_distance": 400.0, "unit_size": 30.0}))
+	a.on(down_at + 1.4, func(): _coiled = _asleep)
 	a.on(sleep_at + 2.6, func():
 		if _asleep:
 			Audio.play_at(&"ferret_snore", mouth_position(), 4.0, 0.0, {"max_distance": 400.0, "unit_size": 30.0}))
-	a.on(sleep_at + SLEEP_FOR, func():
+	a.on(wake_at, func():
 		_asleep = false
+		_coiled = false
 		_poof())
+	var dreams := _dreams(sleep_at + 1.4, wake_at - 0.5)
+	a.layer = func(time: float) -> Dictionary:
+		if time > wake_at + 0.7:
+			return _shake(time - wake_at - 0.7)
+		if time < sleep_at + 0.6 or time > wake_at:
+			return {}
+		return _sleeping(time - sleep_at, clampf(minf(time - sleep_at - 0.6, wake_at - time) / 0.5, 0.0, 1.0), dreams, time)
 	a.tick = func(time: float, delta: float):
 		if time < wind:
 			if is_instance_valid(t) and t.alive:
 				face_toward(t.global_position, delta, 3.0)
 			return
-		if time < wind + n * hop:
+		if time < down_at:
 			if int(st.hop) < 0:
 				return
+			# off the ground from her push to her front paws coming down (how
+			# high she goes is in her pose: front end first, both ways)
 			var u := clampf((time - wind - int(st.hop) * hop) / hop, 0.0, 1.0)
+			var h := smoothstep(0.2, 0.9, u)
 			var from: Vector3 = st.from
 			var to: Vector3 = st.to
-			var p := from.lerp(to, u)
-			p.y = lerpf(from.y, to.y, u) + sin(u * PI) * 9.0
+			var p := from.lerp(to, h)
+			p.y = lerpf(from.y, to.y, h)
 			global_position = p
 			if is_instance_valid(t) and t.alive:
 				face_toward(t.global_position, delta, 4.0)   # (she hops sideways, facing you)
@@ -564,8 +720,133 @@ func _dance(t: Critter) -> BossAction:
 			if float(st.z) <= 0.0:
 				st.z = 0.55
 				_zzz()
-	a.data["cancel"] = func(): _asleep = false
+	a.data["cancel"] = func():
+		_asleep = false
+		_coiled = false
 	return a
+
+
+## The War Dance's bound: a ferret's, front end first both ways and her back
+## arched only as she gathers herself; in the air she's stretched out long
+## and flat as a tube. gather (all four down, bunched under her arched back),
+## lift (her front end up and off, her hind paws still down), push (her hind
+## legs driving off, her back flattening out), apex (stretched out long in the
+## air), reach (nose down, front paws reaching for the bedding), touch (front
+## paws down, her back end still coming down).
+static func _hop_poses() -> Dictionary:
+	return {
+		"gather": {&"hips": Vector3(-10, 0, 0), &"spine": Vector3(8, 0, 0), &"chest": Vector3(14, 0, 0), &"neck": Vector3(-18, 0, 0),
+			&"head": Vector3(-6, 0, 0), &"jaw": Vector3(30, 0, 0), &"tail": Vector3(60, 0, 0), &"l_upper_arm": Vector3(14, 0, 0),
+			&"r_upper_arm": Vector3(14, 0, 0), &"l_lower_arm": Vector3(-22, 0, 0), &"r_lower_arm": Vector3(-22, 0, 0), &"l_hand": Vector3(10, 0, 0),
+			&"r_hand": Vector3(10, 0, 0), &"l_upper_leg": Vector3(-6, 0, 0), &"r_upper_leg": Vector3(-6, 0, 0), &"l_lower_leg": Vector3(18, 0, 0),
+			&"r_lower_leg": Vector3(18, 0, 0), &"long": Vector3(-0.04, 0, 0), &"root": Vector3(0, -0.07, 0)},
+		"lift": {&"hips": Vector3(-26, 0, 0), &"spine": Vector3(4, 0, 0), &"chest": Vector3(6, 0, 0), &"neck": Vector3(-8, 0, 0),
+			&"head": Vector3(6, 0, 0), &"jaw": Vector3(30, 0, 0), &"tail": Vector3(62, 0, 0), &"tail_tip": Vector3(10, 0, 0),
+			&"l_upper_arm": Vector3(-40, 0, 0), &"r_upper_arm": Vector3(-40, 0, 0), &"l_lower_arm": Vector3(80, 0, 0), &"r_lower_arm": Vector3(80, 0, 0),
+			&"l_hand": Vector3(40, 0, 0), &"r_hand": Vector3(40, 0, 0), &"l_upper_leg": Vector3(24, 0, 0), &"r_upper_leg": Vector3(24, 0, 0),
+			&"l_lower_leg": Vector3(6, 0, 0), &"r_lower_leg": Vector3(6, 0, 0), &"root": Vector3(0, -0.04, 0)},
+		"push": {&"hips": Vector3(-18, 0, 0), &"spine": Vector3(2, 0, 0), &"chest": Vector3(-2, 0, 0), &"neck": Vector3(-6, 0, 0),
+			&"head": Vector3(8, 0, 0), &"jaw": Vector3(30, 0, 0), &"tail": Vector3(50, 0, 0), &"tail_tip": Vector3(10, 0, 0),
+			&"l_upper_arm": Vector3(-62, 0, 0), &"r_upper_arm": Vector3(-62, 0, 0), &"l_lower_arm": Vector3(40, 0, 0), &"r_lower_arm": Vector3(40, 0, 0),
+			&"l_hand": Vector3(16, 0, 0), &"r_hand": Vector3(16, 0, 0), &"l_upper_leg": Vector3(54, 0, 0), &"r_upper_leg": Vector3(54, 0, 0),
+			&"l_lower_leg": Vector3(-26, 0, 0), &"r_lower_leg": Vector3(-26, 0, 0), &"l_foot": Vector3(36, 0, 0), &"r_foot": Vector3(36, 0, 0),
+			&"long": Vector3(0.07, 0, 0), &"root": Vector3(0, 0.2, 0)},
+		"apex": {&"spine": Vector3(-2, 0, 0), &"chest": Vector3(-6, 0, 0), &"neck": Vector3(-10, 0, 0), &"head": Vector3(10, 0, 0),
+			&"jaw": Vector3(30, 0, 0), &"tail": Vector3(48, 0, 0), &"tail_tip": Vector3(4, 0, 0), &"l_upper_arm": Vector3(-84, 0, 0),
+			&"r_upper_arm": Vector3(-84, 0, 0), &"l_lower_arm": Vector3(10, 0, 0), &"r_lower_arm": Vector3(10, 0, 0), &"l_hand": Vector3(-6, 0, 0),
+			&"r_hand": Vector3(-6, 0, 0), &"l_upper_leg": Vector3(78, 0, 0), &"r_upper_leg": Vector3(78, 0, 0), &"l_lower_leg": Vector3(-10, 0, 0),
+			&"r_lower_leg": Vector3(-10, 0, 0), &"l_foot": Vector3(60, 0, 0), &"r_foot": Vector3(60, 0, 0), &"long": Vector3(0.12, 0, 0),
+			&"root": Vector3(0, HOP_UP, 0)},
+		"reach": {&"hips": Vector3(22, 0, 0), &"chest": Vector3(-4, 0, 0), &"neck": Vector3(-12, 0, 0), &"jaw": Vector3(30, 0, 0),
+			&"tail": Vector3(46, 0, 0), &"tail_tip": Vector3(6, 0, 0), &"l_upper_arm": Vector3(-44, 0, 0), &"r_upper_arm": Vector3(-44, 0, 0),
+			&"l_lower_arm": Vector3(-4, 0, 0), &"r_lower_arm": Vector3(-4, 0, 0), &"l_hand": Vector3(-10, 0, 0), &"r_hand": Vector3(-10, 0, 0),
+			&"l_upper_leg": Vector3(68, 0, 0), &"r_upper_leg": Vector3(68, 0, 0), &"l_lower_leg": Vector3(-10, 0, 0), &"r_lower_leg": Vector3(-10, 0, 0),
+			&"l_foot": Vector3(40, 0, 0), &"r_foot": Vector3(40, 0, 0), &"long": Vector3(0.1, 0, 0), &"root": Vector3(0, HOP_UP, 0)},
+		"touch": {&"hips": Vector3(16, 0, 0), &"neck": Vector3(-8, 0, 0), &"head": Vector3(-2, 0, 0), &"jaw": Vector3(30, 0, 0),
+			&"tail": Vector3(44, 0, 0), &"l_upper_arm": Vector3(-8, 0, 0), &"r_upper_arm": Vector3(-8, 0, 0), &"l_lower_arm": Vector3(-18, 0, 0),
+			&"r_lower_arm": Vector3(-18, 0, 0), &"l_hand": Vector3(8, 0, 0), &"r_hand": Vector3(8, 0, 0), &"l_upper_leg": Vector3(40, 0, 0),
+			&"r_upper_leg": Vector3(40, 0, 0), &"l_lower_leg": Vector3(2, 0, 0), &"r_lower_leg": Vector3(2, 0, 0), &"l_foot": Vector3(10, 0, 0),
+			&"r_foot": Vector3(10, 0, 0), &"long": Vector3(0.06, 0, 0), &"root": Vector3(0, 0.27, 0)},
+	}
+
+
+## `base` with `more` added on, `k` times (degrees per role; the root's offset too).
+static func _plus(base: Dictionary, more: Dictionary, k := 1.0) -> Dictionary:
+	var out := base.duplicate()
+	for r in more:
+		out[r] = (out.get(r, Vector3.ZERO) as Vector3) + (more[r] as Vector3) * k
+	return out
+
+
+## When she twitches in her sleep, between `from` and `to` (seconds into the
+## dance): [[when, what, which side], ...], one every second or so.
+func _dreams(from: float, to: float) -> Array:
+	var out := []
+	var t := from + randf_range(0.0, 0.6)
+	while t < to:
+		out.append([t, randi() % TWITCHES.size(), 1.0 if randf() < 0.5 else -1.0])
+		t += randf_range(0.6, 1.3)
+	return out
+
+
+## How long each of her twitches takes (_twitch: a front paw paddling, a hind
+## leg kicking, an ear flicking, the tip of her tail, her nose, her jaw).
+const TWITCHES := [0.6, 0.4, 0.22, 0.5, 0.36, 0.34]
+
+
+## Asleep, `since` seconds after she went down: breathing slow and deep (the
+## breath in with each snore: her back rising, her coil stretching a little),
+## and twitching as she dreams (`dreams`, at `time` into the dance), all of it
+## `w` strong.
+func _sleeping(since: float, w: float, dreams: Array, time: float) -> Dictionary:
+	var b := 0.5 + 0.5 * cos(TAU * since / 2.6)
+	var out := {&"chest": Vector3(-2.5 * b, 0, 0), &"spine": Vector3(-1.5 * b, 0, 0), &"head": Vector3(1.2 * b, 0, 0),
+		&"jaw": Vector3(5.0 * b, 0, 0), &"root": Vector3(0, 0.008 * b, 0), &"long": Vector3(0.012 * b, 0, 0)}
+	for d in dreams:
+		var u := (time - float(d[0])) / float(TWITCHES[int(d[1])])
+		if u > 0.0 and u < 1.0:
+			out = _plus(out, _twitch(int(d[1]), float(d[2]), u))
+	for r in out:
+		out[r] = (out[r] as Vector3) * w
+	return out
+
+
+## One twitch, `u` of the way through it (TWITCHES), lying on her belly.
+static func _twitch(kind: int, side: float, u: float) -> Dictionary:
+	var env := sin(PI * u)
+	var l := side > 0.0
+	match kind:
+		0:   # a front paw paddling
+			return {(&"l_upper_arm" if l else &"r_upper_arm"): Vector3(-24.0 * sin(u * TAU * 2.0) * env, 0, 8.0 * side * env),
+				(&"l_lower_arm" if l else &"r_lower_arm"): Vector3(22.0 * sin(u * TAU * 2.0 + 0.9) * env, 0, 0)}
+		1:   # a hind leg kicking
+			return {(&"l_upper_leg" if l else &"r_upper_leg"): Vector3(26.0 * sin(u * TAU) * env, 0, 6.0 * side * env),
+				(&"l_lower_leg" if l else &"r_lower_leg"): Vector3(-22.0 * sin(u * TAU + 0.7) * env, 0, 0)}
+		2:   # an ear flicking
+			return {(&"l_ear" if l else &"r_ear"): Vector3(-32.0 * env, 0, 0)}
+		3:   # the tip of her tail
+			return {&"tail_tip": Vector3(0, 32.0 * sin(u * TAU * 1.5) * env, 0), &"tail": Vector3(0, 6.0 * sin(u * TAU * 1.5 - 0.6) * env, 0)}
+		4:   # her nose going, sniffing at something in her dream
+			return {&"head": Vector3(3.0 * sin(u * TAU * 4.0) * env, 0, 0)}
+		_:   # her jaw working (a lick, a chomp)
+			return {&"jaw": Vector3(12.0 * env, 0, 0)}
+
+
+## Up again and shaking herself off, `t` seconds in: a wave that runs down
+## her from her nose to the tip of her tail, side to side, gone in about half
+## a second.
+static func _shake(t: float) -> Dictionary:
+	if t <= 0.0 or t >= 0.6:
+		return {}
+	var env := sin(PI * t / 0.6)
+	var out := {}
+	var chain := [&"head", &"neck", &"chest", &"spine", &"hips", &"tail", &"tail_tip"]
+	for k in chain.size():
+		var ph := TAU * 5.0 * t - k * 0.9
+		out[chain[k]] = Vector3(0, 9.0 * sin(ph), 7.0 * sin(ph + 0.6)) * env * (0.6 if chain[k] == &"hips" else 1.0)
+	out[&"l_ear"] = Vector3(0, 0, 18.0 * sin(TAU * 5.0 * t)) * env
+	out[&"r_ear"] = Vector3(0, 0, -18.0 * sin(TAU * 5.0 * t)) * env
+	return out
 
 
 ## Where a hop lands: toward whoever she's after, zigzagging (`side`: which
@@ -611,6 +892,7 @@ func _bite(t: Critter) -> BossAction:
 	var strike := 0.2
 	var hit_at := aim + coil + strike
 	var a := BossAction.new(&"bite", hit_at + 0.55 + 0.45)
+	a.flow = true
 	var drawn := {&"spine": Vector3(6, 0, 0), &"chest": Vector3(-8, 0, 0), &"neck": Vector3(-18, 0, 0), &"head": Vector3(14, 0, 0),
 		&"jaw": Vector3(34, 0, 0), &"l_upper_arm": Vector3(-20, 0, 0), &"r_upper_arm": Vector3(-20, 0, 0), &"root": Vector3(0, -0.02, -0.12),
 		&"l_ear": Vector3(-30, 0, 0), &"r_ear": Vector3(-30, 0, 0)}
@@ -657,6 +939,7 @@ func _bite(t: Critter) -> BossAction:
 ## (Her arrival's flourish for the camera, too.)
 func _roar_action() -> BossAction:
 	var a := BossAction.new(&"hiss", 2.3)
+	a.flow = true
 	var loud := REARED.duplicate()
 	loud[&"jaw"] = Vector3(44, 0, 0)
 	loud[&"head"] = (REARED[&"head"] as Vector3) + Vector3(-10, 0, 0)
@@ -678,6 +961,7 @@ func _entrance() -> BossAction:
 	var a := BossAction.new(&"entrance", land_time + 2.2)
 	a.interruptible = false
 	a.blend_in = 0.0
+	a.flow = true
 	var up := REARED.duplicate()
 	up[&"jaw"] = Vector3(30, 0, 0)
 	a.key(0.0, UNDER).key(land_time - 0.15, UNDER).key(land_time + 0.15, up).key(land_time + 1.1, up).key(a.length, {})
@@ -713,44 +997,77 @@ func _after_entrance() -> void:
 
 ## How she was beaten (_death_action): up out of a hole, or flat out asleep or dizzy.
 func _die(info: DamageInfo) -> void:
-	_fell_from = &"popped" if _popped else (&"flopped" if _asleep or _dizzy else &"")
+	_fell_from = &"popped" if _popped else (&"dizzy" if _dizzy else &"")
+	if _asleep:
+		_fell_from = &"coiled" if _coiled else &"asleep"
 	super(info)
 
 
-## She staggers, and goes over onto her side, tongue out, tail curling round.
-## Asleep or seeing stars already, she just doesn't get up; beaten up out of
-## a hole, she slumps out of it onto the bedding.
+## She rears back hissing, her front legs give first, then her back end, and
+## she goes down long and limp, half over on her side, legs out, a last
+## twitch or two. Asleep she just goes slack in her coil; seeing stars she
+## doesn't get up; beaten up out of a hole, she tumbles out of it onto the
+## bedding.
 func _death_action() -> BossAction:
 	_clouds.clear()
 	_asleep = false
 	_dizzy = false
-	var gone := FLOPPED.duplicate()
-	gone[&"jaw"] = Vector3(36, 0, 0)
-	gone[&"head"] = (FLOPPED[&"head"] as Vector3) + Vector3(10, 0, 8)
-	var a := BossAction.new(&"death", 2.4)
+	var a := BossAction.new(&"death", 3.4)
 	a.blend_out = 0.0
 	a.interruptible = false
+	a.flow = true
+	var thud := 2.0
 	match _fell_from:
-		&"flopped":
-			a.length = 1.4
-			a.blend_in = 0.0
-			a.key(0.0, FLOPPED).key(1.0, gone).key(1.4, gone)
-			a.on(0.3, func():
-				if gore_ok:
-					FX.gore_burst(mouth_position(), 1.6, Color(0.42, 0.28, 0.18)))
-			return a
+		&"coiled":
+			a.length = 2.0
+			a.blend_in = 0.4
+			thud = -1.0
+			var slack := _plus(COIL, {&"neck": Vector3(-12, 4, 0), &"head": Vector3(-18, 2, 0), &"jaw": Vector3(24, 0, 0)})   # (her head's turned back along her: down is -x)
+			a.key(0.0, COIL).key(1.0, slack).key(a.length, slack)
+		&"asleep":
+			a.length = 2.0
+			a.blend_in = 0.4
+			thud = -1.0
+			var slack := _plus(BELLY, {&"neck": Vector3(12, 10, 0), &"head": Vector3(10, 8, 30), &"jaw": Vector3(26, 0, 0), &"spine": Vector3(0, 8, 0),
+				&"chest": Vector3(0, -8, 0)})
+			a.key(0.0, BELLY).key(1.0, slack).key(a.length, slack)
+		&"dizzy":
+			a.length = 2.0
+			a.blend_in = 0.4
+			thud = -1.0
+			a.key(0.0, SPLAT).key(1.0, GONE).key(a.length, GONE)
 		&"popped":
 			a.blend_in = 0.0
-			a.key(0.0, POPPED).key(0.4, POPPED).key(1.5, gone).key(2.4, gone)
+			a.length = 2.8
+			thud = 1.1
+			a.key(0.0, POPPED).key(0.35, _plus(POPPED, {&"head": Vector3(-20, 0, 0), &"jaw": Vector3(36, 0, 0)})).key(0.75, TOPPLE)
+			a.key(thud, _plus(GONE, {&"root": Vector3(0, -0.02, 0), &"hips": Vector3(0, 0, -8)})).key(thud + 0.35, GONE).key(a.length, GONE)
 		_:
 			var reel := {&"hips": Vector3(-12, 0, -10), &"neck": Vector3(-20, 0, 0), &"head": Vector3(-25, 0, 10), &"jaw": Vector3(40, 0, 0),
 				&"root": Vector3(0, 0.03, 0)}
-			a.key(0.0, {}).key(0.7, reel).key(1.5, gone).key(2.4, gone)
+			var buckle := _plus(BOW, {&"hips": Vector3(0, 0, -6), &"neck": Vector3(14, 0, 0), &"head": Vector3(6, 0, 0), &"jaw": Vector3(24, 0, 0),
+				&"root": Vector3(0, -0.04, 0)})   # (her back end going down with her front: no hump)
+			a.key(0.0, {}).key(0.55, reel).key(1.0, buckle).key(1.45, BELLY)
+			a.key(thud, _plus(GONE, {&"root": Vector3(0, -0.02, 0), &"hips": Vector3(0, 0, -8)})).key(thud + 0.35, GONE).key(a.length, GONE)
+	# a last twitch or two of her legs, and her tail, once she's down
+	var from := maxf(thud, 0.4) + 0.3
+	a.layer = func(time: float) -> Dictionary:
+		var u := (time - from) / 1.0
+		if u <= 0.0 or u >= 1.0:
+			return {}
+		var env := sin(PI * u) * (1.0 - u)
+		return {&"l_upper_leg": Vector3(26.0 * sin(u * TAU * 2.0) * env, 0, 0), &"l_upper_arm": Vector3(-18.0 * sin(u * TAU * 1.5 + 1.0) * env, 0, 0),
+			&"tail_tip": Vector3(0, 24.0 * sin(u * TAU) * env, 0), &"chest": Vector3(-3.0 * env, 0, 0)}
 	a.on(0.2, func(): Audio.play_at(&"ferret_hiss", mouth_position(), 6.0, 0.0, {"max_distance": 700.0, "unit_size": 45.0}))
-	a.on(1.5, func():
-		BossFX.shockwave(global_position, HEIGHT)
-		Events.explosion.emit(global_position, 20.0)
-		Audio.play_at(&"body_fall", global_position, 12.0, 0.0, {"max_distance": 600.0, "unit_size": 50.0}))
+	if thud > 0.0:
+		a.on(thud, func():
+			BossFX.shockwave(global_position, HEIGHT)
+			Events.explosion.emit(global_position, 20.0)
+			Audio.play_at(&"body_fall", global_position, 12.0, 0.0, {"max_distance": 600.0, "unit_size": 50.0}))
+	else:
+		a.on(0.3, func():
+			if gore_ok:
+				FX.gore_burst(mouth_position(), 1.6, Color(0.42, 0.28, 0.18)))
 	return a
 
 
@@ -764,7 +1081,7 @@ func _fallen() -> void:
 
 ## A point kept inside the cage (a hop's landing, a pop: never out past the glass).
 func _inside(p: Vector3) -> Vector3:
-	var isl: Island = match_manager.island if match_manager and "island" in match_manager else null
+	var isl := match_manager.island as Island if match_manager and "island" in match_manager else null
 	if isl:
 		var r := isl.play_bounds().grow(-25.0)
 		p.x = clampf(p.x, r.position.x, r.end.x)
@@ -780,6 +1097,7 @@ func restore(s: Dictionary) -> void:
 	_whacks = 0.0
 	_fell_from = &""
 	_asleep = false
+	_coiled = false
 	_dizzy = false
 	_clouds.clear()
 	_surface()

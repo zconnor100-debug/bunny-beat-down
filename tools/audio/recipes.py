@@ -3400,3 +3400,49 @@ def ferret_poof(c, v):
     fizz = B.unit(highpass(colored(n, r, -1.0), 2400.0, 2)) * env_pts(n, [(0, 0), (0.15, 1), (1.4, 0)]) ** 2
     x = mix(1.4, (puff, 0, 0), (pff, 0, -3), (fizz, 0.05, -15))
     return reverb(x, r, decay=0.9, mix_db=-13, predelay=0.02, bright=3000.0, tail=0.3)[: n_of(1.6)]
+
+
+# ---- Tube Town (Habitrail): Noodle under it, and coming up through it ----
+
+def _tube_knock(r, k, f_body=230.0):
+    """One knock of a big plastic Habitrail tube against its connectors: a
+    hollow, dull body note, the wall's brighter plastic knock, a click."""
+    j = lambda: r.uniform(0.93, 1.07)
+    return B.struck(r, [(f_body * k * j(), 0.045, 1.0), (f_body * 2.3 * k * j(), 0.03, 0.6), (980 * k * j(), 0.018, 0.75),
+                        (1580 * k * j(), 0.012, 0.5), (2700 * k * j(), 0.006, 0.3), (4100 * k * j(), 0.003, 0.15)], 0.22,
+                    exc_ms=0.7, exc_lp=11000.0)
+
+
+@recipe("tube_rattle", variants=2, loud=-14.0, src="synth")
+def tube_rattle(c, v):
+    """Tube Town rattling as Noodle passes under the bedding beneath it: the
+    plastic tubes and pods jumping on their connectors, a burst of hollow
+    knocks bunching and thinning out, bedding trickling off them, the floor
+    rumbling under it all (~0.9 s)."""
+    r = c.rng
+    k = [1.0, 0.86][v]
+    layers = []
+    t = 0.0
+    while t < 0.62:
+        loud = -2.0 - 10.0 * (t / 0.62) + r.uniform(-3.0, 1.0)
+        layers.append((_tube_knock(r, k * r.uniform(0.9, 1.12)), t, loud))
+        t += r.uniform(0.025, 0.09) * (1.0 + t * 1.5)
+    rumble = B.lowbody(r, 0.8, 40.0, 160.0, 0.25, attack=0.04)
+    trickle = B.grains(r, 0.8, 34, 1400.0, 6500.0, glen=(0.002, 0.008), t_tau=0.25, start=0.05)
+    x = mix(0.95, *layers, (rumble, 0, -8), (trickle, 0.02, -14))
+    return reverb(x, r, decay=0.5, mix_db=-15, predelay=0.008, bright=4500.0, tail=0.15)[: n_of(1.0)]
+
+
+@recipe("tube_clunk", variants=1, loud=-12.0, src="synth")
+def tube_clunk(c, v):
+    """A Habitrail tube (or a pod) knocked clean off its connectors from
+    underneath: a fat hollow plastic POP, the big dull CLONK of the whole
+    thing jumping, and its ends clattering as it goes (~1.1 s)."""
+    r = c.rng
+    pop = B.cork_pop(r, 170.0, 520.0, 0.2, noise_db=-8.0)
+    clonk = B.struck(r, [(118.0, 0.11, 1.0), (271.0, 0.07, 0.7), (640.0, 0.04, 0.5), (1150.0, 0.022, 0.4),
+                         (2300.0, 0.01, 0.2)], 0.5, exc_ms=1.4, exc_lp=8000.0)
+    thud = B.kick(110.0, 55.0, 0.05, 0.12, 0.45, drive=1.2)
+    rattles = [(_tube_knock(r, r.uniform(0.95, 1.2)), 0.16 + i * r.uniform(0.07, 0.12), -9.0 - i * 2.5) for i in range(5)]
+    x = mix(1.1, (pop, 0, -2), (clonk, 0.012, 0), (thud, 0.01, -5), *rattles)
+    return reverb(x, r, decay=0.7, mix_db=-14, predelay=0.01, bright=4000.0, tail=0.2)[: n_of(1.2)]

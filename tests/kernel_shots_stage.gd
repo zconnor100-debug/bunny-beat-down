@@ -17,6 +17,7 @@ var finale := false
 var owl := false     ## ("owl": Old Hoot's Boss Battle, by night, instead)
 var nut := false     ## ("nutcracker": Crackjaw's Boss Battle in the Toy Box, instead)
 var ferret := false  ## ("ferret": Noodle's Boss Battle in the Hamster Cage, instead)
+var tubes := false   ## (with "ferret", "tubes": Noodle in Tube Town, rattling it and knocking it loose)
 var epic := false    ## ("epic": shot at the Epic graphics tier, as the game looks on a fast GPU, not High)
 var movie := false   ## (recorded with Movie Maker: straight to the ending, its frames marked: OUTRO_AT, END_AT; with "act1", Act I's, and KILL_AT; with "act2", Act II's, and TAKEN_AT, LEAP_AT; with "act3", Act III's, and DAM_AT, WAKE_AT; with "finale", the Finale's, and BRIAR_AT, SHUT_AT, WAKE_AT, POD_AT, SPLIT_AT, KILL_AT)
 
@@ -34,6 +35,7 @@ func _ready() -> void:
 	owl = a.has("owl")
 	nut = a.has("nutcracker")
 	ferret = a.has("ferret")
+	tubes = a.has("tubes")
 	movie = a.has("movie")
 	epic = a.has("epic")
 	DirAccess.make_dir_recursive_absolute(out_dir)
@@ -98,6 +100,8 @@ func _run() -> void:
 			await _owl_movie()
 		elif nut:
 			await _nut_movie()
+		elif ferret and tubes:
+			await _ferret_tubes()
 		elif ferret:
 			await _ferret_movie()
 		else:
@@ -108,6 +112,8 @@ func _run() -> void:
 		await _owl()
 	elif nut:
 		await _nut()
+	elif ferret and tubes:
+		await _ferret_tubes()
 	elif ferret:
 		await _ferret()
 	elif boss:
@@ -933,12 +939,12 @@ func _open_spot(g: Node) -> Vector3:
 
 ## A Boss Battle against Noodle in the Hamster Cage, everyone down, and her
 ## on her way in (BossIntro's camera on the bedding heaving).
-func _ferret_battle() -> Node:
+func _ferret_battle(intro := true) -> Node:
 	var settings: Node = get_tree().root.get_node("Settings")
 	settings.set_value(&"map", "cage", false)
 	settings.set_value(&"mode", "boss", false)
 	settings.set_value(&"boss", "ferret", false)
-	settings.set_value(&"boss_intro", true, false)
+	settings.set_value(&"boss_intro", intro, false)
 	settings.set_value(&"seed", 4321, false)
 	var g: Node = await _game()
 	var mm: MatchManager = g.match_manager
@@ -1052,6 +1058,92 @@ func _ferret_movie() -> void:
 		g._end.visible = true
 	await _wait(3.0)
 	print("END_AT %d" % Engine.get_frames_drawn())
+	var settings: Node = get_tree().root.get_node("Settings")
+	settings.set_value(&"mode", "royale", false)
+	settings.set_value(&"boss", "", false)
+
+
+## Noodle in Tube Town (stills, or a film with "movie"): you hiding in one of
+## its tubes, her coming for you under the bedding (Tube Town rattling as she
+## goes by under it), and up she comes under the tube: off its connectors and
+## flying. Then you're in a pod, and the pod goes. Stills t01_rattle ...
+## t05_pod_up; frames marked TUBES_AT, POD_AT, END_AT.
+func _ferret_tubes() -> void:
+	var g: Node = await _ferret_battle(false)   # (no arrival cinematic: straight to Tube Town)
+	var mm: MatchManager = g.match_manager
+	var p := mm.player
+	var b := mm.boss as FerretBoss
+	for i in 240:   # (her arrival's cinematic: till it's begun...)
+		if not g.find_children("*", "BossIntro", true, false).is_empty():
+			break
+		await get_tree().process_frame
+	for i in 1800:   # (...and till it's over)
+		var intro: Array = g.find_children("*", "BossIntro", true, false)
+		if (intro.is_empty() or not intro.any(func(n): return n.playing)) and b.state == Boss.State.FIGHTING:
+			break
+		await get_tree().process_frame
+	b.thinking = false
+	b._cancel_action()
+	var isl: HamsterCage = g.island
+	var tubes_: Array = isl.habitrail.filter(func(pc): return pc.kind == &"tube")
+	var pods_: Array = isl.habitrail.filter(func(pc): return pc.kind == &"pod")
+	var town := (Habitrail.middle(tubes_[0]) + Habitrail.middle(tubes_[2])) * 0.5   # (the middle of the diamond)
+	var hide := Habitrail.middle(tubes_[0])
+	var away := hide - town
+	away.y = 0.0
+	away = away.normalized()
+	for c in mm.critters:   # (the bots off fighting elsewhere: just you and her here)
+		if c != p and c.alive and Vector2(c.global_position.x - town.x, c.global_position.z - town.z).length() < 90.0:
+			c.place_at(town - away * 150.0 + Vector3(randf_range(-30, 30), 2.0, randf_range(-30, 30)), 0.0)
+	p.place_at(hide + Vector3.UP * 0.6, 0.0)
+	b.global_position = b._inside(town - away * 120.0)
+	b.rotation.y = atan2(-(hide.x - b.global_position.x), -(hide.z - b.global_position.z))
+	var cam := Camera3D.new()
+	get_tree().root.add_child(cam)
+	cam.fov = 55.0
+	cam.far = 3000.0
+	cam.make_current()
+	g.hud.visible = false
+	var side := away.cross(Vector3.UP)
+	cam.global_position = town + side * 100.0 - away * 30.0 + Vector3.UP * 36.0
+	cam.look_at(town + Vector3.UP * 5.0, Vector3.UP)
+	print("TUBES_AT %d" % Engine.get_frames_drawn())
+	for round_ in 2:
+		if round_ == 1:   # (now you're in a pod)
+			var pod: Dictionary = pods_.filter(func(pc): return not pc.loose)[0]
+			p.place_at(Habitrail.middle(pod) + Vector3.UP * 0.6, 0.0)
+			print("POD_AT %d" % Engine.get_frames_drawn())
+		b.start(b._pop_goes(p))
+		var shot := {"rattle": false}
+		var up_t := -1.0
+		while b.action != null and b.alive:
+			if not cam.current:
+				cam.make_current()
+			g.hud.visible = false
+			if not movie and not shot.rattle and b._under and Vector2(b.global_position.x - town.x, b.global_position.z - town.z).length() < 34.0:
+				shot.rattle = true
+				if round_ == 0:
+					await _snap("t01_rattle")
+			if b._popped and up_t < 0.0:
+				up_t = 0.0
+			if up_t >= 0.0:
+				up_t += 1.0 / 60.0
+				for k in [["t02_pop", 0, 0.25], ["t03_flying", 0, 0.9], ["t05_pod_up", 1, 0.3]]:
+					if not movie and round_ == k[1] and up_t >= k[2] and not shot.has(k[0]):
+						shot[k[0]] = true
+						await _snap(k[0])
+				if up_t > 3.2:   # (one pop is enough here: up out of Tube Town, and stop)
+					b._cancel_action()
+					break
+			_unpause(g)
+			await get_tree().physics_frame
+		await _wait(1.0)
+		if not movie and round_ == 0:
+			await _snap("t04_landed")
+	await _wait(1.5)
+	print("END_AT %d" % Engine.get_frames_drawn())
+	g.rig.camera.make_current()
+	g.hud.visible = true
 	var settings: Node = get_tree().root.get_node("Settings")
 	settings.set_value(&"mode", "royale", false)
 	settings.set_value(&"boss", "", false)

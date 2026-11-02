@@ -224,7 +224,10 @@ tall only reared up on her hind legs. Pop Goes the Weasel (a music box's
 rhyme under the bedding; out of the hamster's burrows when one's near;
 bopped on the nose while she's up, she's seeing stars), the Bedding Spray
 as she digs in, the Weasel War Dance (ending in a dead sleep and a poof of
-musk), the Lunge, and the Bottle-Brush. Beat her for **the Finders Keepers**
+musk), the Lunge, and the Bottle-Brush. Tube Town rattles as she goes by
+under it, and if you hide in its tubes she comes up under them and sends
+them flying. She bounds like a ferret, stretched long in the air, and
+sleeps coiled up nose to tail. Beat her for **the Finders Keepers**
 beat-down burst.
 
 ### The Briar Heart, the Acorn's Roots (Boulder Bluff, by night)

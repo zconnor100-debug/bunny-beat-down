@@ -24,11 +24,20 @@ const CLOVER_SHADER := preload("res://src/fx/clover_glow.gdshader")
 static var _clover_glow: ShaderMaterial
 static var _acorn_glow: ShaderMaterial
 
+## Every pickup lying about, by the CELL-metre square it's in (Pickup.near):
+## a bot looking for loot looks in the squares round it, not over the map.
+const CELL := 40.0
+## Its glow and beam lights go out past this far from the camera.
+const LIGHT_FADE := 55.0
+static var _grid := {}               # Vector2i -> Array[Pickup]
+
 var spec: Dictionary = {}
 var _spin: Node3D
 var _t := randf() * 10.0
 var _sensor: Area3D
 var _sense_cd := 0.0
+var _near := 0                       # (critters in its sensor: it only checks for them while there are any)
+var _cell := Vector2i.MAX
 var dropped_by: Node = null      ## who swapped this gun out (AI ignores its own drops)
 var dropped_msec := 0
 
@@ -111,6 +120,66 @@ func _ready() -> void:
 		scs.shape = ss
 		_sensor.add_child(scs)
 		add_child(_sensor)
+		_sensor.body_entered.connect(_on_near.bind(1))
+		_sensor.body_exited.connect(_on_near.bind(-1))
+	set_physics_process(false)   # (till someone's in reach: _on_near)
+	_sense_cd = 0.2   # (and not straight away: out of a crate at your feet, it pops out before it's scooped up)
+	# spinning only while it's on screen
+	var seen := VisibleOnScreenNotifier3D.new()
+	seen.aabb = AABB(Vector3(-1.5, -0.5, -1.5), Vector3(3.0, 3.5, 3.0))
+	seen.screen_entered.connect(set_process.bind(true))
+	seen.screen_exited.connect(set_process.bind(false))
+	add_child(seen)
+	set_process(false)
+	sleeping_state_changed.connect(_file)
+	_file.call_deferred()   # (wherever it was put down, once it's put)
+
+
+## Pickups within `radius` of `pos` (flat), from the squares round it.
+static func near(pos: Vector3, radius: float) -> Array:
+	var out := []
+	var lo := Vector2i(floori((pos.x - radius) / CELL), floori((pos.z - radius) / CELL))
+	var hi := Vector2i(floori((pos.x + radius) / CELL), floori((pos.z + radius) / CELL))
+	for x in range(lo.x, hi.x + 1):
+		for z in range(lo.y, hi.y + 1):
+			for p in _grid.get(Vector2i(x, z), []):
+				if is_instance_valid(p):
+					out.append(p)
+	return out
+
+
+## Into the square it's in now (put down, or come to rest somewhere else).
+func _file() -> void:
+	if not is_inside_tree():
+		return
+	var c := Vector2i(floori(global_position.x / CELL), floori(global_position.z / CELL))
+	if c == _cell:
+		return
+	_unfile()
+	_cell = c
+	(_grid.get_or_add(c, []) as Array).append(self)
+
+
+func _unfile() -> void:
+	if _cell != Vector2i.MAX:
+		var a: Array = _grid.get(_cell, [])
+		a.erase(self)
+		if a.is_empty():
+			_grid.erase(_cell)
+	_cell = Vector2i.MAX
+
+
+func _exit_tree() -> void:
+	_unfile()
+
+
+## A critter came into reach (+1) or went (-1): it checks for whoever's in
+## reach only while someone is.
+func _on_near(body: Node, step: int) -> void:
+	if not body is Critter:
+		return
+	_near = maxi(0, _near + step)
+	set_physics_process(_near > 0)
 
 
 func rarity_tier() -> int:
@@ -297,6 +366,7 @@ func _glow(model: Node3D) -> void:
 	light.omni_range = 3.5
 	light.shadow_enabled = false
 	light.position.y = CLOVER_HEIGHT * 0.6
+	_fade(light)
 	add_child(light)
 
 
@@ -317,6 +387,7 @@ func _glow_acorn(model: Node3D) -> void:
 	light.omni_range = 3.5
 	light.shadow_enabled = false
 	light.position.y = AcornShield.HEIGHT * 0.5
+	_fade(light)
 	add_child(light)
 
 
@@ -361,4 +432,12 @@ func _add_beam(col: Color) -> void:
 	light.light_energy = 0.8
 	light.omni_range = 2.5
 	light.position.y = 0.5
+	_fade(light)
 	add_child(light)
+
+
+## (Its light goes out past LIGHT_FADE: hundreds of them, lit all over the map, cost.)
+static func _fade(light: Light3D) -> void:
+	light.distance_fade_enabled = true
+	light.distance_fade_begin = LIGHT_FADE
+	light.distance_fade_length = 10.0

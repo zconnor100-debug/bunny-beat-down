@@ -295,6 +295,9 @@ func _burst(pos: Vector3, dir: Vector3, cfg: Dictionary) -> GPUParticles3D:
 	p.global_basis = Basis.looking_at(d, Vector3.UP if absf(d.y) < 0.95 else Vector3.RIGHT)
 	p.emitting = true
 	p.finished.connect(p.queue_free)
+	# (and gone once it's surely over: `finished` doesn't always come, and
+	# the muzzle's few-particle flecks were piling up in their thousands)
+	Despawner.after(p, p.lifetime * 1.5 + 0.5, func(m: Node): m.queue_free())
 	return p
 
 

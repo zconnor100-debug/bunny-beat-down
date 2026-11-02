@@ -15,6 +15,12 @@ var skeleton: Skeleton3D
 var bones: Dictionary = {}          ## role -> bone index
 var rot: Dictionary = {}            ## role -> Basis: this frame's turn, in the boss's space
 var root_offset := Vector3.ZERO     ## the root bone moved (model units, the boss's space)
+## How much longer its body is this frame (0.1: a tenth longer, its spine,
+## chest and neck set that much further apart: a ferret stretching out). A
+## pose gives it as &"long": Vector3(fraction, 0, 0).
+var long := 0.0
+const LONG_ROLES := [&"spine", &"chest", &"neck"]
+var _long_bones := {}               # bone index -> true: those of LONG_ROLES
 var _role_of: Dictionary = {}       # bone index -> role
 var _order := PackedInt32Array()    # parents before children
 var _rest_global: Array[Transform3D] = []
@@ -41,6 +47,8 @@ func bind(skel: Skeleton3D, role_bones: Dictionary, tails := {}) -> void:
 		if idx >= 0:
 			bones[StringName(role)] = idx
 			_role_of[idx] = StringName(role)
+			if StringName(role) in LONG_ROLES:
+				_long_bones[idx] = true
 			if tails.has(role):
 				var t: Array = tails[role]
 				_tip[idx] = _rest_global[idx].affine_inverse() * Vector3(t[0], t[1], t[2])
@@ -65,6 +73,7 @@ func has(role: StringName) -> bool:
 func clear() -> void:
 	rot.clear()
 	root_offset = Vector3.ZERO
+	long = 0.0
 
 
 ## Turn `role` by `deg` (degrees about x, y, z of the boss's space), on top of
@@ -83,8 +92,23 @@ func add_pose(pose: Dictionary, weight := 1.0) -> void:
 	for role in pose:
 		if role == &"root":
 			root_offset += (pose[role] as Vector3) * weight
+		elif role == &"long":
+			long += (pose[role] as Vector3).x * weight
 		else:
 			add(role, pose[role], weight)
+
+
+## This frame's pose only `u` of the way from `from` (role -> Basis, a pose
+## kept from before), its root offset `root` and its stretch `long_`: a move
+## easing in out of whatever pose came before it.
+func ease_from(from: Dictionary, root: Vector3, long_: float, u: float) -> void:
+	for role in from:
+		rot[role] = (from[role] as Basis).slerp(rot.get(role, Basis.IDENTITY), u)
+	for role in rot:
+		if not from.has(role):
+			rot[role] = Basis.IDENTITY.slerp(rot[role], u)
+	root_offset = root.lerp(root_offset, u)
+	long = lerpf(long_, long, u)
 
 
 func apply() -> void:
@@ -95,7 +119,9 @@ func apply() -> void:
 		var own: Basis = rot.get(_role_of[i], Basis.IDENTITY) if _role_of.has(i) else Basis.IDENTITY
 		var a := own * (_acc[p] if p >= 0 else Basis.IDENTITY)
 		_acc[i] = a
-		var origin: Vector3 = _glob[p] * _rest_local[i].origin if p >= 0 else _rest_global[i].origin + root_offset
+		var origin: Vector3 = _rest_global[i].origin + root_offset
+		if p >= 0:
+			origin = _glob[p] * (_rest_local[i].origin * (1.0 + long) if _long_bones.has(i) else _rest_local[i].origin)
 		_glob[i] = Transform3D(a * _rest_global[i].basis, origin)
 		var local := _glob[p].affine_inverse() * _glob[i] if p >= 0 else _glob[i]
 		skeleton.set_bone_pose_position(i, local.origin)

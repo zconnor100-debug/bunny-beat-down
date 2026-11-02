@@ -118,13 +118,13 @@ and the final shot replayed from three angles. There's a
   | **Old Hoot**, the Night Watch | Wildwood Island, by night | A snowy owl fifty metres wing tip to wing tip, a sliver of the Starfall Acorn glowing gold-green in her left eye, and the first boss that flies: she circles the fight up high and comes down out of the dark for it. **Snatch** (a red ring on you, then she drops onto it, carries off whoever's still in it and lets go from high up; caught, jump and keep jumping to wriggle free, or the rest of you shoot her till she lets go), **Talon Rake** (a low pass along a red strip), **Feather Volley**, **Hoot** (everyone in the ring under her is knocked flat), and now and then she **perches** to rest, low and still. Shoot her wings as she dives and she comes down hard, stunned: go for the eye. |
 
   | **Crackjaw**, the Nutcracker General | Toy Box Bash | A wooden nutcracker as tall as the bookcase, a chip of the Starfall Acorn in him, his painted eyes lit, his limbs swinging rigid on their pegs: every critter is the Mouse King's army, and an acorn helmet is a nut. **Quick March** (a drum roll and a red lane, then down it he comes, each stamp of his boots knocking critters flying and kicking toy forts apart), **Sabre Sweep** (his sabre swung flat across the floor in front of him: jump it), **Crack!** (he bows and snaps his jaw shut on whatever's in front of him; missed, his jaw hangs open, the best place there is to hit him), **Walnut Volley** (each walnut cracking open on its own red ring). Shoot his legs and he wobbles; enough and he goes over like a felled pine, **TIMBER!**, and lies there with his head on the floor. Enraged: Double Time. |
-  | **Noodle**, the Burrow Hunter | Hamster Cage | The House's ferret, sable brown with a bandit's mask, grown as long as the Big Wheel is wide on Nibbles's larder: long and low, ten critters tall only when she rears up. **Pop Goes the Weasel** (she digs in, flinging bedding at whoever's behind her, and goes under; a music box plays the rhyme under the bedding, and on POP! she comes up out of a red ring under whoever she's after, out of a hamster's burrow if one's near, three times over, five enraged; up out of her hole her nose counts triple, and **bopped on the nose** enough she's seeing stars, flat on the bedding taking double), **Weasel War Dance** (back arched, mouth open, she hops sideways at you, each landing on its own red ring, and then she's danced out: she **sleeps like the dead**, taking double, and wakes in a **poof of musk** that hangs there and stings), **Lunge** (she coils back and strikes along a red strip, jaws first). Enraged: the Bottle-Brush. |
+  | **Noodle**, the Burrow Hunter | Hamster Cage | The House's ferret, sable brown with a bandit's mask, grown as long as the Big Wheel is wide on Nibbles's larder: long and low, ten critters tall only when she rears up. **Pop Goes the Weasel** (she digs in, flinging bedding at whoever's behind her, and goes under; a music box plays the rhyme under the bedding, and on POP! she comes up out of a red ring under whoever she's after, out of a hamster's burrow if one's near, three times over, five enraged; up out of her hole her nose counts triple, and **bopped on the nose** enough she's seeing stars, flat on the bedding taking double), **Weasel War Dance** (back arched, mouth open, she hops sideways at you, each landing on its own red ring, and then she's danced out: she **sleeps like the dead**, taking double, and wakes in a **poof of musk** that hangs there and stings), **Lunge** (she coils back and strikes along a red strip, jaws first). Under the bedding she sets **Tube Town** rattling on its connectors, and coming up under it she knocks its tubes and pods flying. She moves like a ferret: bounding front end first and stretched out long in the air, coiling up nose to tail to sleep. Enraged: the Bottle-Brush. |
 
   ![Old Hoot: her name card as she lands by night, carrying a critter off over the lake, the sliver of the Acorn glowing in her left eye, and perched in a clearing](docs/screenshots/boss_owl.jpg)
 
   ![Crackjaw: his name card as he lands in the toy room, marching through a block fort and kicking it apart, bowing for a Crack!, and gone over on his face after shots on his legs](docs/screenshots/boss_nutcracker.jpg)
 
-  ![Noodle: her name card as she rears up out of the bedding, popped up out of her hole, mid-hop in her War Dance, and asleep on her side after it, Zzz](docs/screenshots/boss_ferret.jpg)
+  ![Noodle: her name card as she rears up out of the bedding, popped up out of her hole, mid-hop in her War Dance, front end up first, and asleep coiled up after it, Zzz](docs/screenshots/boss_ferret.jpg)
 
   The bosses are real models (CC-BY, see Credits) given skeletons and
   animated by code: `tools/characters/boss_build.py` welds each download
@@ -904,6 +904,20 @@ The full write-up is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
   laptop's built-in graphics starts at Low the first time the game runs. On
   that GPU at Low, a Hamster Cage frame takes 29% less time to draw and a
   Toy Box frame 26% less.
+- **Long matches stay fast, found by timing every script.**
+  `tests/perf_match.gd` plays a real Battle Royale and, with `breakdown`,
+  times the game's code script by script (each script's nodes run in a band
+  of priorities of their own, with a marker node before each band), splits
+  the rendering into waiting, drawing and after, and counts the engine's
+  busy nodes. The counts found it: 11,000 particle systems alive in the
+  fighting, a few muzzle sparks left behind by every carrot fired (one-shot
+  bursts whose `finished` signal never came). They're freed on a timer now.
+  The timings found the rest: every bot scanned every pickup on the map five
+  times a second (pickups are filed in 40 m squares now, `Pickup.near`), bots
+  far from the camera steer every other tick, loot spins only on screen and
+  checks for collectors only while one's in reach, and sounds out of earshot
+  aren't started. A 49-bot Hamster Cage fight: 41 → 142 frames a second, its
+  slowest frames 49 → 10 ms.
 - **Tests that play the game.** A headless suite of 177 tests covers:
   - the IK maths, hitboxes, ragdolls and dismemberment, and how critters
     carry themselves (never frozen, guns carried low but shooting from the

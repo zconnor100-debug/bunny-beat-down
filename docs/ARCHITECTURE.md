@@ -621,8 +621,36 @@ kind of match; a run's stops are always battle royales.
   eyes dark: `_tend_eyes`) and `_poof`: a `hurt_ring`, a musk cloud that
   stings like Nibbles's foam (`_tend_musk`) and a `danger` entry for its
   whole life, so the bots keep out of it. `_die` notes how she fell
-  (`_fell_from`: popped or flopped) before the actions are cancelled, so
-  her death starts from that pose instead of snapping back onto her feet.
+  (`_fell_from`: popped, asleep flat or coiled, or dizzy) before the actions
+  are cancelled, so her death starts from that pose instead of snapping
+  back onto her feet.
+  She moves like a ferret (worked out from a clip of a real one): her
+  actions `flow` (`BossAction.flow`: a monotone cubic through the keys, so a
+  move carries on through a key heading the same way and only stops where
+  it turns back or holds), each eases in from whatever pose she was in
+  (`Boss.blend_from_pose`: last frame's rotations slerped to the move's,
+  `BossPoser.ease_from`), and a pose can stretch her (`&"long"`:
+  `BossPoser.long` sets her spine, chest and neck that much further apart,
+  moving bones, never scaling them, so her hitboxes stay sound). The War
+  Dance's hop (`_hop_poses`) is a bound: her front end lifts first, she's
+  stretched out flat in the air, front paws down first; danced out she
+  sinks low and long, front end first, and coils up like a snake (yaw down
+  her spine one way and her tail the other) to sleep, the action's `layer`
+  adding her breathing and her dreams' twitches (`_sleeping`, `_twitch`),
+  and `_shake` running a wave nose to tail when she's up. While she's on her
+  belly her own axes are the boss's: lying on her side they wouldn't be
+  (that's why she doesn't). Her body bends into a turn (`idle_pose` from
+  her smoothed yaw rate). Going by under the bedding she rattles Tube Town
+  (`HamsterCage.habitrail`: `Habitrail` pieces, pods, tubes and the burrows'
+  rolls; `Habitrail.rattle` shakes what you see of one, never its walls, so
+  nobody inside is shoved), and coming up under a pod or tube she knocks it
+  off its connectors (`Habitrail.loosen`: its walls and looks moved onto a
+  `ToyBlock.Loose`, the dome's trimesh turned convex, lifted clear of the
+  bedding first, kept off critters for a moment and off her for good, its
+  crush capped). `tests/capture_boss_strip.gd` shoots a boss's move as
+  stills a 60th of a second apart (it steps the boss itself), for judging
+  an animation frame by frame; `tests/capture_kernel.gd -- <dir> ferret
+  tubes` shoots her in Tube Town.
 - The models come from `tools/characters/boss_build.py` (recipes in
   `bosses.json`): decimate, orient and scale a download; build a skeleton
   from joints read off `grid` renders, or keep the download's own (rested in
@@ -740,7 +768,28 @@ prologue's island seed, its rangers and waves; `note_result`, `done`,
   `tests/perf_match.gd` a Battle Royale's or a Team Battle's (the balloon, the
   landings, the fighting), each frame split into the game's code, what was
   deferred after it (the skeletons), the physics engine and the rendering, and
-  the frames over 50 ms noted with when they came.
+  the frames over 50 ms noted with when they came. With `breakdown` it times
+  the game's code script by script (each script's nodes are put in a band of
+  priorities of their own, a `Band` marker node before each, so the time
+  from one marker to the next is that script's; "unscripted" is the engine's
+  own nodes, left at priority 0), splits the rendering by
+  `RenderingServer.frame_pre_draw`/`frame_post_draw` into waiting on the
+  frames before (`render_sync`) and drawing (`render_draw`), counts the
+  engine's busy nodes once a second, and lists the particle systems still
+  there at the end. That's how a leak showed: `FX._burst` freed each burst on
+  `finished`, which doesn't always come (a muzzle's three-particle fleck
+  never did), 11,000 left alive by mid-match; a `Despawner` timer frees them
+  now. And what the bots cost: `AIBrain._find_loot` scanned every pickup on
+  the map five times a second per bot (`Pickup.near` reads them from a
+  `CELL`-metre grid now, filed on their `_ready` and when they come to rest);
+  a bot past `AIBrain.FAR` from the camera thinks 1.6x less often and runs
+  `_act` every other tick with the time in between; `PlayerController`
+  looks for what's in front of you 12 times a second, not 60; a pickup spins
+  only on screen (`VisibleOnScreenNotifier3D`) and polls its sensor only
+  while a critter's in it; pickup lights go out past 55 m; a critter standing
+  still on solid, unmoving ground skips `move_and_slide` for up to
+  `Critter.STILL_TICKS`; `Audio.play_at` doesn't start a sound past its own
+  `max_distance` from the listener.
 - **The rangers' lines** are `Cast.KERNEL_LINES` (`kt`, `kw`, `ks`, `ky`, `kb`,
   `kg`, `kc`, `kd`, `kr`; Act I's `pt`, `pc`, `pp`, `pf`, `pl`, `pd`, `pw`,
   `pb`, `pk`), voiced for every rogue like every other line, said by the

@@ -123,6 +123,13 @@ var escort: Critter
 var _escort_spot := Vector3.INF
 
 var _think_t := randf() * THINK_INTERVAL
+## Out past FAR from the camera a bot thinks a little less often and steers
+## every other physics tick (nobody's watching it up close; it still fights,
+## loots and runs from the storm the same).
+const FAR := 120.0
+var _far := false
+var _skip := false
+var _act_dt := 0.0
 var _last_seen_pos := Vector3.ZERO
 var _last_seen_t := -100.0
 var _spotted_t := -100.0
@@ -176,13 +183,28 @@ func _physics_process(delta: float) -> void:
 		_landed_at = _clock
 	_think_t -= delta
 	if _think_t <= 0.0:
-		_think_t = THINK_INTERVAL * randf_range(0.8, 1.2)
+		_far = _far_from_camera()
+		_think_t = THINK_INTERVAL * randf_range(0.8, 1.2) * (1.6 if _far else 1.0)
 		_think()
 	match me.state:
 		Critter.State.FREEFALL, Critter.State.GLIDING:
 			_steer_drop()
 		_:
-			_act(delta)
+			if not _far:
+				_act_dt = 0.0
+				_act(delta)
+			else:   # (every other tick, its intents held between)
+				_act_dt += delta
+				_skip = not _skip
+				if not _skip:
+					_act(_act_dt)
+					_act_dt = 0.0
+
+
+## Whether it's out past FAR from whatever camera's showing the match.
+func _far_from_camera() -> bool:
+	var cam := me.get_viewport().get_camera_3d()
+	return cam != null and cam.global_position.distance_squared_to(me.global_position) > FAR * FAR
 
 
 # ---- perception -------------------------------------------------------------------------------
@@ -505,7 +527,7 @@ func _find_loot() -> Node3D:
 	var worst := INF
 	for w in me.inventory.weapons:
 		worst = minf(worst, Inventory.weapon_score(w))
-	for n in me.get_tree().get_nodes_in_group(&"pickups"):
+	for n in Pickup.near(pos, best_d):   # (just the squares round it: Pickup.CELL)
 		var p := n as Pickup
 		if p == null:
 			continue

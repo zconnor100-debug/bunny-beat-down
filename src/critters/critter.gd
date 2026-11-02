@@ -297,6 +297,11 @@ func current_spread_deg() -> float:
 
 # ---- physics ------------------------------------------------------------------------------
 
+## Ticks a critter standing still on solid ground goes without a physics step (Critter._ground_move).
+const STILL_TICKS := 5
+var _still := 0
+
+
 func _physics_process(delta: float) -> void:
 	if state == State.DEAD or state == State.IN_DROPSHIP:
 		return
@@ -382,7 +387,14 @@ func _ground_move(delta: float) -> void:
 		velocity.y -= _gravity * delta
 	want_jump = false
 	_fall_speed = -velocity.y if not on_floor else _fall_speed
-	move_and_slide()
+	# standing still on solid, unmoving ground there's nothing for the physics
+	# to work out: it looks again every few ticks (in case the floor went, or
+	# something shoved into it)
+	if on_floor and velocity.length_squared() < 1e-6 and get_platform_velocity().length_squared() < 1e-6 and _still < STILL_TICKS:
+		_still += 1
+	else:
+		_still = 0
+		move_and_slide()
 	_slide_off_slippery()
 	var landed := is_on_floor() and not _was_on_floor
 	if landed:

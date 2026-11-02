@@ -371,6 +371,13 @@
   "ferret_poof": [
     "sfx/ferret_poof.ogg"
   ],
+  "tube_rattle": [
+    "sfx/tube_rattle_1.ogg",
+    "sfx/tube_rattle_2.ogg"
+  ],
+  "tube_clunk": [
+    "sfx/tube_clunk.ogg"
+  ],
   "music": {
     "menu": "music/menu_monkeys_spinning_monkeys.mp3",
     "match": [

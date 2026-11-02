@@ -140,6 +140,8 @@ static func _flat_axis(v: Vector3) -> Vector2:
 ## and bowls it over). (Its own body: the block it came from is gone.)
 class Loose extends RigidBody3D:
 	var reach := 2.0               ## its middle to its far end (how fast that end's going counts too)
+	var what := &"toy_blocks"      ## what came down on you (DamageInfo's weapon: a Habitrail tube, Habitrail)
+	var most := INF                ## the most it hurts, however hard it comes down (a flying pod: Habitrail)
 	var _hit := {}                 # critter -> msec it was last crushed by this
 	var _was := Vector3.ZERO       # (how it was moving before what it ran into stopped it)
 	var _spin := Vector3.ZERO
@@ -168,7 +170,7 @@ class Loose extends RigidBody3D:
 		if speed < CRUSH_SPEED or now - int(_hit.get(c, -10000)) < 600:
 			return
 		_hit[c] = now
-		var info := DamageInfo.make(CRUSH * (speed - CRUSH_SPEED) + 8.0, DamageInfo.Kind.MELEE, null, &"toy_blocks")
+		var info := DamageInfo.make(minf(CRUSH * (speed - CRUSH_SPEED) + 8.0, most), DamageInfo.Kind.MELEE, null, what)
 		info.position = c.get_chest_position()
 		info.direction = _was.normalized() if _was.length() > 0.1 else Vector3.DOWN
 		info.impulse = speed

@@ -53,6 +53,9 @@ const BOWL_COLOURS := [&"pink", &"mint", &"sky", &"lemon", &"lilac"]
 var bowls: Array = []
 ## Where each Tube Town pod and tube stands, for tests: [Vector3 ...].
 var pods: Array = []
+## Tube Town's pods and tubes, and the burrows' cardboard rolls, as Noodle
+## finds them going by under the bedding (Habitrail pieces).
+var habitrail: Array = []
 ## The burrows dug into the hamster's heaps (_build_burrows): {mouth (on the
 ## bedding), out (flat, the way the mouth faces), tube (the cardboard tube)}.
 var burrows: Array = []
@@ -355,6 +358,7 @@ func _build_tube_town(p: Dictionary) -> void:
 		pod.loot_spots = [Vector3(0, pod.floor_y, 0), Vector3(3.5, pod.floor_y, -2.5)]
 		_place_kit(p, pod, here, -out)
 		pods.append(Vector3(here.x, p.height, here.y))
+		habitrail.append(Habitrail.piece(pod, &"pod", pods.back(), pods.back(), CageProps.POD_R + 0.5))
 	for i in 4:
 		var a: Vector2 = spots[i]
 		var b: Vector2 = spots[(i + 1) % 4]
@@ -363,6 +367,9 @@ func _build_tube_town(p: Dictionary) -> void:
 		var t := CageProps.tube(rng, colours[(i + 2) % 4], length, "cage/tube" if absf(length - CageProps.TOWN_TUBE) < 0.05 else "")
 		_prop(t, (a + b) * 0.5, atan2(d.x, d.y), p.height, true, false)
 		scatter.reserve((a + b) * 0.5, length * 0.5)
+		var mid := (a + b) * 0.5
+		habitrail.append(Habitrail.piece(t, &"tube", Vector3(mid.x - d.x * length * 0.5, p.height, mid.y - d.y * length * 0.5),
+			Vector3(mid.x + d.x * length * 0.5, p.height, mid.y + d.y * length * 0.5), CageProps.TUBE_R + CageProps.TUBE_WALL))
 
 
 ## Paper Roll Pile: toilet-paper and paper-towel tubes lying about, three of
@@ -663,6 +670,7 @@ func _build_burrows() -> void:
 			tube.global_basis = Basis(IKMath.from_to(along, Vector3(out.x, 0.0, out.y)))
 			scatter.add_obstacle(mid, 7.0)
 			burrows.append({"mouth": Vector3(mouth.x, terrain.height_at(mouth.x, mouth.y), mouth.y), "out": Vector3(out.x, 0.0, out.y), "tube": tube})
+			habitrail.append(Habitrail.piece(tube, &"burrow", tube.global_position, tube.global_position, 2.6))
 
 
 func _cage_spot_ok(p: Vector2, radius: float) -> bool:

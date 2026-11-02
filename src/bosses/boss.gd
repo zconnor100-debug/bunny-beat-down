@@ -73,6 +73,12 @@ var hitboxes: Dictionary = {}       ## role -> Area3D
 var hitbox_rids: Array[RID] = []
 var gore_ok := true                 ## (Settings.gore: off spares the bots' heads)
 var thinking := true                ## off: it only does what it's told (captures, tests)
+## Each move eases in from whatever pose it was in when it started (not from
+## its walk): one move flows into the next, even one cut short (Noodle).
+var blend_from_pose := false
+var _from_rot := {}                 # (role -> Basis: the pose a move is easing in from)
+var _from_root := Vector3.ZERO
+var _from_long := 0.0
 var _anchors: Dictionary = {}       # role -> Node3D on its bone (hitboxes and stuck carrots ride it)
 var _solids: Array = []             # [AnimatableBody3D, role]
 var _ready_at: Dictionary = {}      # ability -> clock when it can be used again
@@ -433,6 +439,16 @@ func _after_entrance() -> void:
 func start(a: BossAction) -> void:
 	action = a
 	moves_used[a.name] = int(moves_used.get(a.name, 0)) + 1
+	_ease_into(a)
+
+
+## (blend_from_pose) `a` eases in from the pose it's in now (last frame's).
+func _ease_into(a: BossAction) -> void:
+	_from_rot = {}
+	if blend_from_pose and a.blend_in > 0.0 and not poser.rot.is_empty():
+		_from_rot = poser.rot.duplicate()
+		_from_root = poser.root_offset
+		_from_long = poser.long
 
 
 ## Who it goes for: whoever's nearest, you a bit sooner, and anyone hurting
@@ -525,7 +541,7 @@ func move_by(d: Vector3) -> void:
 
 ## The ground under `p` (props and buildings aside: it stomps through those).
 func ground_y(p: Vector3) -> float:
-	var isl: Island = match_manager.island if match_manager and "island" in match_manager else null
+	var isl := match_manager.island as Island if match_manager and "island" in match_manager else null
 	if isl and isl.terrain:
 		return isl.terrain.height_at(p.x, p.z)
 	if is_inside_tree():
@@ -549,12 +565,20 @@ func _animate(delta: float) -> void:
 		_step = step
 		if _speed > 1.5 and state != State.WAITING:
 			_footstep()
-	var w := 1.0 - (action.weight() if action else 0.0)
+	var easing := action != null and not _from_rot.is_empty() and action.t < action.blend_in
+	if not easing:
+		_from_rot = {}
+	var aw := (1.0 if easing else action.weight()) if action else 0.0
+	var w := 1.0 - aw
 	poser.add_pose(walk_pose(_gait, moving), w)
 	poser.add_pose(idle_pose(_clock), 1.0)
 	_look_at_target(delta, w)
 	if action:
-		poser.add_pose(action.pose(), action.weight())
+		poser.add_pose(action.pose(), aw)
+		if action.layer.is_valid():
+			poser.add_pose(action.layer.call(action.t), aw)
+	if easing:
+		poser.ease_from(_from_rot, _from_root, _from_long, smoothstep(0.0, 1.0, action.t / action.blend_in))
 	poser.apply()
 	_tend_eyes()
 
@@ -796,6 +820,7 @@ func _die(info: DamageInfo) -> void:
 	_speed = 0.0
 	died.emit(info.attacker)
 	action = _death_action()
+	_ease_into(action)
 
 
 ## How it goes down (a subclass's; by default it topples forward).

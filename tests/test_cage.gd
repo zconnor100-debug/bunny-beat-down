@@ -30,6 +30,14 @@ func test_cage_layout_and_paths() -> void:
 		check(share > 0.4, "%s is in its biome (%.2f)" % [p.name, share])
 	check(cage.bowls.size() == 5, "a cluster of water bowls in the lagoon (%d)" % cage.bowls.size())
 	check(cage.buildings.size() >= 9, "walk-in pods, huts, castle, tub and shelf (%d)" % cage.buildings.size())
+	var kinds := {}
+	for pc in cage.habitrail:
+		kinds[pc.kind] = int(kinds.get(pc.kind, 0)) + 1
+	check(kinds.get(&"pod", 0) == 4 and kinds.get(&"tube", 0) == 4 and kinds.get(&"burrow", 0) == cage.burrows.size(),
+		"Tube Town's pods and tubes and the burrows' rolls, for Noodle to rattle (%s)" % kinds)
+	for pc in cage.habitrail.filter(func(p): return p.kind == &"tube"):
+		var ends: Array = [pc.a, pc.b].map(func(e): return cage.pods.map(func(q): return Vector2(q.x - e.x, q.z - e.z).length()).min())
+		check(ends.max() < CageProps.POD_R + 2.0, "a tube runs pod to pod (its ends %.1f m and %.1f m from their middles)" % [ends[0], ends[1]])
 	check(cage.loot_points.size() > 250, "plenty of loot (%d)" % cage.loot_points.size())
 	var stray := cage.loot_points.filter(func(l): return not cf.inside(l.pos.x, l.pos.z, 2.0))
 	check(stray.is_empty(), "no loot outside the tank (%d)" % stray.size())

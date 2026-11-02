@@ -132,6 +132,9 @@ func play_at(key: StringName, pos: Vector3, volume_db := 0.0, pitch_jitter := 0.
 		return null
 	if KillCam.recording and KillCam.instance and not KillCam.instance.playing:
 		KillCam.instance.note_sound(key, pos, volume_db)
+	var reach: float = opts.get("max_distance", 140.0)
+	if listener_transform().origin.distance_squared_to(pos) > reach * reach:
+		return null   # (out of earshot: no player kept busy panning a sound nobody hears)
 	var p := _pool3d[_next3d]
 	_next3d = (_next3d + 1) % POOL_3D
 	p.stream = stream
@@ -139,7 +142,7 @@ func play_at(key: StringName, pos: Vector3, volume_db := 0.0, pitch_jitter := 0.
 	p.volume_db = volume_db
 	p.pitch_scale = 1.0 + randf_range(-pitch_jitter, pitch_jitter)
 	p.unit_size = opts.get("unit_size", 6.0)
-	p.max_distance = opts.get("max_distance", 140.0)
+	p.max_distance = reach
 	p.panning_strength = opts.get("panning", 1.0)
 	p.bus = &"SFXBehind" if opts.get("directional", false) and is_behind_listener(pos) else &"SFX"
 	p.play()
