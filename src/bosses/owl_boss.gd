@@ -21,7 +21,10 @@ extends Boss
 ## a dive: the model tilts, the hitboxes with it), not along the navmesh like
 ## the walkers. Her pose is her flight's (wings beating or held out, talons
 ## tucked or reaching: _body_pose) or her perch's (wings drooped round her),
-## and what she's doing adds to it.
+## and what she's doing adds to it. She moves like an owl: her head turning
+## in quick snaps and holding still between them; perched, bobbing and
+## swaying it to size you up, tilting it now and then, and shaking out her
+## feathers once she's down.
 
 const CRUISE := 30.0                ## metres over the ground she flies at (her feet)
 const CRUISE_SPEED := 24.0          ## m/s
@@ -67,6 +70,14 @@ var _carry_hits := 0.0
 var _dropped: Array = []            # [critter, fastest it fell, seconds since]: till they land
 var _diving := false
 var _dive_hits := 0.0
+var _landed_at := -100.0            # (her clock when she last came down: she shakes her feathers out)
+var _tilt_at := -100.0              # (a tilt of her head, perched: curious)
+var _tilt_next := 3.0
+var _tilt_dir := 1.0
+var _look_goal := Vector3.INF       # (where her head's snapped round to: held there a moment)
+var _look_next := 0.0
+var _fade_pose := {}                # (a move cut off: its pose, fading out instead of snapping away)
+var _fade_t := 1.0
 
 
 func _init() -> void:
@@ -98,6 +109,10 @@ func eye_color(angry: bool) -> Color:
 
 
 func _physics_process(delta: float) -> void:
+	if not _air and _clock >= _tilt_next:
+		_tilt_next = _clock + randf_range(3.0, 6.5)
+		_tilt_at = _clock
+		_tilt_dir = 1.0 if randf() < 0.5 else -1.0
 	super(delta)
 	if state != State.WAITING:
 		_tend_dropped(delta)
@@ -232,11 +247,54 @@ func _animate(delta: float) -> void:
 		Audio.play_at(&"owl_flap", get_chest_position(), -4.0, 0.12, {"max_distance": 260.0, "unit_size": 30.0})
 	poser.clear()
 	poser.add_pose(_body_pose(), 1.0)
-	_look_at_target(delta, 1.0 - (action.weight() if action else 0.0))
+	var aw := action.weight() if action else 0.0
+	poser.add_pose(_perched_pose(), 1.0 - aw)
+	_look_at_target(delta, 1.0 - aw)
 	if action:
-		poser.add_pose(action.pose(), action.weight())
+		poser.add_pose(action.pose(), aw)
+		if action.layer.is_valid():
+			poser.add_pose(action.layer.call(action.t), aw)
+	_fade_t += delta
+	if _fade_t < 0.35:
+		poser.add_pose(_fade_pose, 1.0 - smoothstep(0.0, 0.35, _fade_t))
 	poser.apply()
 	_tend_eyes()
+
+
+## A move cut off (shot out of the sky, beaten): what it had her doing fades
+## away over a moment, instead of snapping back.
+func _cancel_action() -> void:
+	if action:
+		var w := action.weight()
+		_fade_pose = {}
+		for pose in [action.pose(), action.layer.call(action.t) if action.layer.is_valid() else {}]:
+			for r in pose:
+				_fade_pose[r] = (_fade_pose.get(r, Vector3.ZERO) as Vector3) + (pose[r] as Vector3) * w
+		_fade_t = 0.0
+	super()
+
+
+## Perched (or down): never quite still. Her head bobbing and swaying as she
+## sizes you up (an owl working out how far off you are), tilted right over
+## now and then, and a shake of all her feathers once she's down.
+func _perched_pose() -> Dictionary:
+	var k := 1.0 - _air_k
+	if k <= 0.01 or not alive:
+		return {}
+	var t := _clock
+	var out := {&"head": Vector3(6.0 * sin(t * 2.1), 0, 10.0 * sin(t * 1.3)) * k, &"neck": Vector3(-4.0 * sin(t * 2.1 - 0.4), 0, 0) * k}
+	var tl := t - _tilt_at
+	if tl >= 0.0 and tl < 1.6:
+		var e := smoothstep(0.0, 0.18, tl) * (1.0 - smoothstep(1.1, 1.6, tl))
+		out[&"head"] = (out[&"head"] as Vector3) + Vector3(0, 0, 40.0 * _tilt_dir * e * k)
+	var since := t - _landed_at - 0.5
+	if since > 0.0 and since < 0.8:   # (a rouse: fluffed up, shaking it all out)
+		var env := sin(PI * since / 0.8) * k
+		var ph := TAU * 5.5 * since
+		out = _plus(out, {&"chest": Vector3(-6.0, 10.0 * sin(ph), 6.0 * sin(ph + 0.7)), &"spine": Vector3(0, -7.0 * sin(ph - 0.5), -5.0 * sin(ph)),
+			&"head": Vector3(0, -12.0 * sin(ph - 1.0), 8.0 * sin(ph - 0.6)), &"tail": Vector3(0, 0, 14.0 * sin(ph - 1.4)),
+			&"l_upper_arm": Vector3(0, 0, 10.0 + 6.0 * sin(ph)), &"r_upper_arm": Vector3(0, 0, -10.0 - 6.0 * sin(ph))}, env)
+	return out
 
 
 ## Her whole body tilted (the model): pitched into her flight, banking into
@@ -288,7 +346,12 @@ func _look_at_target(delta: float, w: float) -> void:
 	if target == null or not is_instance_valid(target) or not poser.has(&"head"):
 		return
 	var want := target.get_eye_position()
-	_look = want if _look == Vector3.INF else _look.lerp(want, IKMath.damp(4.0, delta))
+	# (an owl's head: a quick snap round to where you are, and held there,
+	# not a slow follow)
+	if _look_goal == Vector3.INF or _clock >= _look_next or _look_goal.distance_to(want) > 30.0:
+		_look_goal = want
+		_look_next = _clock + randf_range(0.5, 1.3)
+	_look = _look_goal if _look == Vector3.INF else _look.lerp(_look_goal, IKMath.damp(14.0, delta))
 	var local := global_transform.affine_inverse() * _look
 	var reach := lerpf(110.0, 60.0, _air_k)
 	var yaw := clampf(rad_to_deg(atan2(-local.x, -local.z)), -reach, reach)
@@ -539,6 +602,7 @@ func _volley(t: Critter) -> BossAction:
 	cooldown(&"volley", 8.0)
 	var n := 10 if enraged else 8
 	var a := BossAction.new(&"volley", 2.2)
+	a.flow = true
 	a.key(0.0, {}).key(0.45, {&"l_upper_arm": Vector3(0, 0, 35), &"r_upper_arm": Vector3(0, 0, -35), &"chest": Vector3(-8, 0, 0)})
 	a.key(0.8, {&"l_upper_arm": Vector3(-30, 0, -45), &"r_upper_arm": Vector3(-30, 0, 45), &"chest": Vector3(10, 0, 0)}).key(2.2, {})
 	a.tick = func(_time: float, delta: float):
@@ -627,7 +691,15 @@ func _roar_action() -> BossAction:
 	var a := BossAction.new(&"hoot", 2.4)
 	var puff := {&"chest": Vector3(-14, 0, 0), &"neck": Vector3(-8, 0, 0), &"head": Vector3(-18, 0, 0), &"jaw": Vector3(22, 0, 0),
 		&"l_upper_arm": Vector3(0, 0, 14), &"r_upper_arm": Vector3(0, 0, -14)}
+	a.flow = true
 	a.key(0.0, {}).key(0.55, puff).key(1.7, puff).key(2.4, {})
+	a.layer = func(time: float) -> Dictionary:   # (hooting: her head bobbing with it, her throat swelling, her tail cocked)
+		var u := time - 0.68
+		if u < 0.0 or u > 0.9:
+			return {}
+		var e := sin(PI * u / 0.9)
+		return {&"head": Vector3(10.0 * sin(u * TAU * 2.2), 0, 0) * e, &"neck": Vector3(-6.0 * sin(u * TAU * 2.2 - 0.5), 0, 0) * e,
+			&"chest": Vector3(-5.0, 0, 0) * e, &"tail": Vector3(-14.0, 0, 0) * e}
 	var centre := _ground_below()
 	a.on(0.0, func():
 		centre = _ground_below()
@@ -697,6 +769,7 @@ func _perch_spot(t: Critter) -> Vector3:
 ## back everyone close.
 func _land(spot: Vector3) -> void:
 	_air = false
+	_landed_at = _clock
 	_vel = Vector3.ZERO
 	_talons = 0.0
 	_glide = 0.0
@@ -785,6 +858,19 @@ func _ground() -> void:
 			_perch_left = 1.0
 			stun(GROUNDED_FOR, {&"l_upper_arm": Vector3(0, 0, 48), &"r_upper_arm": Vector3(0, 0, -48),
 				&"neck": Vector3(20, 0, 0), &"head": Vector3(30, 40, 0)})
+			if action:   # (dazed: her head rolling, her wings twitching as she tries to get them under her, stars)
+				action.layer = func(time: float) -> Dictionary:
+					var w := clampf(time / 0.3, 0.0, 1.0) * clampf((GROUNDED_FOR - time) / 0.5, 0.0, 1.0)
+					var r := TAU * 0.7 * time
+					var f := maxf(0.0, sin(time * TAU * 1.1)) * maxf(0.0, sin(time * 0.9))
+					return {&"head": Vector3(-8.0 * sin(r), 12.0 * cos(r), 10.0 * sin(r)) * w, &"neck": Vector3(0, 6.0 * cos(r - 0.6), 0) * w,
+						&"l_upper_arm": Vector3(0, 0, -16.0 * f) * w, &"r_upper_arm": Vector3(0, 0, 16.0 * f) * w}
+				var st := {"stars": 0.0}
+				action.tick = func(time: float, dt: float):
+					st.stars = float(st.stars) - dt
+					if time < GROUNDED_FOR - 0.6 and float(st.stars) <= 0.0:
+						st.stars = 0.5
+						_stars()
 			return
 		global_position = p
 	start(a)
@@ -847,7 +933,16 @@ func _death_action() -> BossAction:
 	var a := BossAction.new(&"death", 3.4)
 	a.blend_out = 0.0
 	a.interruptible = false
+	a.flow = true
 	a.key(0.0, {}).key(1.0, {&"head": Vector3(-30, 0, 0), &"l_upper_arm": Vector3(0, 0, 40), &"r_upper_arm": Vector3(0, 0, -40)})
+	a.layer = func(time: float) -> Dictionary:   # (her wings beating feebly as she goes down, then still)
+		var w := clampf(1.0 - time / 1.5, 0.0, 1.0)
+		if w <= 0.0:
+			return {}
+		var f := sin(time * TAU * 2.2)
+		return {&"l_upper_arm": Vector3(0, 0, 24.0 * f) * w, &"r_upper_arm": Vector3(0, 0, -24.0 * f) * w,
+			&"l_lower_arm": Vector3(0, 0, 12.0 * sin(time * TAU * 2.2 - 0.7)) * w, &"r_lower_arm": Vector3(0, 0, -12.0 * sin(time * TAU * 2.2 - 0.7)) * w,
+			&"head": Vector3(0, 8.0 * sin(time * 3.0), 0) * w}
 	a.key(3.0, {&"spine": Vector3(20, 0, 0), &"neck": Vector3(30, 0, 0), &"head": Vector3(35, 55, 0), &"l_upper_arm": Vector3(0, 0, 40),
 		&"r_upper_arm": Vector3(0, 0, -40), &"tail": Vector3(-15, 0, 0)})
 	var down := false

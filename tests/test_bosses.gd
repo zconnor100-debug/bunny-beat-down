@@ -57,6 +57,11 @@ func test_every_boss_is_ten_critters_tall_and_hittable_all_over() -> void:
 			b.poser.add_pose(FerretBoss.REARED)
 			b.poser.apply()
 			b._update_bones()
+		elif b is HamsterBoss:   # (on all fours when it's on the move: ten critters tall sat up on its haunches)
+			b.set_physics_process(false)
+			b.poser.clear()
+			b.poser.apply()
+			b._update_bones()
 		var skull := b.bone_point(&"head", 1.0).y - b.global_position.y
 		check(absf(skull / critter_h - 10.0) < 1.5, "%s: its skull is ten critters up (%.1f m, a critter %.2f m: x%.1f)" % [id, skull, critter_h, skull / critter_h])
 		for role in [&"head", &"l_upper_leg", &"r_upper_leg"]:

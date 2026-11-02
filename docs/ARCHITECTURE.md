@@ -651,6 +651,37 @@ kind of match; a run's stops are always battle royales.
   stills a 60th of a second apart (it steps the boss itself), for judging
   an animation frame by frame; `tests/capture_kernel.gd -- <dir> ferret
   tubes` shoots her in Tube Town.
+- **Every boss's animation flows** the way Noodle's does (`flow`,
+  `blend_from_pose`, `layer`), each in its own way. `Boss.springs` gives a
+  boss secondary motion: a role swung on a damped spring (role -> [Hz,
+  damping, degrees per m/s²]) by how its bone's base moved last frame
+  (`_tend_springs`: shoved forward it tips back, shoved sideways it tips
+  the other way, brought up short landing it flops further the way it
+  leans), added on top of the pose (`_add_springs`) before it's applied:
+  Brutus's ears and their tips, Crackjaw's hat on its peg, the Tin Tyrant's
+  claws. Nibbles moves like a hamster: its model sits up on its haunches
+  (its rest), and on the move it's down on all fours (`FOURS`, eased in and
+  out by `_fours`: down as soon as it sets off, sat up again `SIT_AFTER`
+  stood still), its `walk_pose` a trot in diagonal pairs; now and then it
+  stops to sit up and sniff the air (`_sniff`, not enraged); its charge
+  gallops (`_gallop`, the action's `layer`) and pulls up short (`SKID`); a
+  wall sits it down dazed and it washes its face (`_dazed`, its own stun);
+  it digs (forepaws by turns in the burrow's `layer`) and bursts up out of
+  the bedding upright (`UNDER_UP`); dying it rolls over onto its side (the
+  hips' Euler for pitched-then-rolled, worked out once: `from_euler` can't
+  say "pitch, then roll"), its legs kicking weaker and weaker. Its moves
+  that can start sat up or on all fours have no key at 0 and a `blend_in`
+  as long as the wait for their first key, so they rise or drop from
+  wherever it was instead of dipping first. Brutus breathes hard after a
+  pound, a leap or a roar (`_puff`), his head shakes as he roars, and he
+  dies like a felled oak (reel, stagger, knees, face down, a bounce). Old
+  Hoot's pose is her flight's, so a move cut off isn't eased from a frozen
+  pose (that would stall her wingbeat): its pose fades out over a moment
+  (`OwlBoss._cancel_action`, `_fade_pose`); her head snaps round and holds
+  (`_look_goal`), and perched she bobs, tilts it right over now and then and
+  shakes out her feathers after landing (`_perched_pose`). The toys keep
+  their keyframes' ease to a stop at each key (stiff, like a toy's) and
+  only ease in from the pose they were in.
 - The models come from `tools/characters/boss_build.py` (recipes in
   `bosses.json`): decimate, orient and scale a download; build a skeleton
   from joints read off `grid` renders, or keep the download's own (rested in

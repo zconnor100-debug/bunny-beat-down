@@ -1,6 +1,6 @@
 extends SceneTree
 ## A boss's moves shot as strips of stills, or filmed (see tests/boss_strip_stage.gd).
-##   godot --path . -s tests/capture_boss_strip.gd -- <out_dir> <boss id> <move,move...> [step=0.1] [view=side|front|high|low] [walk=<s>] [bun=<x>,<z>] [movie]
+##   godot --path . -s tests/capture_boss_strip.gd -- <out_dir> <boss id> <move,move...> [step=0.1] [view=side|front|high|low|back] [walk=<s>] [bun=<x>,<z>] [dist=<k>] [hold=<s>] [movie]
 ## (movie: run with --write-movie <dir>/f.png --fixed-fps 30, and it films instead.)
 
 
@@ -27,6 +27,10 @@ func _start() -> void:
 		elif x.begins_with("bun="):
 			var xz := x.trim_prefix("bun=").split(",")
 			stage.bun_at = Vector3(float(xz[0]), 0.0, float(xz[1]))
+		elif x.begins_with("dist="):
+			stage.dist = float(x.trim_prefix("dist="))
+		elif x.begins_with("hold="):
+			stage.hold = float(x.trim_prefix("hold="))
 		elif x == "movie":
 			stage.movie = true
 	root.add_child(stage)

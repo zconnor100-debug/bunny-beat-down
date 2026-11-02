@@ -8,6 +8,9 @@ extends Boss
 ##   Leap: far off? It jumps the whole way and lands on you.
 ##   Grab: in reach of its paw, it picks you up and bites. Bots don't come back.
 ##   Roar: enraged (or crowded), it roars everyone back off it.
+## Every move flows into the next; its great ears swing on after it (lagging
+## a lunge, flopping as it lands: Boss.springs); and after a pound, a leap or
+## a roar it's out of breath, its shoulders heaving.
 
 const POUND_RADIUS := 25.0
 const BOULDER_RADIUS := 11.0
@@ -18,6 +21,10 @@ const BOULDER_SIZE := 6.0           ## metres across
 var _held: Critter                  # (in its paw: Grab)
 var _boulder: Node3D                # (in its paw, or flying)
 var _roared_at := -100.0
+var _puff := 0.0                    # (how out of breath it is: up after a pound, a leap, a roar)
+var _breath := 0.0                  # (its breathing, in radians: quicker when it's puffed)
+var _turn := 0.0                    # (how fast it's turning, rad/s, smoothed: its head leads into it)
+var _last_yaw := 0.0
 
 
 func _init() -> void:
@@ -31,6 +38,8 @@ func _init() -> void:
 	turn_speed = 1.5
 	weak_spots = {&"head": 2.0, &"jaw": 2.5}
 	limb_scale = 0.7
+	blend_from_pose = true
+	springs = {&"l_ear": [1.6, 0.28, 0.07], &"r_ear": [1.6, 0.28, 0.07], &"l_ear_tip": [2.6, 0.22, 0.09], &"r_ear_tip": [2.6, 0.22, 0.09]}
 
 
 func stride() -> float:
@@ -46,10 +55,36 @@ func walk_pose(phase: float, amount: float) -> Dictionary:
 	return p
 
 
+## Breathing (hard after a pound, a leap, a roar: its chest and shoulders
+## heaving, its mouth open), its nose going, its ears turning this way and
+## that, and its head leading it into a turn.
 func idle_pose(t: float) -> Dictionary:
-	var b := sin(t * 1.3)
-	return {&"chest": Vector3(3.0 * b, 0, 0), &"head": Vector3(-2.0 * b, 0, 0), &"jaw": Vector3(4.0 + 4.0 * maxf(b, 0.0), 0, 0),
-		&"l_ear": Vector3(0, 0, 3.0 * sin(t * 2.3)), &"r_ear": Vector3(0, 0, -3.0 * sin(t * 2.1 + 1.0))}
+	if not alive:
+		return {}
+	var b := sin(_breath)
+	var deep := 3.0 + 5.0 * _puff
+	var sniff := sin(t * 17.0) * maxf(0.0, sin(t * 0.9 + 0.5))
+	var bend := clampf(_turn * 5.0, -10.0, 10.0)
+	return {&"chest": Vector3(deep * b, bend * 0.6, 0), &"spine": Vector3(-0.4 * deep * b, bend * 0.4, 0),
+		&"head": Vector3(-0.6 * deep * b + 1.5 * sniff, bend, 0), &"jaw": Vector3(4.0 + (4.0 + 18.0 * _puff) * maxf(b, 0.0), 0, 0),
+		&"l_shoulder": Vector3(0, 0, -1.2 * deep * maxf(b, 0.0)), &"r_shoulder": Vector3(0, 0, 1.2 * deep * maxf(b, 0.0)),
+		&"l_ear": Vector3(0, 14.0 * sin(t * 0.37), 3.0 * sin(t * 2.3)), &"r_ear": Vector3(0, -14.0 * sin(t * 0.41 + 1.0), -3.0 * sin(t * 2.1 + 1.0))}
+
+
+func _physics_process(delta: float) -> void:
+	var dyaw := wrapf(rotation.y - _last_yaw, -PI, PI)
+	if delta > 0.0 and absf(dyaw) < 0.5:   # (not a landing put right)
+		_turn = lerpf(_turn, dyaw / delta, IKMath.damp(5.0, delta))
+	_last_yaw = rotation.y
+	_puff = maxf(0.0, _puff - delta / 7.0)
+	_breath += delta * (1.3 + 1.7 * _puff)
+	super(delta)
+
+
+## Out of breath after a big move.
+func _action_done(a: BossAction) -> void:
+	_puff = minf(1.0, _puff + float({&"pound": 0.5, &"leap": 0.8, &"roar": 0.4, &"boulder": 0.3, &"gobble": 0.3, &"entrance": 0.6}.get(a.name, 0.0)))
+	super(a)
 
 
 func enrage_line() -> String:
@@ -86,6 +121,7 @@ func _pound() -> BossAction:
 	var r := POUND_RADIUS * (1.2 if enraged else 1.0)
 	var hit_at := 1.05 if not enraged else 0.85
 	var a := BossAction.new(&"pound", hit_at + 1.25)
+	a.flow = true
 	var centre := global_position + forward() * 7.0
 	centre.y = ground_y(centre)
 	a.key(0.0, {})
@@ -96,6 +132,9 @@ func _pound() -> BossAction:
 		&"chest": Vector3(15, 0, 0), &"head": Vector3(10, 0, 0), &"jaw": Vector3(30, 0, 0),
 		&"l_upper_leg": Vector3(-25, 0, 0), &"r_upper_leg": Vector3(-25, 0, 0), &"l_lower_leg": Vector3(35, 0, 0), &"r_lower_leg": Vector3(35, 0, 0),
 		&"root": Vector3(0, -0.06, 0)})
+	a.key(hit_at + 0.14, {&"l_upper_arm": Vector3(-44, 0, 12), &"r_upper_arm": Vector3(-44, 0, -12), &"spine": Vector3(30, 0, 0),
+		&"chest": Vector3(10, 0, 0), &"head": Vector3(2, 0, 0), &"jaw": Vector3(24, 0, 0), &"l_upper_leg": Vector3(-20, 0, 0),
+		&"r_upper_leg": Vector3(-20, 0, 0), &"l_lower_leg": Vector3(28, 0, 0), &"r_lower_leg": Vector3(28, 0, 0), &"root": Vector3(0, -0.045, 0)})
 	a.key(hit_at + 0.5, {&"l_upper_arm": Vector3(-35, 0, 10), &"r_upper_arm": Vector3(-35, 0, -10), &"spine": Vector3(32, 0, 0),
 		&"root": Vector3(0, -0.05, 0)})
 	a.key(hit_at + 1.25, {})
@@ -118,6 +157,7 @@ func _quake(at: Vector3, r: float) -> void:
 func _toss(t: Critter) -> BossAction:
 	cooldown(&"boulder", 6.5)
 	var a := BossAction.new(&"boulder", 2.7)
+	a.flow = true
 	a.key(0.0, {})
 	a.key(0.6, {&"spine": Vector3(45, 0, 0), &"r_upper_arm": Vector3(-55, 0, 0), &"r_lower_arm": Vector3(-20, 0, 0),
 		&"l_upper_leg": Vector3(-30, 0, 0), &"r_upper_leg": Vector3(-30, 0, 0), &"l_lower_leg": Vector3(45, 0, 0), &"r_lower_leg": Vector3(45, 0, 0),
@@ -228,6 +268,7 @@ func _leap(t: Critter) -> BossAction:
 	var crouch := 0.7
 	var a := BossAction.new(&"leap", crouch + air + 1.0)
 	a.interruptible = false
+	a.flow = true
 	var from := global_position
 	var at := t.global_position + Vector3(t.velocity.x, 0.0, t.velocity.z) * 0.6
 	at.y = ground_y(at)
@@ -266,6 +307,7 @@ func _leap(t: Critter) -> BossAction:
 func _gobble(t: Critter) -> BossAction:
 	cooldown(&"gobble", 10.0)
 	var a := BossAction.new(&"gobble", 3.6)
+	a.flow = true
 	var reach := 0.6
 	a.key(0.0, {})
 	a.key(reach, {&"spine": Vector3(40, 0, 0), &"r_upper_arm": Vector3(-75, 0, -10), &"r_lower_arm": Vector3(-15, 0, 0),
@@ -354,7 +396,16 @@ func _roar_action() -> BossAction:
 	var open := {&"spine": Vector3(-20, 0, 0), &"chest": Vector3(-10, 0, 0), &"head": Vector3(-30, 0, 0), &"jaw": Vector3(40, 0, 0),
 		&"l_upper_arm": Vector3(-20, 0, 70), &"r_upper_arm": Vector3(-20, 0, -70), &"l_lower_arm": Vector3(-40, 0, 0),
 		&"r_lower_arm": Vector3(-40, 0, 0), &"l_ear": Vector3(-30, 0, 15), &"r_ear": Vector3(-30, 0, -15)}
-	a.key(0.0, {}).key(0.5, open).key(1.9, open).key(2.4, {})
+	a.flow = true
+	a.key(0.0, {}).key(0.32, _plus(open, {&"head": Vector3(14, 0, 0), &"jaw": Vector3(-25, 0, 0), &"spine": Vector3(12, 0, 0)}))
+	a.key(0.5, open).key(1.9, open).key(2.4, {})
+	a.layer = func(time: float) -> Dictionary:   # (roaring: its head shaking, its whole chest in it)
+		var w := clampf(minf(time - 0.5, 1.95 - time) / 0.12, 0.0, 1.0)
+		if w <= 0.0:
+			return {}
+		var s := sin((time - 0.5) * TAU * 2.6)
+		return {&"head": Vector3(3.0 * sin((time - 0.5) * TAU * 11.0), 9.0 * s, 4.0 * s) * w, &"neck": Vector3(0, 4.0 * s, 0) * w,
+			&"chest": Vector3(-3.0 * absf(s), 0, 0) * w, &"jaw": Vector3(4.0 * sin((time - 0.5) * TAU * 13.0), 0, 0) * w}
 	a.on(0.55, func():
 		var at := global_position
 		hurt_ring(at, 40.0, 12.0, 4.0, 10.0, 5.0, &"roar", false)
@@ -372,6 +423,7 @@ func _entrance() -> BossAction:
 	var drop := land_time
 	var a := BossAction.new(&"entrance", drop + 2.6)
 	a.interruptible = false
+	a.flow = true
 	var landed := {&"spine": Vector3(40, 0, 0), &"l_upper_leg": Vector3(-55, 0, 0), &"r_upper_leg": Vector3(-55, 0, 0),
 		&"l_lower_leg": Vector3(85, 0, 0), &"r_lower_leg": Vector3(85, 0, 0), &"l_upper_arm": Vector3(-30, 0, 20),
 		&"r_upper_arm": Vector3(-30, 0, -20), &"root": Vector3(0, -0.12, 0)}
@@ -392,6 +444,41 @@ func _entrance() -> BossAction:
 func _after_entrance() -> void:
 	if foes_near(global_position, 60.0).size() >= 2:
 		start(_roar_action())
+
+
+## It reels from the last hit, staggers, drops to its knees and goes over on
+## its face like a felled oak (its ears flopping down after it), bouncing
+## once as it hits.
+func _death_action() -> BossAction:
+	var a := BossAction.new(&"death", 3.4)
+	a.blend_in = 0.15
+	a.blend_out = 0.0
+	a.interruptible = false
+	a.flow = true
+	var reel := {&"spine": Vector3(-16, 0, 0), &"chest": Vector3(-8, 0, 0), &"neck": Vector3(-10, 0, 0), &"head": Vector3(-24, 0, 0),
+		&"jaw": Vector3(40, 0, 0), &"l_upper_arm": Vector3(20, 0, 50), &"r_upper_arm": Vector3(20, 0, -50), &"root": Vector3(0, 0.01, -0.03)}
+	var stagger := {&"spine": Vector3(6, 12, 8), &"chest": Vector3(4, 10, 0), &"neck": Vector3(10, 10, 6), &"head": Vector3(18, 16, 10),
+		&"jaw": Vector3(30, 0, 0), &"l_upper_arm": Vector3(10, 0, 12), &"r_upper_arm": Vector3(16, 0, -6), &"l_upper_leg": Vector3(-24, 0, 0),
+		&"l_lower_leg": Vector3(40, 0, 0), &"root": Vector3(0, -0.04, -0.02)}
+	var knees := {&"spine": Vector3(16, 0, 0), &"chest": Vector3(6, 0, 0), &"neck": Vector3(10, 0, 0), &"head": Vector3(24, 0, 0),
+		&"jaw": Vector3(20, 0, 0), &"l_upper_leg": Vector3(-62, 0, 0), &"r_upper_leg": Vector3(-62, 0, 0), &"l_lower_leg": Vector3(100, 0, 0),
+		&"r_lower_leg": Vector3(100, 0, 0), &"l_upper_arm": Vector3(14, 0, 0), &"r_upper_arm": Vector3(14, 0, 0), &"root": Vector3(0, -0.14, 0)}
+	var tip := {&"spine": Vector3(46, 0, 0), &"chest": Vector3(16, 0, 0), &"neck": Vector3(4, 0, 0), &"head": Vector3(4, 0, 0),
+		&"jaw": Vector3(30, 0, 0), &"l_upper_leg": Vector3(-72, 0, 0), &"r_upper_leg": Vector3(-72, 0, 0), &"l_lower_leg": Vector3(112, 0, 0),
+		&"r_lower_leg": Vector3(112, 0, 0), &"l_upper_arm": Vector3(-50, 0, 20), &"r_upper_arm": Vector3(-50, 0, -20), &"root": Vector3(0, -0.2, 0.03)}
+	var down := {&"spine": Vector3(70, 0, 0), &"chest": Vector3(20, 0, 0), &"neck": Vector3(4, 0, 0), &"head": Vector3(-8, 0, 14),
+		&"jaw": Vector3(26, 0, 0), &"l_upper_leg": Vector3(-80, 0, 0), &"r_upper_leg": Vector3(-80, 0, 0), &"l_lower_leg": Vector3(120, 0, 0),
+		&"r_lower_leg": Vector3(120, 0, 0), &"l_upper_arm": Vector3(-60, 0, 36), &"r_upper_arm": Vector3(-50, 0, -40), &"root": Vector3(0, -0.3, 0.05)}
+	a.key(0.3, reel).key(0.95, stagger).key(1.55, knees).key(2.05, tip).key(2.4, down)
+	a.key(2.56, _plus(down, {&"spine": Vector3(-6, 0, 0), &"head": Vector3(-6, 0, 0), &"root": Vector3(0, 0.015, 0)})).key(2.85, down).key(3.4, down)
+	a.on(1.55, func():   # (its knees hit the ground)
+		BossFX.dust(global_position, 16.0)
+		Events.explosion.emit(global_position, 10.0)
+		Audio.play_at(&"boss_stomp", global_position, 4.0, 0.05, {"max_distance": 500.0, "unit_size": 35.0}))
+	a.on(2.4, func():
+		BossFX.shockwave(global_position + forward() * HEIGHT * 0.4, HEIGHT * 1.2)
+		Audio.play_at(&"explosion", global_position, 6.0, 0.05, {"max_distance": 600.0, "unit_size": 40.0}))
+	return a
 
 
 func _fallen() -> void:

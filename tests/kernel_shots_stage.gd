@@ -1132,12 +1132,16 @@ func _ferret_tubes() -> void:
 					if not movie and round_ == k[1] and up_t >= k[2] and not shot.has(k[0]):
 						shot[k[0]] = true
 						await _snap(k[0])
-				if up_t > 3.2:   # (one pop is enough here: up out of Tube Town, and stop)
+				if up_t > FerretBoss.UP_FOR + 0.2:   # (one pop is enough here: up out of Tube Town, and stop before she dives for the next)
 					b._cancel_action()
 					break
 			_unpause(g)
 			await get_tree().physics_frame
-		await _wait(1.0)
+		for i in 150:   # (the tube coming down, her looking round)
+			if not cam.current:
+				cam.make_current()
+			_unpause(g)
+			await get_tree().physics_frame
 		if not movie and round_ == 0:
 			await _snap("t04_landed")
 	await _wait(1.5)

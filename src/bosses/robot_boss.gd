@@ -41,6 +41,8 @@ func _init() -> void:
 	limb_scale = 0.8
 	blood = Color(0.08, 0.07, 0.06)   # (oil)
 	solid_roles = [&"hips", &"chest", &"l_upper_leg", &"r_upper_leg"]
+	blend_from_pose = true   # (a tin toy's stiff moves, but no snapping from one to the next)
+	springs = {&"l_claw_a": [4.0, 0.12, 0.03], &"l_claw_b": [4.0, 0.12, 0.03], &"r_claw_a": [4.0, 0.12, 0.03], &"r_claw_b": [4.0, 0.12, 0.03]}   # (its tin claws rattling)
 
 
 func stride() -> float:

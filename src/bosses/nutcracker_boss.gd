@@ -72,6 +72,8 @@ func _init() -> void:
 	limb_scale = 0.7
 	blood = Color(0.66, 0.5, 0.3)   # (sawdust)
 	solid_roles = [&"hips", &"spine", &"chest", &"l_upper_leg", &"l_lower_leg", &"r_upper_leg", &"r_lower_leg"]
+	blend_from_pose = true   # (a wooden toy's stiff moves, but no snapping from one to the next)
+	springs = {&"hat": [2.8, 0.12, 0.05]}   # (his tall hat wobbling on its peg as he stamps)
 
 
 func stride() -> float:

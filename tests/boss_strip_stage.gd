@@ -15,6 +15,8 @@ var view := "side"          ## side | front | high | low
 var movie := false          ## film it (no stills): under --write-movie
 var walk := 0.0             ## seconds of walking at the bun first
 var bun_at := Vector3(0, 0, 60)   ## where the bun it goes for stands (to one side: it turns)
+var dist := 1.0             ## how far back the camera stands (a tall boss: further)
+var hold := 0.0             ## seconds stood still after the walk, before its moves
 var cam: Camera3D
 var bun: Critter
 
@@ -25,8 +27,7 @@ func _ready() -> void:
 
 func _run() -> void:
 	DirAccess.make_dir_recursive_absolute(out_dir)
-	if not movie:
-		DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_DISABLED)   # (a window behind others crawls, waiting on vsync)
+	DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_DISABLED)   # (a window behind others crawls, waiting on vsync; a movie's frames are timed anyway)
 	var light := WorldLighting.new()
 	add_child(light)
 	light.build(2)
@@ -82,6 +83,14 @@ func _run() -> void:
 			if not movie and fmod(walk - left + 1e-4, step) < 1.0 / 60.0:
 				shot = await _still(boss, shot)
 		boss._speed = 0.0
+	if hold > 0.0:   # (stood still a while: what it does with itself)
+		var left := hold
+		while left > 0.0:
+			await get_tree().physics_frame
+			left -= 1.0 / 60.0
+			_aim(boss)
+			if not movie and fmod(hold - left + 1e-4, step) < 1.0 / 60.0:
+				shot = await _still(boss, shot)
 	for m in moves:
 		boss._cancel_action()
 		boss.danger.clear()
@@ -114,13 +123,14 @@ func _run() -> void:
 
 ## The boss's own move by name, or one that needs someone to go after (the bun).
 func _make(boss: Boss, fn: String) -> BossAction:
-	match fn:
-		"_dance", "_bite", "_pop_goes":
-			return boss.call(fn, bun)
-		"_death_action":
-			boss.alive = false
-			return boss.call(fn)
-	return boss.call(fn) if boss.has_method(fn) else null
+	if fn == "_death_action":
+		boss.alive = false
+	if not boss.has_method(fn):
+		return null
+	if boss.get_method_argument_count(fn) > 0:
+		return boss.call(fn, bun)
+	var a: Variant = boss.call(fn)
+	return a if a is BossAction else boss.action   # (a stun, a crash: it starts its own)
 
 
 ## The camera, kept on the boss as it moves.
@@ -132,14 +142,16 @@ func _aim(boss: Boss) -> void:
 	var left := Vector3.UP.cross(fwd).normalized()   # (her left: the side we film)
 	match view:
 		"front":
-			cam.global_position = at + fwd * 75.0 + Vector3.UP * 12.0
+			cam.global_position = at + (fwd * 75.0 + Vector3.UP * 12.0) * dist
 		"high":
-			cam.global_position = at + left * 44.0 - fwd * 18.0 + Vector3.UP * 38.0
+			cam.global_position = at + (left * 44.0 - fwd * 18.0 + Vector3.UP * 38.0) * dist
 		"low":
-			cam.global_position = at + left * 70.0 + fwd * 10.0 + Vector3.UP * 2.5
+			cam.global_position = at + (left * 70.0 + fwd * 10.0 + Vector3.UP * 2.5) * dist
+		"back":
+			cam.global_position = at + (-fwd * 75.0 + left * 20.0 + Vector3.UP * 12.0) * dist
 		_:
-			cam.global_position = at + left * 58.0 + Vector3.UP * 7.0
-	cam.look_at(at + Vector3.UP * 8.0, Vector3.UP)
+			cam.global_position = at + (left * 58.0 + Vector3.UP * 7.0) * dist
+	cam.look_at(at + Vector3.UP * 8.0 * dist, Vector3.UP)
 
 
 func _still(boss: Boss, shot: int) -> int:

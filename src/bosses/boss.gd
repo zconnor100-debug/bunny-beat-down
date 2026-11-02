@@ -79,6 +79,14 @@ var blend_from_pose := false
 var _from_rot := {}                 # (role -> Basis: the pose a move is easing in from)
 var _from_root := Vector3.ZERO
 var _from_long := 0.0
+## Bits of it that swing on after the rest (secondary motion: a bunny's
+## ears, their tips): role -> [how quick its swing is (Hz), how much it's
+## damped (1: no swing back), how far it swings (degrees per m/s² its base
+## is pushed about)]. Last frame's motion of where it's fixed on swings it,
+## on a spring, on top of its pose: it lags behind a lunge and swings on
+## after it, and flops along its lean when it lands.
+var springs := {}
+var _swing := {}                    # role -> [angle (Vector2: degrees about x, z), its speed, its base (world), its base's speed]
 var _anchors: Dictionary = {}       # role -> Node3D on its bone (hitboxes and stuck carrots ride it)
 var _solids: Array = []             # [AnimatableBody3D, role]
 var _ready_at: Dictionary = {}      # ability -> clock when it can be used again
@@ -579,8 +587,48 @@ func _animate(delta: float) -> void:
 			poser.add_pose(action.layer.call(action.t), aw)
 	if easing:
 		poser.ease_from(_from_rot, _from_root, _from_long, smoothstep(0.0, 1.0, action.t / action.blend_in))
+	_add_springs()
 	poser.apply()
+	_tend_springs(delta)
 	_tend_eyes()
+
+
+## The springs' swing (springs), on top of this frame's pose.
+func _add_springs() -> void:
+	for role in _swing:
+		var a: Vector2 = _swing[role][0]
+		poser.add(role, Vector3(a.x, 0, a.y))
+
+
+## Each spring swung on by how its base moved this frame: where it's fixed
+## on pushed about (last frame's speed to this one's), and the spring
+## pulling it back.
+func _tend_springs(delta: float) -> void:
+	if springs.is_empty() or delta <= 0.0 or skeleton == null:
+		return
+	var to_pose := skeleton.global_basis.orthonormalized().inverse()
+	for role in springs:
+		if not poser.has(role):
+			continue
+		var base: Vector3 = skeleton.global_transform * poser.bone_pose(role).origin
+		var st: Array = _swing.get(role, [])
+		if st.is_empty() or (base - (st[2] as Vector3)).length() > 15.0:   # (new, or it jumped: a rewind, a landing put right)
+			_swing[role] = [Vector2.ZERO, Vector2.ZERO, base, Vector3.ZERO]
+			continue
+		var vel := (base - (st[2] as Vector3)) / delta
+		var acc: Vector3 = to_pose * ((vel - (st[3] as Vector3)) / delta)
+		acc = acc.limit_length(400.0)
+		var lean := (poser.bone_tip(role) - poser.bone_pose(role).origin).normalized()
+		var spec: Array = springs[role]
+		var w := TAU * float(spec[0])
+		# (its base shoved forward, it tips back; shoved left, it tips right;
+		# brought up short landing, it flops further the way it leans)
+		var want := (Vector2(-acc.z, acc.x) + Vector2(lean.z, -lean.x) * acc.y * 0.6) * float(spec[2])
+		var a: Vector2 = st[0]
+		var v: Vector2 = st[1]
+		v += (want - a) * w * w * delta - v * 2.0 * float(spec[1]) * w * delta
+		a = (a + v * delta).limit_length(35.0)
+		_swing[role] = [a, v, base, vel]
 
 
 ## Its eyes' glow, pulsing (eye_color: brighter and redder when it's enraged).
@@ -632,6 +680,21 @@ func walk_pose(phase: float, amount: float) -> Dictionary:
 func idle_pose(t: float) -> Dictionary:
 	var b := sin(t * 1.7)
 	return {&"chest": Vector3(2.0 * b, 0, 0), &"head": Vector3(-1.5 * b, 0, 0)}
+
+
+## `base` with `more` added on, `k` times (degrees per role; the root's offset too).
+static func _plus(base: Dictionary, more: Dictionary, k := 1.0) -> Dictionary:
+	var out := base.duplicate()
+	for r in more:
+		out[r] = (out.get(r, Vector3.ZERO) as Vector3) + (more[r] as Vector3) * k
+	return out
+
+
+## Stars round its head (dizzy, dazed).
+func _stars() -> void:
+	FX.burst(get_eye_position() + Vector3.UP * 5.0, Vector3.UP, {"amount": 5, "lifetime": 1.1, "speed": Vector2(3.0, 6.0),
+		"spread": 80.0, "gravity": 0.5, "size": 2.2, "scale": Vector2(0.6, 1.2), "color": Color(1.0, 0.92, 0.45),
+		"fade": true, "additive": true, "damping": 2.0, "shape": "star", "aabb": 20.0})
 
 
 ## Turn its head toward its target (not while it's busy, mostly).

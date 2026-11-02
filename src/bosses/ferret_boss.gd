@@ -592,13 +592,6 @@ func _dizzy_action() -> BossAction:
 	return a
 
 
-## Stars round her head (dizzy).
-func _stars() -> void:
-	FX.burst(get_eye_position() + Vector3.UP * 5.0, Vector3.UP, {"amount": 5, "lifetime": 1.1, "speed": Vector2(3.0, 6.0),
-		"spread": 80.0, "gravity": 0.5, "size": 2.2, "scale": Vector2(0.6, 1.2), "color": Color(1.0, 0.92, 0.45),
-		"fade": true, "additive": true, "damping": 2.0, "shape": "star", "aabb": 20.0})
-
-
 ## Hits on her head while she's stood up out of a hole count toward bopping
 ## her (yours most, and a blast three times over). Down the hole she can't be hit.
 func take_damage(info: DamageInfo) -> void:
@@ -768,14 +761,6 @@ static func _hop_poses() -> Dictionary:
 			&"r_upper_leg": Vector3(40, 0, 0), &"l_lower_leg": Vector3(2, 0, 0), &"r_lower_leg": Vector3(2, 0, 0), &"l_foot": Vector3(10, 0, 0),
 			&"r_foot": Vector3(10, 0, 0), &"long": Vector3(0.06, 0, 0), &"root": Vector3(0, 0.27, 0)},
 	}
-
-
-## `base` with `more` added on, `k` times (degrees per role; the root's offset too).
-static func _plus(base: Dictionary, more: Dictionary, k := 1.0) -> Dictionary:
-	var out := base.duplicate()
-	for r in more:
-		out[r] = (out.get(r, Vector3.ZERO) as Vector3) + (more[r] as Vector3) * k
-	return out
 
 
 ## When she twitches in her sleep, between `from` and `to` (seconds into the
