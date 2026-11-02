@@ -111,12 +111,14 @@ func test_a_brick_tower_comes_down() -> void:
 	await wait_physics(30)
 	check(k.find_children("*", "ToyBlock", true, false).is_empty() and _loose_count(k) == bricks.size(),
 		"its bottom bricks blasted out: the whole tower comes down (%d loose)" % _loose_count(k))
-	# what stood on them tips over (it doesn't just drop back onto them and stand)
+	# what stood on them tips over (it doesn't just drop back onto them and
+	# stand: that would leave its top a couple of courses down, near 18 m of
+	# 24; now and then the top bricks come down on a stub of it, 13.4 m)
 	await wait_physics(180)
 	var top := 0.0
 	for b in k.find_children("Loose*", "RigidBody3D", true, false):
 		top = maxf(top, (b as RigidBody3D).global_position.y)
-	check(top < bricks.size() * 3.0 * 0.5, "it's fallen over: its highest brick %.1f m up (it stood %.0f m)" % [top, bricks.size() * 3.0])
+	check(top < bricks.size() * 3.0 * 0.65, "it's fallen over: its highest brick %.1f m up (it stood %.0f m)" % [top, bricks.size() * 3.0])
 
 
 ## A loose letter block on the floor: a blast sends it flying.
