@@ -112,6 +112,13 @@ func test_carrots_that_split_pierce_bounce_and_pop() -> void:
 	var a := _dummy("Sly", Vector3(7, 40.0, 0))
 	var b := _dummy("Fennick", Vector3(10, 40.0, 0))
 	await wait_physics(40)
+	# (the three of them put back, at rest, just before the shot: they'd been
+	# falling since they were put up there, and on a slow machine the first
+	# fox's hitboxes, following its body a frame behind, let the carrot by)
+	for p in [[you, Vector3(0, 40.0, 0), -PI / 2.0], [a, Vector3(7, 40.0, 0), PI / 2.0], [b, Vector3(10, 40.0, 0), PI / 2.0]]:
+		(p[0] as Critter).place_at(p[1], p[2])
+		(p[0] as Critter).velocity = Vector3.ZERO
+	await wait_physics(2)
 	# Piercing Carrots: one carrot through the first fox and into the second
 	Boons.reset({"piercing": 1})
 	var rifle := WeaponInstance.new(WeaponDB.get_weapon(&"carrot_rifle"), Rarity.Tier.GARDEN)
