@@ -6,10 +6,18 @@ extends Node3D
 ## Every carrot also draws a glowing tracer streak behind it, so you can see
 ## shots fly and tell where they came from.
 ## Carrots that hit something stay stuck in it — trees, crates, and critters.
+## A critter holds only a few at a time (the next knocks the oldest out), and
+## one still going works them out after a while: they drop to the ground and
+## shrink away. In a corpse they stay till it's gone.
 ## Mutations (your boons, a gun's own: Boons) change what a carrot does when it
 ## hits: it splits into shards, goes on through, bounces, or pops.
 
 const MAX_STUCK := 220
+const MAX_IN_ONE := 6             ## carrots stuck in one critter at a time
+const MAX_IN_BIG := 24            ## ... in a boss (or anything else bigger than a critter)
+const WORK_LOOSE := 10.0          ## seconds (give or take a third) a carrot stays in a critter still going
+const FALL_S := 1.1               ## a carrot that comes out drops, lies there and shrinks away in this long
+const STUCK_DRAWN := 40.0         ## metres: further off, a stuck carrot is a pixel or two, and isn't drawn
 const MAX_LIFE := 3.0
 
 const BOLT_MODEL := "res://assets/weapons/carrot_bolt.glb"
@@ -56,7 +64,13 @@ class Shot:
 var _shots: Array[Shot] = []
 var _mm: Dictionary = {}          # ProjectileKind -> MultiMeshInstance3D
 var _tracers: MultiMeshInstance3D
-var _stuck: Array[Node3D] = []
+var _stuck: Array[Node3D] = []    # oldest first
+var _in: Dictionary = {}          # instance id of what carrots are stuck in (a critter, a boss) -> them, oldest first
+var _loose_at: Dictionary = {}    # carrot -> when (_clock) it works its way out of the critter still going it's in
+var _falling: Array = []          # [carrot, velocity, spin (rad/s), ground y, seconds left]
+var _spare: Array[MeshInstance3D] = []   # carrots that came out, hidden here to be stuck again
+var _clock := 0.0
+var _next_loose := 0.0
 var _bolt_mesh: Mesh
 var _pellet_mesh: Mesh
 
@@ -238,6 +252,10 @@ static func _spread_dir(dir: Vector3, spread_deg: float) -> Vector3:
 
 
 func _physics_process(delta: float) -> void:
+	_clock += delta
+	if _clock >= _next_loose:
+		_next_loose = _clock + 0.25
+		_work_loose()
 	if _shots.is_empty():
 		return
 	var space := get_world_3d().direct_space_state
@@ -281,9 +299,11 @@ func _physics_process(delta: float) -> void:
 		i += 1
 
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
 	# draw: extrapolate by the physics interpolation fraction for smooth motion
 	draw_shots(_shots, Engine.get_physics_interpolation_fraction() / float(Engine.physics_ticks_per_second))
+	if not _falling.is_empty():
+		_drop(delta)
 
 
 ## The carrots in flight right now (the KillCam's replay draws its own).
@@ -526,18 +546,35 @@ static func _pop_data(d: WeaponData) -> WeaponData:
 
 
 ## Leave the carrot embedded where it hit, parented so it moves with the target.
+## A critter holds MAX_IN_ONE at a time (a boss MAX_IN_BIG): one more knocks
+## the oldest out.
 func _stick(pos: Vector3, dir: Vector3, target: Node3D, depth_frac: float) -> void:
 	if target == null or not is_instance_valid(target):
 		return
+	var into: Variant = target.get_meta(&"critter", null)
+	if not is_instance_valid(into):
+		into = null
+	var id: int = into.get_instance_id() if into else 0
+	if id:
+		var theirs := _carrots_in(id)
+		if theirs.size() >= (MAX_IN_ONE if into is Critter else MAX_IN_BIG):
+			_fall_out(theirs[0])
 	var mi: MeshInstance3D
 	_stuck = _stuck.filter(func(n): return is_instance_valid(n))
 	if _stuck.size() >= MAX_STUCK:
-		mi = _stuck.pop_front()
+		mi = _stuck[0]
+		_unstick(mi)
 		mi.get_parent().remove_child(mi)
+	elif not _spare.is_empty():
+		mi = _spare.pop_back()
+		remove_child(mi)
+		mi.visible = true
 	else:
 		mi = MeshInstance3D.new()
 		mi.mesh = _bolt_mesh
 		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		mi.visibility_range_end = STUCK_DRAWN
+		mi.visibility_range_end_margin = 4.0
 	var parent: Node3D = target
 	# hitboxes live on BoneAttachment3D nodes: parent to the attachment so the
 	# carrot rides along with the limb, alive or ragdolled
@@ -549,9 +586,110 @@ func _stick(pos: Vector3, dir: Vector3, target: Node3D, depth_frac: float) -> vo
 	var basis := Basis.looking_at(dir, Vector3.UP if absf(dir.y) < 0.98 else Vector3.RIGHT)
 	basis = basis.rotated(dir, randf() * TAU)
 	mi.global_transform = Transform3D(basis, pos + dir * length * depth_frac)
+	mi.set_meta(&"stuck_in", id)
 	_stuck.append(mi)
+	if id:
+		(_in[id] as Array).append(mi)
+		if into.get(&"alive") == true:
+			_loose_at[mi] = _clock + WORK_LOOSE * randf_range(0.67, 1.33)
+		if into is Critter and (into as Critter).visual and (into as Critter).visual._first_person:
+			mi.visible = false   # (in your own body, out of your eyes' way: CritterVisual.set_first_person)
 	if KillCam.recording and not KillCam.instance.playing:
 		KillCam.instance.note_node(mi, "", false)
+
+
+## The carrots stuck in something (by its instance id), oldest first.
+func _carrots_in(id: int) -> Array:
+	var theirs: Array = (_in.get(id, []) as Array).filter(func(n): return is_instance_valid(n))
+	_in[id] = theirs
+	return theirs
+
+
+## Number of carrots stuck in this critter (or boss) now (tests).
+func stuck_in(what: Object) -> int:
+	return _carrots_in(what.get_instance_id()).size()
+
+
+## Number of carrots dropping out of things now (tests).
+func falling_count() -> int:
+	return _falling.size()
+
+
+func _unstick(mi: Node3D) -> void:
+	_stuck.erase(mi)
+	var id := int(mi.get_meta(&"stuck_in", 0))
+	if _in.has(id):
+		(_in[id] as Array).erase(mi)
+	_loose_at.erase(mi)
+
+
+## Carrots in something still going work their way out in time (in a corpse
+## they stay: it's gone soon enough).
+func _work_loose() -> void:
+	for id in _in.keys():
+		if not is_instance_id_valid(id):
+			_in.erase(id)
+	for mi in _loose_at.keys():
+		if not is_instance_valid(mi):
+			_loose_at.erase(mi)
+		elif _clock >= float(_loose_at[mi]):
+			var into := instance_from_id(int(mi.get_meta(&"stuck_in", 0)))
+			if into and into.get(&"alive") == true:
+				_fall_out(mi)
+			else:
+				_loose_at.erase(mi)
+
+
+## A carrot comes out of whatever it was stuck in (it worked its way out, or
+## the next one knocked it out) and drops to the ground. Not one you can't
+## see go (stuck in your own body in first person), nor in the KillCam's
+## last seconds (its replay wouldn't have it falling): those just go.
+func _fall_out(mi: MeshInstance3D) -> void:
+	_unstick(mi)
+	var shown := mi.is_visible_in_tree() and not KillCam.recording
+	mi.reparent(self)
+	if not shown:
+		mi.visible = false
+		_spare.append(mi)
+		return
+	var at := mi.global_position
+	var q := PhysicsRayQueryParameters3D.create(at + Vector3.UP * 0.2, at + Vector3.DOWN * 8.0, Layers.WORLD)
+	var hit := get_world_3d().direct_space_state.intersect_ray(q)
+	var ground: float = hit.position.y + 0.02 if hit else at.y - 8.0
+	# (it points down -Z, the way it flew: it comes out backwards)
+	_falling.append([mi, mi.global_basis.z * 1.2 + Vector3.UP * 1.6, randf_range(-14.0, 14.0), ground, FALL_S])
+
+
+## Carrots that came out hop out backwards, tumble to the ground, lie there a
+## moment and shrink away (then wait, hidden, to be stuck again).
+func _drop(delta: float) -> void:
+	var g := float(ProjectSettings.get_setting("physics/3d/default_gravity", 16.0))
+	var i := 0
+	while i < _falling.size():
+		var f: Array = _falling[i]
+		f[4] -= delta
+		if f[4] <= 0.0 or not is_instance_valid(f[0]):
+			_falling.remove_at(i)
+			if is_instance_valid(f[0]):
+				(f[0] as MeshInstance3D).visible = false
+				_spare.append(f[0])
+			continue
+		var mi: MeshInstance3D = f[0]
+		var xf := mi.global_transform
+		var rot := xf.basis.orthonormalized()
+		var v: Vector3 = f[1]
+		if v != Vector3.ZERO:
+			v.y -= g * delta
+			xf.origin += v * delta
+			rot = rot.rotated(rot.x, float(f[2]) * delta)   # (end over end)
+			if xf.origin.y <= float(f[3]) and v.y < 0.0:   # landed: it lies down
+				xf.origin.y = float(f[3])
+				var flat := Vector3(rot.z.x, 0.0, rot.z.z)
+				rot = Basis.looking_at(flat.normalized() if flat.length_squared() > 1e-4 else Vector3.FORWARD)
+				v = Vector3.ZERO
+			f[1] = v
+		mi.global_transform = Transform3D(rot * clampf(float(f[4]) / 0.3, 0.01, 1.0), xf.origin)
+		i += 1
 
 
 static func _fallback_carrot(length: float, radius: float) -> Mesh:

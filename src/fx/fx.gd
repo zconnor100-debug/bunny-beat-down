@@ -20,6 +20,7 @@ var _draw_meshes: Dictionary = {}
 
 func _enter_tree() -> void:
 	instance = self
+	FXTextures.puff()   # (drawn now, as the match loads, not at its first blast)
 
 
 func _exit_tree() -> void:
@@ -209,18 +210,33 @@ static func beat_down(pos: Vector3, style: String) -> void:
 			instance._burst(pos, Vector3.UP, o)
 
 
+## A blast `radius` metres across, everything in it scaled to it: a fireball
+## (big puffs burning white-hot, orange, dark red and into smoke, swelling and
+## rising), a white-hot glow at its heart, a dark column of smoke that hangs
+## about, a ring of dust thrown out low along the ground, carrot shrapnel and
+## clods of dirt, a flash and a scorch mark.
 static func explosion(pos: Vector3, radius: float) -> void:
 	if instance == null:
 		return
 	var k := radius / 5.0
-	instance._burst(pos, Vector3.UP, {"amount": int(36 * k), "lifetime": 0.55, "speed": Vector2(2.0, 9.0) * k, "spread": 180.0,
-		"gravity": -1.0, "size": 0.9 * k, "scale": Vector2(0.6, 1.5), "color": Color(1.0, 0.62, 0.2), "fade": true,
-		"damping": 7.0, "additive": true})
-	instance._burst(pos, Vector3.UP, {"amount": int(26 * k), "lifetime": 2.8, "speed": Vector2(1.0, 4.0) * k, "spread": 120.0,
-		"gravity": -1.6, "size": 1.3 * k, "scale": Vector2(0.7, 1.8), "color": Color(0.32, 0.3, 0.28, 0.55), "fade": true, "damping": 2.2})
-	# carrot shrapnel
+	instance._burst(pos + Vector3.UP * 0.5 * k, Vector3.UP, {"amount": int(30 * k), "lifetime": 0.95, "speed": Vector2(1.0, 4.6) * k,
+		"spread": 115.0, "gravity": -4.0, "size": 1.1 * k, "scale": Vector2(0.6, 1.5), "ramp": "fire", "grow": true, "damping": 8.0,
+		"shape": "puff", "soft": 0.8, "aabb": 4.0 * k})
+	instance._burst(pos + Vector3.UP * 0.5 * k, Vector3.UP, {"amount": int(10 * k), "lifetime": 0.3, "speed": Vector2(0.3, 2.0) * k,
+		"spread": 180.0, "gravity": 0.0, "size": 1.5 * k, "scale": Vector2(0.8, 1.2), "color": Color(1.0, 0.85, 0.55), "fade": true,
+		"damping": 4.0, "additive": true})
+	instance._burst(pos + Vector3.UP * 0.6 * k, Vector3.UP, {"amount": int(26 * k), "lifetime": 3.6, "speed": Vector2(1.0, 4.2) * k,
+		"spread": 45.0, "gravity": -1.2, "size": 1.3 * k, "scale": Vector2(0.7, 1.8), "color": Color(0.34, 0.32, 0.3, 0.75), "ramp": "smoke",
+		"grow": true, "damping": 1.6, "shape": "puff", "soft": 0.8, "aabb": 6.0 * k})
+	# (FORWARD: the emitter square to the world, its spread flattened onto the ground)
+	instance._burst(pos + Vector3.UP * 0.3, Vector3.FORWARD, {"amount": int(16 * k), "lifetime": 1.2, "speed": Vector2(5.0, 11.0) * k,
+		"spread": 180.0, "flatness": 0.8, "gravity": -0.8, "size": 0.75 * k, "scale": Vector2(0.5, 1.4), "color": Color(0.74, 0.64, 0.48, 0.55),
+		"fade": true, "damping": 9.0, "shape": "puff", "soft": 0.5, "aabb": 5.0 * k})
+	# carrot shrapnel, and clods of dirt
 	instance._burst(pos, Vector3.UP, {"amount": int(24 * k), "lifetime": 1.3, "speed": Vector2(5.0, 13.0) * k, "spread": 100.0,
-		"gravity": 16.0, "size": 0.05, "scale": Vector2(0.6, 1.4), "color": Color(1.0, 0.45, 0.08), "fade": false})
+		"gravity": 16.0, "size": 0.12, "scale": Vector2(0.6, 1.4), "color": Color(1.0, 0.45, 0.08), "fade": false})
+	instance._burst(pos, Vector3.UP, {"amount": int(16 * k), "lifetime": 1.4, "speed": Vector2(4.0, 10.0) * k, "spread": 65.0,
+		"gravity": 16.0, "size": 0.2, "scale": Vector2(0.6, 1.5), "color": Color(0.27, 0.19, 0.12), "fade": false})
 	instance._flash(pos, radius)
 	if KillCam.recording and not KillCam.instance.playing:
 		KillCam.instance.note_flash(pos, radius)
@@ -275,13 +291,13 @@ static func flare_smoke(parent: Node3D) -> GPUParticles3D:
 func _flash(pos: Vector3, radius: float) -> void:
 	var light := OmniLight3D.new()
 	light.light_color = Color(1.0, 0.7, 0.35)
-	light.light_energy = 12.0
+	light.light_energy = 16.0
 	light.omni_range = radius * 3.0
 	light.shadow_enabled = false
 	add_child(light)
 	light.global_position = pos + Vector3.UP * 0.5
 	var tw := light.create_tween()
-	tw.tween_property(light, "light_energy", 0.0, 0.35)
+	tw.tween_property(light, "light_energy", 0.0, 0.5).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_QUAD)
 	tw.tween_callback(light.queue_free)
 
 
@@ -338,17 +354,19 @@ func _make_particles(cfg: Dictionary, one_shot: bool) -> GPUParticles3D:
 	p.visibility_aabb = AABB(Vector3.ONE * -reach, Vector3.ONE * reach * 2.0)
 	p.process_material = _process_material(cfg)
 	p.draw_pass_1 = _draw_mesh(cfg)
+	p.layers = CritterVisual.RENDER_LAYER   # (no decals on it: the scorch under a blast mustn't stain its smoke)
 	return p
 
 
 func _process_material(cfg: Dictionary) -> ParticleProcessMaterial:
 	var key := str(cfg.get("speed"), cfg.get("spread"), cfg.get("gravity"), cfg.get("scale"), cfg.get("color"), cfg.get("fade"), cfg.get("damping", 0.0),
-		cfg.get("upright", false))
+		cfg.get("upright", false), cfg.get("ramp", ""), cfg.get("flatness", 0.0), cfg.get("grow", false))
 	if _process_mats.has(key):
 		return _process_mats[key]
 	var m := ParticleProcessMaterial.new()
 	m.direction = Vector3(0, 0, -1)
 	m.spread = cfg.get("spread", 30.0)
+	m.flatness = cfg.get("flatness", 0.0)   # (1: the spread flattened onto the emitter's X/Z)
 	var spd: Vector2 = cfg.get("speed", Vector2(1, 2))
 	m.initial_velocity_min = spd.x
 	m.initial_velocity_max = spd.y
@@ -363,7 +381,30 @@ func _process_material(cfg: Dictionary) -> ParticleProcessMaterial:
 	m.angle_max = spin
 	var col: Color = cfg.get("color", Color.WHITE)
 	m.color = col
-	if cfg.get("fade", false):
+	if cfg.get("ramp", "") == "fire":
+		# white-hot (brighter than white: it glows), orange, dark red, then smoke, thinning away
+		var g := Gradient.new()
+		g.set_color(0, Color(1.6, 1.2, 0.55, 1.0))
+		g.set_color(1, Color(0.08, 0.07, 0.06, 0.0))
+		g.add_point(0.08, Color(1.25, 0.5, 0.06, 1.0))
+		g.add_point(0.3, Color(0.8, 0.18, 0.02, 1.0))
+		g.add_point(0.55, Color(0.25, 0.09, 0.04, 0.9))
+		var gt := GradientTexture1D.new()
+		gt.use_hdr = true
+		gt.gradient = g
+		m.color_ramp = gt
+	elif cfg.get("ramp", "") == "smoke":
+		# (rising out of a fireball: it only thickens as the fire dies down)
+		var g := Gradient.new()
+		g.set_color(0, Color(1, 1, 1, 0))
+		g.set_color(1, Color(1, 1, 1, 0))
+		g.add_point(0.1, Color(1, 1, 1, 0))
+		g.add_point(0.26, Color(1, 1, 1, 1))
+		g.add_point(0.62, Color(1, 1, 1, 0.8))
+		var gt := GradientTexture1D.new()
+		gt.gradient = g
+		m.color_ramp = gt
+	elif cfg.get("fade", false):
 		var g := Gradient.new()
 		g.set_color(0, Color(1, 1, 1, 1))
 		g.set_color(1, Color(1, 1, 1, 0))
@@ -372,9 +413,15 @@ func _process_material(cfg: Dictionary) -> ParticleProcessMaterial:
 		gt.gradient = g
 		m.color_ramp = gt
 	var curve := Curve.new()
-	curve.add_point(Vector2(0, 0.6))
-	curve.add_point(Vector2(0.25, 1.0))
-	curve.add_point(Vector2(1, 0.85))
+	if cfg.get("grow", false):   # (a fireball, or smoke, swelling as it goes)
+		curve.max_value = 1.4
+		curve.add_point(Vector2(0, 0.35))
+		curve.add_point(Vector2(0.3, 1.0))
+		curve.add_point(Vector2(1, 1.4))
+	else:
+		curve.add_point(Vector2(0, 0.6))
+		curve.add_point(Vector2(0.25, 1.0))
+		curve.add_point(Vector2(1, 0.85))
 	var ct := CurveTexture.new()
 	ct.curve = curve
 	m.scale_curve = ct
@@ -386,19 +433,20 @@ func _draw_mesh(cfg: Dictionary) -> QuadMesh:
 	var size: float = cfg.get("size", 0.1)
 	var additive: bool = cfg.get("additive", false)
 	var shape: String = cfg.get("shape", "blob")
-	var key := "%s_%s_%s" % [size, additive, shape]
+	var soft: float = cfg.get("soft", 0.15)   # (metres it fades out over, going into what's behind it)
+	var key := "%s_%s_%s_%s" % [size, additive, shape, soft]
 	if _draw_meshes.has(key):
 		return _draw_meshes[key]
 	var mat := StandardMaterial3D.new()
 	mat.billboard_mode = BaseMaterial3D.BILLBOARD_PARTICLES
 	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	mat.vertex_color_use_as_albedo = true
-	mat.albedo_texture = FXTextures.soft_blob() if shape == "blob" else FXTextures.shape(shape)
+	mat.albedo_texture = FXTextures.soft_blob() if shape == "blob" else (FXTextures.puff() if shape == "puff" else FXTextures.shape(shape))
 	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	if additive:
 		mat.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
 	mat.proximity_fade_enabled = true
-	mat.proximity_fade_distance = 0.15
+	mat.proximity_fade_distance = soft
 	var q := QuadMesh.new()
 	q.size = Vector2(size, size)
 	q.material = mat

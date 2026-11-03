@@ -220,6 +220,10 @@ func set_first_person(on: bool) -> void:
 		m.cast_shadow = _shadow_mode()
 	for n in [helmet, weapon_model, club_model] + outfit:
 		_match_first_person(n)
+	for att in attachments.values():   # and the carrots stuck in it (Projectiles._stick)
+		for n in (att as Node).get_children():
+			if n.has_meta(&"stuck_in"):
+				(n as Node3D).visible = not on
 
 
 ## Looking out of this critter's eyes, its body and whatever it holds only

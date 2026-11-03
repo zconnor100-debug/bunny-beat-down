@@ -80,6 +80,20 @@ func test_a_throw_reaches_about_twenty_five_metres() -> void:
 	check(far > 20.0 and far < 32.0, "a lob carries far, but not too far (%.1f m)" % far)
 
 
+func test_a_grenade_at_their_feet_beats_them_down() -> void:
+	var me := spawn_critter(TEST_DEF, Vector3(0, 0.1, 30.0))
+	me.is_player = true   # (bots go easy on each other)
+	var them := spawn_critter(TEST_DEF, Vector3(0, 0.1, 0))
+	var near := spawn_critter(TEST_DEF, Vector3(6.5, 0.1, 0))
+	var far := spawn_critter(TEST_DEF, Vector3(-10.0, 0.1, 0))
+	await wait_physics(3)
+	Grenade.spawn(Projectiles.instance, me, Vector3(0.4, 0.2, 0.4), Vector3.ZERO)
+	await wait_physics(_ticks(Grenade.FUSE + 0.2))
+	check(not them.alive, "a grenade at a full-health critter's feet beats it down (%.0f hp left)" % them.health)
+	check(near.alive and near.health < near.max_health - 20.0, "6.5 m off it still hurts (%.0f hp)" % near.health)
+	check(far.health == far.max_health, "10 m off, it doesn't (%.0f hp)" % far.health)
+
+
 func test_a_beat_down_names_the_grenade() -> void:
 	var me := spawn_critter(TEST_DEF, Vector3(0, 0.1, 0))
 	var them := spawn_critter(TEST_DEF, Vector3(3.0, 0.1, -6.0), PI)

@@ -68,6 +68,45 @@ func test_projectile_damages_and_kills() -> void:
 	check(shooter.kills == 1, "shooter credited with the kill")
 
 
+func test_a_critter_holds_a_few_carrots_and_works_them_out() -> void:
+	var target := spawn_critter(TEST_DEF, Vector3(0, 0.1, -6))
+	var shooter := spawn_critter(TEST_DEF, Vector3(0, 0.1, 0))
+	target.max_health = 100000.0
+	target.health = target.max_health
+	await wait_physics(3)
+	var pr := Projectiles.instance
+	var w := WeaponInstance.new(WeaponDB.get_weapon(&"carrot_pistol"), 0)
+	var dir := (target.get_chest_position() - shooter.get_chest_position()).normalized()
+	var shoot := func(n: int) -> void:
+		for i in n:
+			Projectiles.fire(shooter, w, shooter.get_chest_position() + dir * 0.5, dir, 0.0, shooter.visual.hitbox_rids)
+			await wait_physics(4)
+	await shoot.call(Projectiles.MAX_IN_ONE + 4)
+	check(pr.stuck_in(target) == Projectiles.MAX_IN_ONE, "it holds %d carrots at a time (%d)" % [Projectiles.MAX_IN_ONE, pr.stuck_in(target)])
+	check(pr.falling_count() > 0, "the next ones knocked the oldest out, and they're dropping")
+	var shown := func() -> int:
+		return target.visual.find_children("*", "MeshInstance3D", true, false).filter(func(m): return m.has_meta(&"stuck_in") and m.is_visible_in_tree()).size()
+	target.visual.set_first_person(true)
+	check(shown.call() == 0, "looking out of its eyes, it doesn't see the carrots in it")
+	target.visual.set_first_person(false)
+	check(shown.call() == Projectiles.MAX_IN_ONE, "back in third person they show again")
+	pr._clock += Projectiles.WORK_LOOSE * 1.4   # (a while later)
+	await wait_physics(30)
+	check(pr.stuck_in(target) == 0, "after a while it's worked them all out")
+	await wait_physics(int(Projectiles.FALL_S * 60.0) + 10)
+	check(pr.falling_count() == 0, "and they've dropped and gone")
+	# a corpse keeps the ones in it
+	await shoot.call(3)
+	target.health = 1.0
+	var info := DamageInfo.make(10.0, DamageInfo.Kind.BULLET, null)
+	info.bone_role = &"chest"
+	target.take_damage(info)
+	await wait_physics(3)
+	pr._clock += Projectiles.WORK_LOOSE * 1.4
+	await wait_physics(30)
+	check(not target.alive and pr.stuck_in(target) == 3, "a corpse keeps the carrots in it (%d)" % pr.stuck_in(target))
+
+
 func test_ragdoll_falls_to_ground() -> void:
 	var c := spawn_critter(TEST_DEF, Vector3(0, 0.1, 0))
 	await wait_physics(3)

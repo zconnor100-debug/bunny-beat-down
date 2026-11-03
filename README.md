@@ -348,7 +348,9 @@ and the final shot replayed from three angles. There's a
 
   Five loot rarities run from Baby to **Golden**, and Golden guns shimmer.
   Projectiles are real carrots that take time to arrive (lead a moving
-  target) and **stay stuck** in whatever they hit. Shooting is meant to be
+  target) and **stay stuck** in whatever they hit. A critter only holds a
+  few at a time: the next one knocks the oldest out, and a critter that's
+  still going works them out after a while. Shooting is meant to be
   readable rather than realistic:
   - Within a gun's range, a carrot lands where the crosshair is; past it,
     the drop starts to show.
@@ -432,7 +434,9 @@ and the final shot replayed from three angles. There's a
   ring as wide as the blast; let go and the left paw winds back over the
   shoulder and lobs it, up to about 25 m. It bounces, thuds off critters,
   rolls to a stop, blinks faster and faster and goes off 2.4 s after the
-  throw: falloff damage and a big shove that blows survivors back. You start
+  throw in a fireball: damage out to 9 m (one of yours that lands beside a
+  critter beats it down, unless it wears an acorn shield) and a big shove
+  that blows survivors back. You start
   with two and carry up to four (crates and the floor have more); bots start
   with one or two and lob them at anyone dug in behind cover.
 

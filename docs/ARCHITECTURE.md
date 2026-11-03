@@ -219,12 +219,32 @@ ray-steps each one from its last position to the next (with gravity), so a
 150 m/s carrot can't tunnel through a 5 cm paw. All of them are drawn through
 one `MultiMesh` per kind, extrapolated between ticks for smooth motion. A
 carrot that hits something **stays stuck in it**. It is parented to the hit
-bone's attachment, so carrots ride along on a ragdoll.
+bone's attachment, so carrots ride along on a ragdoll. A critter holds six at
+a time (a boss 24): one more knocks the oldest out, and one that's still going
+works each out after about ten seconds. Carrots that come out drop, lie on the
+ground for a moment and shrink away, then wait hidden to be stuck again. In a
+corpse they stay until it's despawned. The whole match keeps at most 220,
+recycling the oldest. Bots soften their shots at each other, so a kill takes a
+lot of hits: before the per-critter limit, one critter in a 49-bot match
+carried 39 carrots five seconds after the landing. Stuck carrots further than
+40 m from the camera aren't drawn (`visibility_range_end`). In first person,
+the ones in your own body are hidden like the body is.
 
 Rockets are real nodes with smoke trails. `Explosion` gives a critter the
 rocket hit square on the full blast damage (120), and everyone else falloff
 damage by their distance from it (out to 10 m) with a cover check; it shoves
 every ragdoll, gib and prop in range, and blows limbs off nearby corpses.
+
+A carrot grenade's blast is the same, 130 at the middle and out to 9 m.
+`FX.explosion` scales everything to the blast's radius: a fireball of cartoon
+puffs (`FXTextures.puff`, lobes shaded like balls lit from above) that burns
+white-hot, orange and dark red into smoke, a white-hot glow at its heart, a
+column of smoke that only thickens as the fire dies (drawn from the start, it
+hid the fire), a ring of dust thrown out along the ground, shrapnel and clods,
+a flash and a scorch mark. The tonemapper (AgX) washes bright colours out
+toward cream, so the fire's colours are deep rather than bright. Particles sit
+on `CritterVisual.RENDER_LAYER`, which decals skip; the scorch mark's box used
+to stain the bottom of the fireball.
 
 Weapons are `.tres` resources (`data/weapons/`). Balancing happens in the
 inspector, and loot **rarity** (Baby → Garden → Prize → Heirloom → Golden)

@@ -75,6 +75,42 @@ static func shape(kind: String) -> Texture2D:
 	return t
 
 
+## A cartoon puff of cloud, white (the particle's colour tints it): round
+## lobes heaped together with a soft edge, each shaded like a ball lit from
+## above, so a heap of them reads as a billowing fireball or smoke, solid
+## rather than a haze.
+static func puff() -> Texture2D:
+	if _cache.has("puff"):
+		return _cache["puff"]
+	var n := 128
+	var lobes := [[Vector2(0.0, 0.0), 0.55], [Vector2(-0.42, 0.16), 0.4], [Vector2(0.4, 0.2), 0.42], [Vector2(0.04, 0.44), 0.4],
+		[Vector2(-0.3, -0.32), 0.36], [Vector2(0.32, -0.3), 0.38]]
+	var light := Vector3(-0.35, 0.55, 0.76).normalized()
+	var img := Image.create_empty(n, n, false, Image.FORMAT_RGBA8)
+	for y in n:
+		for x in n:
+			var p := Vector2((x + 0.5) / n * 2.0 - 1.0, 1.0 - (y + 0.5) / n * 2.0)   # -1..1, y up
+			var d := 1.0
+			var shade := 0.0
+			for l in lobes:
+				var off: Vector2 = p - l[0]
+				var r: float = l[1]
+				var dl := off.length() - r
+				if dl < d:
+					d = dl
+				if dl < 0.0:   # (lit like a ball: the brightest lobe here wins)
+					var q := off / r
+					var nrm := Vector3(q.x, q.y, sqrt(maxf(1.0 - q.length_squared(), 0.0)))
+					shade = maxf(shade, clampf(nrm.dot(light), 0.0, 1.0))
+			var alpha := clampf(0.5 - d * 9.0, 0.0, 1.0)
+			var v := 0.62 + 0.38 * shade
+			img.set_pixel(x, y, Color(v, v, v, alpha))
+	img.generate_mipmaps()
+	var t := ImageTexture.create_from_image(img)
+	_cache["puff"] = t
+	return t
+
+
 ## A soft streak for wind ribbons (particle trails): it fades across its
 ## width and toward both ends (u across the ribbon, v along it).
 static func streak() -> Texture2D:
