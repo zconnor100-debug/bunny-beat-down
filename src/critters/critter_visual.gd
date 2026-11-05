@@ -30,7 +30,7 @@ const NAME_TAG_MIN_SCALE := 0.35
 static var _enemy_rim: ShaderMaterial
 static var _ally_rim: ShaderMaterial
 static var _xray: ShaderMaterial       # (Pack Sense: reveal)
-var _reveal_until := 0
+var _reveal_timer: SceneTreeTimer      # (the reveal running: when it's out, the glow comes off)
 
 static var _gold_overlay: ShaderMaterial
 static var _soot: ShaderMaterial
@@ -512,17 +512,20 @@ func reveal(seconds: float) -> void:
 		if m.material_overlay != _xray:
 			m.set_meta(&"overlay_before", m.material_overlay)
 			m.material_overlay = _xray
-	_reveal_until = maxi(_reveal_until, Time.get_ticks_msec() + int(seconds * 1000.0))
-	get_tree().create_timer(seconds, false).timeout.connect(_end_reveal)
+	# (timed on game time only: checked against the wall clock, which lags it after a hitch, the glow stayed on)
+	if _reveal_timer == null or _reveal_timer.time_left < seconds:
+		_reveal_timer = get_tree().create_timer(seconds, false)
+		_reveal_timer.timeout.connect(_end_reveal.bind(_reveal_timer))
 
 
 func revealed() -> bool:
 	return meshes.any(func(m): return m.material_overlay == _xray) if _xray else false
 
 
-func _end_reveal() -> void:
-	if Time.get_ticks_msec() < _reveal_until - 30:
-		return   # (revealed again since: that one ends it)
+func _end_reveal(timer: SceneTreeTimer) -> void:
+	if timer != _reveal_timer:
+		return   # (revealed again since, for longer: that one ends it)
+	_reveal_timer = null
 	for m in meshes:
 		if is_instance_valid(m) and m.material_overlay == _xray:
 			m.material_overlay = m.get_meta(&"overlay_before", null)

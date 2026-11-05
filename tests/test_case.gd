@@ -32,6 +32,33 @@ func check_near(a: Variant, b: Variant, tol: float, msg: String) -> bool:
 	return check(ok, "%s (got %s, want %s ± %s)" % [msg, a, b, tol])
 
 
+## Counts the errors logged (the engine's and the scripts', not warnings) from
+## count_errors() until done(). Godot logs some mistakes and carries on (a
+## get_meta with no such entry, a freed object used), so no check sees them.
+class ErrorCount extends Logger:
+	var count := 0
+	var first := ""
+
+	func _log_error(function: String, file: String, line: int, code: String, rationale: String, _editor_notify: bool,
+			error_type: int, _script_backtraces: Array[ScriptBacktrace]) -> void:
+		if error_type == ERROR_TYPE_WARNING:
+			return
+		count += 1
+		if first.is_empty():
+			first = "%s (%s:%d %s)" % [rationale if not rationale.is_empty() else code, file, line, function]
+
+	## Stops counting: "" if nothing was logged, else how many and the first.
+	func done() -> String:
+		OS.remove_logger(self)
+		return "" if count == 0 else "%d logged, the first: %s" % [count, first]
+
+
+func count_errors() -> ErrorCount:
+	var e := ErrorCount.new()
+	OS.add_logger(e)
+	return e
+
+
 func wait_physics(n: int) -> void:
 	for i in n:
 		await get_tree().physics_frame

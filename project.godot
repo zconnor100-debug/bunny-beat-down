@@ -24,6 +24,10 @@ Events="*res://src/autoload/events.gd"
 GameInput="*res://src/autoload/game_input.gd"
 Audio="*res://src/autoload/audio.gd"
 
+[debug]
+
+file_logging/log_path.editor="user://dev_logs/godot.log"
+
 [display]
 
 window/size/viewport_width=1920

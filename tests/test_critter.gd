@@ -107,6 +107,37 @@ func test_a_critter_holds_a_few_carrots_and_works_them_out() -> void:
 	check(not target.alive and pr.stuck_in(target) == 3, "a corpse keeps the carrots in it (%d)" % pr.stuck_in(target))
 
 
+func test_a_carrot_in_the_ground_sticks_without_an_error() -> void:
+	var shooter := spawn_critter(TEST_DEF, Vector3(0, 0.1, 0))
+	await wait_physics(3)
+	var errors := count_errors()
+	var w := WeaponInstance.new(WeaponDB.get_weapon(&"carrot_pistol"), 0)
+	var from := shooter.get_chest_position()
+	var dir := (Vector3(0, 0, -4) - from).normalized()   # (into the ground a few metres ahead)
+	Projectiles.fire(shooter, w, from + dir * 0.5, dir, 0.0, shooter.visual.hitbox_rids)
+	await wait_physics(20)
+	var logged := errors.done()
+	var stuck := get_node("Ground").get_children().filter(func(n): return n.has_meta(&"stuck_in"))
+	check(stuck.size() == 1, "the carrot stuck in the ground (%d)" % stuck.size())
+	check(logged.is_empty(), "without an error (%s)" % logged)
+
+
+func test_a_reveal_wears_off_on_time_even_after_a_hitch() -> void:
+	var c := spawn_critter(TEST_DEF, Vector3(0, 0.1, 0))
+	await wait_physics(3)
+	for m in c.visual.meshes:
+		m.material_overlay = null   # (no rim: not one of your opponents)
+	var errors := count_errors()
+	OS.delay_msec(150)   # (a hitch: after it, the timers' clock, game time, runs ahead of the wall clock)
+	c.visual.reveal(0.3)
+	check(c.visual.revealed(), "Pack Sense: seen through walls")
+	await get_tree().create_timer(0.45, false).timeout
+	var logged := errors.done()
+	check(not c.visual.revealed(), "the glow comes off on time, even after a hitch")
+	check(c.visual.meshes.all(func(m): return m.material_overlay == null), "and it looks as it did")
+	check(logged.is_empty(), "without an error (%s)" % logged)
+
+
 func test_ragdoll_falls_to_ground() -> void:
 	var c := spawn_critter(TEST_DEF, Vector3(0, 0.1, 0))
 	await wait_physics(3)

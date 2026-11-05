@@ -1088,3 +1088,15 @@ glows the sky low over Boulder Bluff from wherever the camera is. Its
 
 `tests/check_scripts.gd` compiles every script. CI
 (`.github/workflows/tests.yml`) runs all of it on each push.
+
+Test runs keep out of the player's things: they read and write their own
+settings (`user://settings_test.cfg`, `Settings.is_test_run`), and every run
+from the source project (the tests, the benchmarks, the captures, F5 in the
+editor) logs to `user://dev_logs/` (`debug/file_logging/log_path.editor`).
+The game's own `user://logs/` keeps only the last five, and a batch of
+benchmarks used to push a player's logs out. The launcher's smoke test runs
+an exported build, so `tools/build_launcher.sh` points it there with
+`--log-file`. `TestCase.count_errors()` counts what the engine and the scripts
+log as errors while a test runs (a Godot `Logger`): Godot logs some mistakes,
+such as a `get_meta` with no such entry, and carries on, so no check would see
+them.

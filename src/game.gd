@@ -628,7 +628,8 @@ func _finish_run_stop() -> void:
 	var p := match_manager.player
 	var won := p.alive and match_manager.phase == MatchManager.Phase.ENDED
 	var placement := p.placement if not p.alive else (1 if won else match_manager.alive_critters().size())
-	var guns: Array = (p.inventory.weapons if p.alive else p.last_weapons).filter(func(w): return w != null and w != p.get_meta(&"stolen", null))
+	var stolen: Variant = p.get_meta(&"stolen") if p.has_meta(&"stolen") else null   # (get_meta's null default logs an error when there's none)
+	var guns: Array = (p.inventory.weapons if p.alive else p.last_weapons).filter(func(w): return w != null and w != stolen)
 	_run_result = Run.finish_match(placement, match_manager.total, p.kills, won, guns, match_manager.time_keeper.charges, Boons.held,
 		match_manager.doppel_beaten)
 	match_manager._check_mastery()   # (the runs' milestones)

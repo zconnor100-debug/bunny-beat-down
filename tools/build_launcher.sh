@@ -30,7 +30,9 @@ rm -rf build/linux_next
 mkdir -p build/linux_next
 "$GODOT" --headless --path . --export-release "Linux" build/linux_next/BunnyBeatDown.x86_64 > build/linux_next.log 2>&1
 echo "$V" > build/linux_next/version.txt
-BBD_TEST=1 timeout 300 build/linux_next/BunnyBeatDown.x86_64 --headless -- --smoke-test --map island 2>&1 \
+# (its log goes in dev_logs with the test runs': the game's own logs/ keeps only five, the player's)
+dev_logs="${XDG_DATA_HOME:-$HOME/.local/share}/godot/app_userdata/Bunny Beat Down/dev_logs"
+BBD_TEST=1 timeout 300 build/linux_next/BunnyBeatDown.x86_64 --headless --log-file "$dev_logs/smoke.log" -- --smoke-test --map island 2>&1 \
   | grep "SMOKE TEST PASS" || { echo "smoke test failed: build/linux_next not swapped in" >&2; exit 1; }
 end=$(( $(date +%s) + 43200 ))
 while pidof BunnyBeatDown.x86_64 > /dev/null; do

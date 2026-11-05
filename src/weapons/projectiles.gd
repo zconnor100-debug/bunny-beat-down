@@ -551,7 +551,8 @@ static func _pop_data(d: WeaponData) -> WeaponData:
 func _stick(pos: Vector3, dir: Vector3, target: Node3D, depth_frac: float) -> void:
 	if target == null or not is_instance_valid(target):
 		return
-	var into: Variant = target.get_meta(&"critter", null)
+	# (has_meta first: get_meta with a null default still logs an error when there's none, as in the ground)
+	var into: Variant = target.get_meta(&"critter") if target.has_meta(&"critter") else null
 	if not is_instance_valid(into):
 		into = null
 	var id: int = into.get_instance_id() if into else 0
